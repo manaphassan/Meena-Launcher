@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
@@ -184,15 +185,15 @@ fun CornerNavHub(
                     }
                 }
 
-                // 3. MAIN ANCHOR BUTTON (Windows Phone ⊞ / ✕)
+                // 3. MAIN ANCHOR BUTTON (Windows Phone ⊞ / ✕, Rounded Floating Action Button)
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(52.dp)
                         .background(
                             color = if (isExpanded) Color.White else MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(0.dp)
+                            shape = CircleShape
                         )
-                        .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                        .border(1.5.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = {
@@ -210,7 +211,7 @@ fun CornerNavHub(
                 ) {
                     Text(
                         text = "⊞",
-                        fontSize = 24.sp,
+                        fontSize = 26.sp,
                         color = if (isExpanded) MeenaBlack else Color.White,
                         modifier = Modifier.rotate(rotationAngle)
                     )
@@ -230,15 +231,15 @@ private fun NavSubButton(
     val haptic = LocalHapticFeedback.current
     Box(
         modifier = Modifier
-            .size(42.dp)
+            .size(44.dp)
             .background(
                 color = if (isPrimary) MaterialTheme.colorScheme.primary else MeenaSurfaceElevated,
-                shape = RoundedCornerShape(0.dp)
+                shape = CircleShape
             )
             .border(
                 1.dp,
                 if (isPrimary) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.25f),
-                RoundedCornerShape(0.dp)
+                CircleShape
             )
             .clickable {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)

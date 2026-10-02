@@ -21,40 +21,7 @@ data class SpendingTransaction(
 object SpendingRepository {
     private val timeFormat = SimpleDateFormat("hh:mm a", Locale.US)
 
-    private val initialTransactions = listOf(
-        SpendingTransaction(
-            id = "tx-1",
-            bank = "Maybank MAE",
-            bankCode = "M",
-            merchant = "Zara • Pavilion Kuala Lumpur",
-            channel = "Maybank MAE QR",
-            amount = 45.00,
-            timestamp = System.currentTimeMillis() - 3600000,
-            formattedTime = "12:49 PM"
-        ),
-        SpendingTransaction(
-            id = "tx-2",
-            bank = "TNG eWallet",
-            bankCode = "T",
-            merchant = "FamilyMart • MRT KLCC",
-            channel = "TNG eWallet NFC",
-            amount = 12.80,
-            timestamp = System.currentTimeMillis() - 7200000,
-            formattedTime = "10:14 AM"
-        ),
-        SpendingTransaction(
-            id = "tx-3",
-            bank = "CIMB Clicks",
-            bankCode = "C",
-            merchant = "Shell • Jalan Tun Razak",
-            channel = "CIMB Debit Mastercard",
-            amount = 60.00,
-            timestamp = System.currentTimeMillis() - 14400000,
-            formattedTime = "08:30 AM"
-        )
-    )
-
-    private val _transactionsFlow = MutableStateFlow<List<SpendingTransaction>>(initialTransactions)
+    private val _transactionsFlow = MutableStateFlow<List<SpendingTransaction>>(emptyList())
     val transactionsFlow: StateFlow<List<SpendingTransaction>> = _transactionsFlow.asStateFlow()
 
     fun addTransaction(

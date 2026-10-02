@@ -16,6 +16,21 @@ class MeenaNotificationListenerService : NotificationListenerService() {
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
 
         if (title.isNotBlank() || text.isNotBlank()) {
+            val pm = applicationContext.packageManager
+            val appLabel = try {
+                val appInfo = pm.getApplicationInfo(packageName, 0)
+                pm.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                packageName
+            }
+
+            com.example.meenalauncher.data.system.NotificationRepository.addNotification(
+                packageName = packageName,
+                appName = appLabel,
+                title = title,
+                text = text
+            )
+
             SpendingRepository.parseAndRecordFromNotification(
                 packageName = packageName,
                 title = title,

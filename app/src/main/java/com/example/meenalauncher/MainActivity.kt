@@ -27,13 +27,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -217,55 +220,33 @@ fun MeenaHomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Top Status Bar (Tap to reveal Action Center)
-            if (!userSettings.isStatusBarHidden) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .height(32.dp)
-                        .background(Color.Black)
-                        .drawBehind {
-                            drawLine(
-                                color = MeenaBorderSubtle,
-                                start = Offset(0f, size.height),
-                                end = Offset(size.width, size.height),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                        }
-                        .clickable { isActionCenterOpen = !isActionCenterOpen }
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("MEENA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("|", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("5G MAX • 📶 Wi-Fi", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("88% ⚡", style = MaterialTheme.typography.labelSmall, color = MeenaProfitGreen)
-                    }
-                }
+            // Panoramic Hub Pivot Header (WP7 / WP8.1 style - non-squeezing, auto-scrolling)
+            val hubs = listOf("start", "agenda", "finance", "apps")
+            val headerScrollState = rememberScrollState()
+
+            LaunchedEffect(pagerState.currentPage) {
+                // Approximate width of titles to scroll the active hub into focus
+                val targetScroll = (pagerState.currentPage * 220).coerceAtMost(headerScrollState.maxValue)
+                headerScrollState.animateScrollTo(targetScroll)
             }
 
-            // Panoramic Continuous Parallax Pivot Header (WP7 / WP8.1 style)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(22.dp),
+                    .statusBarsPadding()
+                    .horizontalScroll(headerScrollState)
+                    .padding(start = 20.dp, end = 60.dp, top = 12.dp, bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(32.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val hubs = listOf("start", "agenda", "finance", "apps")
                 hubs.forEachIndexed { index, title ->
                     val isSelected = pagerState.currentPage == index
                     Text(
                         text = title,
                         style = MaterialTheme.typography.displayLarge,
                         fontSize = 38.sp,
+                        softWrap = false,
+                        maxLines = 1,
                         color = if (isSelected) Color.White else MeenaTextMuted,
                         modifier = Modifier
                             .clickable(
