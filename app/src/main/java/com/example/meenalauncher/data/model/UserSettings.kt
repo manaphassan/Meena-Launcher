@@ -25,10 +25,8 @@ data class MeenaUserSettings(
         fun defaultWidgetMap(): Map<String, Boolean> = mapOf(
             "widget-clock-weather" to true,
             "widget-weather-forecast" to true,
-            "widget-my-apps" to true,
             "widget-calendar-month" to true,
             "widget-today-summary" to true,
-            "widget-mailbox" to true,
             "widget-notes" to true,
             "widget-tasks" to true,
             "widget-exchange-rates" to true,

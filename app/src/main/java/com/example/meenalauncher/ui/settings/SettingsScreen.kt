@@ -408,7 +408,7 @@ fun SettingsScreen(
                 "widgets" -> {
                     item {
                         Text(
-                            text = "16 BUILT-IN MODULAR WIDGETS",
+                            text = "17 BUILT-IN MODULAR WIDGETS",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -417,23 +417,21 @@ fun SettingsScreen(
                     val widgetLabels = listOf(
                         "widget-clock-weather" to "1. Clock & Weather (Hero Typography)",
                         "widget-weather-forecast" to "2. Weather Forecast (5-Day Strip)",
-                        "widget-my-apps" to "3. My Apps / Live Tiles Grid",
-                        "widget-calendar-month" to "4. Monthly Calendar Grid",
-                        "widget-today-summary" to "5. Today Summary (Gemini Flash Brief)",
-                        "widget-mailbox" to "6. Mailbox (Outlook Unread Stream)",
-                        "widget-notes" to "7. Quick Notes",
-                        "widget-tasks" to "8. Today's Events / Schedule",
-                        "widget-exchange-rates" to "9. Exchange Rates (MYR)",
-                        "widget-finance-charts" to "10. Financial Charts (Realtime BTC vs KLSE)",
-                        "widget-spending-summary" to "11. Spending Summary (Bank Notification Hook)",
-                        "widget-notifications" to "12. Notification Stream",
-                        "widget-conversations" to "13. Conversations (Realtime App List)",
-                        "widget-news-feed" to "14. News Feed & Watchlist",
-                        "widget-device-telemetry" to "15. System Telemetry & Battery Gauge",
-                        "widget-map-radar" to "16. Map Radar Location",
-                        "widget-health-device" to "17. Connected Device (Smart Band)",
-                        "widget-health-telemetry" to "18. Fit Telemetry (Steps/Cal/BPM)",
-                        "widget-health-aqi" to "19. Air Quality Index (AQI & UV)"
+                        "widget-calendar-month" to "3. Monthly Calendar Grid",
+                        "widget-today-summary" to "4. Today Summary (Gemini Flash Brief)",
+                        "widget-notes" to "5. Quick Notes",
+                        "widget-tasks" to "6. Today's Events / Schedule",
+                        "widget-exchange-rates" to "7. Exchange Rates (MYR)",
+                        "widget-finance-charts" to "8. Financial Charts (Realtime BTC vs KLSE)",
+                        "widget-spending-summary" to "9. Spending Summary (Bank Notification Hook)",
+                        "widget-notifications" to "10. Notification Stream",
+                        "widget-conversations" to "11. Conversations (Realtime App List)",
+                        "widget-news-feed" to "12. News Feed & Watchlist",
+                        "widget-device-telemetry" to "13. System Telemetry & Battery Gauge",
+                        "widget-map-radar" to "14. Map Radar Location",
+                        "widget-health-device" to "15. Connected Device (Smart Band)",
+                        "widget-health-telemetry" to "16. Fit Telemetry (Steps/Cal/BPM)",
+                        "widget-health-aqi" to "17. Air Quality Index (AQI & UV)"
                     )
 
                     items(widgetLabels) { (id, label) ->

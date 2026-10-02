@@ -9,12 +9,12 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,55 +25,40 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.meenalauncher.data.model.MeenaUserSettings
 import com.example.meenalauncher.data.system.DeviceTelemetryHelper
+import com.example.meenalauncher.data.system.NotificationRepository
 import com.example.meenalauncher.theme.MeenaBorder
 import com.example.meenalauncher.theme.MeenaProfitGreen
 import com.example.meenalauncher.theme.MeenaSurface
-import com.example.meenalauncher.theme.MeenaSurfaceElevated
 import com.example.meenalauncher.theme.MeenaTextMuted
 import com.example.meenalauncher.theme.MeenaTextSecondary
 import com.example.meenalauncher.theme.MeenaTextWhite
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import com.example.meenalauncher.data.system.DeviceAppInfo
-import com.example.meenalauncher.data.system.InstalledAppsRepository
-import com.example.meenalauncher.data.system.NotificationRepository
 import com.example.meenalauncher.ui.components.CollapsibleWidget
 import com.example.meenalauncher.ui.components.ConversationsWidget
-import com.example.meenalauncher.ui.components.LiveTile
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -84,11 +69,11 @@ fun StartHub(
     settings: MeenaUserSettings,
     listState: LazyListState,
     onLaunchPackage: (String) -> Unit = {},
-    onOpenDialer: () -> Unit,
-    onOpenMessages: () -> Unit,
-    onOpenEmail: () -> Unit,
-    onOpenCamera: () -> Unit,
-    onOpenCalculator: () -> Unit
+    onOpenDialer: () -> Unit = {},
+    onOpenMessages: () -> Unit = {},
+    onOpenEmail: () -> Unit = {},
+    onOpenCamera: () -> Unit = {},
+    onOpenCalculator: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -102,17 +87,12 @@ fun StartHub(
     var telemetry by remember { mutableStateOf(DeviceTelemetryHelper.getTelemetry(context)) }
     val notifications by NotificationRepository.notificationsFlow.collectAsState()
     val isListenerConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
-    var installedApps by remember { mutableStateOf<List<DeviceAppInfo>>(emptyList()) }
     var isNotificationAccessGranted by remember {
         mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
     }
 
     LaunchedEffect(isListenerConnected) {
         isNotificationAccessGranted = isListenerConnected || NotificationRepository.isNotificationAccessGranted(context)
-    }
-
-    LaunchedEffect(Unit) {
-        installedApps = InstalledAppsRepository.loadInstalledApps(context)
     }
 
     LaunchedEffect(Unit) {
@@ -281,122 +261,7 @@ fun StartHub(
             }
         }
 
-        // 4. WIDGET: LIVE TILES LIST (Latest 6 Data Items)
-        if (settings.enabledWidgets["widget-my-apps"] != false) {
-            item {
-                CollapsibleWidget(
-                    title = "live tiles (6)",
-                    collapsedSummary = {
-                        Text(
-                            text = "6 active live tiles • Tap to open",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
-                        )
-                    }
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        // 1. Phone
-                        val phoneNotif = notifications.firstOrNull { 
-                            it.packageName.contains("dialer", ignoreCase = true) || 
-                            it.packageName.contains("telecom", ignoreCase = true) ||
-                            it.appName.contains("phone", ignoreCase = true)
-                        }
-                        LiveTileListRow(
-                            title = "Phone",
-                            subtitle = phoneNotif?.let { "${it.title}: ${it.text}" } ?: "Dialer & Recent Calls",
-                            badgeText = phoneNotif?.formattedTime,
-                            accentColor = MaterialTheme.colorScheme.primary,
-                            iconVector = Icons.Default.Phone,
-                            onClick = onOpenDialer
-                        )
-
-                        // 2. Messaging
-                        val msgNotif = notifications.firstOrNull { 
-                            it.packageName.contains("messaging", ignoreCase = true) || 
-                            it.packageName.contains("mms", ignoreCase = true) ||
-                            it.appName.contains("message", ignoreCase = true)
-                        }
-                        LiveTileListRow(
-                            title = "Messaging",
-                            subtitle = msgNotif?.let { "${it.title}: ${it.text}" } ?: "SMS • Chat & Conversations",
-                            badgeText = msgNotif?.formattedTime ?: "3",
-                            accentColor = Color(0xFF107C10),
-                            iconVector = Icons.AutoMirrored.Filled.Message,
-                            onClick = onOpenMessages
-                        )
-
-                        // 3. Outlook / Mail
-                        val mailNotif = notifications.firstOrNull { 
-                            it.packageName.contains("gmail", ignoreCase = true) || 
-                            it.packageName.contains("outlook", ignoreCase = true) ||
-                            it.packageName.contains("email", ignoreCase = true)
-                        }
-                        LiveTileListRow(
-                            title = "Outlook Mail",
-                            subtitle = mailNotif?.let { "${it.title}: ${it.text}" } ?: "Inbox • Synced",
-                            badgeText = mailNotif?.formattedTime ?: "12",
-                            accentColor = Color(0xFF0078D7),
-                            iconVector = Icons.Default.Email,
-                            onClick = onOpenEmail
-                        )
-
-                        // 4. Camera
-                        LiveTileListRow(
-                            title = "Camera",
-                            subtitle = "Quick Capture • 4K HDR",
-                            badgeText = null,
-                            accentColor = Color(0xFFD83B01),
-                            iconVector = Icons.Default.CameraAlt,
-                            onClick = onOpenCamera
-                        )
-
-                        // Items 5 & 6: Pinned apps or top installed apps
-                        val customAppIds = (settings.pinnedAppIds + installedApps.map { it.packageName })
-                            .distinct()
-                            .filterNot { it.contains("dialer") || it.contains("camera") }
-                            .take(2)
-
-                        customAppIds.forEach { pkg ->
-                            val appInfo = installedApps.firstOrNull { it.packageName == pkg }
-                            val meta = getPinnedAppMeta(pkg)
-                            val appNotif = notifications.firstOrNull { it.packageName == pkg }
-                            val appLabel = appInfo?.label ?: meta.name
-                            val appSubtitle = appNotif?.let { "${it.title}: ${it.text}" } ?: (meta.category + " • Live")
-                            val appColor = if (appInfo != null) Color(0xFF1F1F1F) else meta.color
-
-                            LiveTileListRow(
-                                title = appLabel,
-                                subtitle = appSubtitle,
-                                badgeText = appNotif?.formattedTime,
-                                accentColor = appColor,
-                                iconBitmap = appInfo?.iconBitmap,
-                                iconGlyph = if (appInfo?.iconBitmap == null) meta.emoji else null,
-                                onClick = {
-                                    onLaunchPackage(pkg)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // 5. WIDGET: MAILBOX
-        if (settings.enabledWidgets["widget-mailbox"] != false) {
-            item {
-                CollapsibleWidget(title = "mailbox • outlook") {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        MailboxRow("Erik Hudgens: Best mic for hollowbody guitar?", "Re: Telecaster & Shure Beta 58A shootout...", "12:49 PM", Color(0xFF0078D7))
-                        MailboxRow("Sarah Lin: Q3 Product Review Slides", "Attached final sprint deck for leadership...", "09:12 AM", Color(0xFF555555))
-                    }
-                }
-            }
-        }
-
-        // 6. WIDGET: REALTIME CONVERSATIONS (WhatsApp, Telegram, SMS, etc.)
+        // 4. WIDGET: REALTIME CONVERSATIONS (WhatsApp, Telegram, SMS, etc.)
         if (settings.enabledWidgets["widget-conversations"] != false) {
             item {
                 ConversationsWidget()
@@ -743,26 +608,6 @@ private fun ForecastCard(day: String, glyph: String, temp: String, modifier: Mod
     }
 }
 
-@Composable
-private fun MailboxRow(subject: String, preview: String, time: String, borderAccent: Color) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
-            .padding(start = 4.dp)
-            .drawBehindBorderLeft(borderAccent, 3.dp)
-            .padding(10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(subject, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
-            Text(preview, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted, maxLines = 1)
-        }
-        Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-    }
-}
 
 @Composable
 private fun NotificationRow(
@@ -835,124 +680,3 @@ private fun NotificationRow(
     }
 }
 
-private fun Modifier.drawBehindBorderLeft(color: Color, width: Dp) = this.drawBehind {
-    val strokeWidthPx = width.toPx()
-    drawLine(
-        color = color,
-        start = Offset(strokeWidthPx / 2, 0f),
-        end = Offset(strokeWidthPx / 2, this.size.height),
-        strokeWidth = strokeWidthPx
-    )
-}
-
-data class PinnedAppMeta(
-    val name: String,
-    val emoji: String,
-    val color: Color,
-    val category: String
-)
-
-fun getPinnedAppMeta(appId: String): PinnedAppMeta {
-    return when (appId) {
-        "org.telegram.messenger" -> PinnedAppMeta("Telegram", "✈️", Color(0xFF229ED9), "Messaging")
-        "com.google.android.gm" -> PinnedAppMeta("Gmail", "✉️", Color(0xFFEA4335), "Google")
-        "com.whatsapp" -> PinnedAppMeta("WhatsApp", "💬", Color(0xFF25D366), "Social")
-        "com.android.calculator2" -> PinnedAppMeta("Calculator", "🔢", Color(0xFF0078D7), "Tools")
-        "com.android.deskclock" -> PinnedAppMeta("Clock", "⏰", Color(0xFF107C10), "Alarms")
-        "com.android.camera" -> PinnedAppMeta("Camera", "📷", Color(0xFF333333), "Media")
-        else -> {
-            val simpleName = appId.substringAfterLast('.').replaceFirstChar { it.uppercase() }
-            PinnedAppMeta(simpleName, "📱", Color(0xFF1F1F1F), "Application")
-        }
-    }
-}
-
-@Composable
-private fun LiveTileListRow(
-    title: String,
-    subtitle: String,
-    badgeText: String? = null,
-    badgeColor: Color = MeenaProfitGreen,
-    accentColor: Color,
-    iconGlyph: String? = null,
-    iconBitmap: androidx.compose.ui.graphics.ImageBitmap? = null,
-    iconVector: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    onClick: () -> Unit
-) {
-    val haptic = LocalHapticFeedback.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
-            .clickable {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                onClick()
-            }
-            .padding(10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(accentColor),
-                contentAlignment = Alignment.Center
-            ) {
-                if (iconBitmap != null) {
-                    androidx.compose.foundation.Image(
-                        bitmap = iconBitmap,
-                        contentDescription = title,
-                        modifier = Modifier.size(22.dp)
-                    )
-                } else if (iconVector != null) {
-                    Icon(
-                        imageVector = iconVector,
-                        contentDescription = title,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else if (iconGlyph != null) {
-                    Text(
-                        text = iconGlyph,
-                        fontSize = 18.sp
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f, fill = false)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MeenaTextWhite,
-                    maxLines = 1
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted,
-                    maxLines = 1
-                )
-            }
-        }
-        if (!badgeText.isNullOrBlank()) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Box(
-                modifier = Modifier
-                    .background(badgeColor)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = badgeText,
-                    fontSize = 10.sp,
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-    }
-}
