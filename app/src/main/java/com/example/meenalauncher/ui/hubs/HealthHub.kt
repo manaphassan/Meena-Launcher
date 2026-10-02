@@ -42,6 +42,7 @@ import com.example.meenalauncher.theme.MeenaTextMuted
 import com.example.meenalauncher.theme.MeenaTextSecondary
 import com.example.meenalauncher.theme.MeenaTextWhite
 import com.example.meenalauncher.ui.components.CollapsibleWidget
+import com.example.meenalauncher.ui.components.OpenMapsRadarWidget
 
 @Composable
 fun HealthHub(
@@ -438,6 +439,13 @@ fun HealthHub(
             }
         }
     }
+
+        // 4. CURRENT LOCATION MAPS (OpenMaps Dark Theme with 3km Radar Wave & North Bearing)
+        if (settings.enabledWidgets["widget-map-radar"] != false) {
+            item {
+                OpenMapsRadarWidget()
+            }
+        }
 
         item { Spacer(modifier = Modifier.height(64.dp)) }
     }

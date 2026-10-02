@@ -74,8 +74,6 @@ import com.example.meenalauncher.data.system.NotificationRepository
 import com.example.meenalauncher.ui.components.CollapsibleWidget
 import com.example.meenalauncher.ui.components.ConversationsWidget
 import com.example.meenalauncher.ui.components.LiveTile
-import com.example.meenalauncher.ui.components.NewsFeedWidget
-import com.example.meenalauncher.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -721,13 +719,6 @@ fun StartHub(
                         }
                     }
                 }
-            }
-        }
-
-        // 8. WIDGET: MAP RADAR (OpenMaps Dark Theme with 3km Radar Wave & North Bearing)
-        if (settings.enabledWidgets["widget-map-radar"] != false) {
-            item {
-                OpenMapsRadarWidget()
             }
         }
 
