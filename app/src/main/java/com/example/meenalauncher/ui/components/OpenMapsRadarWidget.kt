@@ -91,20 +91,9 @@ fun OpenMapsRadarWidget(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isMapLoaded by remember { mutableStateOf(false) }
 
-    // Compass & Radar Sweep Animations for UI indicators
-    val infiniteTransition = rememberInfiniteTransition(label = "radarSweep")
-    val sweepAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sweepAngle"
-    )
-
-    // Pulse animation for radar status LED
-    val radarPulseAlpha by infiniteTransition.animateFloat(
+    // Pulse animation for radar status LED (draw-phase execution)
+    val infiniteTransition = rememberInfiniteTransition(label = "radarPulse")
+    val radarPulseAlpha = infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -165,7 +154,7 @@ fun OpenMapsRadarWidget(
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
-                                .graphicsLayer { alpha = radarPulseAlpha }
+                                .graphicsLayer { alpha = radarPulseAlpha.value }
                                 .background(Color(0xFF00A4EF), RoundedCornerShape(0.dp))
                         )
                         Text(

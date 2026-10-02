@@ -65,15 +65,6 @@ import com.example.meenalauncher.theme.MeenaTextMuted
 import com.example.meenalauncher.theme.MeenaTextWhite
 import kotlinx.coroutines.launch
 
-data class AppTargetMeta(
-    val id: String,
-    val name: String,
-    val icon: ImageVector? = null,
-    val iconBitmap: ImageBitmap? = null,
-    val iconBg: Color = Color(0xFF00A4EF),
-    val isRealApp: Boolean = true
-)
-
 @Composable
 fun AppsHub(
     listState: LazyListState,
@@ -88,7 +79,7 @@ fun AppsHub(
     var searchQuery by remember { mutableStateOf("") }
 
     val primaryColor = MaterialTheme.colorScheme.primary
-    var selectedTargetForProperties by remember { mutableStateOf<AppTargetMeta?>(null) }
+    var selectedTargetForProperties by remember { mutableStateOf<DeviceAppInfo?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
     var isJumpListOpen by remember { mutableStateOf(false) }
@@ -227,13 +218,7 @@ fun AppsHub(
                             time = appNotif?.formattedTime,
                             onClick = { onLaunchApp(app.packageName) },
                             onLongClick = {
-                                selectedTargetForProperties = AppTargetMeta(
-                                    id = app.packageName,
-                                    name = app.label,
-                                    iconBitmap = app.iconBitmap,
-                                    iconBg = primaryColor,
-                                    isRealApp = true
-                                )
+                                selectedTargetForProperties = app
                             }
                         )
                     }
@@ -362,7 +347,7 @@ fun AppsHub(
         // METRO APP PROPERTIES DIALOG
         val target = selectedTargetForProperties
         if (target != null) {
-            val isPinned = pinnedAppIds.contains(target.id)
+            val isPinned = pinnedAppIds.contains(target.packageName)
             Dialog(onDismissRequest = { selectedTargetForProperties = null }) {
                 Box(
                     modifier = Modifier
@@ -376,19 +361,19 @@ fun AppsHub(
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .background(target.iconBg, RoundedCornerShape(8.dp)),
+                                    .background(primaryColor, RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (target.iconBitmap != null) {
-                                    Image(bitmap = target.iconBitmap, contentDescription = target.name, modifier = Modifier.size(32.dp))
-                                } else if (target.icon != null) {
-                                    Icon(target.icon, contentDescription = target.name, tint = Color.White, modifier = Modifier.size(28.dp))
+                                    Image(bitmap = target.iconBitmap, contentDescription = target.label, modifier = Modifier.size(32.dp))
+                                } else {
+                                    Text(target.firstLetter.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                 }
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(target.name, style = MaterialTheme.typography.titleLarge, color = Color.White)
-                                Text(target.id, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                Text(target.label, style = MaterialTheme.typography.titleLarge, color = Color.White)
+                                Text(target.packageName, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                             }
                         }
 
@@ -400,8 +385,8 @@ fun AppsHub(
                             iconText = if (isPinned) "📌" else "📍",
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onTogglePinApp(target.id)
-                                Toast.makeText(context, if (isPinned) "Unpinned ${target.name}" else "Pinned ${target.name} to Start", Toast.LENGTH_SHORT).show()
+                                onTogglePinApp(target.packageName)
+                                Toast.makeText(context, if (isPinned) "Unpinned ${target.label}" else "Pinned ${target.label} to Start", Toast.LENGTH_SHORT).show()
                                 selectedTargetForProperties = null
                             }
                         )
@@ -415,7 +400,7 @@ fun AppsHub(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.parse("package:${target.id}")
+                                    data = Uri.parse("package:${target.packageName}")
                                 }
                                 context.startActivity(intent)
                                 selectedTargetForProperties = null
@@ -431,7 +416,8 @@ fun AppsHub(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 try {
-                                    val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${target.id}"))
+                                    InstalledAppsRepository.invalidateCache()
+                                    val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${target.packageName}"))
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "System app cannot be uninstalled", Toast.LENGTH_SHORT).show()

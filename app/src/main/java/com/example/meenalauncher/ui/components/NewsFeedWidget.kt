@@ -2,6 +2,7 @@ package com.example.meenalauncher.ui.components
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -79,17 +80,21 @@ fun NewsFeedWidget(
         }
     }
 
-    // Refresh spinner animation
-    val infiniteTransition = rememberInfiniteTransition(label = "newsRefreshAnim")
-    val refreshRotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "refreshRotation"
-    )
+    // Refresh spinner animation - only runs when actively fetching feeds
+    val refreshRotation = remember { Animatable(0f) }
+    androidx.compose.runtime.LaunchedEffect(isLoading) {
+        if (isLoading) {
+            refreshRotation.animateTo(
+                targetValue = refreshRotation.value + 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        } else {
+            refreshRotation.snapTo(0f)
+        }
+    }
 
     CollapsibleWidget(
         title = "local news • 6 latest",
@@ -169,7 +174,7 @@ fun NewsFeedWidget(
                             .size(16.dp)
                             .graphicsLayer {
                                 if (isLoading) {
-                                    rotationZ = refreshRotation
+                                    rotationZ = refreshRotation.value
                                 }
                             }
                     )

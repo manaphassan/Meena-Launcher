@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -92,7 +93,7 @@ fun AdvancedCandlestickChart(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // 1. Ticker Selector Chip Carousel
-        val allWatchlist by remember { mutableStateOf(GoogleFinanceRepository.watchlist.value) }
+        val allWatchlist by GoogleFinanceRepository.watchlist.collectAsState()
         val chipScrollState = rememberScrollState()
 
         Row(

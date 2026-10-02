@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.meenalauncher.data.preferences.SettingsRepository
+import com.example.meenalauncher.data.system.NotificationRepository
 import com.example.meenalauncher.theme.MeenaBorderSubtle
 import com.example.meenalauncher.theme.MeenaLauncherTheme
 import com.example.meenalauncher.theme.MeenaProfitGreen
@@ -412,6 +413,8 @@ fun ActionCenterSheet(
     onClose: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
+    val liveNotifications by NotificationRepository.notificationsFlow.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -501,9 +504,21 @@ fun ActionCenterSheet(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                ActionNotificationItem("Maybank MAE", "DuitNow QR RM 18.50 at Nasi Kandar Pelita", "12m ago")
-                ActionNotificationItem("Jakim e-Solat", "Next: Asar Prayer (WLY01)", "Today")
-                ActionNotificationItem("Meena Launcher", "AMOLED 0dp Pure Metro • System Ready", "Just now")
+                if (liveNotifications.isNotEmpty()) {
+                    liveNotifications.take(4).forEach { item ->
+                        ActionNotificationItem(
+                            app = item.appName.ifBlank { item.packageName.substringAfterLast('.') },
+                            text = if (item.text.isNotBlank()) "${item.title}: ${item.text}" else item.title,
+                            time = item.formattedTime
+                        )
+                    }
+                } else {
+                    ActionNotificationItem(
+                        app = "Meena Launcher",
+                        text = "AMOLED 0dp Pure Metro • System Ready",
+                        time = "Just now"
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

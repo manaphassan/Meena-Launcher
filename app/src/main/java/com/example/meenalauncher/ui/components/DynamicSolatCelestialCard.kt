@@ -81,23 +81,31 @@ fun DynamicSolatCelestialCard(
     var selectedZone by remember { mutableStateOf(initialZone) }
     var schedule by remember(selectedZone) { mutableStateOf(JakimSolatRepository.getTodaySchedule(selectedZone)) }
 
-    var currentTimeStr by remember { mutableStateOf("12:33") }
+    val initialNow = remember { Calendar.getInstance() }
+    var currentTimeStr by remember {
+        mutableStateOf(SimpleDateFormat("HH:mm", Locale.getDefault()).format(initialNow.time))
+    }
     var currentMinutesOfDay by remember {
-        val now = Calendar.getInstance()
-        mutableStateOf(now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE))
+        mutableStateOf(initialNow.get(Calendar.HOUR_OF_DAY) * 60 + initialNow.get(Calendar.MINUTE))
     }
 
     var isZonePickerOpen by remember { mutableStateOf(false) }
     var isMonthlyScheduleOpen by remember { mutableStateOf(false) }
 
-    // Live continuous time ticker updating every second
-    LaunchedEffect(Unit) {
+    // Live continuous time ticker updating prayer schedule only when minute rolls over or zone changes
+    LaunchedEffect(selectedZone) {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        var lastMinute = -1
         while (true) {
             val now = Calendar.getInstance()
-            currentTimeStr = timeFormat.format(now.time)
-            currentMinutesOfDay = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-            schedule = JakimSolatRepository.getTodaySchedule(selectedZone)
+            val minuteNow = now.get(Calendar.MINUTE)
+            val minutesOfDay = now.get(Calendar.HOUR_OF_DAY) * 60 + minuteNow
+            if (minuteNow != lastMinute) {
+                lastMinute = minuteNow
+                currentTimeStr = timeFormat.format(now.time)
+                currentMinutesOfDay = minutesOfDay
+                schedule = JakimSolatRepository.getTodaySchedule(selectedZone)
+            }
             delay(1000)
         }
     }

@@ -66,15 +66,23 @@ fun ConversationsWidget(
     val conversations by NotificationRepository.conversationsFlow.collectAsState()
     val isConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
 
-    var isPermissionGranted by remember {
-        mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
+    var isPermissionGranted by remember(isConnected) {
+        mutableStateOf(isConnected || NotificationRepository.isNotificationAccessGranted(context))
     }
 
-    // Periodically re-check permission status when user returns from Settings
-    LaunchedEffect(Unit) {
-        while (true) {
-            isPermissionGranted = NotificationRepository.isNotificationAccessGranted(context)
-            delay(2000)
+    // Only re-check permission status when not yet connected, stops polling as soon as access is confirmed
+    LaunchedEffect(isConnected) {
+        if (!isConnected) {
+            while (true) {
+                val granted = NotificationRepository.isNotificationAccessGranted(context)
+                if (granted) {
+                    isPermissionGranted = true
+                    break
+                }
+                delay(3000)
+            }
+        } else {
+            isPermissionGranted = true
         }
     }
 

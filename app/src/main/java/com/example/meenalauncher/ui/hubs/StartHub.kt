@@ -94,20 +94,23 @@ fun StartHub(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    var currentTime by remember { mutableStateOf("07:42") }
-    var currentDate by remember { mutableStateOf("FRIDAY, OCTOBER 2") }
+    val initialDate = remember { Date() }
+    var currentTime by remember {
+        mutableStateOf(SimpleDateFormat("HH:mm", Locale.getDefault()).format(initialDate))
+    }
+    var currentDate by remember {
+        mutableStateOf(SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(initialDate).uppercase())
+    }
     var telemetry by remember { mutableStateOf(DeviceTelemetryHelper.getTelemetry(context)) }
     val notifications by NotificationRepository.notificationsFlow.collectAsState()
+    val isListenerConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
     var installedApps by remember { mutableStateOf<List<DeviceAppInfo>>(emptyList()) }
     var isNotificationAccessGranted by remember {
         mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
     }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            isNotificationAccessGranted = NotificationRepository.isNotificationAccessGranted(context)
-            delay(2000)
-        }
+    LaunchedEffect(isListenerConnected) {
+        isNotificationAccessGranted = isListenerConnected || NotificationRepository.isNotificationAccessGranted(context)
     }
 
     LaunchedEffect(Unit) {
@@ -120,20 +123,26 @@ fun StartHub(
         var pollCounter = 0
         while (true) {
             val now = Date()
-            currentTime = timeFormat.format(now)
-            currentDate = dateFormat.format(now).uppercase()
+            val newTime = timeFormat.format(now)
+            if (newTime != currentTime) {
+                currentTime = newTime
+                currentDate = dateFormat.format(now).uppercase()
+            }
             pollCounter++
             if (pollCounter >= 3) {
                 pollCounter = 0
                 telemetry = DeviceTelemetryHelper.getTelemetry(context)
+                if (!isListenerConnected) {
+                    isNotificationAccessGranted = NotificationRepository.isNotificationAccessGranted(context)
+                }
             }
             delay(1000)
         }
     }
 
-    // Dynamic Weather Icon Animation
+    // Dynamic Weather Icon Animation - optimized for draw-phase execution
     val infiniteTransition = rememberInfiniteTransition(label = "weatherAnimation")
-    val sunRotation by infiniteTransition.animateFloat(
+    val sunRotation = infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -142,7 +151,7 @@ fun StartHub(
         ),
         label = "sunRotation"
     )
-    val sunScale by infiniteTransition.animateFloat(
+    val sunScale = infiniteTransition.animateFloat(
         initialValue = 0.95f,
         targetValue = 1.12f,
         animationSpec = infiniteRepeatable(
@@ -151,18 +160,6 @@ fun StartHub(
         ),
         label = "sunScale"
     )
-
-    var isMessagesFlipped by remember { mutableStateOf(false) }
-    var isOutlookFlipped by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(5000)
-            isMessagesFlipped = !isMessagesFlipped
-            delay(1500)
-            isOutlookFlipped = !isOutlookFlipped
-        }
-    }
 
     LazyColumn(
         state = listState,
@@ -191,9 +188,9 @@ fun StartHub(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier.graphicsLayer {
-                                        rotationZ = sunRotation
-                                        scaleX = sunScale
-                                        scaleY = sunScale
+                                        rotationZ = sunRotation.value
+                                        scaleX = sunScale.value
+                                        scaleY = sunScale.value
                                     }
                                 ) {
                                     Text(text = "☀️", fontSize = 24.sp)

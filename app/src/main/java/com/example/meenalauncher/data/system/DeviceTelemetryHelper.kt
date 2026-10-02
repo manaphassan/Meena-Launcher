@@ -60,9 +60,10 @@ object DeviceTelemetryHelper {
             val freeBytes = stat.availableBytes
             val usedBytes = (totalBytes - freeBytes).coerceAtLeast(0)
 
-            totalStorageGb = String.format(java.util.Locale.US, "%.1f", totalBytes / (1024.0 * 1024.0 * 1024.0)).toDouble()
-            freeStorageGb = String.format(java.util.Locale.US, "%.1f", freeBytes / (1024.0 * 1024.0 * 1024.0)).toDouble()
-            usedStorageGb = String.format(java.util.Locale.US, "%.1f", usedBytes / (1024.0 * 1024.0 * 1024.0)).toDouble()
+            val bytesPerGb = 1024.0 * 1024.0 * 1024.0
+            totalStorageGb = ((totalBytes / bytesPerGb) * 10.0).roundToInt() / 10.0
+            freeStorageGb = ((freeBytes / bytesPerGb) * 10.0).roundToInt() / 10.0
+            usedStorageGb = ((usedBytes / bytesPerGb) * 10.0).roundToInt() / 10.0
             storagePct = if (totalStorageGb > 0) ((usedStorageGb / totalStorageGb) * 100).roundToInt() else 25
         } catch (e: Exception) {
             // Keep defaults
@@ -91,11 +92,12 @@ object DeviceTelemetryHelper {
         try {
             val totalRx = TrafficStats.getTotalRxBytes()
             val totalTx = TrafficStats.getTotalTxBytes()
+            val bytesPerMb = 1024.0 * 1024.0
             if (totalRx > 0) {
-                rxMb = String.format(java.util.Locale.US, "%.2f", totalRx / (1024.0 * 1024.0)).toDouble()
+                rxMb = ((totalRx / bytesPerMb) * 100.0).roundToInt() / 100.0
             }
             if (totalTx > 0) {
-                txMb = String.format(java.util.Locale.US, "%.2f", totalTx / (1024.0 * 1024.0)).toDouble()
+                txMb = ((totalTx / bytesPerMb) * 100.0).roundToInt() / 100.0
             }
         } catch (e: Exception) {
             // Keep defaults

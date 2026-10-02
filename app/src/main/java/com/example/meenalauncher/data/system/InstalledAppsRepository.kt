@@ -23,7 +23,18 @@ data class DeviceAppInfo(
 
 object InstalledAppsRepository {
 
-    suspend fun loadInstalledApps(context: Context): List<DeviceAppInfo> = withContext(Dispatchers.IO) {
+    @Volatile
+    private var cachedApps: List<DeviceAppInfo>? = null
+
+    fun invalidateCache() {
+        cachedApps = null
+    }
+
+    suspend fun loadInstalledApps(context: Context, forceRefresh: Boolean = false): List<DeviceAppInfo> = withContext(Dispatchers.IO) {
+        if (!forceRefresh && cachedApps != null) {
+            return@withContext cachedApps!!
+        }
+
         val pm = context.packageManager
         val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
@@ -81,15 +92,21 @@ object InstalledAppsRepository {
 
         // Sort alphabetically
         resultList.sortBy { it.label.lowercase() }
+        cachedApps = resultList
         resultList
     }
 
     private fun drawableToBitmap(drawable: Drawable): Bitmap {
+        val targetSize = 144
         if (drawable is BitmapDrawable && drawable.bitmap != null) {
-            return drawable.bitmap
+            val bmp = drawable.bitmap
+            if (bmp.width <= targetSize && bmp.height <= targetSize) {
+                return bmp
+            }
+            return Bitmap.createScaledBitmap(bmp, targetSize, targetSize, true)
         }
-        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
-        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
+        val width = if (drawable.intrinsicWidth in 1..targetSize) drawable.intrinsicWidth else targetSize
+        val height = if (drawable.intrinsicHeight in 1..targetSize) drawable.intrinsicHeight else targetSize
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
