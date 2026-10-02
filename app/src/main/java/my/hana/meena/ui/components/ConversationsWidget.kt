@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -87,7 +86,7 @@ fun ConversationsWidget(
     }
 
     CollapsibleWidget(
-        title = "conversations (realtime)",
+        title = "conversations",
         collapsedSummary = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -103,9 +102,9 @@ fun ConversationsWidget(
                 )
                 Text(
                     text = when {
-                        !isPermissionGranted -> "Permission Required"
-                        conversations.isNotEmpty() -> "${conversations.size} active conversations"
-                        else -> "Realtime Sync Active"
+                        !isPermissionGranted -> "permission required"
+                        conversations.isNotEmpty() -> "${conversations.size} active chats"
+                        else -> "connected"
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
@@ -138,20 +137,19 @@ fun ConversationsWidget(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Warning,
-                                contentDescription = "Warning",
+                                contentDescription = "warning",
                                 tint = Color(0xFFE51400),
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "NOTIFICATION ACCESS REQUIRED",
+                                text = "notification access required",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFE51400),
-                                letterSpacing = 1.sp
+                                color = Color(0xFFE51400)
                             )
                         }
                         Text(
-                            text = "Tap here to allow Meena Launcher to access incoming notifications so your WhatsApp, Telegram, and SMS conversations update in real-time.",
+                            text = "tap here to grant notification listener access so incoming chats update automatically.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White,
                             lineHeight = 16.sp
@@ -162,7 +160,7 @@ fun ConversationsWidget(
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "ENABLE IN SETTINGS →",
+                                text = "enable in settings",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -190,14 +188,13 @@ fun ConversationsWidget(
                                     .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
                             )
                             Text(
-                                text = "REALTIME LISTENER ACTIVE",
+                                text = "messages ready",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MeenaProfitGreen,
-                                letterSpacing = 1.sp
+                                color = MeenaProfitGreen
                             )
                         }
                         Text(
-                            text = "All caught up! Real-time chats from WhatsApp, Telegram, SMS and messaging apps will appear here as soon as they arrive.",
+                            text = "all caught up. incoming chats from messaging apps will appear here automatically.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MeenaTextMuted,
                             lineHeight = 16.sp
@@ -239,83 +236,93 @@ private fun ConversationRow(
         else -> MaterialTheme.colorScheme.primary
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
             .clickable(onClick = onClick)
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(vertical = 8.dp)
     ) {
-        // App / Channel Accent Strip
-        Box(
-            modifier = Modifier
-                .width(3.dp)
-                .height(38.dp)
-                .background(appColor)
-        )
-
-        // Conversation details
-        Column(modifier = Modifier.weight(1f)) {
+        // Line 1: Accent pill + Contact Name (weighted) + Time + Unread Count
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = item.senderOrContact,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MeenaTextWhite,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "• ${item.appName}",
-                        fontSize = 10.sp,
-                        color = appColor
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .background(appColor)
+                )
+                Text(
+                    text = item.senderOrContact.lowercase(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MeenaTextWhite,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (item.unreadCount > 1) {
+                    Box(
+                        modifier = Modifier
+                            .background(appColor)
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = "${item.unreadCount}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
                 Text(
-                    text = item.formattedTime,
-                    fontSize = 10.sp,
+                    text = item.formattedTime.lowercase(),
+                    fontSize = 11.sp,
                     color = MeenaTextMuted
                 )
             }
+        }
 
-            Spacer(modifier = Modifier.height(2.dp))
+        // Line 2: App Channel tag
+        Text(
+            text = item.appName.lowercase(),
+            fontSize = 11.sp,
+            color = appColor,
+            modifier = Modifier.padding(start = 14.dp, top = 2.dp)
+        )
 
+        // Line 3: Message preview (Vertical stack with multi-line wrap, up to 4 lines)
+        if (item.messageSnippet.isNotBlank()) {
             Text(
                 text = item.messageSnippet,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
                 color = MeenaTextSecondary,
-                maxLines = 2,
+                maxLines = 4,
                 overflow = TextOverflow.Ellipsis,
-                lineHeight = 16.sp
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(start = 14.dp, top = 4.dp)
             )
         }
 
-        // Unread badge or dismiss button
+        // Subtle divider separating conversation threads
+        Spacer(modifier = Modifier.height(8.dp))
         Box(
             modifier = Modifier
-                .size(20.dp)
-                .background(appColor)
-                .clickable(onClick = onDismiss),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = if (item.unreadCount > 1) "${item.unreadCount}" else "✕",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MeenaBorder.copy(alpha = 0.5f))
+        )
     }
 }
 

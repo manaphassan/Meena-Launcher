@@ -68,6 +68,14 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
     val lastUpdatedFlow: StateFlow<Long> = _lastUpdatedFlow.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.IO)
+    private var customFeeds: List<String> = emptyList()
+
+    fun updateFeeds(feeds: List<String>) {
+        if (customFeeds != feeds) {
+            customFeeds = feeds
+            scope.launch { refresh() }
+        }
+    }
 
     init {
         // Fetch feeds in background upon repository init
@@ -86,18 +94,34 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
 
         _newsFlow.value = WidgetState.Loading
         try {
-            val amanzArticles = fetchFeed(
-                urlStr = AMANZ_FEED_URL,
-                sourceName = "Amanz",
-                sourceBadgeColor = "#00A4EF"
-            )
-            val suamiArticles = fetchFeed(
-                urlStr = SUAMISIHAT_FEED_URL,
-                sourceName = "Suami Sihat",
-                sourceBadgeColor = "#107C10"
-            )
+            val feedList = if (customFeeds.isNotEmpty()) customFeeds else listOf(AMANZ_FEED_URL, SUAMISIHAT_FEED_URL)
+            val allArticles = mutableListOf<NewsArticle>()
 
-            val merged = (amanzArticles + suamiArticles)
+            for (feedUrl in feedList) {
+                val name = when {
+                    feedUrl.contains("amanz", ignoreCase = true) -> "Amanz"
+                    feedUrl.contains("suamisihat", ignoreCase = true) -> "Suami Sihat"
+                    feedUrl.contains("thestar", ignoreCase = true) -> "The Star"
+                    feedUrl.contains("bernama", ignoreCase = true) -> "Bernama"
+                    feedUrl.contains("malaysiakini", ignoreCase = true) -> "Malaysiakini"
+                    feedUrl.contains("techcrunch", ignoreCase = true) -> "TechCrunch"
+                    feedUrl.contains("ycombinator", ignoreCase = true) -> "Hacker News"
+                    else -> Uri.parse(feedUrl).host?.removePrefix("www.")?.substringBefore(".") ?: "News"
+                }
+                val color = when {
+                    feedUrl.contains("amanz", ignoreCase = true) -> "#00A4EF"
+                    feedUrl.contains("suamisihat", ignoreCase = true) -> "#107C10"
+                    feedUrl.contains("thestar", ignoreCase = true) -> "#E51400"
+                    feedUrl.contains("bernama", ignoreCase = true) -> "#0050EF"
+                    feedUrl.contains("malaysiakini", ignoreCase = true) -> "#FA6800"
+                    feedUrl.contains("techcrunch", ignoreCase = true) -> "#008A00"
+                    feedUrl.contains("ycombinator", ignoreCase = true) -> "#FA6800"
+                    else -> "#00A4EF"
+                }
+                allArticles.addAll(fetchFeed(feedUrl, name, color))
+            }
+
+            val merged = allArticles
                 .distinctBy { it.link.ifBlank { it.title } }
                 .sortedByDescending { it.pubDateMs }
 

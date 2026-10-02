@@ -246,56 +246,51 @@ fun DynamicSolatCelestialCard(
                 }
             }
 
-            // LOWER SECTION: 6-PRAYER TIMELINE BAR
+            // LOWER SECTION: 6-PRAYER TIMELINE BAR (Equal 1/6th width per prayer, guarantees 'isyak' is never squished)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 schedule.timelineItems.forEach { item ->
                     val isHighlighted = item.isNext
-                    if (isHighlighted) {
-                        // Highlighted Active/Upcoming Prayer Card (pure Metro 0dp)
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFF162F38), RoundedCornerShape(0.dp))
-                                .border(1.dp, Color(0xFF224B57), RoundedCornerShape(0.dp))
-                                .padding(horizontal = 11.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = item.name,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF26C6DA)
-                                )
-                                Text(
-                                    text = item.time24,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF26C6DA)
-                                )
-                            }
-                        }
-                    } else {
-                        // Regular Prayer Column
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .then(
+                                if (isHighlighted) {
+                                    Modifier
+                                        .background(Color(0xFF162F38), RoundedCornerShape(0.dp))
+                                        .border(1.dp, Color(0xFF224B57), RoundedCornerShape(0.dp))
+                                        .padding(vertical = 6.dp)
+                                } else {
+                                    Modifier.padding(vertical = 6.dp)
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Column(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = item.name,
+                                text = item.name.lowercase(),
                                 fontSize = 11.sp,
-                                color = Color(0xFF7E92A2)
+                                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isHighlighted) Color(0xFF26C6DA) else Color(0xFF7E92A2),
+                                maxLines = 1,
+                                softWrap = false
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = item.time24,
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White
+                                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.SemiBold,
+                                color = if (isHighlighted) Color(0xFF26C6DA) else Color.White,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -319,20 +314,20 @@ fun DynamicSolatCelestialCard(
             ) {
                 // Left: Gregorian & Hijri Date
                 Text(
-                    text = "${schedule.formattedGregorianDate}  •  ${schedule.hijriDate}",
+                    text = "${schedule.formattedGregorianDate}  •  ${schedule.hijriDate}".lowercase(),
                     fontSize = 9.5.sp,
                     color = Color(0xFF8697A6),
                     maxLines = 1,
                     modifier = Modifier.weight(1f, fill = false)
                 )
 
-                // Right: Interactive Action Buttons (Protected from line wrap)
+                // Right: Interactive Action Buttons (Protected from line wrap, lowercase English, no symbols)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Jadual sebulan",
+                        text = "monthly schedule",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF26C6DA),
@@ -344,7 +339,7 @@ fun DynamicSolatCelestialCard(
                         }
                     )
                     Text(
-                        text = "Tukar zon →",
+                        text = "change zone",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF26C6DA),

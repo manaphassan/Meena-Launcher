@@ -75,13 +75,17 @@ fun NewsFeedWidget(
                        
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
 
-    var selectedFilter by remember { mutableStateOf("ALL") } // "ALL", "AMANZ", "SUAMI SIHAT"
+    var selectedFilter by remember { mutableStateOf("all") }
+
+    val availableSources = remember(newsArticles) {
+        listOf("all") + newsArticles.map { it.source.lowercase() }.distinct()
+    }
 
     val filteredList = remember(newsArticles, selectedFilter) {
-        when (selectedFilter) {
-            "AMANZ" -> newsArticles.filter { it.source.equals("Amanz", ignoreCase = true) }.take(6)
-            "SUAMI SIHAT" -> newsArticles.filter { it.source.equals("Suami Sihat", ignoreCase = true) }.take(6)
-            else -> newsArticles.take(6)
+        if (selectedFilter.equals("all", ignoreCase = true)) {
+            newsArticles.take(8)
+        } else {
+            newsArticles.filter { it.source.equals(selectedFilter, ignoreCase = true) }.take(8)
         }
     }
 
@@ -102,7 +106,7 @@ fun NewsFeedWidget(
     }
 
     CollapsibleWidget(
-        title = "local news • 6 latest",
+        title = "news feed",
         collapsedSummary = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -114,7 +118,7 @@ fun NewsFeedWidget(
                         .background(Color(0xFF00A4EF))
                 )
                 Text(
-                    text = "Amanz & Suami Sihat • ${newsArticles.size} articles",
+                    text = "${newsArticles.size} stories ready",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
@@ -126,39 +130,26 @@ fun NewsFeedWidget(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Header: Filter Chips & Refresh Button
+            // Header: Dynamic Filter Chips & Refresh Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    NewsFilterChip(
-                        label = "ALL (6)",
-                        isSelected = selectedFilter == "ALL",
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            selectedFilter = "ALL"
-                        }
-                    )
-                    NewsFilterChip(
-                        label = "AMANZ",
-                        isSelected = selectedFilter == "AMANZ",
-                        accentColor = Color(0xFF00A4EF),
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            selectedFilter = "AMANZ"
-                        }
-                    )
-                    NewsFilterChip(
-                        label = "SUAMI SIHAT",
-                        isSelected = selectedFilter == "SUAMI SIHAT",
-                        accentColor = Color(0xFF107C10),
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            selectedFilter = "SUAMI SIHAT"
-                        }
-                    )
+                Row(
+                    modifier = Modifier.weight(1f, fill = false),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    availableSources.take(4).forEach { src ->
+                        NewsFilterChip(
+                            label = if (src == "all") "all (${newsArticles.size})" else src,
+                            isSelected = selectedFilter.equals(src, ignoreCase = true),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedFilter = src
+                            }
+                        )
+                    }
                 }
 
                 // Refresh button
@@ -282,7 +273,7 @@ private fun NewsArticleRow(
                         .padding(horizontal = 4.dp, vertical = 1.dp)
                 ) {
                     Text(
-                        text = article.source.uppercase(),
+                        text = article.source.lowercase(),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = sourceColor
