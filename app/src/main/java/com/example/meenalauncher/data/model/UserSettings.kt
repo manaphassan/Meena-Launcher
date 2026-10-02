@@ -38,7 +38,10 @@ data class MeenaUserSettings(
             "widget-conversations" to true,
             "widget-news-feed" to true,
             "widget-device-telemetry" to true,
-            "widget-map-radar" to true
+            "widget-map-radar" to true,
+            "widget-health-device" to true,
+            "widget-health-telemetry" to true,
+            "widget-health-aqi" to true
         )
     }
 }

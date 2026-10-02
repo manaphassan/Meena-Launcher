@@ -57,10 +57,11 @@ import com.example.meenalauncher.theme.MeenaBorderSubtle
 import com.example.meenalauncher.theme.MeenaLauncherTheme
 import com.example.meenalauncher.theme.MeenaProfitGreen
 import com.example.meenalauncher.theme.MeenaTextMuted
-import com.example.meenalauncher.theme.MeenaTextWhite
 import com.example.meenalauncher.ui.hubs.AgendaHub
 import com.example.meenalauncher.ui.hubs.AppsHub
 import com.example.meenalauncher.ui.hubs.FinanceHub
+import com.example.meenalauncher.ui.hubs.HealthHub
+import com.example.meenalauncher.ui.hubs.NewsHub
 import com.example.meenalauncher.ui.hubs.StartHub
 import com.example.meenalauncher.ui.navigation.CornerNavHub
 import com.example.meenalauncher.ui.settings.SettingsScreen
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
             }
 
             val targetHubExtra = currentHubIntentIndex.value
-                ?: intent?.getIntExtra("target_hub", -1)?.takeIf { it in 0..3 }
+                ?: intent?.getIntExtra("target_hub", -1)?.takeIf { it in 0..5 }
             val initialHub = targetHubExtra ?: userSettings.defaultHubIndex
 
             MeenaLauncherTheme(
@@ -120,7 +121,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val hubExtra = intent.getIntExtra("target_hub", -1)
-        if (hubExtra in 0..3) {
+        if (hubExtra in 0..5) {
             currentHubIntentIndex.value = hubExtra
         }
     }
@@ -202,18 +203,20 @@ fun MeenaHomeScreen(
 
     val pagerState = rememberPagerState(
         initialPage = initialHubIndex,
-        pageCount = { 4 }
+        pageCount = { 6 }
     )
 
     LaunchedEffect(targetHubIndex) {
-        if (targetHubIndex != null && targetHubIndex in 0..3) {
+        if (targetHubIndex != null && targetHubIndex in 0..5) {
             pagerState.animateScrollToPage(targetHubIndex)
         }
     }
 
     val hubStartListState = rememberLazyListState()
     val hubAgendaListState = rememberLazyListState()
+    val hubNewsListState = rememberLazyListState()
     val hubFinanceListState = rememberLazyListState()
+    val hubHealthListState = rememberLazyListState()
     val hubAppsListState = rememberLazyListState()
 
     // Detect if user is actively scrolling in current page or horizontal pager
@@ -222,7 +225,9 @@ fun MeenaHomeScreen(
             pagerState.isScrollInProgress ||
                     hubStartListState.isScrollInProgress ||
                     hubAgendaListState.isScrollInProgress ||
+                    hubNewsListState.isScrollInProgress ||
                     hubFinanceListState.isScrollInProgress ||
+                    hubHealthListState.isScrollInProgress ||
                     hubAppsListState.isScrollInProgress
         }
     }
@@ -247,7 +252,7 @@ fun MeenaHomeScreen(
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Panoramic Hub Pivot Header (WP7 / WP8.1 style - non-squeezing, auto-scrolling)
-            val hubs = listOf("start", "agenda", "finance", "apps")
+            val hubs = listOf("start", "agenda", "news", "finance", "health", "apps")
             val headerScrollState = rememberScrollState()
 
             LaunchedEffect(pagerState.currentPage) {
@@ -299,7 +304,7 @@ fun MeenaHomeScreen(
                 }
             }
 
-            // 4 Lateral Panoramic Canvas Hubs
+            // 6 Lateral Panoramic Canvas Hubs
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -321,11 +326,19 @@ fun MeenaHomeScreen(
                         settings = userSettings,
                         listState = hubAgendaListState
                     )
-                    2 -> FinanceHub(
+                    2 -> NewsHub(
+                        settings = userSettings,
+                        listState = hubNewsListState
+                    )
+                    3 -> FinanceHub(
                         settings = userSettings,
                         listState = hubFinanceListState
                     )
-                    3 -> AppsHub(
+                    4 -> HealthHub(
+                        settings = userSettings,
+                        listState = hubHealthListState
+                    )
+                    5 -> AppsHub(
                         listState = hubAppsListState,
                         pinnedAppIds = userSettings.pinnedAppIds,
                         pinnedAppSizes = userSettings.pinnedAppSizes,
@@ -348,10 +361,10 @@ fun MeenaHomeScreen(
             isLeftHanded = userSettings.isLeftHanded,
             isScrolling = isScrolling,
             onNavigateToApps = {
-                coroutineScope.launch { pagerState.animateScrollToPage(3) }
+                coroutineScope.launch { pagerState.animateScrollToPage(5) }
             },
             onOpenSearch = {
-                coroutineScope.launch { pagerState.animateScrollToPage(3) }
+                coroutineScope.launch { pagerState.animateScrollToPage(5) }
             },
             onOpenCamera = onOpenCamera,
             onOpenSettings = { isSettingsOpen = true },

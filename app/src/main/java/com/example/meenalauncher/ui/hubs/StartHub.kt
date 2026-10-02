@@ -548,12 +548,6 @@ fun StartHub(
             }
         }
 
-        // 8. WIDGET: LOCAL NEWS (6 LATEST FROM AMANZ & SUAMI SIHAT)
-        if (settings.enabledWidgets["widget-news-feed"] != false) {
-            item {
-                NewsFeedWidget()
-            }
-        }
 
         // 7. WIDGET: SYSTEM TELEMETRY (With Minimized Battery Gauge & Collapsible Breakdown)
         if (settings.enabledWidgets["widget-device-telemetry"] != false) {

@@ -234,22 +234,28 @@ fun SettingsScreen(
                         Column {
                             Text("DEFAULT START HUB", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                listOf("start", "agenda", "finance", "apps").forEachIndexed { index, name ->
-                                    val isSelected = settingsState.defaultHubIndex == index
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                            .border(1.dp, if (isSelected) Color.White.copy(alpha = 0.4f) else MeenaBorder)
-                                            .clickable { update { it.copy(defaultHubIndex = index) } }
-                                            .padding(vertical = 8.dp),
-                                        contentAlignment = Alignment.Center
+                            val hubNames = listOf("start", "agenda", "news", "finance", "health", "apps")
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                hubNames.chunked(3).forEach { rowHubs ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Text(name, style = MaterialTheme.typography.labelSmall, color = if (isSelected) Color.White else MeenaTextMuted)
+                                        rowHubs.forEach { name ->
+                                            val index = hubNames.indexOf(name)
+                                            val isSelected = settingsState.defaultHubIndex == index
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
+                                                    .border(1.dp, if (isSelected) Color.White.copy(alpha = 0.4f) else MeenaBorder)
+                                                    .clickable { update { it.copy(defaultHubIndex = index) } }
+                                                    .padding(vertical = 8.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(name, style = MaterialTheme.typography.labelSmall, color = if (isSelected) Color.White else MeenaTextMuted)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -424,7 +430,10 @@ fun SettingsScreen(
                         "widget-conversations" to "13. Conversations (Realtime App List)",
                         "widget-news-feed" to "14. News Feed & Watchlist",
                         "widget-device-telemetry" to "15. System Telemetry & Battery Gauge",
-                        "widget-map-radar" to "16. Map Radar Location"
+                        "widget-map-radar" to "16. Map Radar Location",
+                        "widget-health-device" to "17. Connected Device (Smart Band)",
+                        "widget-health-telemetry" to "18. Fit Telemetry (Steps/Cal/BPM)",
+                        "widget-health-aqi" to "19. Air Quality Index (AQI & UV)"
                     )
 
                     items(widgetLabels) { (id, label) ->
