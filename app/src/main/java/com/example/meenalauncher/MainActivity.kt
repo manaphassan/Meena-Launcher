@@ -85,6 +85,10 @@ class MainActivity : ComponentActivity() {
                 com.example.meenalauncher.theme.MeenaCyan
             }
 
+            val targetHubExtra = currentHubIntentIndex.value
+                ?: intent?.getIntExtra("target_hub", -1)?.takeIf { it in 0..3 }
+            val initialHub = targetHubExtra ?: userSettings.defaultHubIndex
+
             MeenaLauncherTheme(
                 baseTheme = userSettings.baseTheme,
                 accentColor = parsedAccent
@@ -95,6 +99,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     MeenaHomeScreen(
                         settingsRepository = settingsRepository,
+                        initialHubIndex = initialHub,
+                        targetHubIndex = currentHubIntentIndex.value,
                         onLaunchApp = { packageName -> launchPackage(packageName) },
                         onOpenDialer = { openDialerIntent() },
                         onOpenMessages = { openMessagesIntent() },
@@ -104,6 +110,17 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    private var currentHubIntentIndex = mutableStateOf<Int?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val hubExtra = intent.getIntExtra("target_hub", -1)
+        if (hubExtra in 0..3) {
+            currentHubIntentIndex.value = hubExtra
         }
     }
 
@@ -168,6 +185,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MeenaHomeScreen(
     settingsRepository: SettingsRepository,
+    initialHubIndex: Int = 0,
+    targetHubIndex: Int? = null,
     onLaunchApp: (String) -> Unit,
     onOpenDialer: () -> Unit,
     onOpenMessages: () -> Unit,
@@ -181,9 +200,15 @@ fun MeenaHomeScreen(
     )
 
     val pagerState = rememberPagerState(
-        initialPage = userSettings.defaultHubIndex,
+        initialPage = initialHubIndex,
         pageCount = { 4 }
     )
+
+    LaunchedEffect(targetHubIndex) {
+        if (targetHubIndex != null && targetHubIndex in 0..3) {
+            pagerState.animateScrollToPage(targetHubIndex)
+        }
+    }
 
     val hubStartListState = rememberLazyListState()
     val hubAgendaListState = rememberLazyListState()
