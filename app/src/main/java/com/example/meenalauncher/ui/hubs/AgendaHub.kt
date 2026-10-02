@@ -46,6 +46,7 @@ import com.example.meenalauncher.theme.MeenaTextMuted
 import com.example.meenalauncher.theme.MeenaTextSecondary
 import com.example.meenalauncher.theme.MeenaTextWhite
 import com.example.meenalauncher.ui.components.CollapsibleWidget
+import com.example.meenalauncher.ui.components.DynamicSolatCelestialCard
 
 @Composable
 fun AgendaHub(
@@ -70,7 +71,7 @@ fun AgendaHub(
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
 
-        // 1. WAKTU SOLAT JAKIM TIMELINE (With 5 Prayers + 3 Solar Markers)
+        // 1. WAKTU SOLAT JAKIM TIMELINE (With Celestial Animated Sun Arc)
         item {
             CollapsibleWidget(
                 title = "waktu solat • jakim",
@@ -78,53 +79,7 @@ fun AgendaHub(
                     Text(jakimSchedule.nextPrayerLabel, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                 }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Zone ${jakimSchedule.zone} (${jakimSchedule.zoneName})",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MeenaTextMuted
-                    )
-
-                    // 6-Slot Grid
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        jakimSchedule.slots.take(3).forEach { slot ->
-                            PrayerSlot(
-                                name = slot.name,
-                                time = slot.time,
-                                sub = slot.sub,
-                                modifier = Modifier.weight(1f),
-                                isSolar = slot.isSolar,
-                                isCurrent = slot.isCurrent
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        jakimSchedule.slots.drop(3).take(3).forEach { slot ->
-                            PrayerSlot(
-                                name = slot.name,
-                                time = slot.time,
-                                sub = slot.sub,
-                                modifier = Modifier.weight(1f),
-                                isSolar = slot.isSolar,
-                                isCurrent = slot.isCurrent
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Islamic Date: 19 Rabi' al-Awwal 1448H", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                        Text("Qibla: 292° WNW", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
+                DynamicSolatCelestialCard()
             }
         }
 
