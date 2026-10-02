@@ -9,7 +9,8 @@ data class WidgetConfig(
     val isCollapsed: Boolean = false,
     val maxLinesOrItems: Int = 5,
     val refreshMinutes: Int = 15,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    val customSettings: Map<String, String> = emptyMap()
 )
 
 @Serializable
@@ -26,12 +27,21 @@ data class MeenaUserSettings(
     val acrylicBlurDp: Int = 20,
     val wallpaperUri: String? = null,
     val wallpaperDimPercent: Int = 40,
-    val borderStyle: String = "modern", // "modern" (1dp outline) or "purist" (0dp borderless flat block)
+    val borderStyle: String = "purist", // "purist" (0dp flat) or "modern" (1dp outline)
     val pinnedAppIds: List<String> = listOf("com.google.android.gm", "org.telegram.messenger"),
     val pinnedAppSizes: Map<String, String> = emptyMap(), // appId -> "1x1", "2x2", or "4x2" (default "2x2")
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),
-    val widgetConfigs: Map<String, WidgetConfig> = defaultWidgetMap()
+    val widgetConfigs: Map<String, WidgetConfig> = defaultWidgetMap(),
+    // Gemini Flash Brief Settings
+    val geminiApiKey: String = "",
+    val geminiModel: String = "gemini-1.5-flash",
+    val geminiIncludeCalendar: Boolean = true,
+    val geminiIncludeWeather: Boolean = true,
+    val geminiIncludeSolat: Boolean = true,
+    val geminiIncludeFinance: Boolean = false,
+    // First-run permission onboarding
+    val hasCompletedFirstRunSetup: Boolean = false
 ) {
     companion object {
         fun defaultWidgetMap(): Map<String, WidgetConfig> = mapOf(

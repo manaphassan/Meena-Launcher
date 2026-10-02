@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -84,14 +85,25 @@ fun OpenMapsRadarWidget(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    var currentLocation by remember {
-        mutableStateOf(DeviceLocationHelper.getCurrentLocation(context))
-    }
+    val currentLocation by DeviceLocationHelper.locationFlow.collectAsState()
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isMapLoaded by remember { mutableStateOf(false) }
 
-    // Pulse animation for radar status LED (draw-phase execution)
+    LaunchedEffect(Unit) {
+        DeviceLocationHelper.refreshLocation(context)
+    }
+
+    LaunchedEffect(currentLocation.latitude, currentLocation.longitude, isMapLoaded) {
+        if (isMapLoaded) {
+            webViewRef?.evaluateJavascript(
+                "if (window.recenter) { window.recenter(${currentLocation.latitude}, ${currentLocation.longitude}); }",
+                null
+            )
+        }
+    }
+
+    // Pulse animation for radar status LED
     val infiniteTransition = rememberInfiniteTransition(label = "radarPulse")
     val radarPulseAlpha = infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -124,7 +136,7 @@ fun OpenMapsRadarWidget(
                         .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                 )
                 Text(
-                    text = "${currentLocation.formattedCoordinates} • 3km Radar",
+                    text = "${currentLocation.formattedCoordinates} • 3km radar",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
@@ -136,7 +148,7 @@ fun OpenMapsRadarWidget(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Tactical Top HUD Header: Coordinates, North Bearing, and 3km Radar status
+            // Top HUD Header: Coordinates, North Bearing, and 3km Radar status
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,7 +170,7 @@ fun OpenMapsRadarWidget(
                                 .background(Color(0xFF00A4EF), RoundedCornerShape(0.dp))
                         )
                         Text(
-                            text = currentLocation.locationName.uppercase(),
+                            text = currentLocation.locationName.lowercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MeenaTextWhite,
@@ -175,7 +187,7 @@ fun OpenMapsRadarWidget(
                     )
                 }
 
-                // North Bearing Compass Indicator
+                // North Bearing Indicator
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -186,12 +198,12 @@ fun OpenMapsRadarWidget(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Navigation,
-                        contentDescription = "North Bearing",
+                        contentDescription = "north bearing",
                         tint = Color(0xFF00A4EF),
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
-                        text = "NORTH 000°",
+                        text = "north 000°",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -214,6 +226,10 @@ fun OpenMapsRadarWidget(
                             settings.apply {
                                 javaScriptEnabled = true
                                 domStorageEnabled = true
+                                databaseEnabled = true
+                                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                                allowContentAccess = true
+                                allowFileAccess = true
                                 cacheMode = WebSettings.LOAD_DEFAULT
                                 loadWithOverviewMode = true
                                 useWideViewPort = true
@@ -240,14 +256,13 @@ fun OpenMapsRadarWidget(
                                 false
                             }
 
-                            loadDataWithBaseURL("https://openmaps.local", mapHtml, "text/html", "UTF-8", null)
+                            loadDataWithBaseURL("https://www.openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
                             webViewRef = this
                         }
                     },
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Tactical Corner Overlays (Windows Phone / Metro styling)
                 // Top-Left: 3km Radar Active Badge
                 Box(
                     modifier = Modifier
@@ -258,7 +273,7 @@ fun OpenMapsRadarWidget(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "RADAR: 3.0 KM RANGE",
+                        text = "radar: 3.0 km range",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00A4EF)
@@ -275,7 +290,7 @@ fun OpenMapsRadarWidget(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "OPENMAPS • DARK",
+                        text = "openmaps • dark",
                         fontSize = 9.sp,
                         color = MeenaTextMuted
                     )
@@ -334,12 +349,12 @@ fun OpenMapsRadarWidget(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Navigation,
-                            contentDescription = "North",
+                            contentDescription = "north",
                             tint = Color(0xFF00A4EF),
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "BEARING: 000° N",
+                            text = "bearing: 000° n",
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -361,12 +376,7 @@ fun OpenMapsRadarWidget(
                         .border(1.dp, MeenaBorder)
                         .clickable {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            val fresh = DeviceLocationHelper.getCurrentLocation(context)
-                            currentLocation = fresh
-                            webViewRef?.evaluateJavascript(
-                                "window.recenter && window.recenter(${fresh.latitude}, ${fresh.longitude});",
-                                null
-                            )
+                            DeviceLocationHelper.refreshLocation(context)
                         }
                         .padding(horizontal = 8.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -374,12 +384,12 @@ fun OpenMapsRadarWidget(
                 ) {
                     Icon(
                         imageVector = Icons.Default.MyLocation,
-                        contentDescription = "GPS Lock",
+                        contentDescription = "gps lock",
                         tint = if (currentLocation.isGpsActive) MeenaProfitGreen else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
-                        text = if (currentLocation.isGpsActive) "GPS LOCKED (±${currentLocation.accuracyMeters.toInt()}m)" else "DEFAULT POI (KL)",
+                        text = if (currentLocation.isGpsActive) "gps locked (±${currentLocation.accuracyMeters.toInt()}m)" else "default location",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -404,14 +414,14 @@ fun OpenMapsRadarWidget(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "OPEN IN MAPS",
+                        text = "open in maps",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = "Open in external maps",
+                        contentDescription = "open in external maps",
                         tint = Color.White,
                         modifier = Modifier.size(12.dp)
                     )

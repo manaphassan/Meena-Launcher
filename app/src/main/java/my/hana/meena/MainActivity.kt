@@ -14,6 +14,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -218,6 +219,7 @@ fun MeenaHomeScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val userSettings by settingsRepository.userSettingsFlow.collectAsState(initial = null)
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     if (userSettings == null) {
         androidx.compose.material3.Surface(
@@ -225,6 +227,35 @@ fun MeenaHomeScreen(
             color = androidx.compose.ui.graphics.Color.Black
         ) {}
         return
+    }
+
+    var showFirstRunPermissionDialog by remember {
+        mutableStateOf(userSettings?.hasCompletedFirstRunSetup == false)
+    }
+
+    val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
+        }
+        val flat = android.provider.Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
+        val isNotificationAccessGranted = flat != null && flat.contains(context.packageName)
+        if (!isNotificationAccessGranted) {
+            try {
+                val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (my.hana.meena.data.system.DeviceLocationHelper.hasLocationPermission(context)) {
+            my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
+        }
     }
 
     val pagerState = rememberPagerState(
@@ -486,6 +517,85 @@ fun MeenaHomeScreen(
                     isSettingsOpen = true
                 }
             )
+        }
+
+        // First-Time Setup Permissions Popup Dialog (Authentic Metro UI)
+        if (showFirstRunPermissionDialog) {
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = {
+                    showFirstRunPermissionDialog = false
+                    coroutineScope.launch {
+                        settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
+                    }
+                }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF0C0C0C))
+                        .border(1.dp, MaterialTheme.colorScheme.primary)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "welcome to meena",
+                        style = MaterialTheme.typography.displayMedium,
+                        fontSize = 24.sp,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "to show your local prayer times, weather, radar map, and alerts, meena needs a couple of quick permissions. all your data stays strictly on your phone.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MeenaTextMuted
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                showFirstRunPermissionDialog = false
+                                coroutineScope.launch {
+                                    settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
+                                }
+                                permissionLauncher.launch(
+                                    arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
+                        ) {
+                            Text(
+                                text = "enable",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White
+                            )
+                        }
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                showFirstRunPermissionDialog = false
+                                coroutineScope.launch {
+                                    settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1E1E1E)
+                            ),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
+                        ) {
+                            Text(
+                                text = "not now",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
