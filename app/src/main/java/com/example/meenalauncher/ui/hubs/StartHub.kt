@@ -64,12 +64,17 @@ import com.example.meenalauncher.theme.MeenaTextWhite
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.meenalauncher.data.system.DeviceAppInfo
 import com.example.meenalauncher.data.system.InstalledAppsRepository
 import com.example.meenalauncher.data.system.NotificationRepository
 import com.example.meenalauncher.ui.components.CollapsibleWidget
+import com.example.meenalauncher.ui.components.ConversationsWidget
 import com.example.meenalauncher.ui.components.LiveTile
+import com.example.meenalauncher.ui.components.NewsFeedWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -93,6 +98,16 @@ fun StartHub(
     var telemetry by remember { mutableStateOf(DeviceTelemetryHelper.getTelemetry(context)) }
     val notifications by NotificationRepository.notificationsFlow.collectAsState()
     var installedApps by remember { mutableStateOf<List<DeviceAppInfo>>(emptyList()) }
+    var isNotificationAccessGranted by remember {
+        mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            isNotificationAccessGranted = NotificationRepository.isNotificationAccessGranted(context)
+            delay(2000)
+        }
+    }
 
     LaunchedEffect(Unit) {
         installedApps = InstalledAppsRepository.loadInstalledApps(context)
@@ -385,26 +400,160 @@ fun StartHub(
             }
         }
 
-        // 6. WIDGET: NOTIFICATION STREAM
+        // 6. WIDGET: REALTIME CONVERSATIONS (WhatsApp, Telegram, SMS, etc.)
+        if (settings.enabledWidgets["widget-conversations"] != false) {
+            item {
+                ConversationsWidget()
+            }
+        }
+
+        // 7. WIDGET: NOTIFICATION STREAM
         if (settings.enabledWidgets["widget-notifications"] != false) {
             item {
-                CollapsibleWidget(title = "notification stream") {
+                CollapsibleWidget(
+                    title = "notification stream",
+                    collapsedSummary = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(
+                                        if (isNotificationAccessGranted) MeenaProfitGreen else Color(0xFFE51400),
+                                        RoundedCornerShape(0.dp)
+                                    )
+                            )
+                            Text(
+                                text = when {
+                                    !isNotificationAccessGranted -> "Permission Required"
+                                    notifications.isNotEmpty() -> "${notifications.size} unread notifications"
+                                    else -> "Realtime Sync Active"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                    }
+                ) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (notifications.isNotEmpty()) {
-                            notifications.take(5).forEach { notif ->
+                        if (!isNotificationAccessGranted) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF2A1010))
+                                    .border(1.dp, Color(0xFFE51400))
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        NotificationRepository.openNotificationSettings(context)
+                                    }
+                                    .padding(10.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = "Warning",
+                                        tint = Color(0xFFE51400),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "NOTIFICATION ACCESS REQUIRED",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFE51400)
+                                        )
+                                        Text(
+                                            text = "Tap to grant permission so real-time notifications show up.",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        } else if (notifications.isNotEmpty()) {
+                            notifications.take(6).forEach { notif ->
+                                val notifColor = when {
+                                    notif.packageName.contains("whatsapp", ignoreCase = true) -> Color(0xFF25D366)
+                                    notif.packageName.contains("telegram", ignoreCase = true) -> Color(0xFF0088CC)
+                                    notif.packageName.contains("gmail", ignoreCase = true) -> Color(0xFFEA4335)
+                                    notif.packageName.contains("messaging", ignoreCase = true) -> Color(0xFF00A4EF)
+                                    else -> MaterialTheme.colorScheme.primary
+                                }
                                 NotificationRow(
-                                    MaterialTheme.colorScheme.primary,
-                                    notif.appName,
-                                    notif.title + if (notif.text.isNotBlank()) ": ${notif.text}" else "",
-                                    notif.formattedTime
+                                    badgeColor = notifColor,
+                                    app = notif.appName,
+                                    title = notif.title,
+                                    text = notif.text,
+                                    time = notif.formattedTime,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        NotificationRepository.openNotification(context, notif)
+                                    },
+                                    onDismiss = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        NotificationRepository.dismissNotification(notif.key)
+                                    }
+                                )
+                            }
+                            // Clear All Button
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Text(
+                                    text = "CLEAR ALL NOTIFICATIONS",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            NotificationRepository.clearAll()
+                                        }
+                                        .padding(4.dp)
                                 )
                             }
                         } else {
-                            NotificationRow(MaterialTheme.colorScheme.primary, "Telegram", "Ahmad deployed backend v2", "Just now")
-                            NotificationRow(Color(0xFFEA4335), "Gmail", "Build passes for Meena 1.0", "8m ago")
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MeenaSurface)
+                                    .border(1.dp, MeenaBorder)
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
+                                    )
+                                    Text(
+                                        text = "All caught up • Real-time notifications active",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+            }
+        }
+
+        // 8. WIDGET: LOCAL NEWS (6 LATEST FROM AMANZ & SUAMI SIHAT)
+        if (settings.enabledWidgets["widget-news-feed"] != false) {
+            item {
+                NewsFeedWidget()
             }
         }
 
@@ -658,22 +807,73 @@ private fun MailboxRow(subject: String, preview: String, time: String, borderAcc
 }
 
 @Composable
-private fun NotificationRow(badgeColor: Color, app: String, text: String, time: String) {
+private fun NotificationRow(
+    badgeColor: Color,
+    app: String,
+    title: String,
+    text: String,
+    time: String,
+    onClick: () -> Unit = {},
+    onDismiss: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MeenaSurface)
             .border(1.dp, MeenaBorder)
+            .clickable(onClick = onClick)
             .padding(10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Box(modifier = Modifier.size(6.dp).background(badgeColor))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("$app: $text", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(34.dp)
+                .background(badgeColor)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = app.uppercase(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = badgeColor
+                )
+                Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MeenaTextWhite,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (text.isNotBlank()) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
-        Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+        if (onDismiss != null) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("✕", fontSize = 11.sp, color = MeenaTextMuted)
+            }
+        }
     }
 }
 

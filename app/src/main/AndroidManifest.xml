@@ -30,10 +30,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Real Bank & Spending Notification Listener -->
+        <!-- Real Notifications & Conversations Listener -->
         <service
             android:name=".service.MeenaNotificationListenerService"
-            android:label="Meena Transaction Listener"
+            android:label="Meena Launcher Notifications &amp; Conversations"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>
