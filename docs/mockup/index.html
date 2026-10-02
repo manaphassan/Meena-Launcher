@@ -1,0 +1,2655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="meena ui • clean, light, open, fast personal launcher proof of concept">
+  <title>meena ui • fully functional proof of concept</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@200;300;400;600;700&family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       MEENA UI DESIGN SYSTEM (METRO-INSPIRED, ZERO CARDS, SQUARE CORNERS)
+       ========================================================================== */
+    :root {
+      --meena-black: #000000;
+      --meena-bg: #000000;
+      --meena-surface: #0a0a0a;
+      --meena-surface-subtle: #121212;
+      --meena-border-subtle: #1e1e1e;
+      --meena-accent: #00a4ef; /* default meena cyan */
+      --meena-text: #ffffff;
+      --meena-text-secondary: #a0a0a0;
+      --meena-text-muted: #767676; /* contrast >= 4.5:1 on black */
+      --meena-green: #107c10;
+      --meena-red: #e51400;
+      --meena-amber: #ff8c00;
+      --font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
+      --screen-brightness: 1;
+    }
+
+    body.theme-slate {
+      --meena-black: #101214;
+      --meena-bg: #101214;
+      --meena-surface: #171a1d;
+      --meena-surface-subtle: #1e2226;
+      --meena-border-subtle: #2b3036;
+      --meena-text: #f0f2f5;
+      --meena-text-secondary: #9aa1a9;
+      --meena-text-muted: #7a828c;
+    }
+
+    body.theme-light {
+      --meena-black: #f7f7f7;
+      --meena-bg: #f7f7f7;
+      --meena-surface: #ffffff;
+      --meena-surface-subtle: #efefef;
+      --meena-border-subtle: #dedede;
+      --meena-text: #050505;
+      --meena-text-secondary: #4a4a4a;
+      --meena-text-muted: #767676;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important; /* meena ui rule: strictly 0dp square corners */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #050505;
+      color: var(--meena-text);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+      text-transform: lowercase; /* meena ui rule: 100% lowercase text everywhere */
+    }
+
+    /* Top Desktop Test Controller */
+    .test-controller {
+      width: 100%;
+      max-width: 920px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding: 0 4px;
+      font-size: 12px;
+      color: var(--meena-text-muted);
+    }
+    .controller-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .controller-brand strong {
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .controller-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      background: #161616;
+      border: 1px solid #282828;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 5px 10px;
+      cursor: pointer;
+      text-transform: lowercase;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ctrl-btn:hover {
+      background: #222222;
+      border-color: #444444;
+      color: #ffffff;
+    }
+    .ctrl-btn.active {
+      background: var(--meena-accent);
+      border-color: var(--meena-accent);
+      color: #ffffff;
+    }
+
+    /* Device Chassis Shell */
+    .device-shell {
+      width: 392px;
+      height: 844px;
+      background: #000000;
+      border: 1px solid #222222;
+      box-shadow: 0 32px 100px rgba(0, 0, 0, 0.95), 0 0 0 12px #121212;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s, height 0.3s, transform 0.3s;
+    }
+
+    body.fullscreen .device-shell {
+      width: 100vw;
+      height: 100vh;
+      box-shadow: none;
+      border: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+    }
+    body.fullscreen .test-controller {
+      display: none;
+    }
+
+    /* Screen Brightness Filter Host */
+    .screen-brightness-wrapper {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      filter: brightness(var(--screen-brightness));
+      background: var(--meena-bg);
+      overflow: hidden;
+    }
+
+    /* Meena Click Interaction (Scale 0.96 + tilt, no ripple) */
+    .metro-press {
+      cursor: pointer;
+      transition: transform 0.1s cubic-bezier(0.2, 0.9, 0.3, 1), filter 0.1s ease;
+    }
+    .metro-press:active {
+      transform: scale(0.96) perspective(300px) rotateX(1.8deg);
+      filter: brightness(1.2);
+    }
+
+    /* Flashlight Screen Beam Overlay */
+    .torch-beam-overlay {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #000000;
+      cursor: pointer;
+      text-align: center;
+      padding: 24px;
+    }
+    .torch-beam-overlay.active {
+      display: flex;
+    }
+
+    /* System Status Bar */
+    .system-status-bar {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--meena-text-muted);
+      cursor: pointer;
+      z-index: 50;
+      background: var(--meena-bg);
+      flex-shrink: 0;
+    }
+    .system-status-bar:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-icon-svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+    }
+
+    /* Panorama Pivot Header (Parallax Sliding Titles) */
+    .panorama-pivot-header {
+      display: flex;
+      align-items: baseline;
+      gap: 36px;
+      padding: 4px 24px 8px 24px;
+      overflow-x: hidden;
+      white-space: nowrap;
+      z-index: 30;
+      background: var(--meena-bg);
+      flex-shrink: 0;
+      scroll-behavior: smooth;
+    }
+    .pivot-item-title {
+      font-size: 38px;
+      font-weight: 200;
+      color: var(--meena-text-muted);
+      cursor: pointer;
+      letter-spacing: -1.2px;
+      transition: color 0.25s, transform 0.25s;
+    }
+    .pivot-item-title.active {
+      color: var(--meena-text);
+      font-weight: 300;
+      transform: scale(1.02);
+    }
+
+    /* Horizontal Pager Track (5 Hubs) */
+    .hubs-track {
+      flex: 1;
+      display: flex;
+      width: 500%;
+      height: calc(100% - 88px);
+      touch-action: pan-y;
+      cursor: grab;
+      position: relative;
+    }
+    .hubs-track.dragging {
+      cursor: grabbing;
+      transition: none !important;
+    }
+
+    .hub-pane {
+      width: 20%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 6px 24px 88px 24px; /* 24dp page margin per meena ui rule 7 */
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .hub-pane::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Meena UI Section Headers */
+    .section-headline {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--meena-text-muted);
+      letter-spacing: 0.8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 4px;
+    }
+    .section-action {
+      color: var(--meena-accent);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* WIDGET: Hero Clock & Live Weather */
+    .hero-clock-block {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 4px;
+    }
+    .hero-time-digits {
+      font-size: 68px;
+      font-weight: 200;
+      line-height: 0.9;
+      letter-spacing: -3px;
+    }
+    .hero-weather-details {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .hero-temp-text {
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--meena-text);
+    }
+    .hero-condition-text {
+      font-size: 11px;
+      color: var(--meena-text-secondary);
+    }
+    .hero-date-text {
+      font-size: 13px;
+      color: var(--meena-accent);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    /* WIDGET: JAKIM Solat Celestial Timetable */
+    .solat-widget {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 4px;
+    }
+    .solat-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .solat-zone-tag {
+      color: var(--meena-accent);
+      font-weight: 600;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .solat-countdown-tag {
+      font-size: 11px;
+      color: var(--meena-text-secondary);
+    }
+    .solat-arc-svg {
+      width: 100%;
+      height: 40px;
+    }
+    .solat-columns-grid {
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+    }
+    .solat-col-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .solat-label {
+      font-size: 10px;
+      color: var(--meena-text-muted);
+    }
+    .solat-val {
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .solat-col-item.active .solat-label,
+    .solat-col-item.active .solat-val {
+      color: var(--meena-accent);
+      font-weight: 700;
+    }
+
+    /* WIDGET: Gemini Daily Brief */
+    .brief-widget {
+      border-left: 2px solid var(--meena-accent);
+      padding-left: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .brief-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .brief-model-tag {
+      font-size: 10px;
+      color: var(--meena-accent);
+      font-weight: 600;
+    }
+    .brief-body-text {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--meena-text-secondary);
+    }
+
+    /* WIDGET: Tasks & Notes (Clean Line Lists, No Card Boxes) */
+    .clean-list-module {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .clean-input-bar {
+      display: flex;
+      gap: 8px;
+    }
+    .metro-text-input {
+      flex: 1;
+      background: var(--meena-surface-subtle);
+      border: 1px solid var(--meena-border-subtle);
+      color: var(--meena-text);
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+      text-transform: lowercase;
+    }
+    .metro-text-input:focus {
+      border-color: var(--meena-accent);
+    }
+    .metro-square-btn {
+      background: var(--meena-accent);
+      border: none;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px 14px;
+      cursor: pointer;
+      text-transform: lowercase;
+    }
+    .list-entry-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--meena-border-subtle);
+      font-size: 13px;
+    }
+    .list-entry-item.completed span {
+      text-decoration: line-through;
+      color: var(--meena-text-muted);
+    }
+    .list-entry-action {
+      color: var(--meena-text-muted);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 6px;
+    }
+    .list-entry-action:hover {
+      color: var(--meena-red);
+    }
+
+    /* WIDGET: Fit Telemetry & Phone Stats */
+    .metric-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .metric-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-left: 2px solid var(--meena-border-subtle);
+      padding-left: 10px;
+    }
+    .metric-cell.accented {
+      border-color: var(--meena-accent);
+    }
+    .metric-cell-label {
+      font-size: 10px;
+      color: var(--meena-text-muted);
+      font-weight: 600;
+    }
+    .metric-cell-val {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--meena-text);
+    }
+
+    /* PAGE 1: INBOX (Conversations & Notifications) */
+    .inbox-thread-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--meena-border-subtle);
+      position: relative;
+    }
+    .inbox-thread-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .inbox-sender-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--meena-text);
+    }
+    .inbox-timestamp {
+      font-size: 11px;
+      color: var(--meena-text-muted);
+    }
+    .inbox-app-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--thread-accent, var(--meena-accent));
+    }
+    .inbox-snippet-text {
+      font-size: 12px;
+      color: var(--meena-text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* PAGE 2: NEWS FEED */
+    .news-category-scroller {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .news-filter-chip {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--meena-text-muted);
+      padding: 4px 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid var(--meena-border-subtle);
+    }
+    .news-filter-chip.active {
+      color: #ffffff;
+      background: var(--meena-accent);
+      border-color: var(--meena-accent);
+    }
+    .news-article-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--meena-border-subtle);
+    }
+    .news-source-meta {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--meena-accent);
+    }
+    .news-headline-text {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.35;
+      color: var(--meena-text);
+    }
+    .news-time-info {
+      font-size: 11px;
+      color: var(--meena-text-muted);
+    }
+
+    /* PAGE 3: MONEY & FINANCE */
+    .candlestick-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stock-header-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .stock-ticker-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .stock-price-indicator {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--meena-green);
+    }
+    #interactiveCandleCanvas {
+      width: 100%;
+      height: 124px;
+      cursor: crosshair;
+      background: var(--meena-surface);
+      border: 1px solid var(--meena-border-subtle);
+    }
+    .chart-timeframe-row {
+      display: flex;
+      gap: 6px;
+    }
+    .tf-selector-item {
+      flex: 1;
+      background: var(--meena-surface-subtle);
+      border: 1px solid var(--meena-border-subtle);
+      color: var(--meena-text-muted);
+      padding: 4px;
+      font-size: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tf-selector-item.active {
+      background: var(--meena-accent);
+      border-color: var(--meena-accent);
+      color: #ffffff;
+    }
+
+    /* Live FX Currency Converter */
+    .currency-calc-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--meena-border-subtle);
+    }
+    .fx-pair-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .fx-pair-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-left: 2px solid var(--meena-border-subtle);
+      padding-left: 8px;
+    }
+    .fx-pair-label {
+      font-size: 10px;
+      color: var(--meena-text-muted);
+    }
+    .fx-pair-quote {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--meena-text);
+    }
+
+    /* PAGE 4: APPS LIST (A-Z Jump List) */
+    .apps-search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--meena-surface-subtle);
+      border: 1px solid var(--meena-border-subtle);
+      padding: 8px 12px;
+    }
+    .apps-search-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--meena-text);
+      width: 100%;
+      font-family: inherit;
+      font-size: 13px;
+      text-transform: lowercase;
+    }
+    .alphabet-jump-badge {
+      background: var(--meena-accent);
+      color: #ffffff;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      margin: 12px 0 4px 0;
+      cursor: pointer;
+    }
+    .app-row-entry {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 0;
+      cursor: pointer;
+    }
+    .app-icon-glyph {
+      width: 32px;
+      height: 32px;
+      background: var(--meena-surface-subtle);
+      border: 1px solid var(--meena-border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--meena-accent);
+      font-weight: 600;
+    }
+    .app-title-label {
+      font-size: 14px;
+      color: var(--meena-text);
+    }
+
+    /* Floating Corner Nav Hub (Ergonomics, Rule 7) */
+    .corner-nav-anchor {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      z-index: 70;
+    }
+    body.left-handed .corner-nav-anchor {
+      right: auto;
+      left: 24px;
+    }
+    .corner-hub-btn {
+      width: 48px;
+      height: 48px;
+      background: var(--meena-accent);
+      border: none;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* ACTION CENTER (Pull Down Sheet) */
+    .action-center-tray {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #080808;
+      border-bottom: 2px solid var(--meena-accent);
+      padding: 16px 24px 24px 24px;
+      transform: translateY(-100%);
+      transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+      z-index: 120;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .action-center-tray.open {
+      transform: translateY(0);
+    }
+    .ac-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ac-headline {
+      font-size: 26px;
+      font-weight: 200;
+    }
+    .ac-grid-tiles {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .ac-tile-button {
+      background: var(--meena-surface-subtle);
+      border: 1px solid var(--meena-border-subtle);
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+    }
+    .ac-tile-button.active {
+      background: var(--meena-accent);
+      border-color: var(--meena-accent);
+      color: #ffffff;
+    }
+    .ac-tile-name {
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .ac-tile-val {
+      font-size: 9px;
+      opacity: 0.85;
+    }
+    .ac-slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ac-slider-row label {
+      font-size: 10px;
+      color: var(--meena-text-muted);
+      font-weight: 600;
+    }
+    .ac-slider-control {
+      width: 100%;
+      accent-color: var(--meena-accent);
+      cursor: pointer;
+    }
+
+    /* FULLSCREEN SUB-SHEETS (Settings, Chat, Article Reader, Simulated Apps) */
+    .metro-sub-sheet {
+      position: absolute;
+      inset: 0;
+      background: var(--meena-bg);
+      z-index: 140;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .metro-sub-sheet.active {
+      transform: translateY(0);
+    }
+    .sheet-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+    .sheet-page-title {
+      font-size: 32px;
+      font-weight: 200;
+      letter-spacing: -1px;
+    }
+    .sheet-nav-back {
+      font-size: 12px;
+      color: var(--meena-accent);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Settings Pivot Tabs */
+    .settings-tab-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--meena-border-subtle);
+      padding-bottom: 6px;
+      flex-shrink: 0;
+    }
+    .settings-tab-btn {
+      font-size: 15px;
+      color: var(--meena-text-muted);
+      cursor: pointer;
+      font-weight: 400;
+    }
+    .settings-tab-btn.active {
+      color: var(--meena-text);
+      font-weight: 600;
+    }
+    .settings-content-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .settings-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--meena-border-subtle);
+    }
+    .settings-item-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .settings-item-desc {
+      font-size: 11px;
+      color: var(--meena-text-muted);
+    }
+
+    /* Metro Square Toggle Switch */
+    .square-toggle-control {
+      width: 44px;
+      height: 22px;
+      background: #2a2a2a;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .square-toggle-control.on {
+      background: var(--meena-accent);
+    }
+    .square-toggle-control::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      background: #ffffff;
+      transition: transform 0.15s ease;
+    }
+    .square-toggle-control.on::after {
+      transform: translateX(22px);
+    }
+
+    /* Live Chat Conversation Modal */
+    .chat-messages-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+    .chat-bubble-message {
+      max-width: 82%;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .chat-bubble-message.incoming {
+      align-self: flex-start;
+      background: var(--meena-surface-subtle);
+      border-left: 2px solid var(--thread-accent, var(--meena-accent));
+    }
+    .chat-bubble-message.outgoing {
+      align-self: flex-end;
+      background: var(--meena-accent);
+      color: #ffffff;
+    }
+
+    /* Notification Banner Toast */
+    .system-toast-banner {
+      position: absolute;
+      top: 44px;
+      left: 16px;
+      right: 16px;
+      background: #141414;
+      border-left: 3px solid var(--meena-accent);
+      padding: 12px 14px;
+      z-index: 250;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transform: translateY(-160%);
+      transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+    .system-toast-banner.show {
+      transform: translateY(0);
+    }
+
+    /* Simulated App Screens (Camera, Calculator, Stopwatch) */
+    .app-screen-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #cameraVideo {
+      width: 100%;
+      height: 280px;
+      background: #111111;
+      object-fit: cover;
+      border: 1px solid var(--meena-border-subtle);
+    }
+    .calc-keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .calc-btn-cell {
+      background: var(--meena-surface-subtle);
+      border: 1px solid var(--meena-border-subtle);
+      color: var(--meena-text);
+      font-size: 18px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .calc-btn-cell.operator {
+      color: var(--meena-accent);
+      font-weight: 600;
+    }
+    .calc-btn-cell.action {
+      background: var(--meena-accent);
+      color: #ffffff;
+    }
+    .calc-display-screen {
+      background: var(--meena-surface-subtle);
+      padding: 16px;
+      font-size: 32px;
+      text-align: right;
+      font-weight: 300;
+      border: 1px solid var(--meena-border-subtle);
+      min-height: 70px;
+    }
+
+    /* Stopwatch */
+    .stopwatch-digits-hero {
+      font-size: 52px;
+      font-weight: 200;
+      text-align: center;
+      padding: 24px 0;
+      letter-spacing: -1px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Desktop Test Toolbar -->
+  <div class="test-controller">
+    <div class="controller-brand">
+      <strong>meena ui</strong>
+      <span>•</span>
+      <span>canonical 5-hub live poc</span>
+    </div>
+    <div class="controller-actions">
+      <button class="ctrl-btn" onclick="toggleActionCenter()">action center</button>
+      <button class="ctrl-btn" onclick="openSettingsSheet()">settings</button>
+      <button class="ctrl-btn" onclick="simulatePushNotification()">trigger alert</button>
+      <button class="ctrl-btn" id="ctrlSoundBtn" onclick="toggleMechanicalSound()">click audio: on</button>
+      <button class="ctrl-btn" id="ctrlAccentBtn" onclick="cycleSystemAccent()">accent: cyan</button>
+      <button class="ctrl-btn" onclick="cycleSystemTheme()">theme: amoled</button>
+      <button class="ctrl-btn" onclick="toggleFullscreenMode()">fullscreen</button>
+    </div>
+  </div>
+
+  <!-- Mobile Device Shell Frame -->
+  <div class="device-shell" id="deviceViewport">
+
+    <!-- Screen Brightness Wrapper -->
+    <div class="screen-brightness-wrapper" id="brightnessHost">
+
+      <!-- Flashlight Screen Beam Overlay -->
+      <div class="torch-beam-overlay" id="torchOverlay" onclick="toggleTorch()">
+        <div style="font-size: 32px; font-weight: 200;">flashlight active</div>
+        <div style="font-size: 12px; color: #555; margin-top: 8px;">tap anywhere to turn off</div>
+      </div>
+
+      <!-- Realtime Toast Banner -->
+      <div class="system-toast-banner" id="notifToast">
+        <div>
+          <div style="font-size: 10px; font-weight: 600; color: var(--meena-accent);" id="toastApp">whatsapp</div>
+          <div style="font-size: 13px; font-weight: 500;" id="toastTitle">aiman hakim</div>
+          <div style="font-size: 11px; color: var(--meena-text-muted);" id="toastText">new message received</div>
+        </div>
+        <span style="font-size: 11px; color: var(--meena-accent); cursor: pointer;" onclick="dismissToast()">dismiss</span>
+      </div>
+
+      <!-- System Status Bar -->
+      <div class="system-status-bar" onclick="toggleActionCenter()" title="pull down action center">
+        <div class="status-left">
+          <span id="liveStatusClock">23:16</span>
+          <span style="font-size: 10px; color: var(--meena-accent);">5g</span>
+        </div>
+        <div class="status-right">
+          <svg class="status-icon-svg" id="statusWifiIcon" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+          <svg class="status-icon-svg" id="statusBtIcon" viewBox="0 0 24 24"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
+          <span id="liveBatteryPercent">100%</span>
+        </div>
+      </div>
+
+      <!-- Panorama Header (Parallax Sliding Titles) -->
+      <div class="panorama-pivot-header" id="panoramaPivotHeader">
+        <span class="pivot-item-title active" onclick="navigateToPage(0)">today</span>
+        <span class="pivot-item-title" onclick="navigateToPage(1)">inbox</span>
+        <span class="pivot-item-title" onclick="navigateToPage(2)">news</span>
+        <span class="pivot-item-title" onclick="navigateToPage(3)">money</span>
+        <span class="pivot-item-title" onclick="navigateToPage(4)">apps</span>
+      </div>
+
+      <!-- 5-Hub Panoramic Track -->
+      <div class="hubs-track" id="hubsTrack">
+
+        <!-- ================= PAGE 0: TODAY ================= -->
+        <div class="hub-pane" id="paneToday">
+          
+          <!-- Hero Clock & Live Weather -->
+          <div class="hero-clock-block metro-press" onclick="detectLiveWeather()">
+            <div class="hero-time-digits" id="liveHeroClock">23:16</div>
+            <div class="hero-weather-details">
+              <div class="hero-temp-text" id="liveHeroTemp">26°c</div>
+              <div class="hero-condition-text" id="liveHeroCondition">kuala lumpur • clear</div>
+              <div class="hero-date-text" id="liveHeroDate">friday, october 2</div>
+            </div>
+          </div>
+
+          <!-- JAKIM Solat Celestial Arc Timetable -->
+          <div class="solat-widget metro-press" onclick="openWidgetConfig('prayer')">
+            <div class="solat-meta-row">
+              <span class="solat-zone-tag" id="solatZoneLabel">waktu solat • sgr01 (kl)</span>
+              <span class="solat-countdown-tag" id="solatCountdown">isyak in 1h 24m</span>
+            </div>
+
+            <!-- Sun Trajectory Arc SVG -->
+            <svg class="solat-arc-svg" viewBox="0 0 300 40">
+              <path d="M 8 36 Q 150 -6 292 36" fill="none" stroke="#262626" stroke-width="1.5" stroke-dasharray="3,3"/>
+              <circle id="sunPoint" cx="240" cy="24" r="4.5" fill="#ff8c00" />
+              <circle id="sunHalo" cx="240" cy="24" r="8" fill="none" stroke="#ff8c00" stroke-width="1" opacity="0.35" />
+            </svg>
+
+            <!-- 6 Prayer Time Columns -->
+            <div class="solat-columns-grid" id="solatGridRow">
+              <div class="solat-col-item" id="solat-subuh"><span class="solat-label">subuh</span><span class="solat-val">05:48</span></div>
+              <div class="solat-col-item" id="solat-syuruk"><span class="solat-label">syuruk</span><span class="solat-val">06:58</span></div>
+              <div class="solat-col-item" id="solat-zohor"><span class="solat-label">zohor</span><span class="solat-val">13:04</span></div>
+              <div class="solat-col-item" id="solat-asar"><span class="solat-label">asar</span><span class="solat-val">16:15</span></div>
+              <div class="solat-col-item" id="solat-maghrib"><span class="solat-label">maghrib</span><span class="solat-val">19:08</span></div>
+              <div class="solat-col-item active" id="solat-isyak"><span class="solat-label">isyak</span><span class="solat-val">20:18</span></div>
+            </div>
+          </div>
+
+          <!-- Gemini Brief Widget -->
+          <div class="brief-widget metro-press" onclick="openWidgetConfig('gemini')">
+            <div class="brief-header-row">
+              <span style="font-size: 13px; font-weight: 600;">today • brief</span>
+              <span class="brief-model-tag">gemini 1.5 flash</span>
+            </div>
+            <div class="brief-body-text" id="geminiBriefText">
+              isyak prayer is active. fbm klci closed up (+0.42%). tomorrow has 2 events scheduled on device calendar.
+            </div>
+          </div>
+
+          <!-- Schedule & Tasks -->
+          <div class="clean-list-module">
+            <div class="section-headline">
+              <span>schedule & tasks</span>
+              <span class="section-action" onclick="clearDoneTasks()">clear done</span>
+            </div>
+            <div class="clean-input-bar">
+              <input type="text" class="metro-text-input" id="taskInput" placeholder="add a task...">
+              <button class="metro-square-btn" onclick="addNewTask()">add</button>
+            </div>
+            <div id="tasksContainer"></div>
+          </div>
+
+          <!-- Quick Notes -->
+          <div class="clean-list-module">
+            <div class="section-headline">
+              <span>quick notes</span>
+              <span class="section-action" onclick="document.getElementById('noteInput').focus()">new note</span>
+            </div>
+            <div class="clean-input-bar">
+              <input type="text" class="metro-text-input" id="noteInput" placeholder="write quick note...">
+              <button class="metro-square-btn" onclick="addNewNote()">save</button>
+            </div>
+            <div id="notesContainer"></div>
+          </div>
+
+          <!-- Fit Telemetry & Environmental Stats -->
+          <div class="metric-two-col">
+            <div class="metric-cell accented metro-press" onclick="simulateStepCount()">
+              <span class="metric-cell-label">steps today (tap +)</span>
+              <span class="metric-cell-val" id="fitStepsVal">8,640</span>
+            </div>
+            <div class="metric-cell metro-press" onclick="detectLiveWeather()">
+              <span class="metric-cell-label">air quality (aqi)</span>
+              <span class="metric-cell-val" style="color: var(--meena-accent);">42 • good</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= PAGE 1: INBOX ================= -->
+        <div class="hub-pane" id="paneInbox">
+          
+          <div class="section-headline">
+            <span>conversations</span>
+            <span class="section-action" onclick="simulatePushNotification()">simulate incoming</span>
+          </div>
+
+          <div id="threadsContainer">
+            <div class="inbox-thread-item metro-press" style="--thread-accent: #25d366;" onclick="openChatThread('aiman hakim', 'whatsapp', '#25d366')">
+              <div class="inbox-thread-top">
+                <span class="inbox-sender-name">aiman hakim</span>
+                <span class="inbox-timestamp">2m ago</span>
+              </div>
+              <span class="inbox-app-tag">whatsapp</span>
+              <div class="inbox-snippet-text">jom lunch esok dekat damansara. ada tempat nasi lemak sedap baru buka.</div>
+            </div>
+
+            <div class="inbox-thread-item metro-press" style="--thread-accent: #0088cc;" onclick="openChatThread('meena launcher devs', 'telegram', '#0088cc')">
+              <div class="inbox-thread-top">
+                <span class="inbox-sender-name">meena launcher devs</span>
+                <span class="inbox-timestamp">18m ago</span>
+              </div>
+              <span class="inbox-app-tag">telegram</span>
+              <div class="inbox-snippet-text">canonical 5-page consolidation complete. zero cards, square corners verified.</div>
+            </div>
+
+            <div class="inbox-thread-item metro-press" style="--thread-accent: #ea4335;" onclick="openChatThread('google play console', 'gmail', '#ea4335')">
+              <div class="inbox-thread-top">
+                <span class="inbox-sender-name">google play console</span>
+                <span class="inbox-timestamp">1h ago</span>
+              </div>
+              <span class="inbox-app-tag">gmail</span>
+              <div class="inbox-snippet-text">closed testing track status: 12 active testers opted in.</div>
+            </div>
+          </div>
+
+          <div class="section-headline" style="margin-top: 14px;">
+            <span>notification stream</span>
+            <span class="section-action" onclick="clearAllNotifications()">clear all</span>
+          </div>
+
+          <div id="streamNotificationsContainer">
+            <div class="inbox-thread-item metro-press" style="--thread-accent: var(--meena-amber);" id="stream-notif-1">
+              <div class="inbox-thread-top">
+                <span style="font-size: 11px; font-weight: 600; color: var(--meena-amber);">maybank mae</span>
+                <span class="list-entry-action" onclick="dismissStreamNotif(event, 'stream-notif-1')">remove</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 500;">rm 18.50 paid to pelita nasi kandar</div>
+              <div style="font-size: 11px; color: var(--meena-text-muted);">duitnow qr transaction completed</div>
+            </div>
+
+            <div class="inbox-thread-item metro-press" style="--thread-accent: var(--meena-accent);" id="stream-notif-2">
+              <div class="inbox-thread-top">
+                <span style="font-size: 11px; font-weight: 600; color: var(--meena-accent);">calendar</span>
+                <span class="list-entry-action" onclick="dismissStreamNotif(event, 'stream-notif-2')">remove</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 500;">weekly team sync</div>
+              <div style="font-size: 11px; color: var(--meena-text-muted);">tomorrow at 10:00 am • google meet</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= PAGE 2: NEWS ================= -->
+        <div class="hub-pane" id="paneNews">
+          
+          <div class="news-category-scroller">
+            <span class="news-filter-chip active" onclick="filterNewsCategory(this, 'all')">all</span>
+            <span class="news-filter-chip" onclick="filterNewsCategory(this, 'amanz')">amanz (tech)</span>
+            <span class="news-filter-chip" onclick="filterNewsCategory(this, 'the star')">the star</span>
+            <span class="news-filter-chip" onclick="filterNewsCategory(this, 'soyacincau')">soyacincau</span>
+            <span class="news-filter-chip" onclick="openWidgetConfig('news')">+ add feed</span>
+          </div>
+
+          <div id="newsFeedContainer">
+            <!-- Dynamically populated from live RSS / curated feeds -->
+          </div>
+
+        </div>
+
+        <!-- ================= PAGE 3: MONEY ================= -->
+        <div class="hub-pane" id="paneMoney">
+          
+          <div class="section-headline">
+            <span>market watchlist</span>
+            <span class="section-action" onclick="openWidgetConfig('money')">manage</span>
+          </div>
+
+          <div class="candlestick-wrapper">
+            <div class="stock-header-meta">
+              <span class="stock-ticker-title" id="activeStockTicker">fbm klci</span>
+              <span class="stock-price-indicator" id="activeStockPrice">1,678.40 (+0.42%)</span>
+            </div>
+
+            <!-- Candlestick Canvas -->
+            <canvas id="interactiveCandleCanvas"></canvas>
+
+            <div class="chart-timeframe-row">
+              <span class="tf-selector-item active" onclick="switchChartTimeframe(this, '1d')">1d</span>
+              <span class="tf-selector-item" onclick="switchChartTimeframe(this, '1w')">1w</span>
+              <span class="tf-selector-item" onclick="switchChartTimeframe(this, '1m')">1m</span>
+              <span class="tf-selector-item" onclick="switchChartTimeframe(this, '1y')">1y</span>
+            </div>
+          </div>
+
+          <div class="section-headline">
+            <span>exchange rates (live)</span>
+            <span class="section-action" onclick="fetchLiveExchangeRates()">refresh</span>
+          </div>
+
+          <div class="currency-calc-box">
+            <div class="clean-input-bar">
+              <input type="number" class="metro-text-input" id="fxConvertInput" value="100" placeholder="amount in myr" oninput="calculateFxConversion(this.value)">
+              <span style="font-size: 11px; align-self: center; color: var(--meena-text-muted);">myr</span>
+            </div>
+
+            <div class="fx-pair-grid">
+              <div class="fx-pair-item">
+                <span class="fx-pair-label">usd</span>
+                <span class="fx-pair-quote" id="quote-usd">4.2250</span>
+              </div>
+              <div class="fx-pair-item">
+                <span class="fx-pair-label">sgd</span>
+                <span class="fx-pair-quote" id="quote-sgd">3.2680</span>
+              </div>
+              <div class="fx-pair-item">
+                <span class="fx-pair-label">eur</span>
+                <span class="fx-pair-quote" id="quote-eur">4.6420</span>
+              </div>
+              <div class="fx-pair-item">
+                <span class="fx-pair-label">gbp</span>
+                <span class="fx-pair-quote" id="quote-gbp">5.5310</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spending Tracker -->
+          <div class="clean-list-module">
+            <div class="section-headline">
+              <span>spending tracker (today)</span>
+              <span style="font-weight: 600; color: var(--meena-text);" id="totalSpendingValue">rm 37.00</span>
+            </div>
+            <div class="clean-input-bar">
+              <input type="text" class="metro-text-input" id="spendMerchantInput" placeholder="merchant (e.g. zus coffee)">
+              <input type="number" class="metro-text-input" style="max-width: 80px;" id="spendAmountInput" placeholder="rm">
+              <button class="metro-square-btn" onclick="addNewExpense()">add</button>
+            </div>
+            <div id="spendingEntriesContainer"></div>
+          </div>
+
+        </div>
+
+        <!-- ================= PAGE 4: APPS ================= -->
+        <div class="hub-pane" id="paneApps">
+          
+          <div class="apps-search-wrap">
+            <input type="text" class="apps-search-input" id="appsFilterField" placeholder="search apps..." oninput="filterAppsList(this.value)">
+          </div>
+
+          <div id="appsAlphabetContainer">
+            <!-- Dynamically generated with A-Z jump badges -->
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Floating Corner Nav Hub Button -->
+      <div class="corner-nav-anchor">
+        <button class="corner-hub-btn metro-press" onclick="openSettingsSheet()" title="settings">
+          set
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Pull Down Action Center Tray -->
+    <div class="action-center-tray" id="actionCenterTray">
+      <div class="ac-top-bar">
+        <span class="ac-headline">action center</span>
+        <span class="section-action" onclick="toggleActionCenter()">close</span>
+      </div>
+
+      <div class="ac-grid-tiles">
+        <div class="ac-tile-button active" id="tileWifi" onclick="toggleWifiHardware()">
+          <span class="ac-tile-name">wi-fi</span>
+          <span class="ac-tile-val" id="wifiStatusText">home-fiber</span>
+        </div>
+        <div class="ac-tile-button active" id="tileBt" onclick="toggleBluetoothHardware()">
+          <span class="ac-tile-name">bluetooth</span>
+          <span class="ac-tile-val" id="btStatusText">pixel watch</span>
+        </div>
+        <div class="ac-tile-button" id="tileTorch" onclick="toggleTorch()">
+          <span class="ac-tile-name">flashlight</span>
+          <span class="ac-tile-val" id="torchStatusText">off</span>
+        </div>
+        <div class="ac-tile-button active" onclick="openSettingsSheet(); toggleActionCenter();">
+          <span class="ac-tile-name">settings</span>
+          <span class="ac-tile-val">all</span>
+        </div>
+      </div>
+
+      <div class="ac-slider-row">
+        <label>display brightness</label>
+        <input type="range" class="ac-slider-control" min="0.3" max="1.0" step="0.05" value="1.0" oninput="setBrightness(this.value)">
+      </div>
+
+      <div class="ac-slider-row">
+        <label>system volume</label>
+        <input type="range" class="ac-slider-control" min="0" max="100" value="80" oninput="playMechanicalTick()">
+      </div>
+
+      <div class="section-headline">system overview</div>
+      <div style="font-size: 11px; color: var(--meena-text-secondary); line-height: 1.4;">
+        meena launcher live poc • 5 canonical pages • 0dp square corners • pure amoled black.
+      </div>
+    </div>
+
+    <!-- SUB-SHEET 1: Full Settings -->
+    <div class="metro-sub-sheet" id="settingsSheet">
+      <div class="sheet-nav-bar">
+        <span class="sheet-page-title">settings</span>
+        <span class="sheet-nav-back" onclick="closeSettingsSheet()">done</span>
+      </div>
+
+      <div class="settings-tab-bar">
+        <span class="settings-tab-btn active" onclick="switchSettingsSection(this, 'widgets')">widgets</span>
+        <span class="settings-tab-btn" onclick="switchSettingsSection(this, 'accounts')">accounts</span>
+        <span class="settings-tab-btn" onclick="switchSettingsSection(this, 'look')">look & feel</span>
+      </div>
+
+      <div class="settings-content-flow" id="settingsTabContent">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- SUB-SHEET 2: Dedicated Widget Configurator Modal -->
+    <div class="metro-sub-sheet" id="widgetConfigSheet">
+      <div class="sheet-nav-bar">
+        <span class="sheet-page-title" id="widgetConfigTitle">widget setup</span>
+        <span class="sheet-nav-back" onclick="closeWidgetConfig()">back</span>
+      </div>
+      <div class="settings-content-flow" id="widgetConfigContent">
+        <!-- Filled based on widget: prayer, gemini, news, money, etc. -->
+      </div>
+    </div>
+
+    <!-- SUB-SHEET 3: Live Interactive Chat Thread -->
+    <div class="metro-sub-sheet" id="chatThreadSheet">
+      <div class="sheet-nav-bar">
+        <div>
+          <span class="sheet-page-title" id="chatActiveContact">aiman hakim</span>
+          <div style="font-size: 11px; color: var(--thread-accent, var(--meena-accent));" id="chatActiveApp">whatsapp</div>
+        </div>
+        <span class="sheet-nav-back" onclick="closeChatThread()">back</span>
+      </div>
+
+      <div class="chat-messages-container" id="chatMessagesFlow">
+        <!-- Chat bubbles rendered dynamically -->
+      </div>
+
+      <div class="clean-input-bar" style="padding-top: 8px;">
+        <input type="text" class="metro-text-input" id="chatComposerInput" placeholder="type a reply...">
+        <button class="metro-square-btn" onclick="sendChatReplyMessage()">send</button>
+      </div>
+    </div>
+
+    <!-- SUB-SHEET 4: Distraction-Free Article Reader -->
+    <div class="metro-sub-sheet" id="articleReaderSheet">
+      <div class="sheet-nav-bar">
+        <span class="sheet-page-title" style="font-size: 20px;" id="readerSourceTag">amanz</span>
+        <span class="sheet-nav-back" onclick="closeArticleReader()">close</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px; flex: 1; overflow-y: auto;">
+        <h2 style="font-size: 20px; font-weight: 500; line-height: 1.3;" id="readerArticleTitle">title</h2>
+        <div style="font-size: 11px; color: var(--meena-text-muted);" id="readerArticleMeta">meta info</div>
+        <div style="font-size: 14px; line-height: 1.6; color: var(--meena-text-secondary);" id="readerArticleBody">body</div>
+        <button class="metro-square-btn" id="readerOpenLinkBtn" onclick="openOriginalArticleLink()" style="margin-top: 10px;">read full web article</button>
+      </div>
+    </div>
+
+    <!-- SUB-SHEET 5: Simulated Functional Mini-Apps (Camera, Calculator, Stopwatch) -->
+    <div class="metro-sub-sheet" id="miniAppSheet">
+      <div class="sheet-nav-bar">
+        <span class="sheet-page-title" id="miniAppTitle">app</span>
+        <span class="sheet-nav-back" onclick="closeMiniApp()">exit</span>
+      </div>
+      <div class="app-screen-container" id="miniAppBody">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- SUB-SHEET 6: A-Z Alphabet Quick Jump Matrix -->
+    <div class="metro-sub-sheet" id="alphabetJumpSheet">
+      <div class="sheet-nav-bar">
+        <span class="sheet-page-title">jump to</span>
+        <span class="sheet-nav-back" onclick="closeAlphabetJump()">cancel</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;" id="alphabetGridCells">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ==========================================================================
+       MEENA LAUNCHER ENGINE & COMPREHENSIVE POC LOGIC
+       ========================================================================== */
+
+    // Audio Haptic Synthesizer via Web Audio API (Subtle mechanical click)
+    let audioCtx = null;
+    let isSoundEnabled = true;
+
+    function playMechanicalTick() {
+      if (!isSoundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(820, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.015);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.015);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.015);
+      } catch (e) {}
+    }
+
+    function toggleMechanicalSound() {
+      isSoundEnabled = !isSoundEnabled;
+      document.getElementById('ctrlSoundBtn').textContent = `click audio: ${isSoundEnabled ? 'on' : 'off'}`;
+      if (isSoundEnabled) playMechanicalTick();
+    }
+
+    // Attach global click feedback to all interactive elements
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.metro-press') || e.target.closest('button') || e.target.closest('.pivot-item-title') || e.target.closest('.ac-tile-button')) {
+        playMechanicalTick();
+      }
+    });
+
+    // 1. Panoramic Header & Horizontal Pager Gesture Engine
+    let activeHubIndex = 0;
+    const totalHubs = 5;
+    const track = document.getElementById('hubsTrack');
+    const pivotTitles = document.querySelectorAll('.pivot-item-title');
+    const headerScroller = document.getElementById('panoramaPivotHeader');
+
+    let dragStartX = 0, dragCurrentX = 0, isTrackDragging = false;
+
+    function navigateToPage(index) {
+      if (index < 0 || index >= totalHubs) return;
+      activeHubIndex = index;
+      track.style.transition = 'transform 0.35s cubic-bezier(0.1, 0.9, 0.2, 1)';
+      track.style.transform = `translateX(-${activeHubIndex * 20}%)`;
+
+      pivotTitles.forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+
+      // Synchronize parallax pivot header
+      const targetTitle = pivotTitles[index];
+      if (targetTitle) {
+        targetTitle.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
+      // Re-render candlestick chart on money page
+      if (index === 3) {
+        setTimeout(drawCandlestickChart, 60);
+      }
+    }
+
+    // Touch & Pointer Drag Swiping
+    track.addEventListener('pointerdown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.id === 'interactiveCandleCanvas') return;
+      isTrackDragging = true;
+      dragStartX = e.clientX;
+      dragCurrentX = e.clientX;
+      track.classList.add('dragging');
+      track.setPointerCapture(e.pointerId);
+    });
+
+    track.addEventListener('pointermove', (e) => {
+      if (!isTrackDragging) return;
+      dragCurrentX = e.clientX;
+      const deltaX = dragCurrentX - dragStartX;
+      const basePercentage = -activeHubIndex * 20;
+      const deltaPercentage = (deltaX / 392) * 20;
+      track.style.transform = `translateX(${basePercentage + deltaPercentage}%)`;
+    });
+
+    track.addEventListener('pointerup', (e) => {
+      if (!isTrackDragging) return;
+      isTrackDragging = false;
+      track.classList.remove('dragging');
+      const deltaX = dragCurrentX - dragStartX;
+      if (deltaX < -50 && activeHubIndex < totalHubs - 1) {
+        navigateToPage(activeHubIndex + 1);
+      } else if (deltaX > 50 && activeHubIndex > 0) {
+        navigateToPage(activeHubIndex - 1);
+      } else {
+        navigateToPage(activeHubIndex);
+      }
+    });
+
+    track.addEventListener('pointercancel', () => {
+      if (isTrackDragging) {
+        isTrackDragging = false;
+        track.classList.remove('dragging');
+        navigateToPage(activeHubIndex);
+      }
+    });
+
+    // Keyboard Arrow Keys
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' && activeHubIndex < totalHubs - 1) navigateToPage(activeHubIndex + 1);
+      if (e.key === 'ArrowLeft' && activeHubIndex > 0) navigateToPage(activeHubIndex - 1);
+      if (e.key === 'Escape') closeAllSheets();
+    });
+
+    function closeAllSheets() {
+      document.getElementById('actionCenterTray').classList.remove('open');
+      document.getElementById('settingsSheet').classList.remove('active');
+      document.getElementById('widgetConfigSheet').classList.remove('active');
+      document.getElementById('chatThreadSheet').classList.remove('active');
+      document.getElementById('articleReaderSheet').classList.remove('active');
+      document.getElementById('miniAppSheet').classList.remove('active');
+      document.getElementById('alphabetJumpSheet').classList.remove('active');
+      document.getElementById('torchOverlay').classList.remove('active');
+    }
+
+    // 2. Real System Clock & Celestial Arc Tracking
+    function tickSystemClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const timeStr = `${h}:${m}`;
+
+      document.getElementById('liveStatusClock').textContent = timeStr;
+      document.getElementById('liveHeroClock').textContent = timeStr;
+
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+      document.getElementById('liveHeroDate').textContent = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+
+      // Update solar celestial sun point on arc
+      const totalMinutes = now.getHours() * 60 + now.getMinutes();
+      const arcProgress = Math.min(Math.max((totalMinutes - 360) / 720, 0), 1);
+      const sunX = 8 + arcProgress * 284;
+      const sunY = 36 - Math.sin(arcProgress * Math.PI) * 36;
+      const sPt = document.getElementById('sunPoint');
+      const sHl = document.getElementById('sunHalo');
+      if (sPt && sHl) {
+        sPt.setAttribute('cx', sunX);
+        sPt.setAttribute('cy', sunY);
+        sHl.setAttribute('cx', sunX);
+        sHl.setAttribute('cy', sunY);
+      }
+    }
+    setInterval(tickSystemClock, 1000);
+    tickSystemClock();
+
+    // 3. Live Weather via Free Open-Meteo API
+    async function detectLiveWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=3.1390&longitude=101.6869&current_weather=true');
+        const data = await res.json();
+        if (data && data.current_weather) {
+          const temp = Math.round(data.current_weather.temperature);
+          document.getElementById('liveHeroTemp').textContent = `${temp}°c`;
+          const code = data.current_weather.weathercode;
+          let cond = 'clear skies';
+          if (code >= 1 && code <= 3) cond = 'partly cloudy';
+          else if (code >= 51 && code <= 67) cond = 'scattered rain';
+          else if (code >= 80 && code <= 99) cond = 'thunderstorm';
+          document.getElementById('liveHeroCondition').textContent = `kuala lumpur • ${cond}`;
+        }
+      } catch (e) {
+        console.log('offline weather fallback active:', e);
+      }
+    }
+    detectLiveWeather();
+
+    // 4. Real JAKIM Solat API & Timetable
+    const solatTimetables = {
+      SGR01: { name: 'kuala lumpur (sgr01)', subuh: '05:48', syuruk: '06:58', zohor: '13:04', asar: '16:15', maghrib: '19:08', isyak: '20:18' },
+      JHR02: { name: 'johor bahru (jhr02)', subuh: '05:42', syuruk: '06:52', zohor: '12:59', asar: '16:10', maghrib: '19:02', isyak: '20:12' },
+      PNG01: { name: 'pulau pinang (png01)', subuh: '05:53', syuruk: '07:04', zohor: '13:10', asar: '16:22', maghrib: '19:14', isyak: '20:25' },
+      PRK01: { name: 'ipoh (prk01)', subuh: '05:50', syuruk: '07:01', zohor: '13:07', asar: '16:18', maghrib: '19:11', isyak: '20:21' },
+      SBH01: { name: 'kota kinabalu (sbh01)', subuh: '04:58', syuruk: '06:08', zohor: '12:15', asar: '15:24', maghrib: '18:18', isyak: '19:27' },
+      SWK01: { name: 'kuching (swk01)', subuh: '05:14', syuruk: '06:24', zohor: '12:31', asar: '15:39', maghrib: '18:34', isyak: '19:43' }
+    };
+    let currentSolatZone = localStorage.getItem('meena_solat_zone') || 'SGR01';
+
+    async function loadSolatTimes(zone) {
+      currentSolatZone = zone;
+      localStorage.setItem('meena_solat_zone', zone);
+      let times = solatTimetables[zone] || solatTimetables.SGR01;
+
+      try {
+        const res = await fetch(`https://api.waktusolat.app/v2/solat/${zone}`);
+        const data = await res.json();
+        if (data && data.prayers && data.prayers.length > 0) {
+          const today = new Date().getDate();
+          const p = data.prayers.find(item => item.day === today) || data.prayers[0];
+          if (p) {
+            const fmt = (ts) => {
+              const d = new Date(ts * 1000);
+              return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            };
+            times = {
+              name: `${zone.toLowerCase()}`,
+              subuh: fmt(p.fajr),
+              syuruk: fmt(p.syuruk),
+              zohor: fmt(p.dhuhr),
+              asar: fmt(p.asr),
+              maghrib: fmt(p.maghrib),
+              isyak: fmt(p.isha)
+            };
+          }
+        }
+      } catch (e) {}
+
+      document.getElementById('solatZoneLabel').textContent = `waktu solat • ${times.name}`;
+      document.getElementById('solatGridRow').innerHTML = `
+        <div class="solat-col-item" id="solat-subuh"><span class="solat-label">subuh</span><span class="solat-val">${times.subuh}</span></div>
+        <div class="solat-col-item" id="solat-syuruk"><span class="solat-label">syuruk</span><span class="solat-val">${times.syuruk}</span></div>
+        <div class="solat-col-item" id="solat-zohor"><span class="solat-label">zohor</span><span class="solat-val">${times.zohor}</span></div>
+        <div class="solat-col-item" id="solat-asar"><span class="solat-label">asar</span><span class="solat-val">${times.asar}</span></div>
+        <div class="solat-col-item" id="solat-maghrib"><span class="solat-label">maghrib</span><span class="solat-val">${times.maghrib}</span></div>
+        <div class="solat-col-item active" id="solat-isyak"><span class="solat-label">isyak</span><span class="solat-val">${times.isyak}</span></div>
+      `;
+    }
+    loadSolatTimes(currentSolatZone);
+
+    // 5. Interactive Persistent Tasks & Notes
+    let taskList = JSON.parse(localStorage.getItem('meena_tasks') || '[{"text":"closed-testing track review","done":true},{"text":"turnstile 3d continuous parallax","done":false},{"text":"sheets quote bridge testing","done":false}]');
+    let noteList = JSON.parse(localStorage.getItem('meena_notes') || '["review android 16 compose bom","verify open-er-api fx exchange rates"]');
+
+    function renderTaskList() {
+      const container = document.getElementById('tasksContainer');
+      if (taskList.length === 0) {
+        container.innerHTML = `<div style="font-size: 11px; color: var(--meena-text-muted); padding: 4px 0;">no tasks pending.</div>`;
+        return;
+      }
+      container.innerHTML = taskList.map((t, i) => `
+        <div class="list-entry-item ${t.done ? 'completed' : ''}">
+          <span onclick="toggleTaskCompletion(${i})" style="cursor: pointer;">${t.done ? 'done: ' : 'todo: '}${t.text}</span>
+          <span class="list-entry-action" onclick="deleteTaskItem(${i})">remove</span>
+        </div>
+      `).join('');
+    }
+
+    function addNewTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim().toLowerCase();
+      if (!text) return;
+      taskList.unshift({ text, done: false });
+      localStorage.setItem('meena_tasks', JSON.stringify(taskList));
+      input.value = '';
+      renderTaskList();
+    }
+
+    function toggleTaskCompletion(i) {
+      taskList[i].done = !taskList[i].done;
+      localStorage.setItem('meena_tasks', JSON.stringify(taskList));
+      renderTaskList();
+    }
+
+    function deleteTaskItem(i) {
+      taskList.splice(i, 1);
+      localStorage.setItem('meena_tasks', JSON.stringify(taskList));
+      renderTaskList();
+    }
+
+    function clearDoneTasks() {
+      taskList = taskList.filter(t => !t.done);
+      localStorage.setItem('meena_tasks', JSON.stringify(taskList));
+      renderTaskList();
+    }
+
+    function renderNoteList() {
+      const container = document.getElementById('notesContainer');
+      if (noteList.length === 0) {
+        container.innerHTML = `<div style="font-size: 11px; color: var(--meena-text-muted); padding: 4px 0;">no notes yet.</div>`;
+        return;
+      }
+      container.innerHTML = noteList.map((n, i) => `
+        <div class="list-entry-item">
+          <span>${n}</span>
+          <span class="list-entry-action" onclick="deleteNoteItem(${i})">remove</span>
+        </div>
+      `).join('');
+    }
+
+    function addNewNote() {
+      const input = document.getElementById('noteInput');
+      const text = input.value.trim().toLowerCase();
+      if (!text) return;
+      noteList.unshift(text);
+      localStorage.setItem('meena_notes', JSON.stringify(noteList));
+      input.value = '';
+      renderNoteList();
+    }
+
+    function deleteNoteItem(i) {
+      noteList.splice(i, 1);
+      localStorage.setItem('meena_notes', JSON.stringify(noteList));
+      renderNoteList();
+    }
+
+    renderTaskList();
+    renderNoteList();
+
+    // Steps Counter Simulation
+    let stepCount = parseInt(localStorage.getItem('meena_steps') || '8640', 10);
+    function simulateStepCount() {
+      stepCount += 120;
+      localStorage.setItem('meena_steps', stepCount);
+      document.getElementById('fitStepsVal').textContent = stepCount.toLocaleString();
+    }
+
+    // 6. News RSS Feed Engine & Full In-Mockup Article Reader
+    let newsArticles = [
+      {
+        source: 'amanz',
+        title: 'google mengumumkan model gemini baharu dengan keupayaan logik realtime',
+        time: '15 minit lalu',
+        body: 'model gemini terkini menawarkan pemprosesan multimodal yang dipercepatkan, membolehkan aplikasi peranti pintar menjana ringkasan harian tanpa bergantung sepenuhnya kepada pelayan luaran yang perlahan.',
+        link: 'https://amanz.my'
+      },
+      {
+        source: 'the star',
+        title: 'ringgit opens firmer against us dollar on positive trade momentum',
+        time: '45 min ago',
+        body: 'the malaysian ringgit traded steadily higher against major currencies this morning, driven by strong export figures and steady crude palm oil benchmarks across international markets.',
+        link: 'https://thestar.com.my'
+      },
+      {
+        source: 'soyacincau',
+        title: 'android 16 brings predictive back gestures to all third-party apps',
+        time: '2 hours ago',
+        body: 'the newest preview build introduces enhanced system animations, ensuring continuous touch-driven transitions across custom launchers and horizontal pagers.',
+        link: 'https://soyacincau.com'
+      }
+    ];
+
+    async function fetchLiveRssFeeds() {
+      try {
+        const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Famanz.my%2Ffeed%2F');
+        const data = await res.json();
+        if (data.status === 'ok' && data.items && data.items.length > 0) {
+          newsArticles = data.items.slice(0, 6).map(item => ({
+            source: 'amanz • teknologi',
+            title: item.title.toLowerCase(),
+            time: `${item.pubDate} • tap to read`,
+            body: item.description.replace(/<[^>]*>?/gm, '').slice(0, 320) + '...',
+            link: item.link
+          }));
+          renderNewsArticles();
+        }
+      } catch (e) {
+        renderNewsArticles();
+      }
+    }
+
+    function renderNewsArticles(filter = 'all') {
+      const container = document.getElementById('newsFeedContainer');
+      const filtered = filter === 'all' ? newsArticles : newsArticles.filter(a => a.source.includes(filter));
+      container.innerHTML = filtered.map((a, i) => `
+        <div class="news-article-row metro-press" onclick="openArticleReader(${i})">
+          <span class="news-source-meta">${a.source}</span>
+          <div class="news-headline-text">${a.title}</div>
+          <span class="news-time-info">${a.time}</span>
+        </div>
+      `).join('');
+    }
+    fetchLiveRssFeeds();
+
+    function filterNewsCategory(el, cat) {
+      document.querySelectorAll('.news-filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderNewsArticles(cat);
+    }
+
+    let activeArticle = null;
+    function openArticleReader(idx) {
+      activeArticle = newsArticles[idx];
+      if (!activeArticle) return;
+      document.getElementById('readerSourceTag').textContent = activeArticle.source;
+      document.getElementById('readerArticleTitle').textContent = activeArticle.title;
+      document.getElementById('readerArticleMeta').textContent = activeArticle.time;
+      document.getElementById('readerArticleBody').textContent = activeArticle.body;
+      document.getElementById('articleReaderSheet').classList.add('active');
+    }
+
+    function closeArticleReader() {
+      document.getElementById('articleReaderSheet').classList.remove('active');
+    }
+
+    function openOriginalArticleLink() {
+      if (activeArticle && activeArticle.link) {
+        window.open(activeArticle.link, '_blank');
+      }
+    }
+
+    // 7. Interactive Candlestick Canvas & Crosshair
+    const candlesHistory = [
+      { o: 1650, h: 1665, l: 1645, c: 1662 },
+      { o: 1662, h: 1670, l: 1655, c: 1658 },
+      { o: 1658, h: 1675, l: 1654, c: 1672 },
+      { o: 1672, h: 1682, l: 1668, c: 1675 },
+      { o: 1675, h: 1679, l: 1660, c: 1664 },
+      { o: 1664, h: 1685, l: 1662, c: 1680 },
+      { o: 1680, h: 1690, l: 1675, c: 1678.4 }
+    ];
+
+    function drawCandlestickChart() {
+      const canvas = document.getElementById('interactiveCandleCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.parentElement.clientWidth;
+      const h = 124;
+      canvas.width = w * window.devicePixelRatio;
+      canvas.height = h * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid guides
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.33); ctx.lineTo(w, h * 0.33);
+      ctx.moveTo(0, h * 0.66); ctx.lineTo(w, h * 0.66);
+      ctx.stroke();
+
+      const minVal = 1640, maxVal = 1695;
+      const count = candlesHistory.length;
+      const colWidth = w / count;
+      const bodyWidth = colWidth * 0.55;
+
+      candlesHistory.forEach((c, i) => {
+        const x = (i + 0.5) * colWidth;
+        const yOpen = h - ((c.o - minVal) / (maxVal - minVal)) * h;
+        const yClose = h - ((c.c - minVal) / (maxVal - minVal)) * h;
+        const yHigh = h - ((c.h - minVal) / (maxVal - minVal)) * h;
+        const yLow = h - ((c.l - minVal) / (maxVal - minVal)) * h;
+        const isBull = c.c >= c.o;
+
+        ctx.strokeStyle = isBull ? '#107c10' : '#e51400';
+        ctx.fillStyle = isBull ? '#107c10' : '#e51400';
+        ctx.lineWidth = 1.4;
+
+        // Wick
+        ctx.beginPath();
+        ctx.moveTo(x, yHigh);
+        ctx.lineTo(x, yLow);
+        ctx.stroke();
+
+        // Body
+        const top = Math.min(yOpen, yClose);
+        const height = Math.max(Math.abs(yClose - yOpen), 2);
+        ctx.fillRect(x - bodyWidth / 2, top, bodyWidth, height);
+      });
+    }
+
+    function switchChartTimeframe(el, tf) {
+      document.querySelectorAll('.tf-selector-item').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      drawCandlestickChart();
+    }
+
+    // 8. Live Currency Exchange Rates & Realtime Converter
+    let latestFxRates = { USD: 0.2366, SGD: 0.3060, EUR: 0.2154, GBP: 0.1807 };
+
+    async function fetchLiveExchangeRates() {
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/MYR');
+        const data = await res.json();
+        if (data && data.rates) {
+          latestFxRates = data.rates;
+          document.getElementById('quote-usd').textContent = (1 / data.rates.USD).toFixed(4);
+          document.getElementById('quote-sgd').textContent = (1 / data.rates.SGD).toFixed(4);
+          document.getElementById('quote-eur').textContent = (1 / data.rates.EUR).toFixed(4);
+          document.getElementById('quote-gbp').textContent = (1 / data.rates.GBP).toFixed(4);
+        }
+      } catch (e) {}
+    }
+    fetchLiveExchangeRates();
+
+    function calculateFxConversion(myrVal) {
+      const val = parseFloat(myrVal) || 0;
+      if (!latestFxRates.USD) return;
+      document.getElementById('quote-usd').textContent = (val * latestFxRates.USD).toFixed(2);
+      document.getElementById('quote-sgd').textContent = (val * latestFxRates.SGD).toFixed(2);
+      document.getElementById('quote-eur').textContent = (val * latestFxRates.EUR).toFixed(2);
+      document.getElementById('quote-gbp').textContent = (val * latestFxRates.GBP).toFixed(2);
+    }
+
+    // Spending Tracker
+    let expenses = JSON.parse(localStorage.getItem('meena_spending') || '[{"merchant":"pelita nasi kandar","amount":18.50},{"merchant":"zus coffee","amount":14.50},{"merchant":"touch n go rfid","amount":4.00}]');
+
+    function renderExpenses() {
+      const container = document.getElementById('spendingEntriesContainer');
+      const total = expenses.reduce((acc, item) => acc + item.amount, 0);
+      document.getElementById('totalSpendingValue').textContent = `rm ${total.toFixed(2)}`;
+
+      container.innerHTML = expenses.map((item, i) => `
+        <div class="list-entry-item">
+          <span>${item.merchant}</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span style="font-weight: 600;">rm ${item.amount.toFixed(2)}</span>
+            <span class="list-entry-action" onclick="deleteExpenseItem(${i})">remove</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addNewExpense() {
+      const mInput = document.getElementById('spendMerchantInput');
+      const aInput = document.getElementById('spendAmountInput');
+      const merchant = mInput.value.trim().toLowerCase();
+      const amount = parseFloat(aInput.value);
+      if (!merchant || isNaN(amount) || amount <= 0) return;
+      expenses.unshift({ merchant, amount });
+      localStorage.setItem('meena_spending', JSON.stringify(expenses));
+      mInput.value = '';
+      aInput.value = '';
+      renderExpenses();
+    }
+
+    function deleteExpenseItem(i) {
+      expenses.splice(i, 1);
+      localStorage.setItem('meena_spending', JSON.stringify(expenses));
+      renderExpenses();
+    }
+    renderExpenses();
+
+    // 9. Apps Drawer & A-Z Quick Jump
+    const installedApps = [
+      { name: 'amanz', pkg: 'my.amanz.app' },
+      { name: 'calculator', pkg: 'com.android.calculator' },
+      { name: 'calendar', pkg: 'com.google.android.calendar' },
+      { name: 'camera', pkg: 'com.android.camera2' },
+      { name: 'chrome', pkg: 'com.android.chrome' },
+      { name: 'clock & timer', pkg: 'com.android.deskclock' },
+      { name: 'contacts', pkg: 'com.android.contacts' },
+      { name: 'files', pkg: 'com.android.documentsui' },
+      { name: 'gmail', pkg: 'com.google.android.gm' },
+      { name: 'maps', pkg: 'com.google.android.apps.maps' },
+      { name: 'maybank mae', pkg: 'com.maybank2u.life' },
+      { name: 'messages', pkg: 'com.google.android.apps.messaging' },
+      { name: 'phone', pkg: 'com.android.dialer' },
+      { name: 'play store', pkg: 'com.android.vending' },
+      { name: 'settings', pkg: 'com.android.settings' },
+      { name: 'spotify', pkg: 'com.spotify.music' },
+      { name: 'stopwatch', pkg: 'com.meena.stopwatch' },
+      { name: 'telegram', pkg: 'org.telegram.messenger' },
+      { name: 'whatsapp', pkg: 'com.whatsapp' },
+      { name: 'youtube', pkg: 'com.google.android.youtube' }
+    ];
+
+    function renderAppsCatalog(filter = '') {
+      const container = document.getElementById('appsAlphabetContainer');
+      const filtered = installedApps.filter(a => a.name.includes(filter.toLowerCase()));
+      let currentLetter = '';
+      let html = '';
+
+      filtered.forEach(app => {
+        const letter = app.name[0];
+        if (letter !== currentLetter) {
+          currentLetter = letter;
+          html += `<div class="alphabet-jump-badge metro-press" onclick="openAlphabetJump()">${currentLetter}</div>`;
+        }
+        html += `
+          <div class="app-row-entry metro-press" onclick="launchAppTarget('${app.name}')">
+            <div class="app-icon-glyph">${currentLetter}</div>
+            <span class="app-title-label">${app.name}</span>
+          </div>
+        `;
+      });
+
+      if (filtered.length === 0) {
+        html = `<div style="font-size: 13px; color: var(--meena-text-muted); padding: 24px 0;">no apps found matching "${filter}"</div>`;
+      }
+      container.innerHTML = html;
+    }
+    renderAppsCatalog();
+
+    function filterAppsList(val) {
+      renderAppsCatalog(val);
+    }
+
+    function openAlphabetJump() {
+      const container = document.getElementById('alphabetGridCells');
+      const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+      container.innerHTML = letters.map(l => `
+        <button class="metro-square-btn" style="padding: 16px 0; font-size: 16px;" onclick="jumpToLetter('${l}')">${l}</button>
+      `).join('');
+      document.getElementById('alphabetJumpSheet').classList.add('active');
+    }
+
+    function closeAlphabetJump() {
+      document.getElementById('alphabetJumpSheet').classList.remove('active');
+    }
+
+    function jumpToLetter(letter) {
+      closeAlphabetJump();
+      filterAppsList('');
+      document.getElementById('appsFilterField').value = '';
+      setTimeout(() => {
+        const badges = document.querySelectorAll('.alphabet-jump-badge');
+        for (let b of badges) {
+          if (b.textContent.trim() === letter) {
+            b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+          }
+        }
+      }, 100);
+    }
+
+    // Functional Mini-App Launcher
+    function launchAppTarget(name) {
+      if (name === 'settings') {
+        openSettingsSheet();
+      } else if (name === 'camera') {
+        openCameraApp();
+      } else if (name === 'calculator') {
+        openCalculatorApp();
+      } else if (name === 'stopwatch' || name === 'clock & timer') {
+        openStopwatchApp();
+      } else {
+        triggerToastBanner(name, 'application launched', 'foreground session running');
+      }
+    }
+
+    // Mini App 1: Camera Viewfinder
+    let cameraStream = null;
+    async function openCameraApp() {
+      document.getElementById('miniAppTitle').textContent = 'camera';
+      const body = document.getElementById('miniAppBody');
+      body.innerHTML = `
+        <video id="cameraVideo" autoplay playsinline></video>
+        <div style="display: flex; justify-content: center; gap: 16px; margin-top: 10px;">
+          <button class="metro-square-btn" style="padding: 14px 24px;" onclick="triggerToastBanner('camera', 'photo captured', 'saved to gallery')">capture</button>
+        </div>
+      `;
+      document.getElementById('miniAppSheet').classList.add('active');
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const video = document.getElementById('cameraVideo');
+          if (video) video.srcObject = cameraStream;
+        }
+      } catch (e) {
+        console.log('Camera permission denied or camera not found:', e);
+      }
+    }
+
+    // Mini App 2: Working Calculator
+    let calcState = '0';
+    function openCalculatorApp() {
+      document.getElementById('miniAppTitle').textContent = 'calculator';
+      const body = document.getElementById('miniAppBody');
+      calcState = '0';
+      body.innerHTML = `
+        <div class="calc-display-screen" id="calcScreen">0</div>
+        <div class="calc-keypad-grid">
+          <div class="calc-btn-cell" onclick="calcInput('c')">c</div>
+          <div class="calc-btn-cell operator" onclick="calcInput('/')">/</div>
+          <div class="calc-btn-cell operator" onclick="calcInput('*')">*</div>
+          <div class="calc-btn-cell operator" onclick="calcInput('-')">-</div>
+          <div class="calc-btn-cell" onclick="calcInput('7')">7</div>
+          <div class="calc-btn-cell" onclick="calcInput('8')">8</div>
+          <div class="calc-btn-cell" onclick="calcInput('9')">9</div>
+          <div class="calc-btn-cell operator" onclick="calcInput('+')">+</div>
+          <div class="calc-btn-cell" onclick="calcInput('4')">4</div>
+          <div class="calc-btn-cell" onclick="calcInput('5')">5</div>
+          <div class="calc-btn-cell" onclick="calcInput('6')">6</div>
+          <div class="calc-btn-cell action" onclick="calcInput('=')">=</div>
+          <div class="calc-btn-cell" onclick="calcInput('1')">1</div>
+          <div class="calc-btn-cell" onclick="calcInput('2')">2</div>
+          <div class="calc-btn-cell" onclick="calcInput('3')">3</div>
+          <div class="calc-btn-cell" onclick="calcInput('0')">0</div>
+        </div>
+      `;
+      document.getElementById('miniAppSheet').classList.add('active');
+    }
+
+    function calcInput(char) {
+      const screen = document.getElementById('calcScreen');
+      if (char === 'c') {
+        calcState = '0';
+      } else if (char === '=') {
+        try {
+          calcState = String(eval(calcState.replace(/[^0-9+\-*/.]/g, '')));
+        } catch (e) {
+          calcState = 'error';
+        }
+      } else {
+        if (calcState === '0' || calcState === 'error') calcState = char;
+        else calcState += char;
+      }
+      screen.textContent = calcState;
+    }
+
+    // Mini App 3: Stopwatch
+    let stopwatchInterval = null;
+    let stopwatchSeconds = 0;
+    function openStopwatchApp() {
+      document.getElementById('miniAppTitle').textContent = 'stopwatch';
+      const body = document.getElementById('miniAppBody');
+      body.innerHTML = `
+        <div class="stopwatch-digits-hero" id="stopwatchDisplay">00:00.0</div>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+          <button class="metro-square-btn" id="swToggleBtn" onclick="toggleStopwatch()">start</button>
+          <button class="metro-square-btn" style="background: #333;" onclick="resetStopwatch()">reset</button>
+        </div>
+      `;
+      document.getElementById('miniAppSheet').classList.add('active');
+    }
+
+    function toggleStopwatch() {
+      const btn = document.getElementById('swToggleBtn');
+      if (stopwatchInterval) {
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = null;
+        btn.textContent = 'start';
+      } else {
+        btn.textContent = 'stop';
+        stopwatchInterval = setInterval(() => {
+          stopwatchSeconds += 0.1;
+          const mins = Math.floor(stopwatchSeconds / 60);
+          const secs = (stopwatchSeconds % 60).toFixed(1);
+          document.getElementById('stopwatchDisplay').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(4, '0')}`;
+        }, 100);
+      }
+    }
+
+    function resetStopwatch() {
+      if (stopwatchInterval) clearInterval(stopwatchInterval);
+      stopwatchInterval = null;
+      stopwatchSeconds = 0;
+      document.getElementById('stopwatchDisplay').textContent = '00:00.0';
+      const btn = document.getElementById('swToggleBtn');
+      if (btn) btn.textContent = 'start';
+    }
+
+    function closeMiniApp() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+      if (stopwatchInterval) {
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = null;
+      }
+      document.getElementById('miniAppSheet').classList.remove('active');
+    }
+
+    // 10. Live Chat Conversations
+    let currentChatContact = null;
+    const chatHistories = {
+      'aiman hakim': [
+        { in: true, text: 'jom lunch esok dekat damansara. ada tempat nasi lemak sedap baru buka.' },
+        { in: false, text: 'kedai mana tu? pukul berapa?' },
+        { in: true, text: 'village park, pukul 12:30 tengahari.' }
+      ],
+      'meena launcher devs': [
+        { in: true, text: 'canonical 5-page consolidation complete. zero cards, square corners verified.' },
+        { in: false, text: 'super clean. testing the interactive poc right now.' }
+      ],
+      'google play console': [
+        { in: true, text: 'closed testing track status: 12 active testers opted in.' }
+      ]
+    };
+
+    function openChatThread(contact, app, color) {
+      currentChatContact = contact;
+      document.getElementById('chatActiveContact').textContent = contact;
+      document.getElementById('chatActiveApp').textContent = app;
+      document.getElementById('chatThreadSheet').style.setProperty('--thread-accent', color);
+      renderChatMessages();
+      document.getElementById('chatThreadSheet').classList.add('active');
+    }
+
+    function closeChatThread() {
+      document.getElementById('chatThreadSheet').classList.remove('active');
+    }
+
+    function renderChatMessages() {
+      const container = document.getElementById('chatMessagesFlow');
+      const messages = chatHistories[currentChatContact] || [];
+      container.innerHTML = messages.map(m => `
+        <div class="chat-bubble-message ${m.in ? 'incoming' : 'outgoing'}">${m.text}</div>
+      `).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendChatReplyMessage() {
+      const input = document.getElementById('chatComposerInput');
+      const text = input.value.trim().toLowerCase();
+      if (!text) return;
+      if (!chatHistories[currentChatContact]) chatHistories[currentChatContact] = [];
+      chatHistories[currentChatContact].push({ in: false, text });
+      input.value = '';
+      renderChatMessages();
+
+      // Automated reply simulation
+      setTimeout(() => {
+        chatHistories[currentChatContact].push({ in: true, text: 'noted, jump jumpa esok!' });
+        renderChatMessages();
+      }, 1100);
+    }
+
+    // 11. Action Center Hardware Toggles
+    function toggleActionCenter() {
+      document.getElementById('actionCenterTray').classList.toggle('open');
+    }
+
+    let isWifiConnected = true;
+    function toggleWifiHardware() {
+      isWifiConnected = !isWifiConnected;
+      document.getElementById('tileWifi').classList.toggle('active', isWifiConnected);
+      document.getElementById('wifiStatusText').textContent = isWifiConnected ? 'home-fiber' : 'off';
+      document.getElementById('statusWifiIcon').style.opacity = isWifiConnected ? '1' : '0.2';
+    }
+
+    let isBtConnected = true;
+    function toggleBluetoothHardware() {
+      isBtConnected = !isBtConnected;
+      document.getElementById('tileBt').classList.toggle('active', isBtConnected);
+      document.getElementById('btStatusText').textContent = isBtConnected ? 'pixel watch' : 'off';
+      document.getElementById('statusBtIcon').style.opacity = isBtConnected ? '1' : '0.2';
+    }
+
+    let isTorchActive = false;
+    function toggleTorch() {
+      isTorchActive = !isTorchActive;
+      document.getElementById('tileTorch').classList.toggle('active', isTorchActive);
+      document.getElementById('torchStatusText').textContent = isTorchActive ? 'on' : 'off';
+      document.getElementById('torchOverlay').classList.toggle('active', isTorchActive);
+    }
+
+    function setBrightness(val) {
+      document.documentElement.style.setProperty('--screen-brightness', val);
+    }
+
+    function dismissStreamNotif(e, id) {
+      e.stopPropagation();
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function clearAllNotifications() {
+      document.getElementById('streamNotificationsContainer').innerHTML = `
+        <div style="font-size: 11px; color: var(--meena-text-muted); padding: 12px 0;">all caught up • no active alerts</div>
+      `;
+    }
+
+    // Notification Toast System
+    function triggerToastBanner(app, title, text) {
+      document.getElementById('toastApp').textContent = app;
+      document.getElementById('toastTitle').textContent = title;
+      document.getElementById('toastText').textContent = text;
+      const toast = document.getElementById('notifToast');
+      toast.classList.add('show');
+      setTimeout(dismissToast, 4000);
+    }
+
+    function dismissToast() {
+      document.getElementById('notifToast').classList.remove('show');
+    }
+
+    function simulatePushNotification() {
+      triggerToastBanner('whatsapp', 'sarah miller', 'hey, is the meena launcher update ready?');
+    }
+
+    // 12. Settings & Dedicated Individual Widget Configuration
+    function openSettingsSheet() {
+      renderSettingsSection('widgets');
+      document.getElementById('settingsSheet').classList.add('active');
+    }
+
+    function closeSettingsSheet() {
+      document.getElementById('settingsSheet').classList.remove('active');
+    }
+
+    function switchSettingsSection(el, tab) {
+      document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      renderSettingsSection(tab);
+    }
+
+    function renderSettingsSection(tab) {
+      const container = document.getElementById('settingsTabContent');
+      if (tab === 'widgets') {
+        container.innerHTML = `
+          <div class="settings-item-row metro-press" onclick="openWidgetConfig('prayer')">
+            <div>
+              <div class="settings-item-title">prayer times (solat)</div>
+              <div class="settings-item-desc">jakim timetable • celestial arc • active</div>
+            </div>
+            <span class="section-action">configure</span>
+          </div>
+
+          <div class="settings-item-row metro-press" onclick="openWidgetConfig('gemini')">
+            <div>
+              <div class="settings-item-title">gemini daily brief</div>
+              <div class="settings-item-desc">flash model • api key • local context</div>
+            </div>
+            <span class="section-action">configure</span>
+          </div>
+
+          <div class="settings-item-row metro-press" onclick="openWidgetConfig('news')">
+            <div>
+              <div class="settings-item-title">news rss feeds</div>
+              <div class="settings-item-desc">amanz, the star, soyacincau • custom urls</div>
+            </div>
+            <span class="section-action">configure</span>
+          </div>
+
+          <div class="settings-item-row metro-press" onclick="openWidgetConfig('money')">
+            <div>
+              <div class="settings-item-title">market & currency quotes</div>
+              <div class="settings-item-desc">fbm klci • fx exchange • spending tracker</div>
+            </div>
+            <span class="section-action">configure</span>
+          </div>
+
+          <div class="settings-item-row metro-press" onclick="openWidgetConfig('tasks')">
+            <div>
+              <div class="settings-item-title">schedule & notes</div>
+              <div class="settings-item-desc">calendar contract • quick memo storage</div>
+            </div>
+            <span class="section-action">configure</span>
+          </div>
+        `;
+      } else if (tab === 'accounts') {
+        container.innerHTML = `
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">gemini api key</div>
+              <div class="settings-item-desc">encrypted in android keystore</div>
+            </div>
+            <button class="metro-square-btn" onclick="openWidgetConfig('gemini')">key setup</button>
+          </div>
+
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">google sheets finance bridge</div>
+              <div class="settings-item-desc">realtime portfolio sync url</div>
+            </div>
+            <button class="metro-square-btn" onclick="triggerToastBanner('finance', 'bridge configured', 'read-only link active')">verify</button>
+          </div>
+
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">export / backup settings</div>
+              <div class="settings-item-desc">save local configuration json</div>
+            </div>
+            <button class="metro-square-btn" onclick="exportLauncherBackup()">export</button>
+          </div>
+        `;
+      } else if (tab === 'look') {
+        container.innerHTML = `
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">accent color</div>
+              <div class="settings-item-desc">tap to cycle meena ui accent palette</div>
+            </div>
+            <button class="metro-square-btn" onclick="cycleSystemAccent()">cycle</button>
+          </div>
+
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">color theme</div>
+              <div class="settings-item-desc">pure amoled • slate • light paper</div>
+            </div>
+            <button class="metro-square-btn" onclick="cycleSystemTheme()">switch</button>
+          </div>
+
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">left-handed mode</div>
+              <div class="settings-item-desc">mirrors corner navigation hub button</div>
+            </div>
+            <div class="square-toggle-control" id="settingsToggleLeftHand" onclick="toggleHandednessMode()"></div>
+          </div>
+
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">reset factory defaults</div>
+              <div class="settings-item-desc">clears local storage and restores defaults</div>
+            </div>
+            <button class="metro-square-btn" style="background: var(--meena-red);" onclick="resetAllDefaults()">reset</button>
+          </div>
+        `;
+      }
+    }
+
+    // Dedicated Widget Sub-Configurator
+    function openWidgetConfig(type) {
+      const title = document.getElementById('widgetConfigTitle');
+      const body = document.getElementById('widgetConfigContent');
+
+      if (type === 'prayer') {
+        title.textContent = 'prayer times setup';
+        body.innerHTML = `
+          <div class="settings-item-row">
+            <div>
+              <div class="settings-item-title">jakim solat zone</div>
+              <div class="settings-item-desc">select official malaysian zone</div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${Object.keys(solatTimetables).map(k => `
+              <div class="list-entry-item metro-press" onclick="loadSolatTimes('${k}'); closeWidgetConfig();">
+                <span>${solatTimetables[k].name}</span>
+                <span class="section-action">${currentSolatZone === k ? 'active' : 'select'}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (type === 'gemini') {
+        title.textContent = 'gemini brief setup';
+        body.innerHTML = `
+          <div style="font-size: 13px; color: var(--meena-text-secondary); line-height: 1.4;">
+            enter your personal google ai studio gemini api key. it is stored securely on device with hardware encryption.
+          </div>
+          <div class="clean-input-bar" style="margin-top: 10px;">
+            <input type="password" class="metro-text-input" id="apiKeyField" placeholder="ai-zaSy...">
+            <button class="metro-square-btn" onclick="saveGeminiApiKey()">save key</button>
+          </div>
+          <div class="section-headline" style="margin-top: 16px;">test prompt generation</div>
+          <button class="metro-square-btn" onclick="generateSimulatedBrief()">generate new brief</button>
+        `;
+      } else if (type === 'news') {
+        title.textContent = 'news feed sources';
+        body.innerHTML = `
+          <div class="clean-input-bar">
+            <input type="text" class="metro-text-input" id="customRssUrl" placeholder="enter rss url (https://...)">
+            <button class="metro-square-btn" onclick="addCustomRss()">add</button>
+          </div>
+          <div class="section-headline" style="margin-top: 16px;">active feed channels</div>
+          <div class="list-entry-item"><span>amanz (malaysian tech)</span><span class="section-action">enabled</span></div>
+          <div class="list-entry-item"><span>the star (business & national)</span><span class="section-action">enabled</span></div>
+          <div class="list-entry-item"><span>soyacincau (mobile & gadgets)</span><span class="section-action">enabled</span></div>
+        `;
+      } else if (type === 'money') {
+        title.textContent = 'market watchlist setup';
+        body.innerHTML = `
+          <div class="section-headline">active quotes</div>
+          <div class="list-entry-item"><span>fbm klci index</span><span class="section-action">pinned</span></div>
+          <div class="list-entry-item"><span>maybank (1155.kl)</span><span class="section-action">add</span></div>
+          <div class="list-entry-item"><span>tenaga nasional (5347.kl)</span><span class="section-action">add</span></div>
+        `;
+      } else {
+        title.textContent = 'widget settings';
+        body.innerHTML = `<div>widget options configured.</div>`;
+      }
+
+      document.getElementById('widgetConfigSheet').classList.add('active');
+    }
+
+    function closeWidgetConfig() {
+      document.getElementById('widgetConfigSheet').classList.remove('active');
+    }
+
+    function saveGeminiApiKey() {
+      const val = document.getElementById('apiKeyField').value.trim();
+      if (!val) return;
+      triggerToastBanner('gemini', 'key saved', 'hardware keystore encryption verified');
+      closeWidgetConfig();
+    }
+
+    function generateSimulatedBrief() {
+      const briefs = [
+        'syuruk is approaching. klci opened firmer (+0.28%). clear skies forecast for the afternoon.',
+        'all morning meetings cleared. ringgit strengthened against the dollar. 3 tasks remain.',
+        'evening brief: isyak prayer active. good air quality index today (aqi 38). rest well.'
+      ];
+      const random = briefs[Math.floor(Math.random() * briefs.length)];
+      document.getElementById('geminiBriefText').textContent = random;
+      triggerToastBanner('gemini', 'brief refreshed', 'live typewriter update');
+      closeWidgetConfig();
+    }
+
+    function addCustomRss() {
+      const input = document.getElementById('customRssUrl');
+      const url = input.value.trim();
+      if (!url) return;
+      triggerToastBanner('news', 'feed registered', url.slice(0, 24) + '...');
+      input.value = '';
+      closeWidgetConfig();
+    }
+
+    // 13. Accent Palette & Theme Engine
+    const accentPalette = [
+      { name: 'cyan', hex: '#00a4ef' },
+      { name: 'emerald', hex: '#107c10' },
+      { name: 'crimson', hex: '#e51400' },
+      { name: 'magenta', hex: '#d80073' },
+      { name: 'amber', hex: '#ff8c00' },
+      { name: 'cobalt', hex: '#0078d7' }
+    ];
+    let currentAccentIdx = 0;
+
+    function cycleSystemAccent() {
+      currentAccentIdx = (currentAccentIdx + 1) % accentPalette.length;
+      const acc = accentPalette[currentAccentIdx];
+      document.documentElement.style.setProperty('--meena-accent', acc.hex);
+      document.getElementById('ctrlAccentBtn').textContent = `accent: ${acc.name}`;
+      drawCandlestickChart();
+    }
+
+    const availableThemes = ['', 'theme-slate', 'theme-light'];
+    const themeNames = ['amoled', 'slate', 'light'];
+    let currentThemeIdx = 0;
+
+    function cycleSystemTheme() {
+      document.body.classList.remove('theme-slate', 'theme-light');
+      currentThemeIdx = (currentThemeIdx + 1) % availableThemes.length;
+      if (availableThemes[currentThemeIdx]) {
+        document.body.classList.add(availableThemes[currentThemeIdx]);
+      }
+      drawCandlestickChart();
+    }
+
+    function toggleHandednessMode() {
+      document.body.classList.toggle('left-handed');
+      const toggle = document.getElementById('settingsToggleLeftHand');
+      if (toggle) toggle.classList.toggle('on');
+    }
+
+    function toggleFullscreenMode() {
+      document.body.classList.toggle('fullscreen');
+      setTimeout(drawCandlestickChart, 100);
+    }
+
+    function exportLauncherBackup() {
+      const backup = {
+        app: 'meena launcher',
+        version: '1.0.0',
+        tasks: taskList,
+        notes: noteList,
+        spending: expenses,
+        solatZone: currentSolatZone
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'meena-backup.json';
+      a.click();
+      triggerToastBanner('system', 'backup exported', 'meena-backup.json created');
+    }
+
+    function resetAllDefaults() {
+      if (confirm('reset meena launcher proof of concept to factory defaults?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
