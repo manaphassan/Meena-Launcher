@@ -27,7 +27,7 @@ class SettingsRepository(private val context: Context) {
         val rawJson = preferences[KEY_SETTINGS_JSON]
         if (rawJson != null) {
             try {
-                json.decodeFromString<MeenaUserSettings>(rawJson)
+                json.decodeFromString<MeenaUserSettings>(rawJson).migrate()
             } catch (e: Exception) {
                 MeenaUserSettings()
             }

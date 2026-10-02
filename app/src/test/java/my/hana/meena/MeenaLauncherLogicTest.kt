@@ -18,7 +18,33 @@ class MeenaLauncherLogicTest {
         assertEquals(0, settings.defaultHubIndex)
         assertTrue(settings.widgetConfigs.isNotEmpty())
         assertTrue(settings.widgetConfigs["widget-clock-weather"]?.isEnabled == true)
+        assertEquals("today", settings.widgetConfigs["widget-clock-weather"]?.hubId)
+        assertEquals("inbox", settings.widgetConfigs["widget-conversations"]?.hubId)
+        assertEquals("news", settings.widgetConfigs["widget-news-feed"]?.hubId)
+        assertEquals("money", settings.widgetConfigs["widget-finance-charts"]?.hubId)
         assertTrue(settings.widgetConfigs["widget-map-radar"]?.isEnabled == true)
+    }
+
+    @Test
+    fun userSettings_migration_correctlyMapsLegacyHubs() {
+        val legacy = MeenaUserSettings(
+            defaultHubIndex = 5,
+            widgetConfigs = mapOf(
+                "widget-clock-weather" to my.hana.meena.data.model.WidgetConfig("start", 0),
+                "widget-conversations" to my.hana.meena.data.model.WidgetConfig("start", 1),
+                "widget-solat" to my.hana.meena.data.model.WidgetConfig("agenda", 0),
+                "widget-health-device" to my.hana.meena.data.model.WidgetConfig("health", 0),
+                "widget-finance-charts" to my.hana.meena.data.model.WidgetConfig("finance", 0)
+            )
+        )
+        val migrated = legacy.migrate()
+        assertEquals(4, migrated.defaultHubIndex)
+        assertEquals("today", migrated.widgetConfigs["widget-clock-weather"]?.hubId)
+        assertEquals("inbox", migrated.widgetConfigs["widget-conversations"]?.hubId)
+        assertEquals("today", migrated.widgetConfigs["widget-solat"]?.hubId)
+        assertEquals("today", migrated.widgetConfigs["widget-health-device"]?.hubId)
+        assertEquals("money", migrated.widgetConfigs["widget-finance-charts"]?.hubId)
+        assertTrue(migrated.widgetConfigs.containsKey("widget-news-feed"))
     }
 
     @Test

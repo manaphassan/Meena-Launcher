@@ -43,26 +43,76 @@ data class MeenaUserSettings(
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {
+    fun migrate(): MeenaUserSettings {
+        val updatedConfigs = widgetConfigs.toMutableMap()
+        var changed = false
+
+        // Ensure all default widgets exist
+        defaultWidgetMap().forEach { (key, defaultConfig) ->
+            if (!updatedConfigs.containsKey(key)) {
+                updatedConfigs[key] = defaultConfig
+                changed = true
+            }
+        }
+
+        // Migrate legacy hubIds
+        updatedConfigs.forEach { (key, config) ->
+            val targetHubId = when {
+                key == "widget-conversations" || key == "widget-notifications" -> {
+                    if (config.hubId == "start" || config.hubId == "today") "inbox" else config.hubId
+                }
+                config.hubId == "start" || config.hubId == "agenda" || config.hubId == "health" -> "today"
+                config.hubId == "finance" -> "money"
+                else -> config.hubId
+            }
+            if (targetHubId != config.hubId) {
+                updatedConfigs[key] = config.copy(hubId = targetHubId)
+                changed = true
+            }
+        }
+
+        val clampedDefaultHubIndex = defaultHubIndex.coerceIn(0, 4)
+        if (clampedDefaultHubIndex != defaultHubIndex) {
+            changed = true
+        }
+
+        return if (changed) {
+            copy(
+                widgetConfigs = updatedConfigs,
+                defaultHubIndex = clampedDefaultHubIndex
+            )
+        } else {
+            this
+        }
+    }
+
     companion object {
         fun defaultWidgetMap(): Map<String, WidgetConfig> = mapOf(
-            "widget-clock-weather" to WidgetConfig("start", 0, isEnabled = true),
-            "widget-weather-forecast" to WidgetConfig("start", 1, isEnabled = true),
-            "widget-today-summary" to WidgetConfig("start", 2, isEnabled = true),
-            "widget-conversations" to WidgetConfig("start", 3, isEnabled = true),
-            "widget-notifications" to WidgetConfig("start", 4, isEnabled = true),
-            "widget-device-telemetry" to WidgetConfig("start", 5, isEnabled = true),
-            "widget-solat" to WidgetConfig("agenda", 0, isEnabled = true),
-            "widget-calendar-month" to WidgetConfig("agenda", 1, isEnabled = true),
-            "widget-tasks" to WidgetConfig("agenda", 2, isEnabled = true),
-            "widget-notes" to WidgetConfig("agenda", 3, isEnabled = true),
+            // Today Hub (clock, weather, brief, solat, calendar, tasks, notes, health, aqi, radar, phone)
+            "widget-clock-weather" to WidgetConfig("today", 0, isEnabled = true),
+            "widget-weather-forecast" to WidgetConfig("today", 1, isEnabled = true),
+            "widget-today-summary" to WidgetConfig("today", 2, isEnabled = true),
+            "widget-solat" to WidgetConfig("today", 3, isEnabled = true),
+            "widget-calendar-month" to WidgetConfig("today", 4, isEnabled = true),
+            "widget-tasks" to WidgetConfig("today", 5, isEnabled = true),
+            "widget-notes" to WidgetConfig("today", 6, isEnabled = true),
+            "widget-health-device" to WidgetConfig("today", 7, isEnabled = true),
+            "widget-health-telemetry" to WidgetConfig("today", 8, isEnabled = true),
+            "widget-health-aqi" to WidgetConfig("today", 9, isEnabled = true),
+            "widget-map-radar" to WidgetConfig("today", 10, isEnabled = true),
+            "widget-device-telemetry" to WidgetConfig("today", 11, isEnabled = true),
+
+            // Inbox Hub (conversations, alerts / notification stream)
+            "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),
+            "widget-notifications" to WidgetConfig("inbox", 1, isEnabled = true),
+
+            // News Hub
             "widget-news-feed" to WidgetConfig("news", 0, isEnabled = true),
-            "widget-finance-charts" to WidgetConfig("finance", 0, isEnabled = true),
-            "widget-exchange-rates" to WidgetConfig("finance", 1, isEnabled = true),
-            "widget-spending-summary" to WidgetConfig("finance", 2, isEnabled = true),
-            "widget-health-device" to WidgetConfig("health", 0, isEnabled = true),
-            "widget-health-telemetry" to WidgetConfig("health", 1, isEnabled = true),
-            "widget-health-aqi" to WidgetConfig("health", 2, isEnabled = true),
-            "widget-map-radar" to WidgetConfig("health", 3, isEnabled = true)
+
+            // Money Hub (portfolio & watchlist, exchange rates, spending)
+            "widget-finance-charts" to WidgetConfig("money", 0, isEnabled = true),
+            "widget-exchange-rates" to WidgetConfig("money", 1, isEnabled = true),
+            "widget-spending-summary" to WidgetConfig("money", 2, isEnabled = true)
         )
     }
 }

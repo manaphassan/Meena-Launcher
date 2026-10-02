@@ -61,7 +61,7 @@ fun FinanceHub(
     }
 
     val financeWidgets = settings.widgetConfigs.entries
-        .filter { it.value.hubId == "finance" && it.value.isEnabled }
+        .filter { (it.value.hubId == "money" || it.value.hubId == "finance") && it.value.isEnabled }
         .sortedBy { it.value.position }
 
     LazyColumn(

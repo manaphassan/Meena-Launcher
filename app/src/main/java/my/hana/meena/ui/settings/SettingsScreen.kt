@@ -1621,6 +1621,24 @@ private fun SubPageContainer(
                     onCheckedChange = { onUpdate { it.copy(isStatusBarHidden = it.isStatusBarHidden.not()) } }
                 )
             }
+            item {
+                SettingSegmentedRow(
+                    title = "default startup page",
+                    subtitle = "initial page shown on launch and back gesture",
+                    options = listOf(
+                        "0" to "today",
+                        "1" to "inbox",
+                        "2" to "news",
+                        "3" to "money",
+                        "4" to "apps"
+                    ),
+                    selectedKey = settingsState.defaultHubIndex.coerceIn(0, 4).toString(),
+                    onSelectKey = { key ->
+                        val index = key.toIntOrNull() ?: 0
+                        onUpdate { it.copy(defaultHubIndex = index) }
+                    }
+                )
+            }
         }
 
         subPageId == "look:backup" -> {

@@ -61,12 +61,11 @@ import my.hana.meena.theme.MeenaBorderSubtle
 import my.hana.meena.theme.MeenaLauncherTheme
 import my.hana.meena.theme.MeenaProfitGreen
 import my.hana.meena.theme.MeenaTextMuted
-import my.hana.meena.ui.hubs.AgendaHub
 import my.hana.meena.ui.hubs.AppsHub
 import my.hana.meena.ui.hubs.FinanceHub
-import my.hana.meena.ui.hubs.HealthHub
+import my.hana.meena.ui.hubs.InboxHub
 import my.hana.meena.ui.hubs.NewsHub
-import my.hana.meena.ui.hubs.StartHub
+import my.hana.meena.ui.hubs.TodayHub
 import my.hana.meena.ui.navigation.CornerNavHub
 import my.hana.meena.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
@@ -98,8 +97,8 @@ class MainActivity : ComponentActivity() {
             }
 
             val targetHubExtra = currentHubIntentIndex.value
-                ?: intent?.getIntExtra("target_hub", -1)?.takeIf { it in 0..5 }
-            val initialHub = targetHubExtra ?: userSettings.defaultHubIndex
+                ?: intent?.getIntExtra("target_hub", -1)?.takeIf { it in 0..4 }
+            val initialHub = (targetHubExtra ?: userSettings.defaultHubIndex).coerceIn(0, 4)
 
             MeenaLauncherTheme(
                 baseTheme = userSettings.baseTheme,
@@ -133,7 +132,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val hubExtra = intent.getIntExtra("target_hub", -1)
-        if (hubExtra in 0..5) {
+        if (hubExtra in 0..4) {
             currentHubIntentIndex.value = hubExtra
         }
     }
@@ -258,13 +257,15 @@ fun MeenaHomeScreen(
         }
     }
 
+    val defaultHubClamped = (userSettings?.defaultHubIndex ?: initialHubIndex).coerceIn(0, 4)
+
     val pagerState = rememberPagerState(
-        initialPage = userSettings?.defaultHubIndex ?: initialHubIndex,
-        pageCount = { 6 }
+        initialPage = defaultHubClamped,
+        pageCount = { 5 }
     )
 
     LaunchedEffect(targetHubIndex) {
-        if (targetHubIndex != null && targetHubIndex in 0..5) {
+        if (targetHubIndex != null && targetHubIndex in 0..4) {
             pagerState.animateScrollToPage(targetHubIndex)
         }
     }
@@ -277,22 +278,20 @@ fun MeenaHomeScreen(
         }
     }
 
-    val hubStartListState = rememberLazyListState()
-    val hubAgendaListState = rememberLazyListState()
+    val hubTodayListState = rememberLazyListState()
+    val hubInboxListState = rememberLazyListState()
     val hubNewsListState = rememberLazyListState()
-    val hubFinanceListState = rememberLazyListState()
-    val hubHealthListState = rememberLazyListState()
+    val hubMoneyListState = rememberLazyListState()
     val hubAppsListState = rememberLazyListState()
 
     // Detect if user is actively scrolling in current page or horizontal pager
     val isScrolling by remember {
         derivedStateOf {
             pagerState.isScrollInProgress ||
-                    hubStartListState.isScrollInProgress ||
-                    hubAgendaListState.isScrollInProgress ||
+                    hubTodayListState.isScrollInProgress ||
+                    hubInboxListState.isScrollInProgress ||
                     hubNewsListState.isScrollInProgress ||
-                    hubFinanceListState.isScrollInProgress ||
-                    hubHealthListState.isScrollInProgress ||
+                    hubMoneyListState.isScrollInProgress ||
                     hubAppsListState.isScrollInProgress
         }
     }
@@ -301,13 +300,13 @@ fun MeenaHomeScreen(
     var isActionCenterOpen by remember { mutableStateOf(false) }
 
     // Intercept hardware/gesture Back button
-    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || pagerState.currentPage != (userSettings?.defaultHubIndex ?: 0)) {
+    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || pagerState.currentPage != defaultHubClamped) {
         when {
             isSettingsOpen -> isSettingsOpen = false
             isActionCenterOpen -> isActionCenterOpen = false
-            pagerState.currentPage != (userSettings?.defaultHubIndex ?: 0) -> {
+            pagerState.currentPage != defaultHubClamped -> {
                 coroutineScope.launch {
-                    pagerState.animateScrollToPage(userSettings?.defaultHubIndex ?: 0)
+                    pagerState.animateScrollToPage(defaultHubClamped)
                 }
             }
         }
@@ -317,7 +316,7 @@ fun MeenaHomeScreen(
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Panoramic Hub Pivot Header (WP7 / WP8.1 style - continuous drag sync with 1:1 parallax)
-            val hubs = listOf("start", "agenda", "news", "finance", "health", "apps")
+            val hubs = listOf("today", "inbox", "news", "money", "apps")
             val headerScrollState = rememberScrollState()
 
             // Continuous real-time header sync with pager drag position
@@ -403,19 +402,9 @@ fun MeenaHomeScreen(
                         }
                 ) {
                     when (page) {
-                        0 -> StartHub(
+                        0 -> TodayHub(
                             settings = userSettings!!,
-                            listState = hubStartListState,
-                            onLaunchPackage = onLaunchApp,
-                            onOpenDialer = onOpenDialer,
-                            onOpenMessages = onOpenMessages,
-                            onOpenEmail = onOpenEmail,
-                            onOpenCamera = onOpenCamera,
-                            onOpenCalculator = onOpenCalculator
-                        )
-                        1 -> AgendaHub(
-                            settings = userSettings!!,
-                            listState = hubAgendaListState,
+                            listState = hubTodayListState,
                             onUpdateSolatZone = { zone ->
                                 coroutineScope.launch {
                                     val newSettings = userSettings!!.copy(solatZone = zone)
@@ -423,7 +412,17 @@ fun MeenaHomeScreen(
                                     my.hana.meena.data.system.JakimSolatRepository.setZone(zone)
                                     my.hana.meena.data.system.JakimSolatRepository.refresh()
                                 }
-                            }
+                            },
+                            onLaunchPackage = onLaunchApp,
+                            onOpenDialer = onOpenDialer,
+                            onOpenMessages = onOpenMessages,
+                            onOpenEmail = onOpenEmail,
+                            onOpenCamera = onOpenCamera,
+                            onOpenCalculator = onOpenCalculator
+                        )
+                        1 -> InboxHub(
+                            settings = userSettings!!,
+                            listState = hubInboxListState
                         )
                         2 -> NewsHub(
                             settings = userSettings!!,
@@ -431,13 +430,9 @@ fun MeenaHomeScreen(
                         )
                         3 -> FinanceHub(
                             settings = userSettings!!,
-                            listState = hubFinanceListState
+                            listState = hubMoneyListState
                         )
-                        4 -> HealthHub(
-                            settings = userSettings!!,
-                            listState = hubHealthListState
-                        )
-                        5 -> AppsHub(
+                        4 -> AppsHub(
                             listState = hubAppsListState,
                             pinnedAppIds = userSettings!!.pinnedAppIds,
                             pinnedAppSizes = userSettings!!.pinnedAppSizes,
@@ -461,10 +456,10 @@ fun MeenaHomeScreen(
             isLeftHanded = userSettings!!.isLeftHanded,
             isScrolling = isScrolling,
             onNavigateToApps = {
-                coroutineScope.launch { pagerState.animateScrollToPage(5) }
+                coroutineScope.launch { pagerState.animateScrollToPage(4) }
             },
             onOpenSearch = {
-                coroutineScope.launch { pagerState.animateScrollToPage(5) }
+                coroutineScope.launch { pagerState.animateScrollToPage(4) }
             },
             onOpenCamera = onOpenCamera,
             onOpenSettings = { isSettingsOpen = true },
@@ -650,7 +645,7 @@ fun ActionCenterSheet(
                     color = Color.White
                 )
                 Text(
-                    text = "CLOSE ✕",
+                    text = "close",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     modifier = Modifier.clickable(onClick = onClose)
@@ -664,10 +659,10 @@ fun ActionCenterSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ActionTile("Wi-Fi", "Connected", true, Modifier.weight(1f))
-                ActionTile("Bluetooth", "Active", true, Modifier.weight(1f))
-                ActionTile("Torch", "Off", false, Modifier.weight(1f))
-                ActionTile("Settings", "All", true, Modifier.weight(1f), onClick = onOpenSettings)
+                ActionTile("wi-fi", "network", true, Modifier.weight(1f))
+                ActionTile("bluetooth", "ready", true, Modifier.weight(1f))
+                ActionTile("torch", "ready", false, Modifier.weight(1f))
+                ActionTile("settings", "all", true, Modifier.weight(1f), onClick = onOpenSettings)
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -681,9 +676,9 @@ fun ActionCenterSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("NOTIFICATIONS", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                Text("notifications", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                 Text(
-                    "ALL SETTINGS →",
+                    "all settings",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable(onClick = onOpenSettings)
@@ -706,9 +701,9 @@ fun ActionCenterSheet(
                     }
                 } else {
                     ActionNotificationItem(
-                        app = "Meena Launcher",
-                        text = "AMOLED 0dp Pure Metro • System Ready",
-                        time = "Just now"
+                        app = "notifications",
+                        text = "all caught up",
+                        time = ""
                     )
                 }
             }
