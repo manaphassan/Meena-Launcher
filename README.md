@@ -7,14 +7,15 @@ A modern Android Home Screen / Launcher crafted with **100% Kotlin & Jetpack Com
 
 ## ✨ Features
 
-- **Panoramic Pivot Canvas:** Seamless horizontal navigation (`HorizontalPager`) across 4 main hubs:
-  - 🏠 **Start Hub:** Customizable Live Tiles (`1x1`, `2x2`, `4x2`) with 3D flip animations, badge counters, and modular collapsible widgets (Weather Radar, News Feed, Device Telemetry).
-  - 📅 **Agenda Hub:** Integrated **JAKIM Waktu Solat** prayer time schedule with real-time countdown calculations, solar indicators, interactive monthly calendar overview, and quick notes/task checklist.
-  - 💳 **Finance Hub:** Real-time Malaysian banking & e-wallet transaction tracking (Maybank MAE, TNG eWallet, CIMB Octo, GrabPay, Google Wallet), spending visualizer curves, and foreign exchange rates.
-  - 🚀 **Apps Hub:** Complete alphabetical jump-list drawer querying installed device packages with real-time search, pin-to-start, and custom tile sizing.
+- **Panoramic Pivot Canvas:** Seamless horizontal navigation (`HorizontalPager`) across 5 main hubs:
+  - 🏠 **Today:** Customizable widgets (Clock, Weather, Solat, Agenda, Brief, Health, Phone).
+  - 📥 **Inbox:** Stream of notifications, messages, and emails.
+  - 📰 **News:** RSS/Atom feeds updated regularly.
+  - 💳 **Money:** Finance portfolio, exchange rates, and spending summary.
+  - 🚀 **Apps:** Complete alphabetical jump-list drawer querying installed device packages.
 - **Radial Corner Navigation:** Single-thumb ergonomics supporting left-handed or right-handed modes with auto-hide during list scroll.
-- **Action Center:** Top pull-down panel displaying real-time telemetry (RAM, storage, battery, network throughput Rx/Tx, screen brightness) and quick shortcuts.
-- **Deep Customization:** AMOLED Black, Slate Dark, and Light themes, custom accent colors, Segoe UI typography scaling, and backup export/import.
+- **Action Center:** Top pull-down panel displaying real-time telemetry (memory, storage, battery, network throughput, screen brightness) and quick shortcuts.
+- **Deep Customization:** AMOLED Black, Slate Dark, and Light themes, custom accent colors, Selawik typography scaling, and backup export/import.
 
 ---
 

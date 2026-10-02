@@ -14,3 +14,9 @@
 .cxx
 local.properties
 .kotlin
+.vscode/
+
+# Keystore and signing files
+keystore.properties
+*.jks
+*.keystore
