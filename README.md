@@ -1,57 +1,77 @@
-# Meena Launcher 📱
-Metro UI Minimalist Launcher for Android
+# Meena
 
-A modern Android Home Screen / Launcher crafted with **100% Kotlin & Jetpack Compose**. Inspired by the Windows Phone / Metro UI panoramic canvas, Meena Launcher combines clean typography, fluid Live Tiles, and Malaysian localization features.
+> A clean, light, open, and fast Android launcher inspired by Windows Phone Metro UI and AIO Launcher.
 
----
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3-purple.svg?style=flat-square&logo=kotlin)](https://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/Jetpack_Compose-2026.03-green.svg?style=flat-square&logo=jetpackcompose)](https://developer.android.com/jetpack/compose)
+[![Android](https://img.shields.io/badge/Android-7.0%20(API%2024)%20--%2016%20(API%2036)-blue.svg?style=flat-square&logo=android)](https://developer.android.com)
+[![License](https://img.shields.io/badge/License-Apache_2.0-black.svg?style=flat-square)](LICENSE)
 
-## ✨ Features
-
-- **Panoramic Pivot Canvas:** Seamless horizontal navigation (`HorizontalPager`) across 5 main hubs:
-  - 🏠 **Today:** Customizable widgets (Clock, Weather, Solat, Agenda, Brief, Health, Phone).
-  - 📥 **Inbox:** Stream of notifications, messages, and emails.
-  - 📰 **News:** RSS/Atom feeds updated regularly.
-  - 💳 **Money:** Finance portfolio, exchange rates, and spending summary.
-  - 🚀 **Apps:** Complete alphabetical jump-list drawer querying installed device packages.
-- **Radial Corner Navigation:** Single-thumb ergonomics supporting left-handed or right-handed modes with auto-hide during list scroll.
-- **Action Center:** Top pull-down panel displaying real-time telemetry (memory, storage, battery, network throughput, screen brightness) and quick shortcuts.
-- **Deep Customization:** AMOLED Black, Slate Dark, and Light themes, custom accent colors, Selawik typography scaling, and backup export/import.
+**Meena** reimagines the Android home screen around typographic clarity, flat geometry, and continuous lateral flow. Built from scratch with 100% Kotlin and Jetpack Compose, Meena delivers an authentic **Meena UI** experience: zero rounded card clutter, pure AMOLED contrast, and live on-device intelligence.
 
 ---
 
-## 🛠️ Tech Stack & Requirements
+## 5 Canonical Pages
 
-- **Language:** Kotlin 2.3.20
-- **UI Framework:** Jetpack Compose (Compose BOM `2026.03.01`, Material 3)
-- **Minimum SDK:** Android 7.0 (API 24)
-- **Target SDK:** Android 16 (API 36)
-- **JVM Toolchain:** Java 17
-- **Architecture:** Single-Activity, Coroutines & StateFlow, DataStore Preferences, Background Services (`NotificationListenerService`).
+Meena organizes your mobile workflow across five panoramic canvas hubs:
+
+| Hub | Purpose | Default Modules |
+|---|---|---|
+| **today** | Daily essentials & health | Clock, forecast, AI brief, JAKIM prayer times, calendar, tasks, notes, health telemetry, air quality, map radar, and phone status. |
+| **inbox** | Communications center | Realtime conversation threads (WhatsApp, Telegram, SMS) and unified actionable notifications. |
+| **news** | Curated reading | Dynamic RSS/Atom reader with source filters, instant categorization, and live article parsing. |
+| **money** | Personal finance | Watchlist candlestick charts, live exchange rates, and bank notification spending insights. |
+| **apps** | Application drawer | Alphabetical jump-list index with instant search, tile sizing, and pinning. |
 
 ---
 
-## 🚀 Building & Running
+## Design Principles
+
+- **Typographic Hierarchy:** Content is defined by scale and spacing, not decorative cards, borders, drop shadows, or container boxes.
+- **Pure Flat Canvas:** 0dp square corners throughout. Visual rhythm is driven by crisp accent lines and authentic Metro turnstile transitions.
+- **Live, Never Fabricated:** Real status or explicit needs-setup states. No mock numbers, placeholder temperatures, or fake timestamps.
+- **Modular Widgets:** Every widget can be repositioned, assigned to any page, or collapsed via the centralized settings pivot.
+- **Single-Thumb Ergonomics:** Corner navigation hub engineered for natural reach with native left-handed and right-handed modes.
+
+---
+
+## Tech Stack
+
+- **Language:** Kotlin
+- **UI Toolkit:** Jetpack Compose (Material 3 foundation with custom Meena UI tokens)
+- **Architecture:** Single-Activity, reactive StateFlow streams, Coroutines
+- **Storage:** AndroidX DataStore with encrypted preference management
+- **Networking & Parsing:** OkHttp3 with native streaming XML pull parsing
+- **Minimum Target:** Android 7.0 (API 24) · **Target SDK:** Android 16 (API 36)
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Android Studio Ladybug / Meerkat (or newer)
+- Android Studio Ladybug (or newer)
 - JDK 17
 - Android SDK 36
 
-### Build Debug APK
-```bash
-./gradlew assembleDebug
-```
-The output APK will be generated at:
-```
-app/build/outputs/apk/debug/app-debug.apk
-```
+### Build Variants
+- `demo`: Offline demonstration data for testing and development.
+- `live`: Production-grade build utilizing live system APIs and verified user keys.
 
-### Run Unit Tests
+### Common Commands
+
 ```bash
-./gradlew testDebugUnitTest
+# Build live debug APK
+./gradlew assembleLiveDebug
+
+# Run unit tests across all variants
+./gradlew testDemoDebugUnitTest testLiveDebugUnitTest
+
+# Install directly to connected device
+./gradlew installLiveDebug
 ```
 
 ---
 
-## 📄 License
+## License
+
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
