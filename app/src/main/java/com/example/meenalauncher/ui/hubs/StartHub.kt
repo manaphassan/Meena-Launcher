@@ -75,6 +75,7 @@ import com.example.meenalauncher.ui.components.CollapsibleWidget
 import com.example.meenalauncher.ui.components.ConversationsWidget
 import com.example.meenalauncher.ui.components.LiveTile
 import com.example.meenalauncher.ui.components.NewsFeedWidget
+import com.example.meenalauncher.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -732,35 +733,10 @@ fun StartHub(
             }
         }
 
-        // 8. WIDGET: MAP RADAR
+        // 8. WIDGET: MAP RADAR (OpenMaps Dark Theme with 3km Radar Wave & North Bearing)
         if (settings.enabledWidgets["widget-map-radar"] != false) {
             item {
-                CollapsibleWidget(
-                    title = "current map location",
-                    collapsedSummary = {
-                        Text("Bukit Bintang, KL • Live", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                    }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(130.dp)
-                            .background(Color(0xFF080808))
-                            .border(1.dp, MeenaBorder),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Bukit Bintang, Kuala Lumpur", style = MaterialTheme.typography.bodyLarge)
-                            Text("3.1466° N, 101.7112° E • Accuracy 4m", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                        }
-                    }
-                }
+                OpenMapsRadarWidget()
             }
         }
 
