@@ -64,4 +64,13 @@
     <string name="disclosure_gemini_body">selected context (calendar, weather, prayer, or spending) is sent directly to google\'s generative language api from your device when generating a brief. no data is sent anywhere else.</string>
     <string name="finance_delay_notice">quotes from google sheets may be delayed ~20 min</string>
     <string name="finance_hide_amounts">mask balances in public</string>
+
+    <!-- Milestone 3: Health Connect & Air Quality -->
+    <string name="health_connect_notice">google fit has retired. health metrics sync securely on-device through android health connect.</string>
+    <string name="health_manage_permissions">manage health connect permissions</string>
+    <string name="health_install_app">get health connect from play store</string>
+    <string name="health_open_companion">open companion app</string>
+    <string name="health_step_goal_title">step goal</string>
+    <string name="health_sleep_goal_title">sleep goal</string>
+    <string name="health_companion_title">companion app</string>
 </resources>

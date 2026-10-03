@@ -273,6 +273,7 @@ fun MeenaHomeScreen(
         if (isGranted) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
             my.hana.meena.data.system.WeatherRepository.refresh(context, force = true)
+            my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
         }
     }
 
@@ -285,6 +286,11 @@ fun MeenaHomeScreen(
         if (my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)) {
             my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
         }
+        my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
+    }
+
+    LaunchedEffect(userSettings?.stepGoal, userSettings?.healthCompanionPackage) {
+        my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
     }
 
     val defaultHubClamped = (userSettings?.defaultHubIndex ?: initialHubIndex).coerceIn(0, 4)

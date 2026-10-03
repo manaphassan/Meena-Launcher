@@ -105,6 +105,10 @@ dependencies {
   
   // Network
   implementation(libs.okhttp)
+  
+  // Health Connect
+  implementation(libs.androidx.health.connect)
+  
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests

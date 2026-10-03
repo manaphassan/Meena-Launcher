@@ -864,7 +864,7 @@ fun TodayHub(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            HealthRepository.openFitnessApp(context)
+                                            HealthRepository.openHealthConnectSettings(context)
                                         }
                                         .padding(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -904,6 +904,44 @@ fun TodayHub(
                                         color = MeenaProfitGreen,
                                         trackColor = Color(0xFF222222)
                                     )
+
+                                    if (fitTelemetry.distanceKm > 0.0 || fitTelemetry.activeCaloriesKcal > 0) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (fitTelemetry.distanceKm > 0.0) {
+                                                Text(
+                                                    text = "${String.format(java.util.Locale.US, "%.1f", fitTelemetry.distanceKm)} km",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MeenaTextMuted
+                                                )
+                                            }
+                                            if (fitTelemetry.activeCaloriesKcal > 0) {
+                                                Text(
+                                                    text = "${fitTelemetry.activeCaloriesKcal} kcal",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MeenaTextMuted
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (fitTelemetry.sleepHoursFormatted.isNotBlank()) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("sleep", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                            Text(
+                                                text = fitTelemetry.sleepHoursFormatted,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color.White
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             else -> {}
@@ -923,7 +961,12 @@ fun TodayHub(
                             )
                         }
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { HealthRepository.openAirQualityDetails(context) }
+                        ) {
                             Text(airIndex.stationName.ifBlank { "local station" }.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,

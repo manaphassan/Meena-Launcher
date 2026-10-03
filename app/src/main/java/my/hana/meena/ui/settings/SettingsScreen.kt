@@ -65,6 +65,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.R
 import my.hana.meena.data.finance.FinanceRepository
+import my.hana.meena.data.health.HealthConnectAvailability
+import my.hana.meena.data.health.HealthRepository
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.model.WidgetConfig
 import my.hana.meena.data.news.NewsRssRepository
@@ -76,6 +78,8 @@ import my.hana.meena.theme.MeenaBorder
 import my.hana.meena.theme.MeenaCobalt
 import my.hana.meena.theme.MeenaCrimson
 import my.hana.meena.theme.MeenaCyan
+import my.hana.meena.theme.MeenaProfitGreen
+import my.hana.meena.theme.MeenaSolarAmber
 import my.hana.meena.theme.MeenaDarkSlate
 import my.hana.meena.theme.MeenaEmerald
 import my.hana.meena.theme.MeenaLime
@@ -1456,10 +1460,9 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Text(
-                    text = "google fit has retired. health metrics sync securely through android health connect.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MeenaTextMuted
+                HealthAccountSettings(
+                    settingsState = settingsState,
+                    onUpdate = onUpdate
                 )
             }
         }
@@ -2252,6 +2255,139 @@ private fun FinanceAccountSettings(
             shape = RoundedCornerShape(0.dp)
         ) {
             Text("add holding", style = MaterialTheme.typography.labelSmall, color = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun HealthAccountSettings(
+    settingsState: MeenaUserSettings,
+    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
+) {
+    val context = LocalContext.current
+    val availability = remember { HealthRepository.getHealthConnectAvailability(context) }
+    val installedApps = remember { HealthRepository.getInstalledFitnessApps(context) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = "google fit has retired. health metrics sync securely on-device through android health connect.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MeenaTextMuted
+        )
+
+        val statusText = when (availability) {
+            HealthConnectAvailability.AVAILABLE -> "status · installed and ready"
+            HealthConnectAvailability.UPDATE_REQUIRED -> "status · update required"
+            HealthConnectAvailability.NOT_INSTALLED -> "status · not installed"
+            HealthConnectAvailability.NOT_SUPPORTED -> "status · not supported on this device"
+        }
+
+        Text(
+            text = statusText,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (availability == HealthConnectAvailability.AVAILABLE) MeenaProfitGreen else MeenaSolarAmber
+        )
+
+        Button(
+            onClick = {
+                if (availability == HealthConnectAvailability.AVAILABLE) {
+                    HealthRepository.openHealthConnectSettings(context)
+                } else {
+                    HealthRepository.openHealthConnectPlayStore(context)
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Text(
+                text = if (availability == HealthConnectAvailability.AVAILABLE) "manage health connect" else "get health connect",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text("goals", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        SettingSegmentedRow(
+            title = "daily step goal",
+            options = listOf(
+                "6000" to "6,000",
+                "8000" to "8,000",
+                "10000" to "10,000",
+                "12000" to "12,000",
+                "15000" to "15,000"
+            ),
+            selectedKey = settingsState.stepGoal.toString(),
+            onSelectKey = { key ->
+                val goal = key.toIntOrNull() ?: 10000
+                onUpdate { it.copy(stepGoal = goal) }
+                HealthRepository.refreshTelemetry(context, settingsState.copy(stepGoal = goal))
+            }
+        )
+
+        SettingSegmentedRow(
+            title = "daily sleep target",
+            options = listOf(
+                "7.0" to "7 hrs",
+                "7.5" to "7.5 hrs",
+                "8.0" to "8 hrs",
+                "8.5" to "8.5 hrs",
+                "9.0" to "9 hrs"
+            ),
+            selectedKey = String.format(java.util.Locale.US, "%.1f", settingsState.sleepHoursGoal),
+            onSelectKey = { key ->
+                val sleep = key.toFloatOrNull() ?: 8.0f
+                onUpdate { it.copy(sleepHoursGoal = sleep) }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text("companion app", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        if (installedApps.isNotEmpty()) {
+            val appOptions = listOf("" to "auto (detect installed)") + installedApps.map { it.packageName to it.displayName }
+            SettingSegmentedRow(
+                title = "paired device app",
+                options = appOptions,
+                selectedKey = settingsState.healthCompanionPackage,
+                onSelectKey = { pkg ->
+                    val appName = installedApps.find { it.packageName == pkg }?.displayName ?: ""
+                    onUpdate { it.copy(healthCompanionPackage = pkg, healthCompanionName = appName) }
+                    HealthRepository.refreshTelemetry(context, settingsState.copy(healthCompanionPackage = pkg, healthCompanionName = appName))
+                }
+            )
+        }
+
+        Button(
+            onClick = {
+                HealthRepository.openFitnessApp(context, settingsState.healthCompanionPackage)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Text("open companion app", style = MaterialTheme.typography.labelSmall, color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text("air quality", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(
+            text = "air quality metrics are provided live by open-meteo using your coarse approximate location.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+        Button(
+            onClick = {
+                HealthRepository.openAirQualityDetails(context)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Text("view open-meteo air quality", style = MaterialTheme.typography.labelSmall, color = Color.White)
         }
     }
 }

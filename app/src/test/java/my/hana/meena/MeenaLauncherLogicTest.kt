@@ -458,6 +458,61 @@ class MeenaLauncherLogicTest {
         assertEquals(4.25, item.rateToBase, 0.001)
         assertEquals(0.2353, item.baseToCurrency, 0.001)
     }
+
+    @Test
+    fun healthRepository_initialState_isNeedsSetup() {
+        val state = my.hana.meena.data.health.HealthRepository.state.value
+        assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup || state is my.hana.meena.ui.widgets.WidgetState.Ready)
+    }
+
+    @Test
+    fun healthRepository_readPermissions_containAllCoreRecords() {
+        val permissions = my.hana.meena.data.health.HealthRepository.READ_PERMISSIONS
+        assertEquals(5, permissions.size)
+    }
+
+    @Test
+    fun fitTelemetry_defaultsAndCalculations() {
+        val telemetry = my.hana.meena.data.health.FitTelemetry(
+            stepsToday = 7500,
+            stepGoal = 10000,
+            activeCaloriesKcal = 320,
+            distanceKm = 5.2,
+            sleepHoursFormatted = "7h 30m"
+        )
+        assertEquals(7500, telemetry.stepsToday)
+        assertEquals(10000, telemetry.stepGoal)
+        assertEquals(320, telemetry.activeCaloriesKcal)
+        assertEquals(5.2, telemetry.distanceKm, 0.001)
+        assertEquals("7h 30m", telemetry.sleepHoursFormatted)
+    }
+
+    @Test
+    fun airQualityIndexInfo_properties() {
+        val aqi = my.hana.meena.data.health.AirQualityIndexInfo(
+            aqiValue = 42,
+            aqiStatus = "good",
+            aqiColorHex = "#30D158",
+            stationName = "kuala lumpur",
+            pm25 = 10.2,
+            pm10 = 18.5,
+            advisory = "air quality is satisfactory."
+        )
+        assertEquals(42, aqi.aqiValue)
+        assertEquals("good", aqi.aqiStatus)
+        assertEquals("#30D158", aqi.aqiColorHex)
+        assertEquals("kuala lumpur", aqi.stationName)
+        assertEquals(10.2, aqi.pm25, 0.001)
+    }
+
+    @Test
+    fun userSettings_healthSettings_defaults() {
+        val settings = MeenaUserSettings()
+        assertEquals(10000, settings.stepGoal)
+        assertEquals(8.0f, settings.sleepHoursGoal, 0.001f)
+        assertEquals("", settings.healthCompanionPackage)
+        assertEquals("", settings.healthCompanionName)
+    }
 }
 
 

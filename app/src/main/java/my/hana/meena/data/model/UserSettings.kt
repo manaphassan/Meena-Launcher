@@ -51,6 +51,11 @@ data class MeenaUserSettings(
     val hijriDayOffset: Int = 0,
     // Finance privacy
     val showFinanceAmounts: Boolean = true,
+    // Health Connect & Companion settings
+    val stepGoal: Int = 10000,
+    val sleepHoursGoal: Float = 8.0f,
+    val healthCompanionPackage: String = "",
+    val healthCompanionName: String = "",
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {
