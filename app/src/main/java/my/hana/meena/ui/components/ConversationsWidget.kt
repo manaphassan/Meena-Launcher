@@ -1,8 +1,8 @@
 package my.hana.meena.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,14 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,20 +32,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import my.hana.meena.data.system.LiveConversationItem
 import my.hana.meena.data.system.NotificationRepository
-import my.hana.meena.theme.MeenaBorder
-import my.hana.meena.theme.MeenaProfitGreen
-import my.hana.meena.theme.MeenaSurface
-import my.hana.meena.theme.MeenaSurfaceElevated
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
-import kotlinx.coroutines.delay
 
 /**
- * Authentic Windows Phone / Metro style widget for real-time incoming
- * messaging conversations (WhatsApp, Telegram, Google Messages, SMS, etc.).
+ * Authentic Meena UI widget for messaging conversations (WhatsApp, Telegram, Messages, SMS).
+ * Adheres strictly to Meena UI principles: no cards, no borders, pure typographic hierarchy,
+ * generous spacing, casual lowercase copy, and zero decoration.
  */
 @Composable
 fun ConversationsWidget(
@@ -69,7 +58,6 @@ fun ConversationsWidget(
         mutableStateOf(isConnected || NotificationRepository.isNotificationAccessGranted(context))
     }
 
-    // Only re-check permission status when not yet connected, stops polling as soon as access is confirmed
     LaunchedEffect(isConnected) {
         if (!isConnected) {
             while (true) {
@@ -78,7 +66,7 @@ fun ConversationsWidget(
                     isPermissionGranted = true
                     break
                 }
-                delay(3000)
+                delay(3000L)
             }
         } else {
             isPermissionGranted = true
@@ -86,133 +74,54 @@ fun ConversationsWidget(
     }
 
     CollapsibleWidget(
-        title = "conversations",
+        title = "chats",
         collapsedSummary = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(
-                            if (isPermissionGranted) MeenaProfitGreen else Color(0xFFE51400),
-                            RoundedCornerShape(0.dp)
-                        )
-                )
-                Text(
-                    text = when {
-                        !isPermissionGranted -> "permission required"
-                        conversations.isNotEmpty() -> "${conversations.size} active chats"
-                        else -> "connected"
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted
-                )
-            }
+            Text(
+                text = when {
+                    !isPermissionGranted -> "needs a quick okay"
+                    conversations.isNotEmpty() -> "${conversations.size} new"
+                    else -> "all quiet"
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = if (!isPermissionGranted) MeenaTextMuted else MaterialTheme.colorScheme.primary
+            )
         },
         modifier = modifier
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Permission Banner if notification access is missing
             if (!isPermissionGranted) {
-                Box(
+                Text(
+                    text = "want your chats here? turn on notification access. meena reads them on your phone only.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF2A1010))
-                        .border(1.dp, Color(0xFFE51400))
-                        .clickable {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             NotificationRepository.openNotificationSettings(context)
                         }
-                        .padding(12.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = "warning",
-                                tint = Color(0xFFE51400),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "notification access required",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFE51400)
-                            )
-                        }
-                        Text(
-                            text = "tap here to grant notification listener access so incoming chats update automatically.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White,
-                            lineHeight = 16.sp
-                        )
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFFE51400))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "enable in settings",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
+                        .padding(vertical = 8.dp)
+                )
             } else if (conversations.isEmpty()) {
-                // Empty state when sync is active but no unread chats exist
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MeenaSurface)
-                        .border(1.dp, MeenaBorder)
-                        .padding(12.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
-                            )
-                            Text(
-                                text = "messages ready",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaProfitGreen
-                            )
-                        }
-                        Text(
-                            text = "all caught up. incoming chats from messaging apps will appear here automatically.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MeenaTextMuted,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
+                Text(
+                    text = "all quiet",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
             } else {
-                // Display up to 6 real-time conversations
                 conversations.take(6).forEach { item ->
                     ConversationRow(
                         item = item,
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             NotificationRepository.openConversation(context, item)
-                        },
-                        onDismiss = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            NotificationRepository.dismissNotification(item.key)
                         }
                     )
                 }
@@ -224,8 +133,7 @@ fun ConversationsWidget(
 @Composable
 private fun ConversationRow(
     item: LiveConversationItem,
-    onClick: () -> Unit,
-    onDismiss: () -> Unit
+    onClick: () -> Unit
 ) {
     val appColor = when {
         item.packageName.contains("whatsapp", ignoreCase = true) -> Color(0xFF25D366)
@@ -239,10 +147,14 @@ private fun ConversationRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 6.dp)
     ) {
-        // Line 1: Accent pill + Contact Name (weighted) + Time + Unread Count
+        // Line 1: Contact name + time + unread count
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -288,7 +200,7 @@ private fun ConversationRow(
                 }
                 Text(
                     text = item.formattedTime.lowercase(),
-                    fontSize = 11.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
             }
@@ -297,7 +209,7 @@ private fun ConversationRow(
         // Line 2: App Channel tag
         Text(
             text = item.appName.lowercase(),
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             color = appColor,
             modifier = Modifier.padding(start = 14.dp, top = 2.dp)
         )
@@ -314,15 +226,5 @@ private fun ConversationRow(
                 modifier = Modifier.padding(start = 14.dp, top = 4.dp)
             )
         }
-
-        // Subtle divider separating conversation threads
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(MeenaBorder.copy(alpha = 0.5f))
-        )
     }
 }
-

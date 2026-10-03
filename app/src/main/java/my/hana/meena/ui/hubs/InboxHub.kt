@@ -1,8 +1,8 @@
 package my.hana.meena.ui.hubs
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,10 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,9 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.NotificationRepository
-import my.hana.meena.theme.MeenaBorder
-import my.hana.meena.theme.MeenaProfitGreen
-import my.hana.meena.theme.MeenaSurface
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
@@ -71,7 +64,7 @@ fun InboxHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -84,77 +77,46 @@ fun InboxHub(
             val widgetId = inboxWidgets[index].key
             when (widgetId) {
                 "widget-conversations" -> {
-                    // Chats and instant messaging threads
+                    // Chats and messaging threads
                     ConversationsWidget()
                 }
 
                 "widget-notifications" -> {
-                    // Alert stream
+                    // Alerts stream
                     CollapsibleWidget(
-                        title = "notification stream",
+                        title = "alerts",
                         collapsedSummary = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .background(
-                                            if (isNotificationAccessGranted) MeenaProfitGreen else Color(0xFFE51400),
-                                            RoundedCornerShape(0.dp)
-                                        )
-                                )
-                                Text(
-                                    text = when {
-                                        !isNotificationAccessGranted -> "access required"
-                                        notifications.isNotEmpty() -> "${notifications.size} unread notifications"
-                                        else -> "listening"
-                                    },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextMuted
-                                )
-                            }
+                            Text(
+                                text = when {
+                                    !isNotificationAccessGranted -> "needs a quick okay"
+                                    notifications.isNotEmpty() -> "${notifications.size} new"
+                                    else -> "all quiet"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (!isNotificationAccessGranted) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                            )
                         }
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             if (!isNotificationAccessGranted) {
-                                Box(
+                                Text(
+                                    text = "want your alerts here? turn on notification access. meena reads them on your phone only.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MeenaTextMuted,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color(0xFF2A1010))
-                                        .border(1.dp, Color(0xFFE51400))
-                                        .clickable {
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        ) {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             NotificationRepository.openNotificationSettings(context)
                                         }
-                                        .padding(12.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Warning,
-                                            contentDescription = null,
-                                            tint = Color(0xFFE51400),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "notification access required",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFFE51400)
-                                            )
-                                            Text(
-                                                text = "tap to grant access so notifications show up",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = Color.White
-                                            )
-                                        }
-                                    }
-                                }
+                                        .padding(vertical = 8.dp)
+                                )
                             } else if (notifications.isNotEmpty()) {
                                 notifications.take(8).forEach { notif ->
                                     val notifColor = when {
@@ -189,12 +151,14 @@ fun InboxHub(
                                     horizontalArrangement = Arrangement.End
                                 ) {
                                     Text(
-                                        text = "clear all notifications",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Normal,
+                                        text = "clear all",
+                                        style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier
-                                            .clickable {
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            ) {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 NotificationRepository.clearAll()
                                             }
@@ -202,29 +166,12 @@ fun InboxHub(
                                     )
                                 }
                             } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(MeenaSurface)
-                                        .border(1.dp, MeenaBorder)
-                                        .padding(12.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
-                                        )
-                                        Text(
-                                            text = "all caught up • listening",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MeenaTextMuted
-                                        )
-                                    }
-                                }
+                                Text(
+                                    text = "all quiet",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
                             }
                         }
                     }
@@ -249,17 +196,19 @@ private fun InboxNotificationRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
-            .clickable(onClick = onClick)
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Box(
             modifier = Modifier
-                .width(3.dp)
-                .height(34.dp)
+                .padding(top = 6.dp)
+                .size(6.dp)
                 .background(badgeColor)
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -270,11 +219,16 @@ private fun InboxNotificationRow(
             ) {
                 Text(
                     text = app.lowercase(),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = badgeColor
+                    style = MaterialTheme.typography.labelSmall,
+                    color = badgeColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                Text(
+                    text = time.lowercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
             }
             Text(
                 text = title,
@@ -289,18 +243,27 @@ private fun InboxNotificationRow(
                     text = text,
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextSecondary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
                 )
             }
         }
         Box(
             modifier = Modifier
-                .size(32.dp)
-                .clickable(onClick = onDismiss),
+                .size(48.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss
+                ),
             contentAlignment = Alignment.Center
         ) {
-            Text("✕", fontSize = 11.sp, color = MeenaTextMuted)
+            Text(
+                text = "x",
+                fontSize = 13.sp,
+                color = MeenaTextMuted
+            )
         }
     }
 }
