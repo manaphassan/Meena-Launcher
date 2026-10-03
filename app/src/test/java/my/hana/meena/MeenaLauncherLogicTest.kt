@@ -168,6 +168,12 @@ class MeenaLauncherLogicTest {
         assertNotNull(my.hana.meena.data.system.QuickPanelHardwareHelper.bluetoothState.value)
         assertEquals(false, my.hana.meena.data.system.QuickPanelHardwareHelper.isTorchActive.value)
     }
+
+    @Test
+    fun deviceCalendarRepository_initialStateIsNeedsPermission() {
+        val state = my.hana.meena.data.system.DeviceCalendarRepository.state.value
+        assertTrue(state is my.hana.meena.data.system.CalendarState.NeedsPermission)
+    }
 }
 
 

@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.data.health.HealthRepository
 import my.hana.meena.data.model.MeenaUserSettings
+import my.hana.meena.data.system.CalendarState
+import my.hana.meena.data.system.DeviceCalendarRepository
 import my.hana.meena.data.system.DeviceTelemetryHelper
 import my.hana.meena.data.system.JakimSchedule
 import my.hana.meena.data.system.JakimSolatRepository
@@ -66,7 +68,8 @@ fun TodayHub(
     onOpenMessages: () -> Unit = {},
     onOpenEmail: () -> Unit = {},
     onOpenCamera: () -> Unit = {},
-    onOpenCalculator: () -> Unit = {}
+    onOpenCalculator: () -> Unit = {},
+    onRequestCalendarPermission: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -92,11 +95,13 @@ fun TodayHub(
     val fitTelemetry = healthData.fitTelemetry
     val airIndex = healthData.airIndex
 
+    val calendarState by DeviceCalendarRepository.state.collectAsState()
     val quickNotes = remember { mutableStateListOf<String>() }
 
     LaunchedEffect(Unit) {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
+        DeviceCalendarRepository.refresh(context)
         while (true) {
             val now = Date()
             currentTime = timeFormat.format(now)
@@ -216,34 +221,179 @@ fun TodayHub(
                 }
 
                 "widget-calendar-month" -> {
-                    // Monthly calendar
+                    // Device calendar events & agenda
+                    val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
+                    val isNeedsPermission = calendarState is CalendarState.NeedsPermission
                     CollapsibleWidget(
                         title = "calendar",
                         collapsedSummary = {
-                            Text("needs setup", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                            Text(
+                                text = when {
+                                    isNeedsPermission -> "needs setup"
+                                    calEvents.isEmpty() -> "all quiet"
+                                    else -> "${calEvents.size} upcoming"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isNeedsPermission) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                            )
                         }
                     ) {
-                        Text(
-                            text = "allow calendar access in settings",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
-                        )
+                        when {
+                            isNeedsPermission -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onRequestCalendarPermission() }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "want your schedule here? tap to allow calendar access.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = "allow",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            calEvents.isEmpty() -> {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "all quiet • no upcoming events",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                    Text(
+                                        text = "+ event",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                    )
+                                }
+                            }
+                            else -> {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    calEvents.take(4).forEach { event ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(MeenaSurface)
+                                                .clickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
+                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = event.title,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = Color.White
+                                                )
+                                                Text(
+                                                    text = buildString {
+                                                        append(event.formattedDate)
+                                                        append(" • ")
+                                                        append(event.formattedTime)
+                                                        if (event.location.isNotBlank()) {
+                                                            append(" • ")
+                                                            append(event.location)
+                                                        }
+                                                    },
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MeenaTextMuted,
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        Text(
+                                            text = "+ new event",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
                 "widget-tasks" -> {
                     // Today's schedule / agenda
+                    val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
+                    val todayEvents = calEvents.filter { it.formattedDate == "today" }
                     CollapsibleWidget(
                         title = "today's events",
                         collapsedSummary = {
-                            Text("needs setup", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                            Text(
+                                text = if (todayEvents.isEmpty()) "all quiet" else "${todayEvents.size} scheduled today",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (todayEvents.isEmpty()) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                            )
                         }
                     ) {
-                        Text(
-                            text = "add a task or event",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
-                        )
+                        if (todayEvents.isEmpty()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "no more events today",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted
+                                )
+                                Text(
+                                    text = "+ event",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                )
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                todayEvents.forEach { event ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MeenaSurface)
+                                            .clickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = event.title,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White
+                                            )
+                                            Text(
+                                                text = event.formattedTime,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MeenaTextMuted
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -289,7 +439,7 @@ fun TodayHub(
                                                 .clickable { quickNotes.removeAt(index) },
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text(text = "✕", fontSize = 11.sp, color = MeenaTextMuted)
+                                            Text(text = "x", fontSize = 11.sp, color = MeenaTextMuted)
                                         }
                                     }
                                 }

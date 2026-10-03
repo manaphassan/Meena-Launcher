@@ -245,6 +245,9 @@ fun MeenaHomeScreen(
         if (granted) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
         }
+        if (permissions[android.Manifest.permission.READ_CALENDAR] == true) {
+            my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
+        }
         val flat = android.provider.Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
         val isNotificationAccessGranted = flat != null && flat.contains(context.packageName)
         if (!isNotificationAccessGranted) {
@@ -257,10 +260,21 @@ fun MeenaHomeScreen(
         }
     }
 
+    val calendarPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
+        }
+    }
+
     LaunchedEffect(Unit) {
         QuickPanelHardwareHelper.initialize(context)
         if (my.hana.meena.data.system.DeviceLocationHelper.hasLocationPermission(context)) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
+        }
+        if (my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)) {
+            my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
         }
     }
 
@@ -446,7 +460,8 @@ fun MeenaHomeScreen(
                             onOpenMessages = onOpenMessages,
                             onOpenEmail = onOpenEmail,
                             onOpenCamera = onOpenCamera,
-                            onOpenCalculator = onOpenCalculator
+                            onOpenCalculator = onOpenCalculator,
+                            onRequestCalendarPermission = { calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR) }
                         )
                         1 -> InboxHub(
                             settings = userSettings!!,
@@ -582,7 +597,10 @@ fun MeenaHomeScreen(
                                     settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
                                 }
                                 permissionLauncher.launch(
-                                    arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                                    arrayOf(
+                                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        android.Manifest.permission.READ_CALENDAR
+                                    )
                                 )
                             },
                             modifier = Modifier.weight(1f),
