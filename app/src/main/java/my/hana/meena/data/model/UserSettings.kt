@@ -40,6 +40,9 @@ data class MeenaUserSettings(
     val geminiIncludeWeather: Boolean = true,
     val geminiIncludeSolat: Boolean = true,
     val geminiIncludeFinance: Boolean = false,
+    // Calendar settings
+    val calendarDaysAhead: Int = 7,
+    val calendarShowAllDay: Boolean = true,
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {

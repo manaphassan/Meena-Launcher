@@ -107,10 +107,17 @@ fun TodayHub(
     val briefState by GeminiBriefRepository.state.collectAsState()
     val quickNotes = remember { mutableStateListOf<String>() }
 
+    LaunchedEffect(settings.calendarDaysAhead, settings.calendarShowAllDay) {
+        DeviceCalendarRepository.refresh(
+            context = context,
+            daysAhead = settings.calendarDaysAhead,
+            showAllDay = settings.calendarShowAllDay
+        )
+    }
+
     LaunchedEffect(Unit) {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
-        DeviceCalendarRepository.refresh(context)
         WeatherRepository.refresh(context)
         GeminiBriefRepository.refresh(context, settings)
         while (true) {
@@ -581,7 +588,7 @@ fun TodayHub(
                                                     },
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MeenaTextMuted,
-                                                    fontSize = 11.sp
+                                                    fontSize = 12.sp
                                                 )
                                             }
                                         }
@@ -635,7 +642,8 @@ fun TodayHub(
                                     modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
                                 )
                             }
-                                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 todayEvents.forEach { event ->
                                     Row(
                                         modifier = Modifier
@@ -658,6 +666,17 @@ fun TodayHub(
                                             )
                                         }
                                     }
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Text(
+                                        text = "+ new event",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                    )
                                 }
                             }
                         }

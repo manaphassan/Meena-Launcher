@@ -30,6 +30,14 @@ data class DeviceCalendarEvent(
     val formattedDate: String = ""
 )
 
+data class CalendarAccount(
+    val id: Long,
+    val displayName: String,
+    val accountName: String,
+    val color: Int,
+    val isVisible: Boolean
+)
+
 sealed interface CalendarState {
     object NeedsPermission : CalendarState
     data class Ready(
@@ -73,7 +81,55 @@ object DeviceCalendarRepository {
         } catch (_: Exception) {}
     }
 
-    fun refresh(context: Context, daysAhead: Int = 7) {
+    /**
+     * Query available calendars from device to display in settings
+     */
+    fun getAvailableCalendars(context: Context): List<CalendarAccount> {
+        if (!hasCalendarPermission(context)) return emptyList()
+        val list = mutableListOf<CalendarAccount>()
+        try {
+            val projection = arrayOf(
+                CalendarContract.Calendars._ID,
+                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Calendars.ACCOUNT_NAME,
+                CalendarContract.Calendars.CALENDAR_COLOR,
+                CalendarContract.Calendars.VISIBLE
+            )
+            val cursor = context.contentResolver.query(
+                CalendarContract.Calendars.CONTENT_URI,
+                projection,
+                null,
+                null,
+                "${CalendarContract.Calendars.ACCOUNT_NAME} ASC"
+            )
+            cursor?.use { c ->
+                val idIdx = c.getColumnIndex(CalendarContract.Calendars._ID)
+                val nameIdx = c.getColumnIndex(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME)
+                val accountIdx = c.getColumnIndex(CalendarContract.Calendars.ACCOUNT_NAME)
+                val colorIdx = c.getColumnIndex(CalendarContract.Calendars.CALENDAR_COLOR)
+                val visibleIdx = c.getColumnIndex(CalendarContract.Calendars.VISIBLE)
+                while (c.moveToNext()) {
+                    list.add(
+                        CalendarAccount(
+                            id = c.getLong(idIdx),
+                            displayName = c.getString(nameIdx) ?: "calendar",
+                            accountName = c.getString(accountIdx) ?: "",
+                            color = if (colorIdx >= 0) c.getInt(colorIdx) else 0,
+                            isVisible = if (visibleIdx >= 0) c.getInt(visibleIdx) == 1 else true
+                        )
+                    )
+                }
+            }
+        } catch (_: Exception) {}
+        return list
+    }
+
+    fun refresh(
+        context: Context,
+        daysAhead: Int = 7,
+        showAllDay: Boolean = true,
+        visibleCalendarIds: Set<Long>? = null
+    ) {
         if (!hasCalendarPermission(context)) {
             _state.value = CalendarState.NeedsPermission
             return
@@ -108,7 +164,8 @@ object DeviceCalendarRepository {
                 CalendarContract.Instances.END,
                 CalendarContract.Instances.ALL_DAY,
                 CalendarContract.Instances.EVENT_LOCATION,
-                CalendarContract.Instances.DISPLAY_COLOR
+                CalendarContract.Instances.DISPLAY_COLOR,
+                CalendarContract.Instances.CALENDAR_ID
             )
 
             val cursor = context.contentResolver.query(
@@ -132,6 +189,7 @@ object DeviceCalendarRepository {
                 val allDayIdx = c.getColumnIndex(CalendarContract.Instances.ALL_DAY)
                 val locationIdx = c.getColumnIndex(CalendarContract.Instances.EVENT_LOCATION)
                 val colorIdx = c.getColumnIndex(CalendarContract.Instances.DISPLAY_COLOR)
+                val calIdIdx = c.getColumnIndex(CalendarContract.Instances.CALENDAR_ID)
 
                 while (c.moveToNext()) {
                     val id = c.getLong(idIdx)
@@ -141,6 +199,17 @@ object DeviceCalendarRepository {
                     val isAllDay = c.getInt(allDayIdx) == 1
                     val location = c.getString(locationIdx)?.lowercase() ?: ""
                     val color = if (colorIdx >= 0) c.getInt(colorIdx) else 0
+                    val calId = if (calIdIdx >= 0) c.getLong(calIdIdx) else -1L
+
+                    // Filter out unselected calendars if specified
+                    if (visibleCalendarIds != null && calId != -1L && !visibleCalendarIds.contains(calId)) {
+                        continue
+                    }
+
+                    // Filter all day events if disabled
+                    if (!showAllDay && isAllDay) {
+                        continue
+                    }
 
                     val eventCal = Calendar.getInstance().apply { timeInMillis = begin }
                     val isToday = eventCal.get(Calendar.YEAR) == todayYear && eventCal.get(Calendar.DAY_OF_YEAR) == todayDayOfYear

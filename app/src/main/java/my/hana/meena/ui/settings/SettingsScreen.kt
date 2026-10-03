@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -341,6 +342,19 @@ fun SettingsScreen(
                                 title = "health",
                                 status = "activity & health connect",
                                 onClick = { activeSubPage = "account:health" }
+                            )
+                        }
+
+                        item {
+                            val calStatus = if (my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)) {
+                                "${settingsState.calendarDaysAhead}d lookahead"
+                            } else {
+                                "needs permission"
+                            }
+                            SettingLinkRow(
+                                title = "calendar",
+                                status = calStatus,
+                                onClick = { activeSubPage = "account:calendar" }
                             )
                         }
                     }
@@ -1436,6 +1450,22 @@ private fun SubPageContainer(
             }
         }
 
+        subPageId == "account:calendar" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = "accounts",
+                    pageTitle = "device calendar",
+                    onBack = onBack
+                )
+            }
+            item {
+                CalendarAccountSettings(
+                    settingsState = settingsState,
+                    onUpdate = onUpdate
+                )
+            }
+        }
+
         // Dedicated Look & Feel Sub-Pages
         subPageId == "look:theme" -> {
             item {
@@ -2075,6 +2105,148 @@ private fun FinanceAccountSettings() {
             shape = RoundedCornerShape(0.dp)
         ) {
             Text("add holding", style = MaterialTheme.typography.labelSmall, color = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun CalendarAccountSettings(
+    settingsState: MeenaUserSettings,
+    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
+) {
+    val context = LocalContext.current
+    val hasPerm = my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)
+    val availableCalendars = remember(hasPerm) {
+        if (hasPerm) my.hana.meena.data.system.DeviceCalendarRepository.getAvailableCalendars(context)
+        else emptyList()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = "meena reads your agenda directly from your android system calendar. no google login or cloud sync needed.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MeenaTextMuted
+        )
+
+        if (!hasPerm) {
+            Text(
+                text = "calendar permission is needed to show your upcoming agenda on the today hub.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White
+            )
+            Button(
+                onClick = {
+                    try {
+                        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = android.net.Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    } catch (_: Exception) {}
+                },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                shape = RoundedCornerShape(0.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("grant calendar permission in settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            }
+        } else {
+            Column {
+                Text("agenda lookahead", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(1 to "1 day", 3 to "3 days", 7 to "7 days", 14 to "14 days").forEach { (days, label) ->
+                        val isSelected = settingsState.calendarDaysAhead == days
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
+                                .clickable { onUpdate { it.copy(calendarDaysAhead = days) } }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isSelected) Color.White else MeenaTextMuted
+                            )
+                        }
+                    }
+                }
+            }
+
+            SettingToggleRow(
+                title = "all-day events",
+                subtitle = "include all-day items and holidays in agenda widgets",
+                checked = settingsState.calendarShowAllDay,
+                onCheckedChange = { checked -> onUpdate { it.copy(calendarShowAllDay = checked) } }
+            )
+
+            Column {
+                Text("synced calendars", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                Spacer(modifier = Modifier.height(6.dp))
+                if (availableCalendars.isEmpty()) {
+                    Text(
+                        text = "no local calendars found on this phone",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted,
+                        fontSize = 12.sp
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        availableCalendars.forEach { cal ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                val swatchColor = if (cal.color != 0) Color(cal.color) else MaterialTheme.colorScheme.primary
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(swatchColor)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = cal.displayName.lowercase(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White
+                                    )
+                                    if (cal.accountName.isNotBlank()) {
+                                        Text(
+                                            text = cal.accountName.lowercase(),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MeenaTextMuted,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Button(
+                onClick = {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW).setData(android.provider.CalendarContract.CONTENT_URI).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    } catch (_: Exception) {
+                        try {
+                            val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALENDAR).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                shape = RoundedCornerShape(0.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface)
+            ) {
+                Text("open system calendar app", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            }
         }
     }
 }

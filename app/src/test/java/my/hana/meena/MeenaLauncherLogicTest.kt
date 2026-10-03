@@ -286,6 +286,49 @@ class MeenaLauncherLogicTest {
         assertEquals(700.0, holding.profitLoss, 0.001)
         assertEquals((700.0 / 3750.0) * 100.0, holding.profitLossPercent, 0.001)
     }
+
+    @Test
+    fun calendarUserSettings_defaultValues() {
+        val settings = MeenaUserSettings()
+        assertEquals(7, settings.calendarDaysAhead)
+        assertTrue(settings.calendarShowAllDay)
+    }
+
+    @Test
+    fun deviceCalendarEvent_dataModelProperties() {
+        val event = my.hana.meena.data.system.DeviceCalendarEvent(
+            id = 42L,
+            title = "team sprint sync",
+            startTime = 1700000000000L,
+            endTime = 1700003600000L,
+            isAllDay = false,
+            location = "room a",
+            calendarColor = -16711936,
+            formattedTime = "10:00 – 11:00",
+            formattedDate = "today"
+        )
+        assertEquals(42L, event.id)
+        assertEquals("team sprint sync", event.title)
+        assertEquals("room a", event.location)
+        assertFalse(event.isAllDay)
+        assertEquals("today", event.formattedDate)
+    }
+
+    @Test
+    fun calendarAccount_dataModelProperties() {
+        val account = my.hana.meena.data.system.CalendarAccount(
+            id = 1L,
+            displayName = "personal",
+            accountName = "user@example.com",
+            color = -16776961,
+            isVisible = true
+        )
+        assertEquals(1L, account.id)
+        assertEquals("personal", account.displayName)
+        assertEquals("user@example.com", account.accountName)
+        assertTrue(account.isVisible)
+    }
 }
+
 
 
