@@ -4,6 +4,7 @@ import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.JakimSolatRepository
 import my.hana.meena.data.system.SpendingRepository
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -72,6 +73,7 @@ class MeenaLauncherLogicTest {
 
     @Test
     fun spendingRepository_parsesNotificationAmounts() {
+        SpendingRepository.isOptedIn = true
         val parsed = SpendingRepository.parseAndRecordFromNotification(
             packageName = "com.maybank2u.life",
             title = "MAE Transaction Successful",
@@ -81,6 +83,23 @@ class MeenaLauncherLogicTest {
         val latest = (SpendingRepository.state.value as? my.hana.meena.ui.widgets.WidgetState.Ready)?.data?.first()!!
         assertEquals(25.40, latest.amount, 0.001)
         assertEquals("Village Park Restaurant", latest.merchant)
+
+        // Verify non-allowlisted package is strictly rejected
+        val rejectedRandomApp = SpendingRepository.parseAndRecordFromNotification(
+            packageName = "com.random.chat",
+            title = "Friend",
+            text = "Can you transfer me RM 50.00?"
+        )
+        assertFalse(rejectedRandomApp)
+
+        // Verify opted-out state rejects allowlisted notifications
+        SpendingRepository.isOptedIn = false
+        val rejectedWhenOptedOut = SpendingRepository.parseAndRecordFromNotification(
+            packageName = "com.maybank2u.life",
+            title = "MAE Transaction",
+            text = "You paid RM 10.00 at Store"
+        )
+        assertFalse(rejectedWhenOptedOut)
     }
 
     @Test

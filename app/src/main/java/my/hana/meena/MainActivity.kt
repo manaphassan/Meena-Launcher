@@ -570,11 +570,37 @@ fun MeenaHomeScreen(
                 onExportBackup = {
                     coroutineScope.launch {
                         val exported = settingsRepository.exportToJson(userSettings!!)
-                        // Can be saved or shared
+                        try {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "application/json"
+                                putExtra(Intent.EXTRA_SUBJECT, "meena-settings-backup.json")
+                                putExtra(Intent.EXTRA_TEXT, exported)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "export meena settings"))
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "couldn't share backup", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     }
                 },
                 onImportBackup = {
-                    // Import logic hook
+                    try {
+                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                        val clip = clipboard?.primaryClip?.getItemAt(0)?.text?.toString()
+                        if (!clip.isNullOrBlank() && clip.startsWith("{") && clip.contains("widgetConfigs")) {
+                            coroutineScope.launch {
+                                val success = settingsRepository.importFromJson(clip)
+                                if (success) {
+                                    android.widget.Toast.makeText(context, "settings restored from clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, "couldn't parse backup json", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            android.widget.Toast.makeText(context, "copy your backup json to clipboard first, then tap import", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(context, "couldn't import backup", android.widget.Toast.LENGTH_SHORT).show()
+                    }
                 },
                 onResetDefaults = {
                     coroutineScope.launch { settingsRepository.resetToFactoryDefaults() }

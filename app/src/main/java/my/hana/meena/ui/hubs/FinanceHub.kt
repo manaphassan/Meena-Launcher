@@ -54,6 +54,11 @@ fun FinanceHub(
         FinanceRepository.initialize(context)
     }
 
+    LaunchedEffect(settings) {
+        val isSpendingEnabled = settings.widgetConfigs["widget-spending-summary"]?.isEnabled == true
+        SpendingRepository.isOptedIn = isSpendingEnabled
+    }
+
     val financeState by FinanceRepository.state.collectAsState()
     val exchangeRateState by ExchangeRateRepository.state.collectAsState()
     val spendingState by SpendingRepository.state.collectAsState()
@@ -95,6 +100,7 @@ fun FinanceHub(
 
                 "widget-spending-summary" -> {
                     SpendingSection(
+                        state = spendingState,
                         transactions = liveTransactions,
                         totalSpentToday = totalSpentToday,
                         onOpenSettings = onOpenSettings
@@ -445,6 +451,7 @@ private fun ExchangeRatesSection(
  */
 @Composable
 private fun SpendingSection(
+    state: WidgetState<List<my.hana.meena.data.system.SpendingTransaction>>,
     transactions: List<my.hana.meena.data.system.SpendingTransaction>,
     totalSpentToday: Double,
     onOpenSettings: () -> Unit
@@ -460,7 +467,7 @@ private fun SpendingSection(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            if (totalSpentToday > 0) {
+            if (totalSpentToday > 0 && state is WidgetState.Ready) {
                 Text(
                     text = "rm %.2f today".format(totalSpentToday),
                     style = MaterialTheme.typography.bodyMedium,
@@ -469,25 +476,46 @@ private fun SpendingSection(
             }
         }
 
-        if (transactions.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenSettings() },
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "all quiet today",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White
-                )
-                Text(
-                    text = "banking notifications from maybank, cimb, tng and grab will appear here.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MeenaTextMuted
-                )
+        when {
+            state is WidgetState.NeedsSetup -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenSettings() },
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "turn on spending",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "tap to opt in and track payments from allowlisted banking apps.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
             }
-        } else {
+            transactions.isEmpty() -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenSettings() },
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "all quiet today",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "banking notifications from allowlisted payment apps will appear here.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+            else -> {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 transactions.take(6).forEach { tx ->
                     Row(
@@ -518,3 +546,6 @@ private fun SpendingSection(
         }
     }
 }
+}
+
+

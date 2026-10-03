@@ -258,24 +258,24 @@ fun SettingsScreen(
                         }
 
                         val widgetList = listOf(
-                            "widget-clock-weather" to "clock & weather",
+                            "widget-clock-weather" to "clock",
                             "widget-weather-forecast" to "weather forecast",
                             "widget-solat" to "prayer times (solat)",
-                            "widget-calendar-month" to "calendar grid",
-                            "widget-tasks" to "schedule & agenda",
-                            "widget-today-summary" to "brief (gemini flash)",
-                            "widget-notes" to "quick notes",
-                            "widget-exchange-rates" to "exchange rates",
-                            "widget-finance-charts" to "financial charts",
-                            "widget-spending-summary" to "spending tracker",
-                            "widget-notifications" to "alerts & notifications",
-                            "widget-conversations" to "conversations",
+                            "widget-calendar-month" to "calendar",
+                            "widget-tasks" to "tasks",
+                            "widget-today-summary" to "brief",
+                            "widget-notes" to "notes",
+                            "widget-exchange-rates" to "rates",
+                            "widget-finance-charts" to "portfolio",
+                            "widget-spending-summary" to "spending",
+                            "widget-notifications" to "alerts",
+                            "widget-conversations" to "chats",
                             "widget-news-feed" to "news feed",
-                            "widget-device-telemetry" to "phone status",
+                            "widget-device-telemetry" to "phone",
                             "widget-map-radar" to "map radar",
-                            "widget-health-device" to "connected device",
-                            "widget-health-telemetry" to "fit telemetry",
-                            "widget-health-aqi" to "air quality index"
+                            "widget-health-device" to "companion device",
+                            "widget-health-telemetry" to "health",
+                            "widget-health-aqi" to "air"
                         )
 
                         items(widgetList) { (id, title) ->
@@ -322,8 +322,8 @@ fun SettingsScreen(
 
                         item {
                             SettingLinkRow(
-                                title = "notification access",
-                                status = "interception for alerts & spending",
+                                title = "alerts & chats",
+                                status = "access for alerts, chats & spending",
                                 onClick = { activeSubPage = "account:notifications" }
                             )
                         }
@@ -338,8 +338,8 @@ fun SettingsScreen(
 
                         item {
                             SettingLinkRow(
-                                title = "health connect",
-                                status = "device telemetry & metrics",
+                                title = "health",
+                                status = "activity & health connect",
                                 onClick = { activeSubPage = "account:health" }
                             )
                         }
@@ -1716,7 +1716,7 @@ fun SettingLinkRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = title.lowercase(),
                 style = MaterialTheme.typography.titleMedium,
@@ -1730,12 +1730,6 @@ fun SettingLinkRow(
                 color = MeenaTextMuted
             )
         }
-        Text(
-            text = "›",
-            fontSize = 20.sp,
-            color = MeenaTextMuted,
-            modifier = Modifier.padding(start = 8.dp)
-        )
     }
 }
 
