@@ -161,6 +161,13 @@ class MeenaLauncherLogicTest {
         // Clamped by maxScroll
         assertEquals(80, my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(1f, widths, spacing, 80))
     }
+
+    @Test
+    fun quickPanelHardwareHelper_initialStatesAreValid() {
+        assertNotNull(my.hana.meena.data.system.QuickPanelHardwareHelper.wifiState.value)
+        assertNotNull(my.hana.meena.data.system.QuickPanelHardwareHelper.bluetoothState.value)
+        assertEquals(false, my.hana.meena.data.system.QuickPanelHardwareHelper.isTorchActive.value)
+    }
 }
 
 

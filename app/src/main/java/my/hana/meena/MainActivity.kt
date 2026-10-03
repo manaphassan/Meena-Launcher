@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.data.preferences.SettingsRepository
 import my.hana.meena.data.system.NotificationRepository
+import my.hana.meena.data.system.QuickPanelHardwareHelper
 import my.hana.meena.theme.MeenaBorderSubtle
 import my.hana.meena.theme.MeenaLauncherTheme
 import my.hana.meena.theme.MeenaProfitGreen
@@ -257,6 +258,7 @@ fun MeenaHomeScreen(
     }
 
     LaunchedEffect(Unit) {
+        QuickPanelHardwareHelper.initialize(context)
         if (my.hana.meena.data.system.DeviceLocationHelper.hasLocationPermission(context)) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
         }
@@ -627,6 +629,10 @@ fun ActionCenterSheet(
     onOpenSettings: () -> Unit
 ) {
     val liveNotifications by NotificationRepository.notificationsFlow.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val wifiState by QuickPanelHardwareHelper.wifiState.collectAsState()
+    val bluetoothState by QuickPanelHardwareHelper.bluetoothState.collectAsState()
+    val isTorchActive by QuickPanelHardwareHelper.isTorchActive.collectAsState()
 
     Box(
         modifier = Modifier
@@ -680,15 +686,39 @@ fun ActionCenterSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 4 Quick Action Tiles (WP8.1 Style)
+            // 4 Quick Action Tiles (WP8.1 Style with Live Android Hardware State)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ActionTile("wi-fi", "network", true, Modifier.weight(1f))
-                ActionTile("bluetooth", "ready", true, Modifier.weight(1f))
-                ActionTile("torch", "ready", false, Modifier.weight(1f))
-                ActionTile("settings", "all", true, Modifier.weight(1f), onClick = onOpenSettings)
+                ActionTile(
+                    title = "wi-fi",
+                    state = wifiState.label,
+                    isActive = wifiState.isConnected,
+                    modifier = Modifier.weight(1f),
+                    onClick = { QuickPanelHardwareHelper.openWifiPanel(context) }
+                )
+                ActionTile(
+                    title = "bluetooth",
+                    state = bluetoothState.label,
+                    isActive = bluetoothState.isEnabled,
+                    modifier = Modifier.weight(1f),
+                    onClick = { QuickPanelHardwareHelper.openBluetoothPanel(context) }
+                )
+                ActionTile(
+                    title = "torch",
+                    state = if (isTorchActive) "on" else "off",
+                    isActive = isTorchActive,
+                    modifier = Modifier.weight(1f),
+                    onClick = { QuickPanelHardwareHelper.toggleTorch(context) }
+                )
+                ActionTile(
+                    title = "settings",
+                    state = "all",
+                    isActive = true,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenSettings
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
