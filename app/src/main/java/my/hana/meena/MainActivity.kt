@@ -42,11 +42,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import my.hana.meena.ui.navigation.ParallaxHelper
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -315,30 +320,44 @@ fun MeenaHomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Panoramic Hub Pivot Header (WP7 / WP8.1 style - continuous drag sync with 1:1 parallax)
+            // Panoramic Hub Pivot Header (WP7 / WP8.1 style - continuous drag sync with measured title widths)
             val hubs = listOf("today", "inbox", "news", "money", "apps")
             val headerScrollState = rememberScrollState()
+            val titleWidths = remember { mutableStateListOf(0, 0, 0, 0, 0) }
+            val localDensity = LocalDensity.current
+            val titleSpacingDp = 32.dp
+            val titleSpacingPx = with(localDensity) { titleSpacingDp.roundToPx() }
 
-            // Continuous real-time header sync with pager drag position
+            // Continuous real-time header sync with pager drag position and measured widths
             LaunchedEffect(pagerState) {
-                snapshotFlow { pagerState.currentPage + pagerState.currentPageOffsetFraction }
-                    .collect { continuousPage ->
-                        if (headerScrollState.maxValue > 0) {
-                            val targetScroll = (continuousPage * 135.dp.value).toInt().coerceIn(0, headerScrollState.maxValue)
-                            headerScrollState.scrollTo(targetScroll)
-                        }
+                snapshotFlow {
+                    val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                    val widths = titleWidths.toList()
+                    val maxScroll = headerScrollState.maxValue
+                    Triple(continuousPage, widths, maxScroll)
+                }.collect { (continuousPage, widths, maxScroll) ->
+                    if (maxScroll > 0 && widths.any { it > 0 }) {
+                        val targetScroll = ParallaxHelper.calculateTitleScrollOffset(
+                            continuousPage = continuousPage,
+                            titleWidths = widths,
+                            spacingPx = titleSpacingPx,
+                            maxScroll = maxScroll
+                        )
+                        headerScrollState.scrollTo(targetScroll)
                     }
+                }
             }
 
             val currentContinuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
+            val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .horizontalScroll(headerScrollState)
-                    .padding(start = 20.dp, end = 60.dp, top = 12.dp, bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    .horizontalScroll(headerScrollState, enabled = false)
+                    .padding(start = 24.dp, top = 12.dp, bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(titleSpacingDp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 hubs.forEachIndexed { index, title ->
@@ -353,6 +372,11 @@ fun MeenaHomeScreen(
                         maxLines = 1,
                         color = Color.White.copy(alpha = titleAlpha),
                         modifier = Modifier
+                            .onSizeChanged { size ->
+                                if (index < titleWidths.size && titleWidths[index] != size.width) {
+                                    titleWidths[index] = size.width
+                                }
+                            }
                             .graphicsLayer {
                                 scaleX = titleScale
                                 scaleY = titleScale
@@ -367,6 +391,8 @@ fun MeenaHomeScreen(
                             }
                     )
                 }
+                // Trailing spacer so the final hub title ("apps") can scroll cleanly to the start margin
+                Spacer(modifier = Modifier.width((screenWidthDp - 24.dp).coerceAtLeast(80.dp)))
             }
 
             val onTogglePin = { pkgId: String ->

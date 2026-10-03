@@ -82,5 +82,85 @@ class MeenaLauncherLogicTest {
         assertEquals(25.40, latest.amount, 0.001)
         assertEquals("Village Park Restaurant", latest.merchant)
     }
+
+    @Test
+    fun parallaxHelper_calculatesZeroOffsetAtFirstPage() {
+        val widths = listOf(180, 160, 140, 200, 150)
+        val spacing = 96
+        val offset = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(
+            continuousPage = 0f,
+            titleWidths = widths,
+            spacingPx = spacing,
+            maxScroll = 2000
+        )
+        assertEquals(0, offset)
+    }
+
+    @Test
+    fun parallaxHelper_calculatesExactOffsetsForMeasuredTitles() {
+        val widths = listOf(180, 160, 140, 200, 150)
+        val spacing = 96
+        // Page 1 (inbox) should offset by title 0 width + spacing: 180 + 96 = 276
+        val page1Offset = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(
+            continuousPage = 1f,
+            titleWidths = widths,
+            spacingPx = spacing,
+            maxScroll = 2000
+        )
+        assertEquals(276, page1Offset)
+
+        // Page 2 (news) should offset by 276 + 160 + 96 = 532
+        val page2Offset = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(
+            continuousPage = 2f,
+            titleWidths = widths,
+            spacingPx = spacing,
+            maxScroll = 2000
+        )
+        assertEquals(532, page2Offset)
+
+        // Page 4 (apps) should offset by 532 + (140 + 96) + (200 + 96) = 532 + 236 + 296 = 1064
+        val page4Offset = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(
+            continuousPage = 4f,
+            titleWidths = widths,
+            spacingPx = spacing,
+            maxScroll = 2000
+        )
+        assertEquals(1064, page4Offset)
+    }
+
+    @Test
+    fun parallaxHelper_interpolatesSmoothlyBetweenPages() {
+        val widths = listOf(200, 200, 200, 200, 200)
+        val spacing = 100 // step = 300
+        val offsetMid = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(
+            continuousPage = 0.5f,
+            titleWidths = widths,
+            spacingPx = spacing,
+            maxScroll = 2000
+        )
+        assertEquals(150, offsetMid)
+
+        val offsetQuarter = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(
+            continuousPage = 1.25f,
+            titleWidths = widths,
+            spacingPx = spacing,
+            maxScroll = 2000
+        )
+        // 300 + 0.25 * 300 = 375
+        assertEquals(375, offsetQuarter)
+    }
+
+    @Test
+    fun parallaxHelper_clampsAtMaxScrollAndBounds() {
+        val widths = listOf(100, 100)
+        val spacing = 50
+        // Negative page clamped to 0
+        assertEquals(0, my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(-1f, widths, spacing, 1000))
+        // Beyond page clamped to max title
+        assertEquals(150, my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(5f, widths, spacing, 1000))
+        // Clamped by maxScroll
+        assertEquals(80, my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleScrollOffset(1f, widths, spacing, 80))
+    }
 }
+
 
