@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.R
+import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.model.WidgetConfig
 import my.hana.meena.data.news.NewsRssRepository
@@ -1396,11 +1398,7 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Text(
-                    text = "quotes are sourced from the google sheets bridge or licensed free quote providers. no synthetic prices or fake balances are ever used.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MeenaTextMuted
-                )
+                FinanceAccountSettings()
             }
         }
 
@@ -1834,6 +1832,255 @@ fun SettingSegmentedRow(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FinanceAccountSettings() {
+    val context = LocalContext.current
+    val financeState by FinanceRepository.state.collectAsState()
+    val data: my.hana.meena.data.finance.FinanceData? = when (val s = financeState) {
+        is my.hana.meena.ui.widgets.WidgetState.Ready -> s.data
+        is my.hana.meena.ui.widgets.WidgetState.Stale -> s.data
+        else -> null
+    }
+
+    var sheetUrlInput by remember(data?.sheetUrl) { mutableStateOf(data?.sheetUrl ?: "") }
+    var newSymbol by remember { mutableStateOf("") }
+    var newShares by remember { mutableStateOf("") }
+    var newAvgCost by remember { mutableStateOf("") }
+    var newPrice by remember { mutableStateOf("") }
+    var newGroup by remember { mutableStateOf("mplus") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // 1. Google Sheets Bridge
+        Text(
+            text = "google sheets bridge",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "connect your own google sheet with googlefinance() formulas. data may be delayed up to 20 minutes.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+
+        OutlinedTextField(
+            value = sheetUrlInput,
+            onValueChange = { sheetUrlInput = it },
+            label = { Text("google sheet or csv url", style = MaterialTheme.typography.labelSmall) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MeenaSurface,
+                unfocusedContainerColor = MeenaSurface,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MeenaBorder
+            )
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    FinanceRepository.setSheetUrl(context, sheetUrlInput)
+                },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(0.dp)
+            ) {
+                Text("save & load sheet", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            }
+
+            if (sheetUrlInput.isNotBlank()) {
+                Button(
+                    onClick = {
+                        sheetUrlInput = ""
+                        FinanceRepository.setSheetUrl(context, "")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
+                    shape = RoundedCornerShape(0.dp)
+                ) {
+                    Text("disconnect", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 2. Local Portfolio Holdings
+        Text(
+            text = "portfolio holdings",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "manage local stock and crypto holdings. all balances are stored privately on your phone.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+
+        // Existing Holdings
+        val holdings: List<my.hana.meena.data.finance.FinanceHolding> = data?.holdings ?: emptyList()
+        if (holdings.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (holding in holdings) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${holding.symbol.lowercase()} (${holding.groupName.lowercase()})",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "${holding.shares.toInt()} shares · cost rm %.2f · now rm %.2f".format(holding.averageCost, holding.currentPrice),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                        IconButton(
+                            onClick = { FinanceRepository.removeHolding(context, holding.id) }
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "delete", tint = Color(0xFFFF5252))
+                        }
+                    }
+                }
+            }
+        } else {
+            Text(
+                text = "no holdings added yet.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MeenaTextMuted
+            )
+        }
+
+        // Add New Holding Form
+        Text(
+            text = "add holding",
+            style = MaterialTheme.typography.titleSmall,
+            color = Color.White
+        )
+
+        OutlinedTextField(
+            value = newSymbol,
+            onValueChange = { newSymbol = it },
+            label = { Text("symbol (e.g. bursa, hlal, btc)", style = MaterialTheme.typography.labelSmall) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MeenaSurface,
+                unfocusedContainerColor = MeenaSurface,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = newShares,
+                onValueChange = { newShares = it },
+                label = { Text("shares/units", style = MaterialTheme.typography.labelSmall) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MeenaSurface,
+                    unfocusedContainerColor = MeenaSurface,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            OutlinedTextField(
+                value = newAvgCost,
+                onValueChange = { newAvgCost = it },
+                label = { Text("avg cost (rm)", style = MaterialTheme.typography.labelSmall) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MeenaSurface,
+                    unfocusedContainerColor = MeenaSurface,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = newPrice,
+                onValueChange = { newPrice = it },
+                label = { Text("current price (rm)", style = MaterialTheme.typography.labelSmall) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MeenaSurface,
+                    unfocusedContainerColor = MeenaSurface,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            OutlinedTextField(
+                value = newGroup,
+                onValueChange = { newGroup = it },
+                label = { Text("account (e.g. mplus)", style = MaterialTheme.typography.labelSmall) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MeenaSurface,
+                    unfocusedContainerColor = MeenaSurface,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+        }
+
+        Button(
+            onClick = {
+                val shares = newShares.toDoubleOrNull() ?: 0.0
+                val cost = newAvgCost.toDoubleOrNull() ?: 0.0
+                val price = newPrice.toDoubleOrNull() ?: cost
+                if (newSymbol.isNotBlank() && shares > 0.0) {
+                    FinanceRepository.addHolding(
+                        context,
+                        my.hana.meena.data.finance.FinanceHolding(
+                            symbol = newSymbol.trim().uppercase(),
+                            name = newSymbol.trim().uppercase(),
+                            shares = shares,
+                            averageCost = cost,
+                            currentPrice = price,
+                            currency = "MYR",
+                            groupName = newGroup.trim().ifBlank { "portfolio" }
+                        )
+                    )
+                    newSymbol = ""
+                    newShares = ""
+                    newAvgCost = ""
+                    newPrice = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Text("add holding", style = MaterialTheme.typography.labelSmall, color = Color.White)
         }
     }
 }

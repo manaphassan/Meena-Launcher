@@ -194,6 +194,33 @@ class MeenaLauncherLogicTest {
         val state = my.hana.meena.data.system.GeminiBriefRepository.state.value
         assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup)
     }
+
+    @Test
+    fun exchangeRateRepository_initialStateIsNeedsSetup() {
+        val state = my.hana.meena.data.finance.ExchangeRateRepository.state.value
+        assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup)
+    }
+
+    @Test
+    fun financeRepository_initialStateIsNeedsSetup() {
+        val state = my.hana.meena.data.finance.FinanceRepository.state.value
+        assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup)
+    }
+
+    @Test
+    fun financeHolding_profitAndLossCalculationsAreCorrect() {
+        val holding = my.hana.meena.data.finance.FinanceHolding(
+            symbol = "BURSA",
+            name = "Bursa Malaysia Bhd",
+            shares = 500.0,
+            averageCost = 7.50,
+            currentPrice = 8.90
+        )
+        assertEquals(3750.0, holding.totalCost, 0.001)
+        assertEquals(4450.0, holding.currentValue, 0.001)
+        assertEquals(700.0, holding.profitLoss, 0.001)
+        assertEquals((700.0 / 3750.0) * 100.0, holding.profitLossPercent, 0.001)
+    }
 }
 
 

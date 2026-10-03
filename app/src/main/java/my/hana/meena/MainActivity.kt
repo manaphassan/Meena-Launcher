@@ -486,7 +486,8 @@ fun MeenaHomeScreen(
                         )
                         3 -> FinanceHub(
                             settings = userSettings!!,
-                            listState = hubMoneyListState
+                            listState = hubMoneyListState,
+                            onOpenSettings = { isSettingsOpen = true }
                         )
                         4 -> AppsHub(
                             listState = hubAppsListState,

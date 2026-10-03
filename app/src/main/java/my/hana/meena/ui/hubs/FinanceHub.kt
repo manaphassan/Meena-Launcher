@@ -1,9 +1,7 @@
 package my.hana.meena.ui.hubs
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,54 +9,57 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import my.hana.meena.data.finance.FinanceTicker
-import my.hana.meena.data.finance.GoogleFinanceRepository
+import my.hana.meena.data.finance.ExchangeRateRepository
+import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.SpendingRepository
-import my.hana.meena.theme.MeenaBorder
 import my.hana.meena.theme.MeenaProfitGreen
-import my.hana.meena.theme.MeenaSurface
 import my.hana.meena.theme.MeenaTextMuted
-import my.hana.meena.ui.components.AdvancedCandlestickChart
-import my.hana.meena.ui.components.CollapsibleWidget
-import my.hana.meena.ui.components.GoogleFinanceCard
-
 import my.hana.meena.ui.widgets.WidgetState
 
+/**
+ * Authentic Meena UI Money & Finance Hub.
+ * Design language: Clean, light, open, fast (inspired by Windows Phone Metro UI & AIO Launcher).
+ * Rules:
+ * - 100% lowercase text, no ALL CAPS, no emojis.
+ * - Zero cards, zero borders, zero boxes, zero elevation.
+ * - Hierarchy comes strictly from type scale and generous 24dp margins.
+ * - Real live sources: Frankfurter ECB exchange rates, Google Sheets bridge, bank SMS spending.
+ */
 @Composable
 fun FinanceHub(
     settings: MeenaUserSettings,
-    listState: LazyListState
+    listState: LazyListState,
+    onOpenSettings: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+
+    // Initialize repositories on entry
+    LaunchedEffect(Unit) {
+        ExchangeRateRepository.initialize(context, baseCurrency = "MYR")
+        FinanceRepository.initialize(context)
+    }
+
+    val financeState by FinanceRepository.state.collectAsState()
+    val exchangeRateState by ExchangeRateRepository.state.collectAsState()
     val spendingState by SpendingRepository.state.collectAsState()
+
     val liveTransactions = (spendingState as? WidgetState.Ready)?.data ?: emptyList()
     val totalSpentToday = liveTransactions.sumOf { it.amount }
-
-    val financeState by GoogleFinanceRepository.state.collectAsState()
-    val financeData = (financeState as? WidgetState.Ready)?.data
-    val watchlist = financeData?.watchlist ?: emptyList()
-
-    var selectedTicker: FinanceTicker? by remember(watchlist) {
-        mutableStateOf(watchlist.firstOrNull())
-    }
 
     val financeWidgets = settings.widgetConfigs.entries
         .filter { (it.value.hubId == "money" || it.value.hubId == "finance") && it.value.isEnabled }
@@ -68,211 +69,452 @@ fun FinanceHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        item { Spacer(modifier = Modifier.height(4.dp)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
 
         items(financeWidgets.size, key = { financeWidgets[it].key }) { index ->
-            val (widgetId, config) = financeWidgets[index]
+            val (widgetId, _) = financeWidgets[index]
             when (widgetId) {
                 "widget-finance-charts" -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        CollapsibleWidget(
-                            title = selectedTicker?.let { "candlestick chart • ${it.tickerDisplay.lowercase()}" } ?: "candlestick chart",
-                            collapsedSummary = {
-                                if (selectedTicker != null) {
-                                    val isBull = selectedTicker!!.changePercent >= 0
-                                    Text(
-                                        "${if (isBull) "+" else ""}${selectedTicker!!.change} (${if (isBull) "+" else ""}${selectedTicker!!.changePercent}%)",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (isBull) MeenaProfitGreen else Color(0xFFFF3B30)
-                                    )
-                                } else {
-                                    Text(
-                                        "add your first holding",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextMuted
-                                    )
-                                }
-                            }
-                        ) {
-                            if (selectedTicker != null) {
-                                AdvancedCandlestickChart(
-                                    selectedTicker = selectedTicker!!,
-                                    onSelectTicker = { selectedTicker = it }
-                                )
-                            } else {
-                                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                                    Text("add your first holding", color = MeenaTextMuted)
-                                }
-                            }
-                        }
-
-                        CollapsibleWidget(
-                            title = "google finance • portfolio & watchlist",
-                            collapsedSummary = {
-                                val portValue = GoogleFinanceRepository.getTotalPortfolioValue()
-                                Text(
-                                    if (watchlist.isNotEmpty()) "RM ${"%.2f".format(portValue)} • ${watchlist.size} Watchlist" else "add your first holding",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (watchlist.isNotEmpty()) MeenaProfitGreen else MeenaTextMuted
-                                )
-                            }
-                        ) {
-                            if (selectedTicker != null) {
-                                GoogleFinanceCard(
-                                    selectedTickerSymbol = selectedTicker!!.symbol,
-                                    onSelectTicker = { selectedTicker = it }
-                                )
-                            } else {
-                                Box(modifier = Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
-                                    Text("add your first holding", color = MeenaTextMuted)
-                                }
-                            }
-                        }
-                    }
+                    PortfolioSection(
+                        state = financeState,
+                        onOpenSettings = onOpenSettings,
+                        onRefresh = { FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "") }
+                    )
                 }
+
                 "widget-exchange-rates" -> {
-                    CollapsibleWidget(
-                        title = "exchange rates (myr)",
-                        collapsedSummary = {
-                            Text(
-                                "pick a currency",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextMuted
-                            )
-                        }
+                    ExchangeRatesSection(
+                        state = exchangeRateState,
+                        onRefresh = { ExchangeRateRepository.refresh(context, "MYR", force = true) },
+                        onOpenSettings = onOpenSettings
+                    )
+                }
+
+                "widget-spending-summary" -> {
+                    SpendingSection(
+                        transactions = liveTransactions,
+                        totalSpentToday = totalSpentToday,
+                        onOpenSettings = onOpenSettings
+                    )
+                }
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(80.dp)) }
+    }
+}
+
+/**
+ * Portfolio and Watchlist Section.
+ * Strictly free-tier, Google Sheets bridge or local holdings.
+ * Follows Meena UI: no cards, no borders, clean type hierarchy.
+ */
+@Composable
+private fun PortfolioSection(
+    state: WidgetState<my.hana.meena.data.finance.FinanceData>,
+    onOpenSettings: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "portfolio",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        when (state) {
+            is WidgetState.NeedsSetup -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenSettings() }
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "needs setup",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "add your holdings or connect a google sheet in settings. tap to configure.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+
+            is WidgetState.Loading -> {
+                Text(
+                    text = "updating portfolio...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+
+            is WidgetState.Ready, is WidgetState.Stale -> {
+                val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
+                val totalValue = data.holdings.sumOf { it.currentValue }
+                val totalCost = data.holdings.sumOf { it.totalCost }
+                val totalChange = totalValue - totalCost
+                val changePct = if (totalCost > 0) (totalChange / totalCost) * 100.0 else 0.0
+                val isProfit = totalChange >= 0
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onRefresh() },
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = "pick a currency in settings",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
+                            text = "rm %.2f".format(totalValue),
+                            fontSize = 32.sp,
+                            style = MaterialTheme.typography.displaySmall,
+                            color = Color.White
                         )
-                    }
-                }
-                "widget-spending-summary" -> {
-                    CollapsibleWidget(
-                        title = "spending • transactions",
-                        collapsedSummary = {
+                        if (data.holdings.isNotEmpty()) {
                             Text(
-                                text = if (totalSpentToday > 0) "MYR %.2f spent today".format(totalSpentToday) else "Monitoring banking notifications",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (totalSpentToday > 0) MeenaProfitGreen else MeenaTextMuted
+                                text = "${if (isProfit) "+" else ""}rm %.2f (${if (isProfit) "+" else ""}%.1f%%)".format(totalChange, changePct),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = if (isProfit) MeenaProfitGreen else Color(0xFFFF5252)
                             )
                         }
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    }
+
+                    Text(
+                        text = if (data.sheetConnected) "updated just now · google sheets bridge" else "updated just now · local portfolio",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted
+                    )
+                }
+
+                // Holdings List
+                if (data.holdings.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        data.holdings.forEach { holding ->
+                            val hProfit = holding.profitLoss >= 0
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "LATEST RECORDED TRANSACTIONS",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextMuted
-                                )
-                                Text(
-                                    text = "MYR %.2f".format(totalSpentToday),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
+                                Column {
+                                    Text(
+                                        text = holding.symbol.lowercase(),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "rm %.2f".format(holding.currentValue),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (hProfit) MeenaProfitGreen else Color(0xFFFF5252)
+                                    )
+                                }
                             }
+                        }
+                    }
+                }
 
-                            if (liveTransactions.isEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(MeenaSurface)
-                                        .border(1.dp, MeenaBorder)
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Watchlist Items
+                if (data.watchlist.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "watchlist",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MeenaTextMuted
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        data.watchlist.forEach { item ->
+                            val isBull = item.change >= 0
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = item.tickerDisplay.lowercase(),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White
+                                    )
+                                    if (item.name.isNotBlank() && item.name != item.symbol) {
                                         Text(
-                                            text = "No transactions recorded yet today",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "Maybank MAE, TNG eWallet, CIMB, GrabPay, and Bank SMS alerts will automatically appear here when received.",
+                                            text = item.name.lowercase(),
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted,
-                                            lineHeight = 16.sp
+                                            color = MeenaTextMuted
                                         )
                                     }
                                 }
-                            } else {
-                                liveTransactions.take(6).forEach { tx ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(MeenaSurface, RoundedCornerShape(0.dp))
-                                            .border(1.dp, MeenaBorder, RoundedCornerShape(0.dp))
-                                            .padding(12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.weight(1f),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .background(
-                                                        when (tx.bankCode) {
-                                                            "M" -> Color(0xFFFFB800)
-                                                            "T" -> Color(0xFF0055A5)
-                                                            "C" -> Color(0xFFCC0000)
-                                                            "G" -> Color(0xFF00B14F)
-                                                            else -> MaterialTheme.colorScheme.primary
-                                                        },
-                                                        RoundedCornerShape(0.dp)
-                                                    ),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = tx.bankCode,
-                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                                    fontSize = 16.sp,
-                                                    color = Color.White
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Column {
-                                                Text(tx.merchant, style = MaterialTheme.typography.bodyLarge, color = Color.White)
-                                                Text("${tx.bank} • ${tx.formattedTime}", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                            }
-                                        }
-                                        Text("-MYR %.2f".format(tx.amount), style = MaterialTheme.typography.bodyLarge, color = Color(0xFFFF5252))
-                                    }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "%.2f".format(item.price),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "${if (isBull) "+" else ""}%.2f (%.1f%%)".format(item.change, item.changePercent),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isBull) MeenaProfitGreen else Color(0xFFFF5252)
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
+
+            is WidgetState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onRefresh() }
+                ) {
+                    Text(
+                        text = state.message.lowercase(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFFF6B68)
+                    )
+                    Text(
+                        text = "tap to retry",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+
+            is WidgetState.Empty -> {
+                Text(
+                    text = "no portfolio items",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Exchange Rates Section backed by Frankfurter ECB reference rates.
+ * Follows Meena UI: no cards, no borders, clean type hierarchy.
+ */
+@Composable
+private fun ExchangeRatesSection(
+    state: WidgetState<my.hana.meena.data.finance.ExchangeRatesData>,
+    onRefresh: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "exchange rates",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        when (state) {
+            is WidgetState.NeedsSetup -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenSettings() }
+                ) {
+                    Text(
+                        text = "needs setup",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "pick currencies in settings. tap to configure.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+
+            is WidgetState.Loading -> {
+                Text(
+                    text = "fetching exchange rates...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+
+            is WidgetState.Ready, is WidgetState.Stale -> {
+                val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
+                val base = data.baseCurrency.lowercase()
+                val isStale = state is WidgetState.Stale
+
+                Text(
+                    text = if (isStale) "updated earlier · offline cache" else "updated today · european central bank",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Rate rows
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    data.rates.chunked(2).forEach { pair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            pair.forEach { item ->
+                                val target = item.currency.lowercase()
+                                val unit = if (target == "jpy" || target == "thb" || target == "idr") 100 else 1
+                                val price = if (unit == 100) item.rateToBase * 100 else item.rateToBase
+
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { onRefresh() }
+                                ) {
+                                    Text(
+                                        text = "$unit $target",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                    Text(
+                                        text = "%.2f $base".format(price),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+
+            is WidgetState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onRefresh() }
+                ) {
+                    Text(
+                        text = state.message.lowercase(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFFF6B68)
+                    )
+                    Text(
+                        text = "tap to retry",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+
+            is WidgetState.Empty -> {
+                Text(
+                    text = "no exchange rates",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Spending Section derived from parsed banking notifications.
+ * Follows Meena UI: no cards, no borders, clean typography.
+ */
+@Composable
+private fun SpendingSection(
+    transactions: List<my.hana.meena.data.system.SpendingTransaction>,
+    totalSpentToday: Double,
+    onOpenSettings: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "spending",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            if (totalSpentToday > 0) {
+                Text(
+                    text = "rm %.2f today".format(totalSpentToday),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+            }
         }
 
-        item { Spacer(modifier = Modifier.height(72.dp)) }
+        if (transactions.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenSettings() },
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "all quiet today",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White
+                )
+                Text(
+                    text = "banking notifications from maybank, cimb, tng and grab will appear here.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                transactions.take(6).forEach { tx ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = tx.merchant.lowercase(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "${tx.bank.lowercase()} · ${tx.formattedTime}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                        Text(
+                            text = "-rm %.2f".format(tx.amount),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFFF5252)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
-
-@Composable
-private fun RateCard(currency: String, rate: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .background(MeenaSurface, RoundedCornerShape(0.dp))
-            .border(1.dp, MeenaBorder, RoundedCornerShape(0.dp))
-            .padding(10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(currency, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-        Text(rate, style = MaterialTheme.typography.bodyLarge, color = Color.White)
-    }
-}
-
