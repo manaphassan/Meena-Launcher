@@ -557,9 +557,8 @@ fun TodayHub(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .background(MeenaSurface)
                                                 .clickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
-                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                                .padding(vertical = 6.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
@@ -636,15 +635,13 @@ fun TodayHub(
                                     modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
                                 )
                             }
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 todayEvents.forEach { event ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .background(MeenaSurface)
                                             .clickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            .padding(vertical = 4.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -673,7 +670,7 @@ fun TodayHub(
                         title = "quick notes",
                         collapsedSummary = {
                             Text(
-                                text = if (quickNotes.isEmpty()) "empty" else "${quickNotes.size} notes pinned",
+                                text = if (quickNotes.isEmpty()) "empty" else "${quickNotes.size} notes",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -691,9 +688,7 @@ fun TodayHub(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .background(MeenaSurface)
-                                            .border(1.dp, MeenaBorder)
-                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                            .padding(vertical = 4.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -703,14 +698,12 @@ fun TodayHub(
                                             color = MeenaTextWhite,
                                             modifier = Modifier.weight(1f)
                                         )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clickable { quickNotes.removeAt(index) },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = "x", fontSize = 11.sp, color = MeenaTextMuted)
-                                        }
+                                        Text(
+                                            text = "remove",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextMuted,
+                                            modifier = Modifier.clickable { quickNotes.removeAt(index) }
+                                        )
                                     }
                                 }
                             }
@@ -719,30 +712,49 @@ fun TodayHub(
                 }
 
                 "widget-health-device" -> {
-                    // Connected device
+                    // Connected fitness device / companion app
                     CollapsibleWidget(
-                        title = "connected device status",
+                        title = "companion app",
                         collapsedSummary = {
                             Text(
-                                text = "${deviceInfo.name.lowercase()} • ${deviceInfo.batteryPercent}%",
+                                text = when (healthState) {
+                                    is WidgetState.NeedsSetup -> "connect companion"
+                                    is WidgetState.Ready, is WidgetState.Stale -> deviceInfo.name.ifBlank { "connected" }.lowercase()
+                                    else -> "not connected"
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MeenaProfitGreen
+                                color = if (healthState is WidgetState.Ready) MeenaProfitGreen else MeenaTextMuted
                             )
                         }
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MeenaSurface)
-                                    .border(1.dp, MeenaBorder)
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        HealthRepository.openFitnessApp(context)
+                            when (healthState) {
+                                is WidgetState.NeedsSetup, is WidgetState.Empty -> {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                HealthRepository.openFitnessApp(context)
+                                            }
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "open companion app (mi fitness, health connect, samsung health)",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextMuted,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "open",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
-                                    .padding(14.dp)
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                }
+                                is WidgetState.Ready, is WidgetState.Stale -> {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -755,133 +767,78 @@ fun TodayHub(
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White
                                             )
-                                            Text(
-                                                text = "synced today at ${deviceInfo.lastSyncTime}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MeenaTextMuted
-                                            )
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .background(Color(0xFF00A4EF), RoundedCornerShape(0.dp))
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = deviceInfo.connectionType.lowercase(),
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White
-                                            )
-                                        }
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .background(Color(0xFF141414))
-                                                .border(1.dp, MeenaBorder)
-                                                .padding(horizontal = 10.dp, vertical = 8.dp)
-                                        ) {
-                                            Column {
-                                                Text("battery", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "${deviceInfo.batteryPercent}%",
-                                                        style = MaterialTheme.typography.titleLarge,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = if (deviceInfo.batteryPercent > 20) MeenaProfitGreen else Color(0xFFFF5252)
-                                                    )
-                                                    Text("normal", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                                }
+                                            if (deviceInfo.lastSyncTime.isNotBlank()) {
+                                                Text(
+                                                    text = "synced at ${deviceInfo.lastSyncTime}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MeenaTextMuted
+                                                )
                                             }
                                         }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .background(Color(0xFF141414))
-                                                .border(1.dp, MeenaBorder)
-                                                .padding(horizontal = 10.dp, vertical = 8.dp)
-                                        ) {
-                                            Column {
-                                                Text("skin temp", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "%.1f°c".format(deviceInfo.bodyTempCelsius),
-                                                        style = MaterialTheme.typography.titleLarge,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = Color.White
-                                                    )
-                                                    Text("wrist", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
                                         Text(
-                                            text = "open companion app",
-                                            fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = "sync now",
-                                            fontSize = 11.sp,
-                                            color = MeenaTextMuted,
-                                            modifier = Modifier.clickable {
-                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                HealthRepository.refreshTelemetry()
-                                            }
+                                            text = "open app",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.clickable { HealthRepository.openFitnessApp(context) }
                                         )
                                     }
                                 }
+                                else -> {}
                             }
                         }
                     }
                 }
 
                 "widget-health-telemetry" -> {
-                    // Fit telemetry
+                    // Daily activity & health metrics
                     CollapsibleWidget(
-                        title = "fit telemetry",
+                        title = "health",
                         collapsedSummary = {
                             Text(
-                                text = "${fitTelemetry.stepsToday} steps • ${fitTelemetry.heartRateBpm} bpm",
+                                text = when (healthState) {
+                                    is WidgetState.NeedsSetup -> "connect health"
+                                    is WidgetState.Ready, is WidgetState.Stale -> "${fitTelemetry.stepsToday} steps"
+                                    else -> "no data"
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White
+                                color = if (healthState is WidgetState.Ready) Color.White else MeenaTextMuted
                             )
                         }
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MeenaSurface)
-                                    .border(1.dp, MeenaBorder)
-                                    .padding(14.dp)
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        when (healthState) {
+                            is WidgetState.NeedsSetup, is WidgetState.Empty -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            HealthRepository.openFitnessApp(context)
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "connect health connect to track steps, sleep and activity.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = "connect",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            is WidgetState.Ready, is WidgetState.Stale -> {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("step target", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                        Text("steps", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                         Text(
                                             text = "${fitTelemetry.stepsToday} / ${fitTelemetry.stepGoal}",
                                             style = MaterialTheme.typography.labelSmall,
@@ -889,54 +846,49 @@ fun TodayHub(
                                         )
                                     }
                                     LinearProgressIndicator(
-                                        progress = { (fitTelemetry.stepsToday.toFloat() / fitTelemetry.stepGoal.toFloat()).coerceIn(0f, 1f) },
-                                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                                        progress = { if (fitTelemetry.stepGoal > 0) (fitTelemetry.stepsToday.toFloat() / fitTelemetry.stepGoal.toFloat()).coerceIn(0f, 1f) else 0f },
+                                        modifier = Modifier.fillMaxWidth().height(2.dp),
                                         color = MeenaProfitGreen,
-                                        trackColor = MeenaBorder
+                                        trackColor = Color(0xFF222222)
                                     )
                                 }
                             }
+                            else -> {}
                         }
                     }
                 }
 
                 "widget-health-aqi" -> {
-                    // Air quality index
+                    // Air quality
                     CollapsibleWidget(
-                        title = "air quality index",
+                        title = "air quality",
                         collapsedSummary = {
                             Text(
-                                text = "${airIndex.stationName.lowercase()} • aqi ${airIndex.aqiValue}",
+                                text = "${airIndex.stationName.ifBlank { "local" }.lowercase()} • aqi ${airIndex.aqiValue}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
                         }
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MeenaSurface)
-                                .border(1.dp, MeenaBorder)
-                                .padding(14.dp)
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(airIndex.stationName.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "${airIndex.aqiValue}",
-                                        fontSize = 34.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(android.graphics.Color.parseColor(airIndex.aqiColorHex))
-                                    )
-                                    Text(
-                                        text = airIndex.aqiStatus.lowercase(),
-                                        fontSize = 12.sp,
-                                        color = Color(android.graphics.Color.parseColor(airIndex.aqiColorHex))
-                                    )
-                                }
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(airIndex.stationName.ifBlank { "local station" }.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "${airIndex.aqiValue}",
+                                    fontSize = 32.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { Color.White }
+                                )
+                                Text(
+                                    text = airIndex.aqiStatus.lowercase(),
+                                    fontSize = 13.sp,
+                                    color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextMuted }
+                                )
+                            }
+                            if (airIndex.advisory.isNotBlank()) {
                                 Text(
                                     text = airIndex.advisory.lowercase(),
                                     style = MaterialTheme.typography.bodySmall,
@@ -953,147 +905,83 @@ fun TodayHub(
                 }
 
                 "widget-device-telemetry" -> {
-                    // System telemetry
+                    // Phone status
                     CollapsibleWidget(
-                        title = "device status",
+                        title = "phone",
                         collapsedSummary = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = 28.dp, height = 10.dp)
-                                        .border(1.dp, MeenaBorder, RoundedCornerShape(0.dp))
-                                        .padding(1.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize((telemetry.batteryPercent / 100f).coerceIn(0.05f, 1f))
-                                            .background(if (telemetry.batteryPercent <= 20) Color(0xFFE51400) else MeenaProfitGreen)
-                                    )
-                                }
-                                Text("${telemetry.batteryPercent}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
-                                if (telemetry.isCharging) {
-                                    Text("charging", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                                }
-                                Text("• memory ${telemetry.ramPercent}%", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                            }
+                            Text(
+                                text = "battery ${telemetry.batteryPercent}% • ${String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
                         }
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            // Battery
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MeenaSurface)
-                                    .border(1.dp, MeenaBorder)
-                                    .padding(10.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("battery:", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = 44.dp, height = 12.dp)
-                                            .border(1.dp, MeenaBorder)
-                                            .padding(1.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize((telemetry.batteryPercent / 100f).coerceIn(0.05f, 1f))
-                                                .background(if (telemetry.batteryPercent <= 20) Color(0xFFE51400) else MeenaProfitGreen)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("${telemetry.batteryPercent}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
-                                }
-                                Text(
-                                    if (telemetry.isCharging) "fast charging" else "discharging • optimal",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (telemetry.isCharging) MaterialTheme.colorScheme.primary else MeenaTextMuted
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .background(MeenaSurface)
-                                        .border(1.dp, MeenaBorder)
-                                        .padding(10.dp)
-                                ) {
-                                    Column {
-                                        Text("memory", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                        Text(
-                                            String.format(Locale.US, "%.1f gb / %.1f gb", telemetry.usedRamMb / 1024.0, telemetry.totalRamMb / 1024.0),
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
-                                        LinearProgressIndicator(
-                                            progress = { (telemetry.ramPercent / 100f).coerceIn(0f, 1f) },
-                                            modifier = Modifier.fillMaxWidth().height(4.dp).padding(top = 4.dp),
-                                            color = MaterialTheme.colorScheme.primary,
-                                            trackColor = MeenaBorder
-                                        )
-                                    }
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .background(MeenaSurface)
-                                        .border(1.dp, MeenaBorder)
-                                        .padding(10.dp)
-                                ) {
-                                    Column {
-                                        Text("storage", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                        Text(
-                                            String.format(Locale.US, "%.1f gb / %.1f gb", telemetry.usedStorageGb, telemetry.totalStorageGb),
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
-                                        LinearProgressIndicator(
-                                            progress = { (telemetry.storagePercent / 100f).coerceIn(0f, 1f) },
-                                            modifier = Modifier.fillMaxWidth().height(4.dp).padding(top = 4.dp),
-                                            color = Color.White,
-                                            trackColor = MeenaBorder
-                                        )
-                                    }
+                                Column {
+                                    Text("battery", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text(
+                                        text = "${telemetry.batteryPercent}% · ${if (telemetry.isCharging) "charging" else "on battery"}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (telemetry.batteryPercent <= 20) Color(0xFFFF5252) else Color.White
+                                    )
                                 }
                             }
 
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MeenaSurface)
-                                    .border(1.dp, MeenaBorder)
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
+                            // Memory
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("data traffic:", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text("memory", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                     Text(
-                                        String.format(Locale.US, "↓ %.2f mb  ↑ %.2f mb", telemetry.trafficRxMb, telemetry.trafficTxMb),
+                                        text = String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = Color.White
                                     )
                                 }
+                                LinearProgressIndicator(
+                                    progress = { (telemetry.ramPercent / 100f).coerceIn(0f, 1f) },
+                                    modifier = Modifier.fillMaxWidth().height(2.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = Color(0xFF222222)
+                                )
+                            }
+
+                            // Storage
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("brightness:", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                    Text("${telemetry.screenBrightnessPercent}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                    Text("storage", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text(
+                                        text = String.format(Locale.US, "%.1f gb free", telemetry.totalStorageGb - telemetry.usedStorageGb),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White
+                                    )
                                 }
+                                LinearProgressIndicator(
+                                    progress = { (telemetry.storagePercent / 100f).coerceIn(0f, 1f) },
+                                    modifier = Modifier.fillMaxWidth().height(2.dp),
+                                    color = Color.White,
+                                    trackColor = Color(0xFF222222)
+                                )
+                            }
+
+                            // Screen
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("screen", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                Text("${telemetry.screenBrightnessPercent}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
                             }
                         }
                     }
@@ -1104,3 +992,4 @@ fun TodayHub(
         item { Spacer(modifier = Modifier.height(64.dp)) }
     }
 }
+

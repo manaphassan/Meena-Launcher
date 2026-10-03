@@ -16,7 +16,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -318,29 +321,17 @@ fun MeenaHomeScreen(
     val hubMoneyListState = rememberLazyListState()
     val hubAppsListState = rememberLazyListState()
 
-    // Detect if user is actively scrolling in current page or horizontal pager
-    val isScrolling by remember {
-        derivedStateOf {
-            pagerState.isScrollInProgress ||
-                    hubTodayListState.isScrollInProgress ||
-                    hubInboxListState.isScrollInProgress ||
-                    hubNewsListState.isScrollInProgress ||
-                    hubMoneyListState.isScrollInProgress ||
-                    hubAppsListState.isScrollInProgress
-        }
-    }
-
     var isSettingsOpen by remember { mutableStateOf(false) }
     var isActionCenterOpen by remember { mutableStateOf(false) }
 
-    // Intercept hardware/gesture Back button
-    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || pagerState.currentPage != defaultHubClamped) {
+    // Intercept hardware/gesture Back button (return to today hub)
+    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || pagerState.currentPage != 0) {
         when {
             isSettingsOpen -> isSettingsOpen = false
             isActionCenterOpen -> isActionCenterOpen = false
-            pagerState.currentPage != defaultHubClamped -> {
+            pagerState.currentPage != 0 -> {
                 coroutineScope.launch {
-                    pagerState.animateScrollToPage(defaultHubClamped)
+                    pagerState.animateScrollToPage(0)
                 }
             }
         }
@@ -393,6 +384,13 @@ fun MeenaHomeScreen(
                     .fillMaxWidth()
                     .statusBarsPadding()
                     .padding(top = 8.dp)
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures { _, dragAmount ->
+                            if (dragAmount > 25f) {
+                                isActionCenterOpen = true
+                            }
+                        }
+                    }
             ) {
                 // Layer 1: Ultra-wide Brand Header ("meena") - slow background parallax canvas layer
                 Text(
@@ -409,6 +407,13 @@ fun MeenaHomeScreen(
                             translationX = brandParallaxOffset
                         }
                         .padding(start = 24.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    isSettingsOpen = true
+                                }
+                            )
+                        }
                 )
 
                 // Layer 2: Hub Section Titles - continuous parallax with guaranteed right-edge peek affordance
@@ -431,13 +436,17 @@ fun MeenaHomeScreen(
                                         scaleX = titleScale
                                         scaleY = titleScale
                                     }
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(index)
-                                        }
+                                    .pointerInput(index) {
+                                        detectTapGestures(
+                                            onTap = {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(index)
+                                                }
+                                            },
+                                            onLongPress = {
+                                                isSettingsOpen = true
+                                            }
+                                        )
                                     }
                             )
                         }
@@ -546,27 +555,6 @@ fun MeenaHomeScreen(
                 }
             }
         }
-
-        // Single Button Bottom-Right Navigation Hub
-        CornerNavHub(
-            isLeftHanded = userSettings!!.isLeftHanded,
-            isScrolling = isScrolling,
-            onNavigateToApps = {
-                coroutineScope.launch { pagerState.animateScrollToPage(4) }
-            },
-            onOpenSearch = {
-                coroutineScope.launch { pagerState.animateScrollToPage(4) }
-            },
-            onOpenCamera = onOpenCamera,
-            onOpenSettings = { isSettingsOpen = true },
-            onOpenDialer = onOpenDialer,
-            onOpenMessages = onOpenMessages,
-            onOpenEmail = onOpenEmail,
-            onOpenCalculator = onOpenCalculator,
-            onOpenTaskSwitcher = {
-                isActionCenterOpen = true
-            }
-        )
 
         // Settings Pivot Dialog
         AnimatedVisibility(
