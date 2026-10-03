@@ -115,17 +115,37 @@ fun TodayHub(
         )
     }
 
-    LaunchedEffect(Unit) {
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
+    val hijriDateStr = remember(currentDate, settings.showHijriDate, settings.hijriDayOffset) {
+        if (settings.showHijriDate) {
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    val hijrahDate = java.time.chrono.HijrahDate.now().plus(settings.hijriDayOffset.toLong(), java.time.temporal.ChronoUnit.DAYS)
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
+                    "${formatter.format(hijrahDate).lowercase()} ah"
+                } else null
+            } catch (_: Exception) {
+                null
+            }
+        } else null
+    }
+
+    LaunchedEffect(settings.is24HourFormat, settings.dateFormatPattern, settings.showClockSeconds) {
+        val timePattern = when {
+            settings.is24HourFormat && settings.showClockSeconds -> "HH:mm:ss"
+            settings.is24HourFormat -> "HH:mm"
+            settings.showClockSeconds -> "h:mm:ss a"
+            else -> "h:mm a"
+        }
+        val timeFormat = SimpleDateFormat(timePattern, Locale.getDefault())
+        val dateFormat = SimpleDateFormat(settings.dateFormatPattern, Locale.getDefault())
         WeatherRepository.refresh(context)
         GeminiBriefRepository.refresh(context, settings)
         while (true) {
             val now = Date()
-            currentTime = timeFormat.format(now)
+            currentTime = timeFormat.format(now).lowercase()
             currentDate = dateFormat.format(now).lowercase()
             telemetry = DeviceTelemetryHelper.getTelemetry(context)
-            delay(10000L)
+            delay(if (settings.showClockSeconds) 1000L else 10000L)
         }
     }
 
@@ -218,12 +238,26 @@ fun TodayHub(
                                 )
                             }
                         }
-                        Text(
-                            text = currentDate,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = currentDate,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (hijriDateStr != null) {
+                                Text(
+                                    text = hijriDateStr,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted
+                                )
+                            }
+                        }
                     }
                 }
 

@@ -361,6 +361,16 @@ fun SettingsScreen(
 
                     "look & feel" -> {
                         item {
+                            val timeMode = if (settingsState.is24HourFormat) "24-hour" else "12-hour"
+                            val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
+                            SettingLinkRow(
+                                title = "date & time",
+                                status = "$timeMode • $hijriMode",
+                                onClick = { activeSubPage = "look:datetime" }
+                            )
+                        }
+
+                        item {
                             SettingLinkRow(
                                 title = "theme & accents",
                                 status = "${settingsState.baseTheme} • ${settingsState.accentHex.lowercase()}",
@@ -1467,6 +1477,22 @@ private fun SubPageContainer(
         }
 
         // Dedicated Look & Feel Sub-Pages
+        subPageId == "look:datetime" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = "look & feel",
+                    pageTitle = "date & time",
+                    onBack = onBack
+                )
+            }
+            item {
+                DateTimeSettings(
+                    settingsState = settingsState,
+                    onUpdate = onUpdate
+                )
+            }
+        }
+
         subPageId == "look:theme" -> {
             item {
                 MetroSubPageHeader(
@@ -2582,3 +2608,120 @@ private fun SolatZonePicker(
         }
     }
 }
+
+@Composable
+private fun DateTimeSettings(
+    settingsState: MeenaUserSettings,
+    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = "customize clock display, date formats and islamic hijri calendar offset.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MeenaTextMuted
+        )
+
+        SettingToggleRow(
+            title = "24-hour clock",
+            subtitle = "display time in 24-hour format (e.g. 14:00 vs 2:00 pm)",
+            checked = settingsState.is24HourFormat,
+            onCheckedChange = { onUpdate { it.copy(is24HourFormat = it.is24HourFormat.not()) } }
+        )
+
+        SettingToggleRow(
+            title = "show seconds",
+            subtitle = "display live seconds on the main clock",
+            checked = settingsState.showClockSeconds,
+            onCheckedChange = { onUpdate { it.copy(showClockSeconds = it.showClockSeconds.not()) } }
+        )
+
+        Column {
+            Text("date pattern", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("live preview using today's date", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            val patterns = listOf(
+                "EEEE, MMMM d",
+                "EEE, d MMM yyyy",
+                "d MMMM yyyy",
+                "yyyy-MM-dd",
+                "d MMM"
+            )
+            val today = java.util.Date()
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                patterns.forEach { pattern ->
+                    val isSelected = settingsState.dateFormatPattern == pattern
+                    val preview = try {
+                        java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(today).lowercase()
+                    } catch (_: Exception) {
+                        pattern
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
+                            .clickable { onUpdate { it.copy(dateFormatPattern = pattern) } }
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = preview,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
+                            )
+                            Text(
+                                text = pattern,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isSelected) Color.White.copy(alpha = 0.8f) else MeenaTextMuted,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        SettingToggleRow(
+            title = "hijri date",
+            subtitle = "show islamic hijri date beneath the clock",
+            checked = settingsState.showHijriDate,
+            onCheckedChange = { onUpdate { it.copy(showHijriDate = it.showHijriDate.not()) } }
+        )
+
+        if (settingsState.showHijriDate) {
+            Column {
+                Text("hijri day adjustment", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("compensate for moon sighting differences", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(-2 to "-2d", -1 to "-1d", 0 to "exact", 1 to "+1d", 2 to "+2d").forEach { (offset, label) ->
+                        val isSelected = settingsState.hijriDayOffset == offset
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
+                                .clickable { onUpdate { it.copy(hijriDayOffset = offset) } }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isSelected) Color.White else MeenaTextMuted
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

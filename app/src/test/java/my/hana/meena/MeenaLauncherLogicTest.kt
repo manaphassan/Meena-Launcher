@@ -328,6 +328,48 @@ class MeenaLauncherLogicTest {
         assertEquals("user@example.com", account.accountName)
         assertTrue(account.isVisible)
     }
+
+    @Test
+    fun userSettings_dateTimeDefaults_areValid() {
+        val settings = MeenaUserSettings()
+        assertTrue(settings.is24HourFormat)
+        assertEquals("EEEE, MMMM d", settings.dateFormatPattern)
+        assertFalse(settings.showClockSeconds)
+        assertTrue(settings.showHijriDate)
+        assertEquals(0, settings.hijriDayOffset)
+    }
+
+    @Test
+    fun dailyForecast_dataModelProperties() {
+        val forecast = my.hana.meena.data.system.DailyForecast(
+            date = "2026-10-03",
+            dayLabel = "sat",
+            weatherCode = 0,
+            condition = "clear sky",
+            maxTemp = 32.5f,
+            minTemp = 24.0f,
+            precipitationProbability = 10
+        )
+        assertEquals("2026-10-03", forecast.date)
+        assertEquals("sat", forecast.dayLabel)
+        assertEquals(0, forecast.weatherCode)
+        assertEquals("clear sky", forecast.condition)
+        assertEquals(32.5f, forecast.maxTemp, 0.01f)
+        assertEquals(24.0f, forecast.minTemp, 0.01f)
+        assertEquals(10, forecast.precipitationProbability)
+    }
+
+    @Test
+    fun hijrahDate_calculation_formatsValidString() {
+        val hijrahDate = java.time.chrono.HijrahDate.now()
+        assertNotNull(hijrahDate)
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.getDefault())
+        val formatted = formatter.format(hijrahDate).lowercase()
+        assertTrue(formatted.isNotBlank())
+        val offsetDate = hijrahDate.plus(1, java.time.temporal.ChronoUnit.DAYS)
+        val formattedOffset = formatter.format(offsetDate).lowercase()
+        assertTrue(formattedOffset.isNotBlank())
+    }
 }
 
 

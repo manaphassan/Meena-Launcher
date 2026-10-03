@@ -21,12 +21,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -80,6 +80,7 @@ fun AppsHub(
 
     val primaryColor = MaterialTheme.colorScheme.primary
     var selectedTargetForProperties by remember { mutableStateOf<DeviceAppInfo?>(null) }
+    var showUninstallConfirm by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
     var isJumpListOpen by remember { mutableStateOf(false) }
@@ -314,8 +315,7 @@ fun AppsHub(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(68.dp)
-                    .background(primaryColor, CircleShape)
-                    .border(2.dp, Color.White, CircleShape),
+                    .background(primaryColor),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -348,131 +348,189 @@ fun AppsHub(
         val target = selectedTargetForProperties
         if (target != null) {
             val isPinned = pinnedAppIds.contains(target.packageName)
-            Dialog(onDismissRequest = { selectedTargetForProperties = null }) {
+            Dialog(onDismissRequest = {
+                selectedTargetForProperties = null
+                showUninstallConfirm = false
+            }) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF0C0C0C))
-                        .border(2.dp, primaryColor)
-                        .padding(20.dp)
+                        .background(Color.Black)
+                        .padding(24.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
+                    if (showUninstallConfirm) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text(
+                                text = "uninstall app?",
+                                style = MaterialTheme.typography.displayMedium,
+                                fontSize = 24.sp,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "do you want to remove ${target.label.lowercase()} from your phone?",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MeenaTextMuted
+                            )
+                            Row(
                                 modifier = Modifier
-                                    .size(48.dp)
-                                    .background(primaryColor, RoundedCornerShape(0.dp)),
-                                contentAlignment = Alignment.Center
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                if (target.iconBitmap != null) {
-                                    Image(bitmap = target.iconBitmap, contentDescription = target.label, modifier = Modifier.size(32.dp))
-                                } else {
-                                    Text(target.firstLetter.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 48.dp)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .clickable {
+                                            try {
+                                                InstalledAppsRepository.invalidateCache()
+                                                val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${target.packageName}"))
+                                                context.startActivity(intent)
+                                            } catch (_: Exception) {
+                                                Toast.makeText(context, "couldn't uninstall app", Toast.LENGTH_SHORT).show()
+                                            }
+                                            showUninstallConfirm = false
+                                            selectedTargetForProperties = null
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("yes", style = MaterialTheme.typography.labelSmall, color = Color.White)
                                 }
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(target.label, style = MaterialTheme.typography.titleLarge, color = Color.White)
-                                Text(target.packageName, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 48.dp)
+                                        .background(Color(0xFF161616))
+                                        .clickable { showUninstallConfirm = false },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("no", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                }
                             }
                         }
-
-                        // PIN / UNPIN
-                        MetroDialogActionRow(
-                            title = if (isPinned) "Unpin from Start" else "Pin to Start",
-                            subtitle = if (isPinned) "Remove quick tile from home canvas" else "Display tile on main panoramic canvas",
-                            accentColor = if (isPinned) Color(0xFFFF5252) else primaryColor,
-                            iconText = if (isPinned) "📌" else "📍",
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onTogglePinApp(target.packageName)
-                                Toast.makeText(context, if (isPinned) "Unpinned ${target.label}" else "Pinned ${target.label} to Start", Toast.LENGTH_SHORT).show()
-                                selectedTargetForProperties = null
-                            }
-                        )
-
-                        // APP INFO
-                        MetroDialogActionRow(
-                            title = "App Info & Access",
-                            subtitle = "Open Android system settings",
-                            accentColor = Color.White,
-                            iconText = "⚙️",
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.parse("package:${target.packageName}")
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .background(primaryColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (target.iconBitmap != null) {
+                                        Image(bitmap = target.iconBitmap, contentDescription = target.label, modifier = Modifier.size(32.dp))
+                                    } else {
+                                        Text(target.firstLetter.toString().lowercase(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    }
                                 }
-                                context.startActivity(intent)
-                                selectedTargetForProperties = null
-                            }
-                        )
-
-                        // UNINSTALL
-                        MetroDialogActionRow(
-                            title = "Uninstall App",
-                            subtitle = "Delete application from device",
-                            accentColor = Color(0xFFFF5252),
-                            iconText = "🗑️",
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                try {
-                                    InstalledAppsRepository.invalidateCache()
-                                    val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${target.packageName}"))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "System app cannot be uninstalled", Toast.LENGTH_SHORT).show()
+                                Spacer(modifier = Modifier.width(14.dp))
+                                Column {
+                                    Text(target.label.lowercase(), style = MaterialTheme.typography.titleLarge, color = Color.White)
+                                    Text("quick actions", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                 }
-                                selectedTargetForProperties = null
                             }
-                        )
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFF1C1C1C))
-                                .border(1.dp, MeenaBorder)
-                                .clickable { selectedTargetForProperties = null }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("CLOSE", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            // PIN / UNPIN
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onTogglePinApp(target.packageName)
+                                        selectedTargetForProperties = null
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = if (isPinned) "unpin from today" else "pin to today",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = if (isPinned) Color(0xFFFF5252) else primaryColor
+                                    )
+                                    Text(
+                                        text = if (isPinned) "remove tile from today home page" else "show tile on today home page",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                            }
+
+                            // APP INFO
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = Uri.parse("package:${target.packageName}")
+                                        }
+                                        context.startActivity(intent)
+                                        selectedTargetForProperties = null
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "app info",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "open android application settings",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                            }
+
+                            // UNINSTALL
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        showUninstallConfirm = true
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "uninstall",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color(0xFFFF5252)
+                                    )
+                                    Text(
+                                        text = "delete application from phone",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Text(
+                                    text = "close",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier
+                                        .clickable { selectedTargetForProperties = null }
+                                        .padding(8.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MetroDialogActionRow(
-    title: String,
-    subtitle: String,
-    accentColor: Color,
-    iconText: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF141414))
-            .border(1.dp, MeenaBorder)
-            .clickable(onClick = onClick)
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .background(Color(0xFF222222)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(iconText, fontSize = 16.sp)
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = accentColor)
-            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
         }
     }
 }
@@ -577,7 +635,7 @@ private fun AppRow(
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
             )
         }
     }
@@ -613,14 +671,14 @@ private fun AlphabetJumpListOverlay(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "choose letter",
+                    text = "jump to",
                     style = MaterialTheme.typography.displayLarge,
                     fontSize = 28.sp,
                     color = Color.White
                 )
                 Text(
-                    text = "✕",
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "close",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     modifier = Modifier.clickable { onDismiss() }
                 )

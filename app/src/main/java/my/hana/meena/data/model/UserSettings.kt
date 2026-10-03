@@ -43,6 +43,12 @@ data class MeenaUserSettings(
     // Calendar settings
     val calendarDaysAhead: Int = 7,
     val calendarShowAllDay: Boolean = true,
+    // Date & Time settings
+    val is24HourFormat: Boolean = true,
+    val dateFormatPattern: String = "EEEE, MMMM d",
+    val showClockSeconds: Boolean = false,
+    val showHijriDate: Boolean = true,
+    val hijriDayOffset: Int = 0,
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {
