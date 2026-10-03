@@ -52,6 +52,10 @@ import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.CollapsibleWidget
 import my.hana.meena.ui.components.DynamicSolatCelestialCard
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import kotlin.math.roundToInt
+import my.hana.meena.data.system.WeatherRepository
+import my.hana.meena.ui.widgets.WidgetState
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -69,7 +73,8 @@ fun TodayHub(
     onOpenEmail: () -> Unit = {},
     onOpenCamera: () -> Unit = {},
     onOpenCalculator: () -> Unit = {},
-    onRequestCalendarPermission: () -> Unit = {}
+    onRequestCalendarPermission: () -> Unit = {},
+    onRequestLocationPermission: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -95,6 +100,7 @@ fun TodayHub(
     val fitTelemetry = healthData.fitTelemetry
     val airIndex = healthData.airIndex
 
+    val weatherState by WeatherRepository.state.collectAsState()
     val calendarState by DeviceCalendarRepository.state.collectAsState()
     val quickNotes = remember { mutableStateListOf<String>() }
 
@@ -102,6 +108,7 @@ fun TodayHub(
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
         DeviceCalendarRepository.refresh(context)
+        WeatherRepository.refresh(context)
         while (true) {
             val now = Date()
             currentTime = timeFormat.format(now)
@@ -133,7 +140,29 @@ fun TodayHub(
             when (widgetId) {
                 "widget-clock-weather" -> {
                     // Clock and current weather row
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                    val clockWeatherConfig = settings.widgetConfigs["widget-clock-weather"]
+                    val tempUnit = clockWeatherConfig?.customSettings?.get("temp_unit") ?: "c"
+                    val isFahrenheit = tempUnit.equals("f", ignoreCase = true)
+
+                    val weatherData = (weatherState as? WidgetState.Ready)?.data ?:
+                                      (weatherState as? WidgetState.Stale)?.data
+                    val isWeatherStale = weatherState is WidgetState.Stale
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                if (weatherState is WidgetState.NeedsSetup) {
+                                    onRequestLocationPermission()
+                                } else {
+                                    WeatherRepository.refresh(context, force = true)
+                                }
+                            }
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -145,16 +174,34 @@ fun TodayHub(
                                 color = MeenaTextWhite
                             )
                             Column(horizontalAlignment = Alignment.End) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "--°",
-                                        fontSize = 28.sp,
-                                        color = MeenaTextWhite,
-                                        style = MaterialTheme.typography.headlineMedium
-                                    )
+                                val tempText = if (weatherData != null) {
+                                    val tempVal = if (isFahrenheit) {
+                                        (weatherData.current.temperature * 9f / 5f + 32f).roundToInt()
+                                    } else {
+                                        weatherData.current.temperature.roundToInt()
+                                    }
+                                    "$tempVal°"
+                                } else {
+                                    "--°"
                                 }
                                 Text(
-                                    text = "needs setup",
+                                    text = tempText,
+                                    fontSize = 28.sp,
+                                    color = MeenaTextWhite,
+                                    style = MaterialTheme.typography.headlineMedium
+                                )
+                                val conditionText = when (weatherState) {
+                                    is WidgetState.NeedsSetup -> "allow location"
+                                    is WidgetState.Loading -> "checking..."
+                                    is WidgetState.Ready, is WidgetState.Stale -> {
+                                        val cond = weatherData?.current?.condition ?: "clear"
+                                        if (isWeatherStale) "$cond (stale)" else cond
+                                    }
+                                    is WidgetState.Error -> "offline"
+                                    else -> "needs setup"
+                                }
+                                Text(
+                                    text = conditionText,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MeenaTextMuted
                                 )
@@ -170,14 +217,161 @@ fun TodayHub(
                 }
 
                 "widget-weather-forecast" -> {
-                    // Weather forecast
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "pick a place to see forecast",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted,
-                            modifier = Modifier.padding(bottom = 6.dp)
-                        )
+                    // 5-day Weather Forecast
+                    val forecastConfig = settings.widgetConfigs["widget-weather-forecast"]
+                    val tempUnit = settings.widgetConfigs["widget-clock-weather"]?.customSettings?.get("temp_unit") ?: "c"
+                    val isFahrenheit = tempUnit.equals("f", ignoreCase = true)
+                    val forecastDaysStr = forecastConfig?.customSettings?.get("forecast_days") ?: "5"
+                    val maxForecastDays = (forecastDaysStr.toIntOrNull() ?: 5).coerceIn(1, 7)
+                    val showRainProb = forecastConfig?.customSettings?.get("show_rain_prob") != "false"
+                    val showDetails = forecastConfig?.customSettings?.get("show_details") == "true"
+
+                    val weatherData = (weatherState as? WidgetState.Ready)?.data ?:
+                                      (weatherState as? WidgetState.Stale)?.data
+                    val forecastItems = weatherData?.daily?.take(maxForecastDays) ?: emptyList()
+
+                    CollapsibleWidget(
+                        title = "next $maxForecastDays days",
+                        collapsedSummary = {
+                            Text(
+                                text = when (weatherState) {
+                                    is WidgetState.NeedsSetup -> "allow location"
+                                    is WidgetState.Loading -> "loading"
+                                    is WidgetState.Ready, is WidgetState.Stale -> {
+                                        val loc = weatherData?.locationName ?: "local"
+                                        val first = forecastItems.firstOrNull()
+                                        if (first != null) {
+                                            val minVal = if (isFahrenheit) (first.minTemp * 9f / 5f + 32f).roundToInt() else first.minTemp.roundToInt()
+                                            val maxVal = if (isFahrenheit) (first.maxTemp * 9f / 5f + 32f).roundToInt() else first.maxTemp.roundToInt()
+                                            "$minVal° / $maxVal° · $loc"
+                                        } else {
+                                            loc
+                                        }
+                                    }
+                                    is WidgetState.Error -> "offline"
+                                    else -> "needs setup"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            when (weatherState) {
+                                is WidgetState.NeedsSetup -> {
+                                    Text(
+                                        text = "meena needs location to check the weather. tap to allow.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                onRequestLocationPermission()
+                                            }
+                                            .padding(vertical = 8.dp)
+                                    )
+                                }
+                                is WidgetState.Loading -> {
+                                    Text(
+                                        text = "checking the skies...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                                is WidgetState.Error -> {
+                                    Text(
+                                        text = "couldn't reach the weather. tap to try again.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                WeatherRepository.refresh(context, force = true)
+                                            }
+                                            .padding(vertical = 8.dp)
+                                    )
+                                }
+                                is WidgetState.Ready, is WidgetState.Stale -> {
+                                    if (forecastItems.isEmpty()) {
+                                        Text(
+                                            text = "no forecast available",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MeenaTextMuted
+                                        )
+                                    } else {
+                                        forecastItems.forEach { day ->
+                                            val minVal = if (isFahrenheit) (day.minTemp * 9f / 5f + 32f).roundToInt() else day.minTemp.roundToInt()
+                                            val maxVal = if (isFahrenheit) (day.maxTemp * 9f / 5f + 32f).roundToInt() else day.maxTemp.roundToInt()
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = day.dayLabel,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MeenaTextWhite
+                                                    )
+                                                    Text(
+                                                        text = if (showRainProb && day.precipitationProbability > 0) {
+                                                            "${day.condition} · ${day.precipitationProbability}% rain"
+                                                        } else {
+                                                            day.condition
+                                                        },
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MeenaTextMuted
+                                                    )
+                                                }
+                                                Text(
+                                                    text = "$minVal° / $maxVal°",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+
+                                        // Atmospheric details if enabled
+                                        if (showDetails && weatherData != null) {
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "humidity · ${weatherData.current.humidity}%",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MeenaTextMuted
+                                                )
+                                                Text(
+                                                    text = "wind · ${weatherData.current.windSpeed.toInt()} km/h",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MeenaTextMuted
+                                                )
+                                            }
+                                        }
+
+                                        // Freshness caption
+                                        val minutesAgo = ((System.currentTimeMillis() - weatherData!!.fetchedAt) / 60000L).coerceAtLeast(0)
+                                        val freshnessText = if (minutesAgo == 0L) "updated just now" else "updated ${minutesAgo}m ago"
+                                        Text(
+                                            text = "$freshnessText · open-meteo",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextMuted,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                }
+                                else -> {}
+                            }
+                        }
                     }
                 }
 

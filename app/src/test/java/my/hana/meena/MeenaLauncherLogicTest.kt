@@ -174,6 +174,20 @@ class MeenaLauncherLogicTest {
         val state = my.hana.meena.data.system.DeviceCalendarRepository.state.value
         assertTrue(state is my.hana.meena.data.system.CalendarState.NeedsPermission)
     }
+
+    @Test
+    fun weatherRepository_initialStateAndConditions() {
+        val state = my.hana.meena.data.system.WeatherRepository.state.value
+        assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup)
+
+        assertEquals("clear sky", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(0))
+        assertEquals("partly cloudy", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(2))
+        assertEquals("drizzle", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(53))
+        assertEquals("rain", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(63))
+        assertEquals("heavy rain", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(65))
+        assertEquals("rain showers", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(81))
+        assertEquals("thunderstorm", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(95))
+    }
 }
 
 

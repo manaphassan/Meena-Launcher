@@ -244,6 +244,7 @@ fun MeenaHomeScreen(
         val granted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (granted) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
+            my.hana.meena.data.system.WeatherRepository.refresh(context, force = true)
         }
         if (permissions[android.Manifest.permission.READ_CALENDAR] == true) {
             my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
@@ -268,10 +269,20 @@ fun MeenaHomeScreen(
         }
     }
 
+    val locationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
+            my.hana.meena.data.system.WeatherRepository.refresh(context, force = true)
+        }
+    }
+
     LaunchedEffect(Unit) {
         QuickPanelHardwareHelper.initialize(context)
         if (my.hana.meena.data.system.DeviceLocationHelper.hasLocationPermission(context)) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
+            my.hana.meena.data.system.WeatherRepository.refresh(context)
         }
         if (my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)) {
             my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
@@ -461,7 +472,8 @@ fun MeenaHomeScreen(
                             onOpenEmail = onOpenEmail,
                             onOpenCamera = onOpenCamera,
                             onOpenCalculator = onOpenCalculator,
-                            onRequestCalendarPermission = { calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR) }
+                            onRequestCalendarPermission = { calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR) },
+                            onRequestLocationPermission = { locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
                         )
                         1 -> InboxHub(
                             settings = userSettings!!,
