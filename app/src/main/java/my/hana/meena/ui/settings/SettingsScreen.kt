@@ -68,6 +68,8 @@ import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.model.WidgetConfig
 import my.hana.meena.data.news.NewsRssRepository
+import my.hana.meena.data.system.NotificationRepository
+import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.theme.MeenaAmber
 import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaBorder
@@ -431,6 +433,21 @@ private fun SubPageContainer(
     onResetDefaults: () -> Unit
 ) {
     val context = LocalContext.current
+    var showNotificationDisclosure by remember { mutableStateOf(false) }
+
+    if (showNotificationDisclosure) {
+        MetroDialog(
+            title = "notification access",
+            message = "meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.\n\ndo you want to open notification access settings?",
+            confirmText = "yes",
+            dismissText = "no",
+            onConfirm = {
+                showNotificationDisclosure = false
+                NotificationRepository.openNotificationSettings(context)
+            },
+            onDismiss = { showNotificationDisclosure = false }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -932,11 +949,7 @@ private fun SubPageContainer(
                     }
                     item {
                         Button(
-                            onClick = {
-                                try {
-                                    context.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
-                                } catch (e: Exception) { }
-                            },
+                            onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
@@ -977,11 +990,7 @@ private fun SubPageContainer(
                     }
                     item {
                         Button(
-                            onClick = {
-                                try {
-                                    context.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
-                                } catch (e: Exception) { }
-                            },
+                            onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
@@ -1031,11 +1040,7 @@ private fun SubPageContainer(
                     }
                     item {
                         Button(
-                            onClick = {
-                                try {
-                                    context.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
-                                } catch (e: Exception) { }
-                            },
+                            onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
@@ -1396,14 +1401,7 @@ private fun SubPageContainer(
             }
             item {
                 Button(
-                    onClick = {
-                        try {
-                            val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            // Ignore
-                        }
-                    },
+                    onClick = { showNotificationDisclosure = true },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
@@ -1748,9 +1746,74 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "charter: clean • light • open • fast\nzero ads. zero trackers. zero cloud storage of your keys or balances.",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "charter: clean • light • open • fast",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "inspired by windows phone metro ui and aio launcher. no boxes, no cards, no elevation. hierarchy comes from type and space alone.",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "privacy & data safety",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "• on-device processing: notifications and bank alerts are read locally in memory and never sent to any server or third party.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "• coarse location: approximate location is used solely to query local weather and prayer times. no background tracking.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "• calendar read: reads device calendar via calendarcontract for your agenda widget without requiring cloud accounts.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "• secure storage: api keys and sensitive settings are kept locally with android keystore encryption.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "• zero cloud backup: system cloud backup is disabled (allowbackup=false) to ensure your data stays on this device.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "open source licenses",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "built using kotlin, jetpack compose, kotlinx serialization, datastore preferences, and okhttp. license information is available under apache 2.0.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "version 1.0 • package my.hana.meena",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted,
+                    fontSize = 11.sp
                 )
             }
         }

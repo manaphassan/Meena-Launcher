@@ -40,4 +40,18 @@
     <string name="settings_tab_widgets">widgets</string>
     <string name="settings_tab_accounts">accounts</string>
     <string name="settings_tab_look">look &amp; feel</string>
+
+    <!-- Service Label -->
+    <string name="notification_service_label">meena notifications</string>
+
+    <!-- Prominent Disclosures & Privacy -->
+    <string name="disclosure_notification_title">notification access</string>
+    <string name="disclosure_notification_body">meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.</string>
+    <string name="disclosure_notification_question">do you want to open notification access settings?</string>
+    <string name="disclosure_location_title">approximate location</string>
+    <string name="disclosure_location_body">meena uses coarse approximate location to show your local weather and prayer times. your location stays on your device and is never shared or tracked.</string>
+    <string name="disclosure_calendar_title">calendar access</string>
+    <string name="disclosure_calendar_body">meena reads your device calendar to display today\'s upcoming events. your schedule stays strictly on your phone.</string>
+    <string name="about_privacy_title">privacy charter</string>
+    <string name="about_privacy_body">on-device only. no analytics, no ads, and no background tracking. all api keys and personal data are kept locally on your phone.</string>
 </resources>

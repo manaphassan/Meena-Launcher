@@ -42,6 +42,7 @@ import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.CollapsibleWidget
 import my.hana.meena.ui.components.ConversationsWidget
+import my.hana.meena.ui.components.MetroDialog
 
 @Composable
 fun InboxHub(
@@ -54,6 +55,21 @@ fun InboxHub(
     val isListenerConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
     var isNotificationAccessGranted by remember {
         mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
+    }
+    var showNotificationDisclosure by remember { mutableStateOf(false) }
+
+    if (showNotificationDisclosure) {
+        MetroDialog(
+            title = "notification access",
+            message = "meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.\n\ndo you want to open notification access settings?",
+            confirmText = "yes",
+            dismissText = "no",
+            onConfirm = {
+                showNotificationDisclosure = false
+                NotificationRepository.openNotificationSettings(context)
+            },
+            onDismiss = { showNotificationDisclosure = false }
+        )
     }
 
     LaunchedEffect(isListenerConnected) {
@@ -113,7 +129,7 @@ fun InboxHub(
                                             indication = null
                                         ) {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            NotificationRepository.openNotificationSettings(context)
+                                            showNotificationDisclosure = true
                                         }
                                         .padding(vertical = 8.dp)
                                 )

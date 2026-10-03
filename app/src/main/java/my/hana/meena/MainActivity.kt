@@ -79,6 +79,7 @@ import my.hana.meena.ui.hubs.NewsHub
 import my.hana.meena.ui.hubs.TodayHub
 import my.hana.meena.ui.navigation.CornerNavHub
 import my.hana.meena.ui.settings.SettingsScreen
+import my.hana.meena.ui.components.MetroDialog
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -242,6 +243,8 @@ fun MeenaHomeScreen(
     var showFirstRunPermissionDialog by remember {
         mutableStateOf(userSettings?.hasCompletedFirstRunSetup == false)
     }
+    var showLocationDisclosure by remember { mutableStateOf(false) }
+    var showCalendarDisclosure by remember { mutableStateOf(false) }
 
     val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
@@ -253,16 +256,6 @@ fun MeenaHomeScreen(
         }
         if (permissions[android.Manifest.permission.READ_CALENDAR] == true) {
             my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
-        }
-        val flat = android.provider.Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
-        val isNotificationAccessGranted = flat != null && flat.contains(context.packageName)
-        if (!isNotificationAccessGranted) {
-            try {
-                val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
-                context.startActivity(intent)
-            } catch (e: Exception) {
-                // Ignore
-            }
         }
     }
 
@@ -520,8 +513,8 @@ fun MeenaHomeScreen(
                             onOpenEmail = onOpenEmail,
                             onOpenCamera = onOpenCamera,
                             onOpenCalculator = onOpenCalculator,
-                            onRequestCalendarPermission = { calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR) },
-                            onRequestLocationPermission = { locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) },
+                            onRequestCalendarPermission = { showCalendarDisclosure = true },
+                            onRequestLocationPermission = { showLocationDisclosure = true },
                             onOpenSettings = { isSettingsOpen = true }
                         )
                         1 -> InboxHub(
@@ -624,86 +617,60 @@ fun MeenaHomeScreen(
             )
         }
 
+        if (showLocationDisclosure) {
+            MetroDialog(
+                title = "approximate location",
+                message = "meena uses coarse approximate location to show your local weather and prayer times. your location stays on your device and is never shared or tracked.\n\nallow location access?",
+                confirmText = "yes",
+                dismissText = "no",
+                onConfirm = {
+                    showLocationDisclosure = false
+                    locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                },
+                onDismiss = { showLocationDisclosure = false }
+            )
+        }
+
+        if (showCalendarDisclosure) {
+            MetroDialog(
+                title = "calendar access",
+                message = "meena reads your device calendar to display today's upcoming events. your schedule stays strictly on your phone.\n\nallow calendar access?",
+                confirmText = "yes",
+                dismissText = "no",
+                onConfirm = {
+                    showCalendarDisclosure = false
+                    calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR)
+                },
+                onDismiss = { showCalendarDisclosure = false }
+            )
+        }
+
         // First-Time Setup Permissions Popup Dialog (Authentic Metro UI)
         if (showFirstRunPermissionDialog) {
-            androidx.compose.ui.window.Dialog(
-                onDismissRequest = {
+            MetroDialog(
+                title = "welcome to meena",
+                message = "to show your local prayer times, weather, and upcoming calendar agenda, meena needs a couple of quick permissions. all your data stays strictly on your phone.\n\nwould you like to allow these permissions?",
+                confirmText = "yes",
+                dismissText = "not now",
+                onConfirm = {
+                    showFirstRunPermissionDialog = false
+                    coroutineScope.launch {
+                        settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
+                    }
+                    permissionLauncher.launch(
+                        arrayOf(
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                            android.Manifest.permission.READ_CALENDAR
+                        )
+                    )
+                },
+                onDismiss = {
                     showFirstRunPermissionDialog = false
                     coroutineScope.launch {
                         settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
                     }
                 }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF0C0C0C))
-                        .border(1.dp, MaterialTheme.colorScheme.primary)
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "welcome to meena",
-                        style = MaterialTheme.typography.displayMedium,
-                        fontSize = 24.sp,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "to show your local prayer times, weather, radar map, and alerts, meena needs a couple of quick permissions. all your data stays strictly on your phone.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MeenaTextMuted
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                showFirstRunPermissionDialog = false
-                                coroutineScope.launch {
-                                    settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
-                                }
-                                permissionLauncher.launch(
-                                    arrayOf(
-                                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                                        android.Manifest.permission.READ_CALENDAR
-                                    )
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            ),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
-                        ) {
-                            Text(
-                                text = "enable",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White
-                            )
-                        }
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                showFirstRunPermissionDialog = false
-                                coroutineScope.launch {
-                                    settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1E1E1E)
-                            ),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
-                        ) {
-                            Text(
-                                text = "not now",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextMuted
-                            )
-                        }
-                    }
-                }
-            }
+            )
         }
     }
 }
