@@ -1,6 +1,8 @@
 package my.hana.meena.ui.hubs
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,11 +29,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.data.finance.ExchangeRateRepository
+import my.hana.meena.data.finance.FinanceHolding
 import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.SpendingRepository
 import my.hana.meena.theme.MeenaProfitGreen
 import my.hana.meena.theme.MeenaTextMuted
+import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.ui.widgets.WidgetState
 
 /**
@@ -40,6 +47,7 @@ import my.hana.meena.ui.widgets.WidgetState
  * - Hierarchy comes strictly from type scale and generous 24dp margins.
  * - Real live sources: Frankfurter ECB exchange rates, Google Sheets bridge, bank SMS spending.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FinanceHub(
     settings: MeenaUserSettings,
@@ -47,6 +55,8 @@ fun FinanceHub(
     onOpenSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    var localShowAmounts by remember(settings.showFinanceAmounts) { mutableStateOf(settings.showFinanceAmounts) }
+    var holdingToDelete by remember { mutableStateOf<FinanceHolding?>(null) }
 
     // Initialize repositories on entry
     LaunchedEffect(Unit) {
@@ -70,6 +80,21 @@ fun FinanceHub(
         .filter { (it.value.hubId == "money" || it.value.hubId == "finance") && it.value.isEnabled }
         .sortedBy { it.value.position }
 
+    if (holdingToDelete != null) {
+        val holding = holdingToDelete!!
+        MetroDialog(
+            title = "delete holding",
+            message = "delete this holding (${holding.symbol.lowercase()})?",
+            confirmText = "yes",
+            dismissText = "no",
+            onConfirm = {
+                FinanceRepository.removeHolding(context, holding.id)
+                holdingToDelete = null
+            },
+            onDismiss = { holdingToDelete = null }
+        )
+    }
+
     LazyColumn(
         state = listState,
         modifier = Modifier
@@ -85,6 +110,9 @@ fun FinanceHub(
                 "widget-finance-charts" -> {
                     PortfolioSection(
                         state = financeState,
+                        showAmounts = localShowAmounts,
+                        onToggleShowAmounts = { localShowAmounts = !localShowAmounts },
+                        onDeleteHolding = { holding -> holdingToDelete = holding },
                         onOpenSettings = onOpenSettings,
                         onRefresh = { FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "") }
                     )
@@ -118,9 +146,13 @@ fun FinanceHub(
  * Strictly free-tier, Google Sheets bridge or local holdings.
  * Follows Meena UI: no cards, no borders, clean type hierarchy.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PortfolioSection(
     state: WidgetState<my.hana.meena.data.finance.FinanceData>,
+    showAmounts: Boolean,
+    onToggleShowAmounts: () -> Unit,
+    onDeleteHolding: (FinanceHolding) -> Unit,
     onOpenSettings: () -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -169,10 +201,11 @@ private fun PortfolioSection(
                 val changePct = if (totalCost > 0) (totalChange / totalCost) * 100.0 else 0.0
                 val isProfit = totalChange >= 0
 
+                val context = LocalContext.current
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onRefresh() },
+                        .clickable { onToggleShowAmounts() },
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Row(
@@ -181,14 +214,19 @@ private fun PortfolioSection(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = "rm %.2f".format(totalValue),
+                            text = if (showAmounts) "rm %.2f".format(totalValue) else "rm •••••",
                             fontSize = 32.sp,
                             style = MaterialTheme.typography.displaySmall,
                             color = Color.White
                         )
                         if (data.holdings.isNotEmpty()) {
+                            val changeText = if (showAmounts) {
+                                "${if (isProfit) "+" else ""}rm %.2f (${if (isProfit) "+" else ""}%.1f%%)".format(totalChange, changePct)
+                            } else {
+                                "${if (isProfit) "+" else ""}••.•• (${if (isProfit) "+" else ""}%.1f%%)".format(changePct)
+                            }
                             Text(
-                                text = "${if (isProfit) "+" else ""}rm %.2f (${if (isProfit) "+" else ""}%.1f%%)".format(totalChange, changePct),
+                                text = changeText,
                                 style = MaterialTheme.typography.titleSmall,
                                 color = if (isProfit) MeenaProfitGreen else Color(0xFFFF5252)
                             )
@@ -209,7 +247,17 @@ private fun PortfolioSection(
                         data.holdings.forEach { holding ->
                             val hProfit = holding.profitLoss >= 0
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            FinanceRepository.openQuoteUrl(context, "https://www.google.com/finance/quote/${holding.symbol}")
+                                        },
+                                        onLongClick = {
+                                            onDeleteHolding(holding)
+                                        }
+                                    )
+                                    .padding(vertical = 2.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -219,20 +267,31 @@ private fun PortfolioSection(
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = Color.White
                                     )
+                                    val sharesText = if (showAmounts) {
+                                        "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost)
+                                    } else {
+                                        "••• shares · avg rm ••.••"
+                                    }
                                     Text(
-                                        text = "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost),
+                                        text = sharesText,
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
+                                    val valText = if (showAmounts) "rm %.2f".format(holding.currentValue) else "rm ••.••"
                                     Text(
-                                        text = "rm %.2f".format(holding.currentValue),
+                                        text = valText,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.White
                                     )
+                                    val profitText = if (showAmounts) {
+                                        "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent)
+                                    } else {
+                                        "${if (hProfit) "+" else ""}••.•• (%.1f%%)".format(holding.profitLossPercent)
+                                    }
                                     Text(
-                                        text = "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent),
+                                        text = profitText,
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (hProfit) MeenaProfitGreen else Color(0xFFFF5252)
                                     )
@@ -254,7 +313,12 @@ private fun PortfolioSection(
                         data.watchlist.forEach { item ->
                             val isBull = item.change >= 0
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        FinanceRepository.openQuote(context, item)
+                                    }
+                                    .padding(vertical = 2.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

@@ -49,6 +49,8 @@ data class MeenaUserSettings(
     val showClockSeconds: Boolean = false,
     val showHijriDate: Boolean = true,
     val hijriDayOffset: Int = 0,
+    // Finance privacy
+    val showFinanceAmounts: Boolean = true,
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {

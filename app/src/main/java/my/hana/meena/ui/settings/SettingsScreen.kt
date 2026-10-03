@@ -1297,7 +1297,10 @@ private fun SubPageContainer(
                 )
             }
             item {
-                GeminiApiKeyInput()
+                GeminiApiKeyInput(
+                    currentModel = settingsState.geminiModel,
+                    onModelSelect = { model -> onUpdate { it.copy(geminiModel = model) } }
+                )
             }
             item {
                 Column {
@@ -1420,7 +1423,10 @@ private fun SubPageContainer(
                 )
             }
             item {
-                FinanceAccountSettings()
+                FinanceAccountSettings(
+                    settingsState = settingsState,
+                    onUpdate = onUpdate
+                )
             }
         }
 
@@ -1950,7 +1956,10 @@ fun SettingSegmentedRow(
 }
 
 @Composable
-private fun FinanceAccountSettings() {
+private fun FinanceAccountSettings(
+    settingsState: MeenaUserSettings,
+    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
+) {
     val context = LocalContext.current
     val financeState by FinanceRepository.state.collectAsState()
     val data: my.hana.meena.data.finance.FinanceData? = when (val s = financeState) {
@@ -1965,6 +1974,22 @@ private fun FinanceAccountSettings() {
     var newAvgCost by remember { mutableStateOf("") }
     var newPrice by remember { mutableStateOf("") }
     var newGroup by remember { mutableStateOf("mplus") }
+    var holdingToDelete by remember { mutableStateOf<my.hana.meena.data.finance.FinanceHolding?>(null) }
+
+    if (holdingToDelete != null) {
+        val holding = holdingToDelete!!
+        MetroDialog(
+            title = "delete holding",
+            message = "delete this holding (${holding.symbol.lowercase()})?",
+            confirmText = "yes",
+            dismissText = "no",
+            onConfirm = {
+                FinanceRepository.removeHolding(context, holding.id)
+                holdingToDelete = null
+            },
+            onDismiss = { holdingToDelete = null }
+        )
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // 1. Google Sheets Bridge
@@ -2024,6 +2049,30 @@ private fun FinanceAccountSettings() {
             }
         }
 
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MeenaSurface)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "google sheets setup guide",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "1. create a sheet with columns:\n   a: symbol (e.g. klse:bursa, btc, aapl)\n   b: price (=googlefinance(a2, \"price\"))\n   c: change (=googlefinance(a2, \"change\"))\n   d: changepct (=googlefinance(a2, \"changepct\"))\n   e: name\n2. share as 'anyone with link can view'\n3. paste the url above.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MeenaTextMuted
+            )
+            Text(
+                text = "note: google finance quotes can be delayed ~20 min.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaAmber
+            )
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         // 2. Local Portfolio Holdings
@@ -2036,6 +2085,15 @@ private fun FinanceAccountSettings() {
             text = "manage local stock and crypto holdings. all balances are stored privately on your phone.",
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted
+        )
+
+        SettingToggleRow(
+            title = "mask balances in public",
+            subtitle = "hide exact portfolio totals and share counts on home and money pages",
+            checked = !settingsState.showFinanceAmounts,
+            onCheckedChange = { masked ->
+                onUpdate { it.copy(showFinanceAmounts = !masked) }
+            }
         )
 
         // Existing Holdings
@@ -2063,7 +2121,7 @@ private fun FinanceAccountSettings() {
                             )
                         }
                         IconButton(
-                            onClick = { FinanceRepository.removeHolding(context, holding.id) }
+                            onClick = { holdingToDelete = holding }
                         ) {
                             Icon(Icons.Default.Close, contentDescription = "delete", tint = Color(0xFFFF5252))
                         }
@@ -2544,12 +2602,33 @@ fun MetroSubPageHeader(
 }
 
 @Composable
-private fun GeminiApiKeyInput() {
+private fun GeminiApiKeyInput(
+    currentModel: String = "gemini-1.5-flash",
+    onModelSelect: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var keyText by remember { mutableStateOf(my.hana.meena.data.system.KeystoreSecretsManager.getGeminiApiKey(context)) }
     var statusMessage by remember { mutableStateOf("") }
     var isTesting by remember { mutableStateOf(false) }
+    var showForgetDialog by remember { mutableStateOf(false) }
+    var discoveredModels by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    if (showForgetDialog) {
+        MetroDialog(
+            title = "forget api key",
+            message = "remove your gemini api key from encrypted storage?",
+            confirmText = "yes",
+            dismissText = "no",
+            onConfirm = {
+                keyText = ""
+                my.hana.meena.data.system.KeystoreSecretsManager.clearGeminiApiKey(context)
+                statusMessage = "key forgotten"
+                showForgetDialog = false
+            },
+            onDismiss = { showForgetDialog = false }
+        )
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("api key", style = MaterialTheme.typography.bodyMedium, color = Color.White)
@@ -2602,8 +2681,9 @@ private fun GeminiApiKeyInput() {
                             val res = my.hana.meena.data.system.GeminiBriefRepository.testApiKeyAndFetchModels(keyText.trim())
                             isTesting = false
                             statusMessage = if (res.isSuccess) {
-                                val count = res.getOrNull()?.size ?: 0
-                                "key is valid ($count models ready)"
+                                val list = res.getOrNull() ?: emptyList()
+                                discoveredModels = list
+                                "key is valid (${list.size} models ready)"
                             } else {
                                 "test failed: ${res.exceptionOrNull()?.message ?: "network error"}"
                             }
@@ -2617,11 +2697,7 @@ private fun GeminiApiKeyInput() {
                 }
 
                 Button(
-                    onClick = {
-                        keyText = ""
-                        my.hana.meena.data.system.KeystoreSecretsManager.clearGeminiApiKey(context)
-                        statusMessage = "key forgotten"
-                    },
+                    onClick = { showForgetDialog = true },
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
@@ -2629,6 +2705,37 @@ private fun GeminiApiKeyInput() {
                 }
             }
         }
+
+        if (discoveredModels.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text("live models available", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(4.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                discoveredModels.forEach { model ->
+                    val isSelected = currentModel == model
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
+                            .clickable { onModelSelect(model) }
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = model,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isSelected) Color.White else MeenaTextMuted
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "disclosure: selected context (calendar, weather, prayer, or spending) is sent directly to google's generative language api from your device when generating a brief. no data is sent anywhere else.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MeenaTextMuted
+        )
     }
 }
 

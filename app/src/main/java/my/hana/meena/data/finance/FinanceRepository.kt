@@ -1,6 +1,8 @@
 package my.hana.meena.data.finance
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,8 +55,10 @@ data class FinanceTicker(
     val dayHigh: Double = 0.0,
     val dayLow: Double = 0.0,
     val sparkline: List<Double> = emptyList(),
-    val googleFinanceUrl: String = "https://www.google.com/finance"
-)
+    val quoteUrl: String = "https://www.google.com/finance"
+) {
+    val googleFinanceUrl: String get() = quoteUrl
+}
 
 /**
  * Summary account model for portfolio groups.
@@ -227,10 +231,54 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     /**
-     * Parses standard CSV exported from Google Sheets.
-     * Expected columns or rows: symbol, price, change, changePercent
+     * Parses standard CSV line respecting quotes and escaped quotes.
      */
-    private fun parseCsvSheet(csvText: String) {
+    fun parseCsvLine(line: String): List<String> {
+        val tokens = mutableListOf<String>()
+        val sb = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        while (i < line.length) {
+            val c = line[i]
+            if (c == '\"') {
+                if (inQuotes && i + 1 < line.length && line[i + 1] == '\"') {
+                    sb.append('\"')
+                    i++
+                } else {
+                    inQuotes = !inQuotes
+                }
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(sb.toString().trim())
+                sb.setLength(0)
+            } else {
+                sb.append(c)
+            }
+            i++
+        }
+        tokens.add(sb.toString().trim())
+        return tokens
+    }
+
+    /**
+     * Sanitizes numerical string removing currency symbols, percentage signs, and commas.
+     */
+    fun parseNumeric(value: String?): Double {
+        if (value.isNullOrBlank()) return 0.0
+        val cleaned = value
+            .replace("RM", "", ignoreCase = true)
+            .replace("$", "")
+            .replace("%", "")
+            .replace(",", "")
+            .replace("+", "")
+            .trim()
+        return cleaned.toDoubleOrNull() ?: 0.0
+    }
+
+    /**
+     * Parses standard CSV exported from Google Sheets.
+     * Expected columns or rows: symbol, price, change, changePercent, name
+     */
+    fun parseCsvSheet(csvText: String) {
         if (csvText.isBlank()) return
         val lines = csvText.lines().map { it.trim() }.filter { it.isNotBlank() }
         if (lines.isEmpty()) return
@@ -243,31 +291,42 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         val dataLines = if (hasHeaders) lines.drop(1) else lines
 
         for (line in dataLines) {
-            val cols = line.split(",").map { it.replace("\"", "").trim() }
+            val cols = parseCsvLine(line)
             if (cols.isEmpty() || cols[0].isBlank()) continue
 
-            val symbol = cols[0].uppercase()
-            val price = cols.getOrNull(1)?.toDoubleOrNull() ?: 0.0
-            val change = cols.getOrNull(2)?.toDoubleOrNull() ?: 0.0
-            val changePercent = cols.getOrNull(3)?.toDoubleOrNull() ?: 0.0
-            val name = cols.getOrNull(4) ?: symbol
+            val rawSymbol = cols[0]
+            val symbol = rawSymbol.uppercase()
+            val price = parseNumeric(cols.getOrNull(1))
+            val change = parseNumeric(cols.getOrNull(2))
+            val changePercent = parseNumeric(cols.getOrNull(3))
+            val name = cols.getOrNull(4)?.ifBlank { null } ?: symbol
+
+            val cleanTicker = symbol
+                .removePrefix("KLSE:")
+                .removeSuffix(".KL")
+                .removePrefix("NASDAQ:")
+                .removePrefix("NYSE:")
 
             newWatchlist.add(
                 FinanceTicker(
                     symbol = symbol,
-                    tickerDisplay = symbol.removePrefix("KLSE:").removeSuffix(".KL"),
+                    tickerDisplay = cleanTicker,
                     name = name,
                     price = price,
                     change = change,
                     changePercent = changePercent,
-                    currency = "MYR"
+                    currency = "MYR",
+                    quoteUrl = "https://www.google.com/finance/quote/$symbol"
                 )
             )
 
             // Also update any matching local holdings with current live price from sheet
             for (i in holdingsList.indices) {
                 val h = holdingsList[i]
-                if (h.symbol.equals(symbol, ignoreCase = true) || h.symbol.equals(cols[0], ignoreCase = true)) {
+                if (h.symbol.equals(symbol, ignoreCase = true) ||
+                    h.symbol.equals(cleanTicker, ignoreCase = true) ||
+                    h.symbol.equals(rawSymbol, ignoreCase = true)
+                ) {
                     if (price > 0.0) {
                         holdingsList[i] = h.copy(currentPrice = price)
                     }
@@ -279,6 +338,19 @@ object FinanceRepository : WidgetSpec<FinanceData> {
             watchlistItems.clear()
             watchlistItems.addAll(newWatchlist)
         }
+    }
+
+    fun openQuote(context: Context, ticker: FinanceTicker) {
+        openQuoteUrl(context, ticker.quoteUrl)
+    }
+
+    fun openQuoteUrl(context: Context, url: String) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {}
     }
 
     private fun evaluateState() {

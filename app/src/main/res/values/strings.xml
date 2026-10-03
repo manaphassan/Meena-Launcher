@@ -54,4 +54,14 @@
     <string name="disclosure_calendar_body">meena reads your device calendar to display today\'s upcoming events. your schedule stays strictly on your phone.</string>
     <string name="about_privacy_title">privacy charter</string>
     <string name="about_privacy_body">on-device only. no analytics, no ads, and no background tracking. all api keys and personal data are kept locally on your phone.</string>
+
+    <!-- Milestone 2: Finance & Gemini Brief -->
+    <string name="dialog_delete_holding_title">delete holding</string>
+    <string name="dialog_delete_holding_question">delete this holding?</string>
+    <string name="dialog_forget_gemini_title">forget api key</string>
+    <string name="dialog_forget_gemini_question">remove your gemini api key from encrypted storage?</string>
+    <string name="disclosure_gemini_title">gemini daily brief</string>
+    <string name="disclosure_gemini_body">selected context (calendar, weather, prayer, or spending) is sent directly to google\'s generative language api from your device when generating a brief. no data is sent anywhere else.</string>
+    <string name="finance_delay_notice">quotes from google sheets may be delayed ~20 min</string>
+    <string name="finance_hide_amounts">mask balances in public</string>
 </resources>
