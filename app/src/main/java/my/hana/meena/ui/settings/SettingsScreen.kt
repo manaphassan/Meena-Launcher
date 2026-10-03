@@ -48,7 +48,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -299,7 +301,7 @@ fun SettingsScreen(
                         }
 
                         item {
-                            val geminiStatus = if (settingsState.geminiApiKey.isNotBlank()) "api key configured" else "needs key"
+                            val geminiStatus = if (my.hana.meena.data.system.KeystoreSecretsManager.hasGeminiApiKey(context)) "configured" else "needs key"
                             SettingLinkRow(
                                 title = "brief (gemini api)",
                                 status = geminiStatus,
@@ -726,10 +728,7 @@ private fun SubPageContainer(
                         Text("brief specific options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        GeminiApiKeyInput(
-                            currentKey = settingsState.geminiApiKey,
-                            onSaveKey = { key -> onUpdate { it.copy(geminiApiKey = key) } }
-                        )
+                        GeminiApiKeyInput()
                     }
                     item {
                         SettingSegmentedRow(
@@ -1267,10 +1266,7 @@ private fun SubPageContainer(
                 )
             }
             item {
-                GeminiApiKeyInput(
-                    currentKey = settingsState.geminiApiKey,
-                    onSaveKey = { key -> onUpdate { it.copy(geminiApiKey = key) } }
-                )
+                GeminiApiKeyInput()
             }
             item {
                 Column {
@@ -2046,12 +2042,12 @@ fun MetroSubPageHeader(
 }
 
 @Composable
-private fun GeminiApiKeyInput(
-    currentKey: String,
-    onSaveKey: (String) -> Unit
-) {
-    var keyText by remember { mutableStateOf(currentKey) }
-    var isSaved by remember { mutableStateOf(false) }
+private fun GeminiApiKeyInput() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var keyText by remember { mutableStateOf(my.hana.meena.data.system.KeystoreSecretsManager.getGeminiApiKey(context)) }
+    var statusMessage by remember { mutableStateOf("") }
+    var isTesting by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("api key", style = MaterialTheme.typography.bodyMedium, color = Color.White)
@@ -2060,7 +2056,7 @@ private fun GeminiApiKeyInput(
             value = keyText,
             onValueChange = {
                 keyText = it
-                isSaved = false
+                statusMessage = ""
             },
             placeholder = { Text("paste your gemini key here...", color = MeenaTextMuted) },
             singleLine = true,
@@ -2074,29 +2070,60 @@ private fun GeminiApiKeyInput(
                 unfocusedIndicatorColor = MeenaBorder
             )
         )
+        if (statusMessage.isNotBlank()) {
+            Text(
+                text = statusMessage,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (statusMessage.contains("valid") || statusMessage.contains("securely")) MaterialTheme.colorScheme.primary else Color(0xFFE51400),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = {
-                    onSaveKey(keyText.trim())
-                    isSaved = true
+                    my.hana.meena.data.system.KeystoreSecretsManager.saveGeminiApiKey(context, keyText.trim())
+                    statusMessage = "key saved securely in keystore"
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(0.dp)
             ) {
-                Text(if (isSaved) "key saved" else "save key", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("save key", style = MaterialTheme.typography.labelSmall, color = Color.White)
             }
+
             if (keyText.isNotBlank()) {
                 Button(
                     onClick = {
+                        isTesting = true
+                        statusMessage = "testing key..."
+                        coroutineScope.launch {
+                            val res = my.hana.meena.data.system.GeminiBriefRepository.testApiKeyAndFetchModels(keyText.trim())
+                            isTesting = false
+                            statusMessage = if (res.isSuccess) {
+                                val count = res.getOrNull()?.size ?: 0
+                                "key is valid ($count models ready)"
+                            } else {
+                                "test failed: ${res.exceptionOrNull()?.message ?: "network error"}"
+                            }
+                        }
+                    },
+                    enabled = !isTesting,
+                    colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
+                    shape = RoundedCornerShape(0.dp)
+                ) {
+                    Text(if (isTesting) "testing..." else "test key", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                }
+
+                Button(
+                    onClick = {
                         keyText = ""
-                        onSaveKey("")
-                        isSaved = false
+                        my.hana.meena.data.system.KeystoreSecretsManager.clearGeminiApiKey(context)
+                        statusMessage = "key forgotten"
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("clear key", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("forget key", style = MaterialTheme.typography.labelSmall, color = Color.White)
                 }
             }
         }

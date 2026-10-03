@@ -188,6 +188,12 @@ class MeenaLauncherLogicTest {
         assertEquals("rain showers", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(81))
         assertEquals("thunderstorm", my.hana.meena.data.system.WeatherRepository.weatherCodeToCondition(95))
     }
+
+    @Test
+    fun geminiBriefRepository_initialStateIsNeedsSetup() {
+        val state = my.hana.meena.data.system.GeminiBriefRepository.state.value
+        assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup)
+    }
 }
 
 

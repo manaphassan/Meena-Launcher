@@ -56,6 +56,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import kotlin.math.roundToInt
 import my.hana.meena.data.system.WeatherRepository
 import my.hana.meena.ui.widgets.WidgetState
+import my.hana.meena.data.system.GeminiBriefRepository
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -74,7 +75,8 @@ fun TodayHub(
     onOpenCamera: () -> Unit = {},
     onOpenCalculator: () -> Unit = {},
     onRequestCalendarPermission: () -> Unit = {},
-    onRequestLocationPermission: () -> Unit = {}
+    onRequestLocationPermission: () -> Unit = {},
+    onOpenSettings: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -102,6 +104,7 @@ fun TodayHub(
 
     val weatherState by WeatherRepository.state.collectAsState()
     val calendarState by DeviceCalendarRepository.state.collectAsState()
+    val briefState by GeminiBriefRepository.state.collectAsState()
     val quickNotes = remember { mutableStateListOf<String>() }
 
     LaunchedEffect(Unit) {
@@ -109,6 +112,7 @@ fun TodayHub(
         val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
         DeviceCalendarRepository.refresh(context)
         WeatherRepository.refresh(context)
+        GeminiBriefRepository.refresh(context, settings)
         while (true) {
             val now = Date()
             currentTime = timeFormat.format(now)
@@ -377,21 +381,93 @@ fun TodayHub(
 
                 "widget-today-summary" -> {
                     // Gemini AI Brief
+                    val briefData = (briefState as? WidgetState.Ready)?.data ?:
+                                    (briefState as? WidgetState.Stale)?.data
+
                     CollapsibleWidget(
-                        title = "today • summary",
+                        title = "brief",
                         collapsedSummary = {
                             Text(
-                                text = "needs setup",
+                                text = when (briefState) {
+                                    is WidgetState.NeedsSetup -> "needs setup"
+                                    is WidgetState.Loading -> "writing brief..."
+                                    is WidgetState.Ready, is WidgetState.Stale -> "brief is on"
+                                    is WidgetState.Error -> "offline"
+                                    else -> "needs setup"
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextMuted
+                                color = if (briefState is WidgetState.Ready || briefState is WidgetState.Stale) MaterialTheme.colorScheme.primary else MeenaTextMuted
                             )
                         }
                     ) {
-                        Text(
-                            text = "add your gemini key to see your brief",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
-                        )
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            when (briefState) {
+                                is WidgetState.NeedsSetup -> {
+                                    Text(
+                                        text = "add your gemini key to get a brief. tap to configure.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            ) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                onOpenSettings()
+                                            }
+                                            .padding(vertical = 4.dp)
+                                    )
+                                }
+                                is WidgetState.Loading -> {
+                                    Text(
+                                        text = "writing your daily brief...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                                is WidgetState.Error -> {
+                                    val err = (briefState as WidgetState.Error).message
+                                    Text(
+                                        text = "$err. tap to retry.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            ) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                GeminiBriefRepository.refresh(context, settings, force = true)
+                                            }
+                                            .padding(vertical = 4.dp)
+                                    )
+                                }
+                                is WidgetState.Ready, is WidgetState.Stale -> {
+                                    if (briefData != null) {
+                                        Text(
+                                            text = briefData.summaryText,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MeenaTextWhite,
+                                            lineHeight = 20.sp
+                                        )
+                                        val minutesAgo = ((System.currentTimeMillis() - briefData.generatedAt) / 60000L).coerceAtLeast(0)
+                                        val freshnessText = if (minutesAgo == 0L) "updated just now" else "updated ${minutesAgo}m ago"
+                                        Text(
+                                            text = "$freshnessText · ${briefData.modelUsed}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextMuted,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        )
+                                    }
+                                }
+                                else -> {}
+                            }
+                        }
                     }
                 }
 

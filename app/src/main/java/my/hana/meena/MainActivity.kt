@@ -473,7 +473,8 @@ fun MeenaHomeScreen(
                             onOpenCamera = onOpenCamera,
                             onOpenCalculator = onOpenCalculator,
                             onRequestCalendarPermission = { calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR) },
-                            onRequestLocationPermission = { locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
+                            onRequestLocationPermission = { locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) },
+                            onOpenSettings = { isSettingsOpen = true }
                         )
                         1 -> InboxHub(
                             settings = userSettings!!,
