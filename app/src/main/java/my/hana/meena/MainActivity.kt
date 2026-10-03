@@ -48,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -58,6 +59,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.data.preferences.SettingsRepository
@@ -347,27 +349,30 @@ fun MeenaHomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Panoramic Hub Pivot Header (WP7 / WP8.1 style - continuous drag sync with measured title widths)
+            // Panoramic Hub Pivot Header (WP7 / WP8.1 style - multi-speed parallax with right-edge peek)
             val hubs = listOf("today", "inbox", "news", "money", "apps")
             val headerScrollState = rememberScrollState()
-            val titleWidths = remember { mutableStateListOf(0, 0, 0, 0, 0) }
             val localDensity = LocalDensity.current
-            val titleSpacingDp = 32.dp
-            val titleSpacingPx = with(localDensity) { titleSpacingDp.roundToPx() }
+            val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+            val screenWidthPx = with(localDensity) { screenWidthDp.roundToPx() }
+            val startMarginDp = 24.dp
+            val startMarginPx = with(localDensity) { startMarginDp.roundToPx() }
+            val peekWidthDp = 68.dp
+            val peekWidthPx = with(localDensity) { peekWidthDp.roundToPx() }
+            val titleSpanPx = ParallaxHelper.calculateTitleSpan(screenWidthPx, startMarginPx, peekWidthPx)
 
-            // Continuous real-time header sync with pager drag position and measured widths
-            LaunchedEffect(pagerState) {
+            // Continuous real-time header sync with pager drag position
+            LaunchedEffect(pagerState, titleSpanPx) {
                 snapshotFlow {
                     val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                    val widths = titleWidths.toList()
                     val maxScroll = headerScrollState.maxValue
-                    Triple(continuousPage, widths, maxScroll)
-                }.collect { (continuousPage, widths, maxScroll) ->
-                    if (maxScroll > 0 && widths.any { it > 0 }) {
-                        val targetScroll = ParallaxHelper.calculateTitleScrollOffset(
+                    Pair(continuousPage, maxScroll)
+                }.collect { (continuousPage, maxScroll) ->
+                    if (maxScroll > 0) {
+                        val targetScroll = ParallaxHelper.calculatePanoramicScrollOffset(
                             continuousPage = continuousPage,
-                            titleWidths = widths,
-                            spacingPx = titleSpacingPx,
+                            pageCount = hubs.size,
+                            titleSpanPx = titleSpanPx,
                             maxScroll = maxScroll
                         )
                         headerScrollState.scrollTo(targetScroll)
@@ -376,50 +381,84 @@ fun MeenaHomeScreen(
             }
 
             val currentContinuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
-            val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+            val brandParallaxOffset = ParallaxHelper.calculateBrandParallaxOffset(
+                continuousPage = currentContinuousPage,
+                screenWidthPx = screenWidthPx,
+                speedRatio = 0.32f
+            )
 
-            Row(
+            // Authentic WP7 Multi-Speed Panoramic Header (slow brand watermark + continuous peek titles)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .horizontalScroll(headerScrollState, enabled = false)
-                    .padding(start = 24.dp, top = 12.dp, bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(titleSpacingDp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(top = 8.dp)
             ) {
-                hubs.forEachIndexed { index, title ->
-                    val dist = kotlin.math.abs(currentContinuousPage - index)
-                    val titleAlpha = (1f - dist * 0.62f).coerceIn(0.35f, 1f)
-                    val titleScale = (1f - dist * 0.08f).coerceIn(0.92f, 1f)
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.displayLarge,
-                        fontSize = 38.sp,
-                        softWrap = false,
-                        maxLines = 1,
-                        color = Color.White.copy(alpha = titleAlpha),
-                        modifier = Modifier
-                            .onSizeChanged { size ->
-                                if (index < titleWidths.size && titleWidths[index] != size.width) {
-                                    titleWidths[index] = size.width
-                                }
-                            }
-                            .graphicsLayer {
-                                scaleX = titleScale
-                                scaleY = titleScale
-                            }
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            }
-                    )
+                // Layer 1: Ultra-wide Brand Header ("meena") - slow background parallax canvas layer
+                Text(
+                    text = "meena",
+                    style = MaterialTheme.typography.displayLarge,
+                    fontSize = 46.sp,
+                    fontWeight = FontWeight.Light,
+                    letterSpacing = (-1).sp,
+                    color = Color.White.copy(alpha = 0.22f),
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            translationX = brandParallaxOffset
+                        }
+                        .padding(start = 24.dp)
+                )
+
+                // Layer 2: Hub Section Titles - continuous parallax with guaranteed right-edge peek affordance
+                Layout(
+                    content = {
+                        hubs.forEachIndexed { index, title ->
+                            val dist = kotlin.math.abs(currentContinuousPage - index)
+                            val titleAlpha = (1f - dist * 0.58f).coerceIn(0.42f, 1f)
+                            val titleScale = (1f - dist * 0.05f).coerceIn(0.95f, 1f)
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.displayLarge,
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.Light,
+                                softWrap = false,
+                                maxLines = 1,
+                                color = Color.White.copy(alpha = titleAlpha),
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        scaleX = titleScale
+                                        scaleY = titleScale
+                                    }
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(headerScrollState, enabled = false)
+                        .padding(top = 2.dp, bottom = 8.dp)
+                ) { measurables, constraints ->
+                    val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0)) }
+                    val lastPlaceableWidth = placeables.lastOrNull()?.width ?: 0
+                    val totalWidth = startMarginPx + (hubs.size - 1) * titleSpanPx + lastPlaceableWidth + screenWidthPx
+                    val maxHeight = placeables.maxOfOrNull { it.height } ?: 0
+
+                    layout(totalWidth, maxHeight) {
+                        placeables.forEachIndexed { index, placeable ->
+                            val x = startMarginPx + index * titleSpanPx
+                            placeable.placeRelative(x = x, y = 0)
+                        }
+                    }
                 }
-                // Trailing spacer so the final hub title ("apps") can scroll cleanly to the start margin
-                Spacer(modifier = Modifier.width((screenWidthDp - 24.dp).coerceAtLeast(80.dp)))
             }
 
             val onTogglePin = { pkgId: String ->
@@ -435,7 +474,7 @@ fun MeenaHomeScreen(
                 }
             }
 
-            // 6 Lateral Panoramic Canvas Hubs with Windows Phone 3D Turnstile Continuity
+            // 5 Lateral Panoramic Canvas Hubs with Windows Phone 3D Turnstile Continuity
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -448,10 +487,10 @@ fun MeenaHomeScreen(
                         .fillMaxSize()
                         .graphicsLayer {
                             // Signature Metro UI Turnstile Parallax & 3D Depth
-                            translationX = pageOffset * 48.dp.toPx()
-                            alpha = (1f - kotlin.math.abs(pageOffset) * 0.65f).coerceIn(0.15f, 1f)
-                            rotationY = (pageOffset * -7.5f).coerceIn(-20f, 20f)
-                            cameraDistance = 18f * density
+                            translationX = pageOffset * 36.dp.toPx()
+                            alpha = (1f - kotlin.math.abs(pageOffset) * 0.55f).coerceIn(0.20f, 1f)
+                            rotationY = (pageOffset * -6.5f).coerceIn(-16f, 16f)
+                            cameraDistance = 16f * density
                         }
                 ) {
                     when (page) {

@@ -163,6 +163,52 @@ class MeenaLauncherLogicTest {
     }
 
     @Test
+    fun parallaxHelper_calculatesTitleSpanWithGuaranteedPeek() {
+        // screenWidth = 1080px, startMargin = 72px (24dp), peekWidth = 204px (68dp)
+        // span = 1080 - 204 - 72 = 804px
+        val span = my.hana.meena.ui.navigation.ParallaxHelper.calculateTitleSpan(
+            screenWidthPx = 1080,
+            startMarginPx = 72,
+            peekWidthPx = 204
+        )
+        assertEquals(804, span)
+    }
+
+    @Test
+    fun parallaxHelper_panoramicScrollCalculatesAccurateOffsets() {
+        val titleSpan = 300
+        val maxScroll = 2000
+        val pageCount = 5
+
+        // Page 0 -> 0
+        assertEquals(0, my.hana.meena.ui.navigation.ParallaxHelper.calculatePanoramicScrollOffset(0f, pageCount, titleSpan, maxScroll))
+
+        // Page 1 -> 300
+        assertEquals(300, my.hana.meena.ui.navigation.ParallaxHelper.calculatePanoramicScrollOffset(1f, pageCount, titleSpan, maxScroll))
+
+        // Page 0.5 -> 150
+        assertEquals(150, my.hana.meena.ui.navigation.ParallaxHelper.calculatePanoramicScrollOffset(0.5f, pageCount, titleSpan, maxScroll))
+
+        // Page 4 (apps) -> 1200
+        assertEquals(1200, my.hana.meena.ui.navigation.ParallaxHelper.calculatePanoramicScrollOffset(4f, pageCount, titleSpan, maxScroll))
+
+        // Clamping beyond max page (e.g. 6f clamped to 4f -> 1200)
+        assertEquals(1200, my.hana.meena.ui.navigation.ParallaxHelper.calculatePanoramicScrollOffset(6f, pageCount, titleSpan, maxScroll))
+    }
+
+    @Test
+    fun parallaxHelper_calculatesBrandParallaxOffset() {
+        // At page 0, offset is 0
+        val offset0 = my.hana.meena.ui.navigation.ParallaxHelper.calculateBrandParallaxOffset(0f, 1080)
+        assertEquals(0f, offset0, 0.001f)
+
+        // At page 1, continuous offset moves smoothly to the left
+        val offset1 = my.hana.meena.ui.navigation.ParallaxHelper.calculateBrandParallaxOffset(1f, 1080, speedRatio = 0.32f)
+        assertTrue(offset1 < 0f)
+        assertEquals(-1080f * 0.32f * 0.25f, offset1, 0.001f)
+    }
+
+    @Test
     fun quickPanelHardwareHelper_initialStatesAreValid() {
         assertNotNull(my.hana.meena.data.system.QuickPanelHardwareHelper.wifiState.value)
         assertNotNull(my.hana.meena.data.system.QuickPanelHardwareHelper.bluetoothState.value)
