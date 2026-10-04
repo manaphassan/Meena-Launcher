@@ -65,6 +65,8 @@ import my.hana.meena.data.system.NotificationRepository
 import my.hana.meena.theme.MeenaBorder
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.ui.components.MetroDottedProgress
+import my.hana.meena.ui.components.metroClickable
 import kotlinx.coroutines.launch
 
 @Composable
@@ -178,16 +180,16 @@ fun AppsHub(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 48.dp),
+                            .padding(vertical = 32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = primaryColor)
+                        MetroDottedProgress()
                     }
                 }
             } else if (groupedApps.isEmpty()) {
                 item {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "No apps found matching \"$searchQuery\"" else "No applications available",
+                        text = if (searchQuery.isNotBlank()) "no apps matching \"$searchQuery\"" else "no apps available",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MeenaTextMuted,
                         modifier = Modifier.padding(vertical = 32.dp)
@@ -195,7 +197,7 @@ fun AppsHub(
                 }
             } else {
                 groupedApps.forEach { (letter, appsInLetter) ->
-                    // Metro Jump-List Header Tile
+                    // Metro Jump-List Header Tile (48x48dp, 0dp corner radius, metroClickable)
                     item(key = "header-$letter") {
                         Row(
                             modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
@@ -203,9 +205,9 @@ fun AppsHub(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(42.dp)
-                                    .background(primaryColor, RoundedCornerShape(0.dp))
-                                    .clickable {
+                                    .size(48.dp)
+                                    .background(primaryColor)
+                                    .metroClickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         isJumpListOpen = true
                                     },
@@ -397,7 +399,7 @@ fun AppsHub(
                                         .weight(1f)
                                         .heightIn(min = 48.dp)
                                         .background(MaterialTheme.colorScheme.primary)
-                                        .clickable {
+                                        .metroClickable {
                                             try {
                                                 InstalledAppsRepository.invalidateCache()
                                                 val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${target.packageName}"))
@@ -417,7 +419,7 @@ fun AppsHub(
                                         .weight(1f)
                                         .heightIn(min = 48.dp)
                                         .background(Color(0xFF161616))
-                                        .clickable { showUninstallConfirm = false },
+                                        .metroClickable { showUninstallConfirm = false },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text("no", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
@@ -451,7 +453,7 @@ fun AppsHub(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 48.dp)
-                                    .clickable {
+                                    .metroClickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         onTogglePinApp(target.packageName)
                                         selectedTargetForProperties = null
@@ -466,7 +468,7 @@ fun AppsHub(
                                         color = if (isPinned) Color(0xFFFF5252) else primaryColor
                                     )
                                     Text(
-                                        text = if (isPinned) "remove tile from today home page" else "show tile on today home page",
+                                        text = if (isPinned) "remove tile from today" else "show tile on today",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -478,7 +480,7 @@ fun AppsHub(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 48.dp)
-                                    .clickable {
+                                    .metroClickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                             data = Uri.parse("package:${target.packageName}")
@@ -496,7 +498,7 @@ fun AppsHub(
                                         color = Color.White
                                     )
                                     Text(
-                                        text = "open android application settings",
+                                        text = "open system settings",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -508,7 +510,7 @@ fun AppsHub(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 48.dp)
-                                    .clickable {
+                                    .metroClickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         showUninstallConfirm = true
                                     }
@@ -522,7 +524,7 @@ fun AppsHub(
                                         color = Color(0xFFFF5252)
                                     )
                                     Text(
-                                        text = "delete application from phone",
+                                        text = "delete app from phone",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -538,8 +540,9 @@ fun AppsHub(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MeenaTextMuted,
                                     modifier = Modifier
-                                        .clickable { selectedTargetForProperties = null }
-                                        .padding(8.dp)
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { selectedTargetForProperties = null }
+                                        .padding(vertical = 12.dp, horizontal = 8.dp)
                                 )
                             }
                         }
@@ -695,7 +698,10 @@ private fun AlphabetJumpListOverlay(
                     text = "close",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
-                    modifier = Modifier.clickable { onDismiss() }
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onDismiss() }
+                        .padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
 
@@ -715,7 +721,7 @@ private fun AlphabetJumpListOverlay(
                                     .background(
                                         color = if (isAvailable) MaterialTheme.colorScheme.primary else Color(0xFF161616)
                                     )
-                                    .clickable(enabled = isAvailable) {
+                                    .metroClickable(enabled = isAvailable) {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         onSelectLetter(char.uppercaseChar())
                                     },

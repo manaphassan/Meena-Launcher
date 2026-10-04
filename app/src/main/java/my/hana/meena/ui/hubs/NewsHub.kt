@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import my.hana.meena.ui.components.metroClickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,12 +78,12 @@ fun NewsHub(
         ?: emptyList()
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("ALL") } // "ALL", "AMANZ", "SUAMI SIHAT"
+    var selectedFilter by remember { mutableStateOf("all") } // "all", "amanz", "suami sihat"
 
     val filteredList = remember(newsArticles, selectedFilter, searchQuery) {
         val bySource = when (selectedFilter) {
-            "AMANZ" -> newsArticles.filter { it.source.equals("Amanz", ignoreCase = true) }
-            "SUAMI SIHAT" -> newsArticles.filter { it.source.equals("Suami Sihat", ignoreCase = true) }
+            "amanz" -> newsArticles.filter { it.source.equals("Amanz", ignoreCase = true) }
+            "suami sihat" -> newsArticles.filter { it.source.equals("Suami Sihat", ignoreCase = true) }
             else -> newsArticles
         }
         if (searchQuery.isNotBlank()) {
@@ -136,26 +138,24 @@ fun NewsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = "local news • rss feeds",
+                                        text = "local news · rss feeds",
                                         style = MaterialTheme.typography.displaySmall,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
                                     )
                                     Text(
-                                        text = "Latest 6 real-time articles from Amanz.my & SuamiSihat.com.my",
+                                        text = "latest articles from amanz & suami sihat",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
                                 }
 
-                                // Refresh Button (pure Metro 0dp)
+                                // Refresh Button (pure Metro 0dp, min 48dp)
                                 Box(
                                     modifier = Modifier
-                                        .size(34.dp)
-                                        .background(MeenaSurface, RoundedCornerShape(0.dp))
-                                        .border(1.dp, MeenaBorder, RoundedCornerShape(0.dp))
-                                        .clickable {
+                                        .size(48.dp)
+                                        .metroClickable {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             kotlinx.coroutines.MainScope().launch {
                                                 NewsRssRepository.refresh()
@@ -165,10 +165,10 @@ fun NewsHub(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
-                                        contentDescription = "Refresh",
+                                        contentDescription = "refresh",
                                         tint = if (isLoading) MaterialTheme.colorScheme.primary else Color.White,
                                         modifier = Modifier
-                                            .size(18.dp)
+                                            .size(20.dp)
                                             .graphicsLayer {
                                                 if (isLoading) {
                                                     rotationZ = refreshRotation.value
@@ -183,7 +183,7 @@ fun NewsHub(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Filter articles by keyword...", color = MeenaTextMuted, fontSize = 12.sp) },
+                                placeholder = { Text("search articles", color = MeenaTextMuted, fontSize = 12.sp) },
                                 singleLine = true,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = MeenaSurface,
@@ -201,29 +201,29 @@ fun NewsHub(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 NewsFilterPill(
-                                    label = "ALL (6)",
-                                    isSelected = selectedFilter == "ALL",
+                                    label = "all",
+                                    isSelected = selectedFilter == "all",
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilter = "ALL"
+                                        selectedFilter = "all"
                                     }
                                 )
                                 NewsFilterPill(
-                                    label = "AMANZ.MY",
-                                    isSelected = selectedFilter == "AMANZ",
+                                    label = "amanz",
+                                    isSelected = selectedFilter == "amanz",
                                     accentColor = Color(0xFF00A4EF),
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilter = "AMANZ"
+                                        selectedFilter = "amanz"
                                     }
                                 )
                                 NewsFilterPill(
-                                    label = "SUAMISIHAT.COM.MY",
-                                    isSelected = selectedFilter == "SUAMI SIHAT",
+                                    label = "suami sihat",
+                                    isSelected = selectedFilter == "suami sihat",
                                     accentColor = Color(0xFF107C10),
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilter = "SUAMI SIHAT"
+                                        selectedFilter = "suami sihat"
                                     }
                                 )
                             }
@@ -234,13 +234,11 @@ fun NewsHub(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MeenaSurface)
-                                    .border(1.dp, MeenaBorder)
                                     .padding(20.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = if (searchQuery.isNotBlank()) "No articles matching \"$searchQuery\"" else "Fetching live feeds...",
+                                    text = if (searchQuery.isNotBlank()) "no articles matching \"$searchQuery\"" else "fetching live feeds",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MeenaTextMuted
                                 )
@@ -265,7 +263,7 @@ fun NewsHub(
                         }
 
                         // 3. RSS FEED SOURCE MONITOR
-                        CollapsibleWidget(title = "feed sources • live status") {
+                        CollapsibleWidget(title = "feed sources · live status") {
                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 FeedSourceStatusRow("Amanz.my", "https://amanz.my/feed/", Color(0xFF00A4EF))
                                 FeedSourceStatusRow("SuamiSihat.com.my", "https://suamisihat.com.my/feed/", Color(0xFF107C10))
@@ -294,10 +292,9 @@ private fun NewsArticleCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
-            .clickable(onClick = onClick)
-            .padding(14.dp)
+            .heightIn(min = 48.dp)
+            .metroClickable(onClick = onClick)
+            .padding(vertical = 8.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             // Source badge + time row
@@ -316,7 +313,7 @@ private fun NewsArticleCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = article.source.uppercase(),
+                            text = article.source.lowercase(),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -325,7 +322,7 @@ private fun NewsArticleCard(
 
                     if (article.category.isNotBlank()) {
                         Text(
-                            text = "• ${article.category}",
+                            text = "· ${article.category.lowercase()}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MeenaTextMuted
                         )
@@ -333,7 +330,7 @@ private fun NewsArticleCard(
                 }
 
                 Text(
-                    text = article.formattedDate,
+                    text = article.formattedDate.lowercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
@@ -364,8 +361,8 @@ private fun NewsArticleCard(
 
             // Read article prompt
             Text(
-                text = "READ ARTICLE ↗",
-                fontSize = 10.sp,
+                text = "read article",
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = badgeColor,
                 modifier = Modifier.padding(top = 2.dp)
@@ -383,22 +380,18 @@ private fun NewsFilterPill(
 ) {
     Box(
         modifier = Modifier
+            .heightIn(min = 48.dp)
             .background(
                 if (isSelected) accentColor else Color(0xFF141414),
                 RoundedCornerShape(0.dp)
             )
-            .border(
-                1.dp,
-                if (isSelected) accentColor else MeenaBorder,
-                RoundedCornerShape(0.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .metroClickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = label,
-            fontSize = 10.sp,
+            text = label.lowercase(),
+            fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             color = if (isSelected) Color.White else MeenaTextMuted
         )
@@ -410,9 +403,8 @@ private fun FeedSourceStatusRow(name: String, url: String, badgeColor: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF141414))
-            .border(1.dp, MeenaBorder)
-            .padding(10.dp),
+            .heightIn(min = 48.dp)
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -426,11 +418,11 @@ private fun FeedSourceStatusRow(name: String, url: String, badgeColor: Color) {
                     .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
             )
             Column {
-                Text(name, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(url, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted, fontSize = 9.sp)
+                Text(name.lowercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(url.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted, fontSize = 9.sp)
             }
         }
-        Text("ACTIVE", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MeenaProfitGreen)
+        Text("active", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MeenaProfitGreen)
     }
 }
 

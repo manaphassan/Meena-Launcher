@@ -32,6 +32,8 @@ object InstalledAppsRepository {
         cachedApps = null
     }
 
+    fun getCachedApp(packageName: String): DeviceAppInfo? = cachedApps?.firstOrNull { it.packageName == packageName }
+
     suspend fun loadInstalledApps(context: Context, forceRefresh: Boolean = false): List<DeviceAppInfo> = withContext(Dispatchers.IO) {
         if (!forceRefresh && cachedApps != null) {
             return@withContext cachedApps!!

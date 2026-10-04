@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import my.hana.meena.ui.components.metroClickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
@@ -124,10 +126,8 @@ fun InboxHub(
                                     color = MeenaTextMuted,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null
-                                        ) {
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             showNotificationDisclosure = true
                                         }
@@ -171,10 +171,8 @@ fun InboxHub(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null
-                                            ) {
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 NotificationRepository.clearAll()
                                             }
@@ -212,11 +210,8 @@ private fun InboxNotificationRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
+            .heightIn(min = 48.dp)
+            .metroClickable(onClick = onClick)
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -268,11 +263,7 @@ private fun InboxNotificationRow(
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onDismiss
-                ),
+                .metroClickable(onClick = onDismiss),
             contentAlignment = Alignment.Center
         ) {
             Text(

@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.R
+import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.health.HealthConnectAvailability
 import my.hana.meena.data.health.HealthRepository
@@ -186,26 +187,24 @@ fun SettingsScreen(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable {
-                    if (activeSubPage != null) activeSubPage = null else onClose()
-                }
-            ) {
-                IconButton(
-                    onClick = {
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .metroClickable {
                         if (activeSubPage != null) activeSubPage = null else onClose()
-                    },
-                    modifier = Modifier
-                        .size(32.dp)
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(0.dp))
+                    }
+            ) {
+                Box(
+                    modifier = Modifier.size(48.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "back",
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Image(
                     painter = painterResource(id = R.drawable.ic_meena_emblem),
                     contentDescription = "meena",
@@ -213,13 +212,18 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "meena ui • settings",
+                    text = "meena ui · settings",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     letterSpacing = 1.sp
                 )
             }
-            IconButton(onClick = onClose) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .metroClickable(onClick = onClose),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(Icons.Default.Close, contentDescription = "close", tint = MeenaTextMuted)
             }
         }

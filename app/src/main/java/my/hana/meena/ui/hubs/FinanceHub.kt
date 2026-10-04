@@ -3,6 +3,7 @@ package my.hana.meena.ui.hubs
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import my.hana.meena.ui.components.metroClickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
@@ -168,7 +171,8 @@ private fun PortfolioSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenSettings() }
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onOpenSettings() }
                         .padding(vertical = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -205,7 +209,8 @@ private fun PortfolioSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onToggleShowAmounts() },
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onToggleShowAmounts() },
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Row(
@@ -214,7 +219,7 @@ private fun PortfolioSection(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = if (showAmounts) "rm %.2f".format(totalValue) else "rm •••••",
+                            text = if (showAmounts) "rm %.2f".format(totalValue) else "rm ·····",
                             fontSize = 32.sp,
                             style = MaterialTheme.typography.displaySmall,
                             color = Color.White
@@ -223,7 +228,7 @@ private fun PortfolioSection(
                             val changeText = if (showAmounts) {
                                 "${if (isProfit) "+" else ""}rm %.2f (${if (isProfit) "+" else ""}%.1f%%)".format(totalChange, changePct)
                             } else {
-                                "${if (isProfit) "+" else ""}••.•• (${if (isProfit) "+" else ""}%.1f%%)".format(changePct)
+                                "${if (isProfit) "+" else ""}··.·· (${if (isProfit) "+" else ""}%.1f%%)".format(changePct)
                             }
                             Text(
                                 text = changeText,
@@ -249,7 +254,10 @@ private fun PortfolioSection(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
                                     .combinedClickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
                                         onClick = {
                                             FinanceRepository.openQuoteUrl(context, "https://www.google.com/finance/quote/${holding.symbol}")
                                         },
@@ -257,7 +265,7 @@ private fun PortfolioSection(
                                             onDeleteHolding(holding)
                                         }
                                     )
-                                    .padding(vertical = 2.dp),
+                                    .padding(vertical = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -270,7 +278,7 @@ private fun PortfolioSection(
                                     val sharesText = if (showAmounts) {
                                         "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost)
                                     } else {
-                                        "••• shares · avg rm ••.••"
+                                        "··· shares · avg rm ··.··"
                                     }
                                     Text(
                                         text = sharesText,
@@ -279,7 +287,7 @@ private fun PortfolioSection(
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
-                                    val valText = if (showAmounts) "rm %.2f".format(holding.currentValue) else "rm ••.••"
+                                    val valText = if (showAmounts) "rm %.2f".format(holding.currentValue) else "rm ··.··"
                                     Text(
                                         text = valText,
                                         style = MaterialTheme.typography.bodyMedium,
@@ -288,7 +296,7 @@ private fun PortfolioSection(
                                     val profitText = if (showAmounts) {
                                         "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent)
                                     } else {
-                                        "${if (hProfit) "+" else ""}••.•• (%.1f%%)".format(holding.profitLossPercent)
+                                        "${if (hProfit) "+" else ""}··.·· (%.1f%%)".format(holding.profitLossPercent)
                                     }
                                     Text(
                                         text = profitText,
@@ -315,10 +323,11 @@ private fun PortfolioSection(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable {
                                         FinanceRepository.openQuote(context, item)
                                     }
-                                    .padding(vertical = 2.dp),
+                                    .padding(vertical = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -358,7 +367,8 @@ private fun PortfolioSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onRefresh() }
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onRefresh() }
                 ) {
                     Text(
                         text = state.message.lowercase(),
@@ -406,7 +416,8 @@ private fun ExchangeRatesSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenSettings() }
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onOpenSettings() }
                 ) {
                     Text(
                         text = "needs setup",
@@ -457,7 +468,8 @@ private fun ExchangeRatesSection(
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clickable { onRefresh() }
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { onRefresh() }
                                 ) {
                                     Text(
                                         text = "$unit $target",
@@ -483,7 +495,8 @@ private fun ExchangeRatesSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onRefresh() }
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onRefresh() }
                 ) {
                     Text(
                         text = state.message.lowercase(),
@@ -545,7 +558,8 @@ private fun SpendingSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenSettings() },
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onOpenSettings() },
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
@@ -564,7 +578,8 @@ private fun SpendingSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenSettings() },
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onOpenSettings() },
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
@@ -583,7 +598,9 @@ private fun SpendingSection(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 transactions.take(6).forEach { tx ->
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

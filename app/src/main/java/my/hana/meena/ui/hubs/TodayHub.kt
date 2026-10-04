@@ -11,11 +11,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextOverflow
 import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.MetroLineProgress
 import my.hana.meena.ui.components.metroClickable
@@ -58,6 +63,7 @@ import kotlin.math.roundToInt
 import my.hana.meena.data.system.WeatherRepository
 import my.hana.meena.ui.widgets.WidgetState
 import my.hana.meena.data.system.GeminiBriefRepository
+import my.hana.meena.data.system.InstalledAppsRepository
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -107,6 +113,12 @@ fun TodayHub(
     val calendarState by DeviceCalendarRepository.state.collectAsState()
     val briefState by GeminiBriefRepository.state.collectAsState()
     val quickNotes = remember { mutableStateListOf<String>() }
+    var appsVersion by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        InstalledAppsRepository.loadInstalledApps(context)
+        appsVersion++
+    }
 
     LaunchedEffect(settings.calendarDaysAhead, settings.calendarShowAllDay) {
         DeviceCalendarRepository.refresh(
@@ -184,10 +196,7 @@ fun TodayHub(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
+                            .metroClickable {
                                 if (weatherState is WidgetState.NeedsSetup) {
                                     onRequestLocationPermission()
                                 } else {
@@ -314,7 +323,7 @@ fun TodayHub(
                                         color = MeenaTextMuted,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
+                                            .metroClickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 onRequestLocationPermission()
                                             }
@@ -338,7 +347,7 @@ fun TodayHub(
                                         color = MeenaTextMuted,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
+                                            .metroClickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 WeatherRepository.refresh(context, force = true)
                                             }
@@ -457,10 +466,7 @@ fun TodayHub(
                                         color = MeenaTextMuted,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null
-                                            ) {
+                                            .metroClickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 onOpenSettings()
                                             }
@@ -482,10 +488,7 @@ fun TodayHub(
                                         color = MeenaTextMuted,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null
-                                            ) {
+                                            .metroClickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 GeminiBriefRepository.refresh(context, settings, force = true)
                                             }
@@ -558,7 +561,8 @@ fun TodayHub(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { onRequestCalendarPermission() }
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { onRequestCalendarPermission() }
                                         .padding(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
@@ -584,7 +588,7 @@ fun TodayHub(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "all quiet • no upcoming events",
+                                        text = "all quiet · no upcoming events",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -592,7 +596,10 @@ fun TodayHub(
                                         text = "+ event",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                        modifier = Modifier
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
+                                            .padding(vertical = 12.dp, horizontal = 4.dp)
                                     )
                                 }
                             }
@@ -602,7 +609,8 @@ fun TodayHub(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .clickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
                                                 .padding(vertical = 6.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
@@ -617,10 +625,10 @@ fun TodayHub(
                                                 Text(
                                                     text = buildString {
                                                         append(event.formattedDate)
-                                                        append(" • ")
+                                                        append(" · ")
                                                         append(event.formattedTime)
                                                         if (event.location.isNotBlank()) {
-                                                            append(" • ")
+                                                            append(" · ")
                                                             append(event.location)
                                                         }
                                                     },
@@ -639,7 +647,10 @@ fun TodayHub(
                                             text = "+ new event",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                            modifier = Modifier
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
+                                                .padding(vertical = 12.dp, horizontal = 4.dp)
                                         )
                                     }
                                 }
@@ -677,7 +688,10 @@ fun TodayHub(
                                     text = "+ event",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                    modifier = Modifier
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
+                                        .padding(vertical = 12.dp, horizontal = 4.dp)
                                 )
                             }
                         } else {
@@ -686,7 +700,8 @@ fun TodayHub(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
                                             .padding(vertical = 4.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
@@ -713,7 +728,10 @@ fun TodayHub(
                                         text = "+ new event",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.clickable { DeviceCalendarRepository.openNewEvent(context) }
+                                        modifier = Modifier
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
+                                            .padding(vertical = 12.dp, horizontal = 4.dp)
                                     )
                                 }
                             }
@@ -836,7 +854,10 @@ fun TodayHub(
                                             text = "open app",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.clickable { HealthRepository.openFitnessApp(context) }
+                                            modifier = Modifier
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable { HealthRepository.openFitnessApp(context) }
+                                                .padding(vertical = 12.dp, horizontal = 4.dp)
                                         )
                                     }
                                 }
@@ -867,7 +888,8 @@ fun TodayHub(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable {
                                             HealthRepository.openHealthConnectSettings(context)
                                         }
                                         .padding(vertical = 4.dp),
@@ -960,7 +982,7 @@ fun TodayHub(
                         title = "air quality",
                         collapsedSummary = {
                             Text(
-                                text = "${airIndex.stationName.ifBlank { "local" }.lowercase()} • aqi ${airIndex.aqiValue}",
+                                text = "${airIndex.stationName.ifBlank { "local" }.lowercase()} · aqi ${airIndex.aqiValue}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -970,7 +992,7 @@ fun TodayHub(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { HealthRepository.openAirQualityDetails(context) }
+                                .metroClickable { HealthRepository.openAirQualityDetails(context) }
                         ) {
                             Text(airIndex.stationName.ifBlank { "local station" }.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                             Row(
@@ -1011,7 +1033,7 @@ fun TodayHub(
                         title = "phone",
                         collapsedSummary = {
                             Text(
-                                text = "battery ${telemetry.batteryPercent}% • ${String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)}",
+                                text = "battery ${telemetry.batteryPercent}% · ${String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -1087,6 +1109,110 @@ fun TodayHub(
                                 Text("${telemetry.screenBrightnessPercent}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // Quick Actions Row (phone, messages, email, camera, calc)
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "quick actions",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val quickActions = listOf(
+                        Triple("phone", MaterialTheme.colorScheme.primary, onOpenDialer),
+                        Triple("messages", MaterialTheme.colorScheme.primary, onOpenMessages),
+                        Triple("email", MaterialTheme.colorScheme.primary, onOpenEmail),
+                        Triple("camera", MaterialTheme.colorScheme.primary, onOpenCamera),
+                        Triple("calc", MaterialTheme.colorScheme.primary, onOpenCalculator)
+                    )
+                    quickActions.forEach { (label, bg, action) ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp)
+                                .background(bg, RoundedCornerShape(0.dp))
+                                .metroClickable(onClick = action),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pinned App Tiles (WP8.1 Metro Live Tiles)
+        if (settings.pinnedAppIds.isNotEmpty()) {
+            val currentAppsVersion = appsVersion
+            item {
+                Text(
+                    text = "pinned",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp)
+                )
+            }
+            val chunked = settings.pinnedAppIds.chunked(3)
+            items(chunked) { rowApps ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowApps.forEach { pkgId ->
+                        // Read currentAppsVersion so recomposition triggers when cache is loaded
+                        if (currentAppsVersion >= 0) { }
+                        val app = InstalledAppsRepository.getCachedApp(pkgId)
+                        val label = app?.label?.lowercase() ?: pkgId.substringAfterLast('.').lowercase()
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(88.dp)
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
+                                .metroClickable { onLaunchPackage(pkgId) }
+                                .padding(8.dp)
+                        ) {
+                            if (app?.iconBitmap != null) {
+                                Image(
+                                    bitmap = app.iconBitmap,
+                                    contentDescription = label,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .align(Alignment.Center)
+                                )
+                            }
+                            Text(
+                                text = label,
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.align(Alignment.BottomStart),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    repeat(3 - rowApps.size) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
