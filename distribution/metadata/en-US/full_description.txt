@@ -1,0 +1,19 @@
+meena is a personal android launcher built with jetpack compose, designed around clean typography, generous whitespace, and pure speed.
+
+inspired by windows phone metro ui and aio launcher, meena replaces boxes, cards, and cluttered app grids with a lightweight five-page panoramic experience. hierarchy comes from type size and space alone.
+
+five panoramic hubs:
+• today: glanceable daily clock, live local weather, official jakim prayer times, upcoming calendar agenda, and daily health metrics.
+• inbox: unified notification alert stream, recent conversation threads, and quick panel toggles.
+• news: lightweight, distraction-free rss reader with instant on-device parsing and offline reading.
+• money: private offline spending ledger and local asset portfolio tracker with live currency conversion.
+• apps: vertical alphabetical application list with an instant letter-picker jump grid and search.
+
+the meena ui charter:
+• clean: zero cards, zero drop shadows, zero rounded container cards.
+• light: fast download size under 5 mb, zero heavy third-party tracking sdk dependencies.
+• open: generous 24dp margins, clear typographic contrast, and thoughtful whitespace.
+• fast: instant app launching, smooth turnstile screen transitions, and fluid touch interactions.
+
+privacy & data safety:
+meena is built upon a strict on-device processing model. your notifications, calendar appointments, fitness statistics, and financial entries stay on your phone. meena connects to zero advertising networks, collects zero background telemetry, and disables cloud backups (allowbackup=false) to keep your personal data strictly yours.

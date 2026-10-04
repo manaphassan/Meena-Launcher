@@ -817,6 +817,44 @@ class MeenaLauncherLogicTest {
         assertNotNull("docs/play-store-compliance.md must exist", complianceFile)
         assertTrue("docs/play-store-compliance.md must not be empty", complianceFile!!.length() > 500)
     }
+
+    @Test
+    fun releaseMetadata_filesExistAndComplyWithLimits() {
+        val candidates = listOf(
+            java.io.File("distribution/metadata/en-US"),
+            java.io.File("../distribution/metadata/en-US")
+        )
+        val metaDir = candidates.firstOrNull { it.exists() }
+        assertNotNull("distribution/metadata/en-US directory must exist", metaDir)
+
+        val titleFile = java.io.File(metaDir, "title.txt")
+        assertTrue("title.txt must exist", titleFile.exists())
+        val title = titleFile.readText().trim()
+        assertEquals("Meena", title)
+        assertTrue("Title must be <= 30 chars", title.length <= 30)
+
+        val shortDescFile = java.io.File(metaDir, "short_description.txt")
+        assertTrue("short_description.txt must exist", shortDescFile.exists())
+        val shortDesc = shortDescFile.readText().trim()
+        assertTrue("Short description must be <= 80 chars", shortDesc.length <= 80)
+
+        val fullDescFile = java.io.File(metaDir, "full_description.txt")
+        assertTrue("full_description.txt must exist", fullDescFile.exists())
+        val fullDesc = fullDescFile.readText().trim()
+        assertTrue("Full description must be <= 4000 chars", fullDesc.length <= 4000)
+
+        val releaseNotesFile = java.io.File(metaDir, "release_notes.txt")
+        assertTrue("release_notes.txt must exist", releaseNotesFile.exists())
+        val releaseNotes = releaseNotesFile.readText().trim()
+        assertTrue("Release notes must be <= 500 chars", releaseNotes.length <= 500)
+
+        val rolloutGuideFile = listOf(
+            java.io.File("docs/play-store-rollout-guide.md"),
+            java.io.File("../docs/play-store-rollout-guide.md")
+        ).firstOrNull { it.exists() }
+        assertNotNull("docs/play-store-rollout-guide.md must exist", rolloutGuideFile)
+        assertTrue("docs/play-store-rollout-guide.md must not be empty", rolloutGuideFile!!.length() > 500)
+    }
 }
 
 
