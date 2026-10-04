@@ -179,7 +179,7 @@ object HealthRepository : WidgetSpec<HealthData> {
                 hasPermissions = grantedPermissions.containsAll(READ_PERMISSIONS) ||
                         grantedPermissions.contains(HealthPermission.getReadPermission(StepsRecord::class))
 
-                if (hasPermissions) {
+                if (hasPermissions && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     telemetry = queryHealthConnectTelemetry(client, userSettings)
                 }
             } catch (e: Exception) {
@@ -221,6 +221,7 @@ object HealthRepository : WidgetSpec<HealthData> {
         }
     }
 
+    @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.O)
     private suspend fun queryHealthConnectTelemetry(
         client: HealthConnectClient,
         userSettings: MeenaUserSettings?

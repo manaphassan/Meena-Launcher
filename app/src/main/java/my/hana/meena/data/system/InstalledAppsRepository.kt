@@ -59,10 +59,10 @@ object InstalledAppsRepository {
                 }
 
                 val letter = label.firstOrNull()?.uppercaseChar()?.let {
-                if (it in 'A'..'Z') it else '#'
-            } ?: '#'
+                    if (it in 'A'..'Z') it else '#'
+                } ?: '#'
 
-            var version = "v1.0"
+                var version = "v1.0"
                 try {
                     val pkgInfo = context.packageManager.getPackageInfo(pkg, 0)
                     version = "v${pkgInfo.versionName ?: "1.0"}"
@@ -70,7 +70,7 @@ object InstalledAppsRepository {
                     // Ignore
                 }
 
-            var imageBitmap: ImageBitmap? = null
+                var imageBitmap: ImageBitmap? = null
                 try {
                     val drawable = info.getBadgedIcon(0)
                     val bmp = drawableToBitmap(drawable)

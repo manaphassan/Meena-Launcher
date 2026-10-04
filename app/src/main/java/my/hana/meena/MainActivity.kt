@@ -604,6 +604,13 @@ fun MeenaHomeScreen(
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it })
         ) {
+            val backupSharedMsg = stringResource(R.string.backup_shared)
+            val backupShareFailedMsg = stringResource(R.string.backup_share_failed)
+            val backupRestoredMsg = stringResource(R.string.backup_restored)
+            val backupParseFailedMsg = stringResource(R.string.backup_parse_failed)
+            val backupClipboardHintMsg = stringResource(R.string.backup_clipboard_hint)
+            val backupImportFailedMsg = stringResource(R.string.backup_import_failed)
+
             SettingsScreen(
                 currentSettings = userSettings,
                 initialTab = settingsInitialTab,
@@ -619,9 +626,9 @@ fun MeenaHomeScreen(
                                 putExtra(Intent.EXTRA_SUBJECT, "meena-settings-backup.json")
                                 putExtra(Intent.EXTRA_TEXT, exported)
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.backup_shared)))
+                            context.startActivity(Intent.createChooser(shareIntent, backupSharedMsg))
                         } catch (e: Exception) {
-                            android.widget.Toast.makeText(context, context.getString(R.string.backup_share_failed), android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, backupShareFailedMsg, android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -633,16 +640,16 @@ fun MeenaHomeScreen(
                             coroutineScope.launch {
                                 val success = settingsRepository.importFromJson(clip)
                                 if (success) {
-                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_restored), android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, backupRestoredMsg, android.widget.Toast.LENGTH_SHORT).show()
                                 } else {
-                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_parse_failed), android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, backupParseFailedMsg, android.widget.Toast.LENGTH_SHORT).show()
                                 }
                             }
                         } else {
-                            android.widget.Toast.makeText(context, context.getString(R.string.backup_clipboard_hint), android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, backupClipboardHintMsg, android.widget.Toast.LENGTH_LONG).show()
                         }
                     } catch (e: Exception) {
-                        android.widget.Toast.makeText(context, context.getString(R.string.backup_import_failed), android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, backupImportFailedMsg, android.widget.Toast.LENGTH_SHORT).show()
                     }
                 },
                 onResetDefaults = {
