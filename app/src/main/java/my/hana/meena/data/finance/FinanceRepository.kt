@@ -55,10 +55,8 @@ data class FinanceTicker(
     val dayHigh: Double = 0.0,
     val dayLow: Double = 0.0,
     val sparkline: List<Double> = emptyList(),
-    val quoteUrl: String = "https://www.google.com/finance"
-) {
-    val googleFinanceUrl: String get() = quoteUrl
-}
+    val quoteUrl: String = ""
+)
 
 /**
  * Summary account model for portfolio groups.

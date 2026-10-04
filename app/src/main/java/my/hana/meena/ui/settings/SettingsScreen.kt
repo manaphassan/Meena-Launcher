@@ -441,6 +441,14 @@ fun SettingsScreen(
 
                         item {
                             SettingLinkRow(
+                                title = "privacy & data safety",
+                                status = "on-device only · zero cloud tracking",
+                                onClick = { activeSubPage = "look:privacy" }
+                            )
+                        }
+
+                        item {
+                            SettingLinkRow(
                                 title = "about meena ui",
                                 status = "clean, light, open, fast",
                                 onClick = { activeSubPage = "look:about" }
@@ -1858,6 +1866,84 @@ private fun SubPageContainer(
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     fontSize = 11.sp
+                )
+            }
+        }
+
+        subPageId == "look:privacy" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = "look & feel",
+                    pageTitle = "privacy & data safety",
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(
+                    text = "meena is designed from the ground up to respect your privacy. your data stays on your phone.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White
+                )
+            }
+            item {
+                Text(
+                    text = "on-device architecture",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "all notifications, calendar events, bank spending alerts, and health stats are processed locally in memory. meena operates with zero tracking, zero analytical servers, and zero cloud profiling.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+            item {
+                Text(
+                    text = "what meena reads",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "approximate location: used solely to query public weather and jakim prayer times. never tracked in background or saved.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "device calendar: read via calendarcontract solely to show your upcoming agenda on today. no cloud account required.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "notifications: read in memory to show alerts, chats, and opt-in spending tracking. no message text is ever logged or shared.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "health connect: reads daily step counts, distance, active calories, sleep, and heart rate for display. never shared.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = "brief: user-initiated only. your selected summary details are sent directly to google's generative language api using your own api key. keys are stored with android keystore encryption.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+            item {
+                Text(
+                    text = "backup & data safety",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "android cloud backup is permanently disabled (allowbackup=false) to ensure your data stays exclusively on this device. clearing app data in android settings deletes all local information immediately.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
                 )
             }
         }

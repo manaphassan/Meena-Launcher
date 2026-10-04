@@ -719,6 +719,104 @@ class MeenaLauncherLogicTest {
 
         assertTrue("Found banned symbols in strings.xml:\n${violations.joinToString("\n")}", violations.isEmpty())
     }
+
+    private fun resolveManifestFile(): java.io.File {
+        val candidates = listOf(
+            java.io.File("src/main/AndroidManifest.xml"),
+            java.io.File("app/src/main/AndroidManifest.xml")
+        )
+        return candidates.firstOrNull { it.exists() }
+            ?: throw IllegalStateException("Cannot locate AndroidManifest.xml in: ${candidates.map { it.absolutePath }}")
+    }
+
+    @Test
+    fun manifest_hasNoForbiddenPermissions() {
+        val manifestFile = resolveManifestFile()
+        assertTrue("AndroidManifest.xml must exist", manifestFile.exists())
+        val builder = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(manifestFile)
+        val permNodes = doc.getElementsByTagName("uses-permission")
+        
+        val forbidden = setOf(
+            "android.permission.QUERY_ALL_PACKAGES",
+            "android.permission.ACCESS_FINE_LOCATION"
+        )
+        val found = mutableListOf<String>()
+
+        for (i in 0 until permNodes.length) {
+            val node = permNodes.item(i) as org.w3c.dom.Element
+            val name = node.getAttribute("android:name")
+            if (name in forbidden) {
+                found.add(name)
+            }
+        }
+
+        assertTrue("Forbidden permissions found in AndroidManifest.xml: $found", found.isEmpty())
+    }
+
+    @Test
+    fun manifest_hasAllowedPermissionsOnly() {
+        val manifestFile = resolveManifestFile()
+        assertTrue("AndroidManifest.xml must exist", manifestFile.exists())
+        val builder = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(manifestFile)
+        val permNodes = doc.getElementsByTagName("uses-permission")
+        
+        val allowedPermissions = setOf(
+            "android.permission.VIBRATE",
+            "android.permission.INTERNET",
+            "android.permission.ACCESS_NETWORK_STATE",
+            "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.READ_CALENDAR",
+            "android.permission.health.READ_STEPS",
+            "android.permission.health.READ_DISTANCE",
+            "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+            "android.permission.health.READ_SLEEP",
+            "android.permission.health.READ_HEART_RATE"
+        )
+        val unauthorized = mutableListOf<String>()
+
+        for (i in 0 until permNodes.length) {
+            val node = permNodes.item(i) as org.w3c.dom.Element
+            val name = node.getAttribute("android:name")
+            if (name !in allowedPermissions) {
+                unauthorized.add(name)
+            }
+        }
+
+        assertTrue("Unauthorized permissions found in AndroidManifest.xml: $unauthorized", unauthorized.isEmpty())
+    }
+
+    @Test
+    fun manifest_disablesAllowBackup() {
+        val manifestFile = resolveManifestFile()
+        assertTrue("AndroidManifest.xml must exist", manifestFile.exists())
+        val builder = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(manifestFile)
+        val appNodes = doc.getElementsByTagName("application")
+        assertTrue("Application node must exist", appNodes.length > 0)
+        
+        val app = appNodes.item(0) as org.w3c.dom.Element
+        val allowBackup = app.getAttribute("android:allowBackup")
+        assertEquals("allowBackup must be explicitly false for data safety", "false", allowBackup)
+    }
+
+    @Test
+    fun privacyDocuments_existAndAreNonEmpty() {
+        val privacyFile = listOf(
+            java.io.File("docs/privacy-policy.md"),
+            java.io.File("../docs/privacy-policy.md")
+        ).firstOrNull { it.exists() }
+        assertNotNull("docs/privacy-policy.md must exist", privacyFile)
+        assertTrue("docs/privacy-policy.md must not be empty", privacyFile!!.length() > 500)
+
+        val complianceFile = listOf(
+            java.io.File("docs/play-store-compliance.md"),
+            java.io.File("../docs/play-store-compliance.md")
+        ).firstOrNull { it.exists() }
+        assertNotNull("docs/play-store-compliance.md must exist", complianceFile)
+        assertTrue("docs/play-store-compliance.md must not be empty", complianceFile!!.length() > 500)
+    }
 }
 
 

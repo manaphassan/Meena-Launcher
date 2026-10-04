@@ -60,7 +60,7 @@ data class ConnectedDeviceInfo(
     val lastSyncTime: String = ""
 )
 
-data class FitTelemetry(
+data class HealthMetrics(
     val stepsToday: Int = 0,
     val stepGoal: Int = 10000,
     val activeCaloriesKcal: Int = 0,
@@ -73,6 +73,8 @@ data class FitTelemetry(
     val deepSleepFormatted: String = "",
     val sleepScore: Int = 0
 )
+
+typealias FitTelemetry = HealthMetrics
 
 data class AirQualityIndexInfo(
     val aqiValue: Int = 0,
