@@ -83,6 +83,7 @@ import my.hana.meena.ui.hubs.TodayHub
 import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.settings.SettingsScreen
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -164,7 +165,7 @@ class MainActivity : ComponentActivity() {
                 if (launchIntent != null) {
                     startActivity(launchIntent)
                 } else {
-                    android.widget.Toast.makeText(this@MainActivity, "App $packageName not installed", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this@MainActivity, getString(R.string.error_app_not_installed, packageName), android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -182,7 +183,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Opening default messages app...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_open_messages), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -193,7 +194,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Opening default email app...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_open_email), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -202,7 +203,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Camera intent launched", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_open_camera), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -214,7 +215,7 @@ class MainActivity : ComponentActivity() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Calculator opened", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_open_calculator), Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -618,9 +619,9 @@ fun MeenaHomeScreen(
                                 putExtra(Intent.EXTRA_SUBJECT, "meena-settings-backup.json")
                                 putExtra(Intent.EXTRA_TEXT, exported)
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "export meena settings"))
+                            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.backup_shared)))
                         } catch (e: Exception) {
-                            android.widget.Toast.makeText(context, "couldn't share backup", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.backup_share_failed), android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -632,16 +633,16 @@ fun MeenaHomeScreen(
                             coroutineScope.launch {
                                 val success = settingsRepository.importFromJson(clip)
                                 if (success) {
-                                    android.widget.Toast.makeText(context, "settings restored from clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_restored), android.widget.Toast.LENGTH_SHORT).show()
                                 } else {
-                                    android.widget.Toast.makeText(context, "couldn't parse backup json", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_parse_failed), android.widget.Toast.LENGTH_SHORT).show()
                                 }
                             }
                         } else {
-                            android.widget.Toast.makeText(context, "copy your backup json to clipboard first, then tap import", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.backup_clipboard_hint), android.widget.Toast.LENGTH_LONG).show()
                         }
                     } catch (e: Exception) {
-                        android.widget.Toast.makeText(context, "couldn't import backup", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.backup_import_failed), android.widget.Toast.LENGTH_SHORT).show()
                     }
                 },
                 onResetDefaults = {
@@ -670,10 +671,10 @@ fun MeenaHomeScreen(
 
         if (showLocationDisclosure) {
             MetroDialog(
-                title = "approximate location",
-                message = "meena uses coarse approximate location to show your local weather and prayer times. your location stays on your device and is never shared or tracked.\n\nallow location access?",
-                confirmText = "yes",
-                dismissText = "no",
+                title = stringResource(R.string.disclosure_location_title),
+                message = "${stringResource(R.string.disclosure_location_body)}\n\n${stringResource(R.string.disclosure_location_question)}",
+                confirmText = stringResource(R.string.action_yes),
+                dismissText = stringResource(R.string.action_no),
                 onConfirm = {
                     showLocationDisclosure = false
                     locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -684,10 +685,10 @@ fun MeenaHomeScreen(
 
         if (showCalendarDisclosure) {
             MetroDialog(
-                title = "calendar access",
-                message = "meena reads your device calendar to display today's upcoming events. your schedule stays strictly on your phone.\n\nallow calendar access?",
-                confirmText = "yes",
-                dismissText = "no",
+                title = stringResource(R.string.disclosure_calendar_title),
+                message = "${stringResource(R.string.disclosure_calendar_body)}\n\n${stringResource(R.string.disclosure_calendar_question)}",
+                confirmText = stringResource(R.string.action_yes),
+                dismissText = stringResource(R.string.action_no),
                 onConfirm = {
                     showCalendarDisclosure = false
                     calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR)
@@ -699,10 +700,10 @@ fun MeenaHomeScreen(
         // First-Time Setup Permissions Popup Dialog (Authentic Metro UI)
         if (showFirstRunPermissionDialog) {
             MetroDialog(
-                title = "welcome to meena",
-                message = "to show your local prayer times, weather, and upcoming calendar agenda, meena needs a couple of quick permissions. all your data stays strictly on your phone.\n\nwould you like to allow these permissions?",
-                confirmText = "yes",
-                dismissText = "not now",
+                title = stringResource(R.string.welcome_title),
+                message = stringResource(R.string.welcome_body),
+                confirmText = stringResource(R.string.action_yes),
+                dismissText = stringResource(R.string.action_no),
                 onConfirm = {
                     showFirstRunPermissionDialog = false
                     coroutineScope.launch {
@@ -782,13 +783,13 @@ fun ActionCenterSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "action center",
+                    text = stringResource(R.string.quick_panel_title),
                     style = MaterialTheme.typography.displayLarge,
                     fontSize = 32.sp,
                     color = Color.White
                 )
                 Text(
-                    text = "close",
+                    text = stringResource(R.string.action_close),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     modifier = Modifier
@@ -806,29 +807,29 @@ fun ActionCenterSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ActionTile(
-                    title = "wi-fi",
+                    title = stringResource(R.string.quick_panel_wifi),
                     state = wifiState.label,
                     isActive = wifiState.isConnected,
                     modifier = Modifier.weight(1f),
                     onClick = { QuickPanelHardwareHelper.openWifiPanel(context) }
                 )
                 ActionTile(
-                    title = "bluetooth",
+                    title = stringResource(R.string.quick_panel_bluetooth),
                     state = bluetoothState.label,
                     isActive = bluetoothState.isEnabled,
                     modifier = Modifier.weight(1f),
                     onClick = { QuickPanelHardwareHelper.openBluetoothPanel(context) }
                 )
                 ActionTile(
-                    title = "torch",
-                    state = if (isTorchActive) "on" else "off",
+                    title = stringResource(R.string.quick_panel_torch),
+                    state = if (isTorchActive) stringResource(R.string.quick_panel_torch_on) else stringResource(R.string.quick_panel_torch_off),
                     isActive = isTorchActive,
                     modifier = Modifier.weight(1f),
                     onClick = { QuickPanelHardwareHelper.toggleTorch(context) }
                 )
                 ActionTile(
-                    title = "settings",
-                    state = "all",
+                    title = stringResource(R.string.quick_panel_settings),
+                    state = stringResource(R.string.quick_panel_settings_all),
                     isActive = true,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenSettings
@@ -848,16 +849,16 @@ fun ActionCenterSheet(
             ) {
                 if (isLeftHanded) {
                     Text(
-                        text = "all settings",
+                        text = stringResource(R.string.action_all_settings),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.metroClickable(onClick = onOpenSettings)
                     )
-                    Text("notifications", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                    Text(stringResource(R.string.quick_panel_notifications), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                 } else {
-                    Text("notifications", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                    Text(stringResource(R.string.quick_panel_notifications), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                     Text(
-                        text = "all settings",
+                        text = stringResource(R.string.action_all_settings),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.metroClickable(onClick = onOpenSettings)
@@ -881,8 +882,8 @@ fun ActionCenterSheet(
                     }
                 } else {
                     ActionNotificationItem(
-                        app = "notifications",
-                        text = "all caught up",
+                        app = stringResource(R.string.quick_panel_notifications),
+                        text = stringResource(R.string.state_all_quiet),
                         time = ""
                     )
                 }

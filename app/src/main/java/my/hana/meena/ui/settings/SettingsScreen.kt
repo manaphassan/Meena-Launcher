@@ -319,7 +319,7 @@ fun SettingsScreen(
                             val config = settingsState.widgetConfigs[id]
                             val isEnabled = config?.isEnabled != false
                             val hub = config?.hubId ?: "home"
-                            val statusText = if (isEnabled) "on • $hub" else "off"
+                            val statusText = if (isEnabled) "on · $hub" else "off"
 
                             SettingLinkRow(
                                 title = title,
@@ -385,7 +385,7 @@ fun SettingsScreen(
                             val calStatus = if (my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)) {
                                 "${settingsState.calendarDaysAhead}d lookahead"
                             } else {
-                                "needs permission"
+                                "needs a quick okay"
                             }
                             SettingLinkRow(
                                 title = "calendar",
@@ -401,7 +401,7 @@ fun SettingsScreen(
                             val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
                             SettingLinkRow(
                                 title = "date & time",
-                                status = "$timeMode • $hijriMode",
+                                status = "$timeMode · $hijriMode",
                                 onClick = { activeSubPage = "look:datetime" }
                             )
                         }
@@ -409,7 +409,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "theme & accents",
-                                status = "${settingsState.baseTheme} • ${settingsState.accentHex.lowercase()}",
+                                status = "${settingsState.baseTheme} · ${settingsState.accentHex.lowercase()}",
                                 onClick = { activeSubPage = "look:theme" }
                             )
                         }
@@ -417,7 +417,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "typography",
-                                status = "${settingsState.fontFamily} • ${settingsState.fontScalePercent}%",
+                                status = "${settingsState.fontFamily} · ${settingsState.fontScalePercent}%",
                                 onClick = { activeSubPage = "look:typography" }
                             )
                         }
@@ -426,7 +426,7 @@ fun SettingsScreen(
                             val hand = if (settingsState.isLeftHanded) "left-handed" else "right-handed"
                             SettingLinkRow(
                                 title = "ergonomics & layout",
-                                status = "$hand • haptics on",
+                                status = "$hand · haptics on",
                                 onClick = { activeSubPage = "look:ergonomics" }
                             )
                         }
@@ -825,7 +825,7 @@ private fun SubPageContainer(
                         )
                     }
                     item {
-                        Text("context sources for brief", style = MaterialTheme.typography.titleSmall, color = Color.White)
+                        Text("what brief reads", style = MaterialTheme.typography.titleSmall, color = Color.White)
                     }
                     item {
                         SettingToggleRow(
@@ -1146,8 +1146,8 @@ private fun SubPageContainer(
                     }
                     item {
                         SettingToggleRow(
-                            title = "memory usage (ram)",
-                            subtitle = "display active and free operating system ram",
+                            title = "memory usage",
+                            subtitle = "display active and free memory",
                             checked = custom("show_ram", "true") == "true",
                             onCheckedChange = { setCustom("show_ram", it.toString()) }
                         )
@@ -1242,7 +1242,7 @@ private fun SubPageContainer(
                 "widget-health-telemetry" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("fit telemetry options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text("health options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
                         SettingSegmentedRow(
@@ -1581,7 +1581,7 @@ private fun SubPageContainer(
                 val swatchName = activeSwatch?.name ?: settingsState.accentHex.lowercase()
 
                 Text(
-                    text = "$swatchName • ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} • ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
+                    text = "$swatchName · ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} · ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
                 )
@@ -1708,7 +1708,7 @@ private fun SubPageContainer(
             item {
                 SettingToggleRow(
                     title = "hide status bar",
-                    subtitle = "hide top battery and clock for pure full-bleed canvas",
+                    subtitle = "hide top battery and clock for a clean screen",
                     checked = settingsState.isStatusBarHidden,
                     onCheckedChange = { onUpdate { it.copy(isStatusBarHidden = it.isStatusBarHidden.not()) } }
                 )
@@ -1790,7 +1790,7 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "charter: clean • light • open • fast",
+                    text = "charter: clean · light · open · fast",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -1811,27 +1811,27 @@ private fun SubPageContainer(
                 Spacer(modifier = Modifier.height(4.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "• on-device processing: notifications and bank alerts are read locally in memory and never sent to any server or third party.",
+                        text = "on-device processing: notifications and bank alerts are read locally in memory and never sent to any server or third party.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "• coarse location: approximate location is used solely to query local weather and prayer times. no background tracking.",
+                        text = "coarse location: approximate location is used solely to query local weather and prayer times. no background tracking.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "• calendar read: reads device calendar via calendarcontract for your agenda widget without requiring cloud accounts.",
+                        text = "calendar read: reads device calendar via calendarcontract for your agenda widget without requiring cloud accounts.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "• secure storage: api keys and sensitive settings are kept locally with android keystore encryption.",
+                        text = "secure storage: api keys and sensitive settings are kept locally with android keystore encryption.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "• zero cloud backup: system cloud backup is disabled (allowbackup=false) to ensure your data stays on this device.",
+                        text = "zero cloud backup: system cloud backup is disabled (allowbackup=false) to ensure your data stays on this device.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -1854,7 +1854,7 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "version 1.0 • package my.hana.meena",
+                    text = "version 1.0 · my.hana.meena",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     fontSize = 11.sp
@@ -2428,7 +2428,7 @@ private fun CalendarAccountSettings(
 
         if (!hasPerm) {
             Text(
-                text = "calendar permission is needed to show your upcoming agenda on the today hub.",
+                text = "meena needs calendar access to show your upcoming agenda on today.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White
             )
@@ -2445,7 +2445,7 @@ private fun CalendarAccountSettings(
                 shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("grant calendar permission in settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("turn on calendar access in settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
             }
         } else {
             Column {
@@ -2574,7 +2574,7 @@ private fun NewsFeedManager(
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "articles are fetched directly on-device with zero server intermediaries or cloud telemetry.",
+            text = "articles are fetched directly on-device with zero server intermediaries or cloud tracking.",
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted
         )
@@ -2638,7 +2638,7 @@ private fun NewsFeedManager(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (alreadyAdded) "added • $label" else "+ $label",
+                        text = if (alreadyAdded) "added · $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 12.sp,
                         color = if (alreadyAdded) Color.White else MeenaTextMuted
@@ -2664,7 +2664,7 @@ private fun NewsFeedManager(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (alreadyAdded) "added • $label" else "+ $label",
+                        text = if (alreadyAdded) "added · $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 12.sp,
                         color = if (alreadyAdded) Color.White else MeenaTextMuted
@@ -2892,7 +2892,7 @@ private fun GeminiApiKeyInput(
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "disclosure: selected context (calendar, weather, prayer, or spending) is sent directly to google's generative language api from your device when generating a brief. no data is sent anywhere else.",
+            text = "disclosure: the details you choose (calendar, weather, prayer, or spending) are sent directly to google's generative language api from your device when generating a brief. no data is sent anywhere else.",
             style = MaterialTheme.typography.labelSmall,
             color = MeenaTextMuted
         )
@@ -2906,17 +2906,17 @@ private fun SolatZonePicker(
 ) {
     val zones = listOf(
         "" to "auto-detect by location (gps)",
-        "WLY01" to "WLY01 • Kuala Lumpur & Putrajaya",
-        "SGR01" to "SGR01 • Gombak, Petaling, Sepang, Hulu Langat",
-        "SGR02" to "SGR02 • Kuala Selangor, Sabak Bernam",
-        "SGR03" to "SGR03 • Klang, Kuala Langat",
-        "JHR01" to "JHR01 • Pulau Aur & Pemanggil",
-        "JHR02" to "JHR02 • Johor Bahru, Kota Tinggi, Kulai",
-        "PNG01" to "PNG01 • Pulau Pinang",
-        "PRK01" to "PRK01 • Tapah, Slim River, Tanjung Malim",
-        "PRK02" to "PRK02 • Ipoh, Batu Gajah, Kampar",
-        "SBH01" to "SBH01 • Kota Kinabalu, Ranau, Penampang",
-        "SWK01" to "SWK01 • Kuching, Bau, Lundu, Sematan"
+        "WLY01" to "wly01 · kuala lumpur & putrajaya",
+        "SGR01" to "sgr01 · gombak, petaling, sepang, hulu langat",
+        "SGR02" to "sgr02 · kuala selangor, sabak bernam",
+        "SGR03" to "sgr03 · klang, kuala langat",
+        "JHR01" to "jhr01 · pulau aur & pemanggil",
+        "JHR02" to "jhr02 · johor bahru, kota tinggi, kulai",
+        "PNG01" to "png01 · pulau pinang",
+        "PRK01" to "prk01 · tapah, slim river, tanjung malim",
+        "PRK02" to "prk02 · ipoh, batu gajah, kampar",
+        "SBH01" to "sbh01 · kota kinabalu, ranau, penampang",
+        "SWK01" to "swk01 · kuching, bau, lundu, sematan"
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

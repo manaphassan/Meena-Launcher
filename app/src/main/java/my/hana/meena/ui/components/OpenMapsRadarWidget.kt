@@ -124,7 +124,7 @@ fun OpenMapsRadarWidget(
     }
 
     CollapsibleWidget(
-        title = "current map location • openmaps",
+        title = "nearby · openmaps",
         collapsedSummary = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +136,7 @@ fun OpenMapsRadarWidget(
                         .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                 )
                 Text(
-                    text = "${currentLocation.formattedCoordinates} • 3km radar",
+                    text = "${currentLocation.formattedCoordinates} · 3km radar",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
@@ -290,8 +290,8 @@ fun OpenMapsRadarWidget(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "openmaps • dark",
-                        fontSize = 9.sp,
+                        text = "openmaps · dark",
+                        fontSize = 12.sp,
                         color = MeenaTextMuted
                     )
                 }

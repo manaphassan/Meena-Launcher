@@ -81,7 +81,7 @@ fun CollapsibleWidget(
                 }
 
                 Text(
-                    text = if (isExpanded) "▲" else "▼",
+                    text = if (isExpanded) "less" else "more",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )

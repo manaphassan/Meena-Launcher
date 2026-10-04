@@ -528,7 +528,7 @@ fun TodayHub(
                 "widget-solat" -> {
                     // Waktu Solat JAKIM with dynamic celestial arc
                     CollapsibleWidget(
-                        title = "waktu solat • jakim",
+                        title = "waktu solat · jakim",
                         collapsedSummary = {
                             Text(
                                 text = jakimSchedule.nextPrayerLabel.lowercase(),

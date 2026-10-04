@@ -20,21 +20,26 @@
     <string name="action_search">search</string>
     <string name="action_new_event">+ new event</string>
 
-    <!-- App Context Menu -->
+    <!-- App Menu -->
     <string name="menu_pin_today">pin to today</string>
     <string name="menu_unpin_today">unpin from today</string>
     <string name="menu_app_info">app info</string>
     <string name="menu_uninstall">uninstall</string>
     <string name="dialog_uninstall_title">uninstall app?</string>
-    <string name="dialog_uninstall_question">do you want to uninstall this application?</string>
+    <string name="dialog_uninstall_question">do you want to remove %1$s from your phone?</string>
 
     <!-- Common States -->
     <string name="state_all_quiet">all quiet</string>
     <string name="state_offline">offline</string>
     <string name="state_loading">loading</string>
     <string name="state_needs_setup">needs setup</string>
+    <string name="state_needs_quick_okay">needs a quick okay</string>
     <string name="state_nothing_new">nothing new</string>
     <string name="state_allow_location">allow location</string>
+    <string name="state_checking">checking...</string>
+    <string name="state_updated_just_now">updated just now</string>
+    <string name="state_updated_ago">updated %1$dm ago</string>
+    <string name="state_new_count">%1$d new</string>
 
     <!-- Settings Pivot Tabs -->
     <string name="settings_tab_widgets">widgets</string>
@@ -50,10 +55,67 @@
     <string name="disclosure_notification_question">do you want to open notification access settings?</string>
     <string name="disclosure_location_title">approximate location</string>
     <string name="disclosure_location_body">meena uses coarse approximate location to show your local weather and prayer times. your location stays on your device and is never shared or tracked.</string>
+    <string name="disclosure_location_question">allow location access?</string>
     <string name="disclosure_calendar_title">calendar access</string>
     <string name="disclosure_calendar_body">meena reads your device calendar to display today\'s upcoming events. your schedule stays strictly on your phone.</string>
+    <string name="disclosure_calendar_question">allow calendar access?</string>
     <string name="about_privacy_title">privacy charter</string>
     <string name="about_privacy_body">on-device only. no analytics, no ads, and no background tracking. all api keys and personal data are kept locally on your phone.</string>
+
+    <!-- First Run Setup -->
+    <string name="welcome_title">welcome to meena</string>
+    <string name="welcome_body">to show your local prayer times, weather, and upcoming calendar agenda, meena needs a couple of quick okays. all your data stays strictly on your phone.\n\nwould you like to allow these?</string>
+
+    <!-- Errors & Toasts -->
+    <string name="error_app_not_installed">%1$s isn\'t installed</string>
+    <string name="error_open_messages">couldn\'t open messages</string>
+    <string name="error_open_email">couldn\'t open email</string>
+    <string name="error_open_camera">couldn\'t open camera</string>
+    <string name="error_open_calculator">couldn\'t open calculator</string>
+    <string name="error_open_app">couldn\'t open app</string>
+    <string name="error_uninstall_app">couldn\'t uninstall app</string>
+    <string name="error_generic">something went wrong. try again?</string>
+    <string name="error_offline">you\'re offline. showing what we had.</string>
+
+    <!-- Backups -->
+    <string name="backup_shared">backup shared</string>
+    <string name="backup_share_failed">couldn\'t share backup</string>
+    <string name="backup_restored">settings restored from clipboard</string>
+    <string name="backup_parse_failed">couldn\'t parse backup json</string>
+    <string name="backup_clipboard_hint">copy your backup json to clipboard first, then tap import</string>
+    <string name="backup_import_failed">couldn\'t import backup</string>
+
+    <!-- Quick Panel -->
+    <string name="quick_panel_title">quick panel</string>
+    <string name="quick_panel_wifi">wi-fi</string>
+    <string name="quick_panel_bluetooth">bluetooth</string>
+    <string name="quick_panel_torch">torch</string>
+    <string name="quick_panel_torch_on">on</string>
+    <string name="quick_panel_torch_off">off</string>
+    <string name="quick_panel_settings">settings</string>
+    <string name="quick_panel_settings_all">all</string>
+    <string name="quick_panel_notifications">notifications</string>
+
+    <!-- Widget Catalog Names -->
+    <string name="widget_clock">clock</string>
+    <string name="widget_weather">weather</string>
+    <string name="widget_solat">solat</string>
+    <string name="widget_agenda">agenda</string>
+    <string name="widget_brief">brief</string>
+    <string name="widget_health">health</string>
+    <string name="widget_air">air</string>
+    <string name="widget_alerts">alerts</string>
+    <string name="widget_chats">chats</string>
+    <string name="widget_mail">mail</string>
+    <string name="widget_news">news</string>
+    <string name="widget_portfolio">portfolio</string>
+    <string name="widget_watchlist">watchlist</string>
+    <string name="widget_rates">rates</string>
+    <string name="widget_spending">spending</string>
+    <string name="widget_notes">notes</string>
+    <string name="widget_tasks">tasks</string>
+    <string name="widget_phone">phone</string>
+    <string name="widget_nearby">nearby</string>
 
     <!-- Milestone 2: Finance & Gemini Brief -->
     <string name="dialog_delete_holding_title">delete holding</string>
@@ -61,16 +123,36 @@
     <string name="dialog_forget_gemini_title">forget api key</string>
     <string name="dialog_forget_gemini_question">remove your gemini api key from encrypted storage?</string>
     <string name="disclosure_gemini_title">gemini daily brief</string>
-    <string name="disclosure_gemini_body">selected context (calendar, weather, prayer, or spending) is sent directly to google\'s generative language api from your device when generating a brief. no data is sent anywhere else.</string>
+    <string name="disclosure_gemini_body">the details you choose (calendar, weather, prayer, or spending) are sent directly to google\'s generative language api from your device when generating a brief. no data is sent anywhere else.</string>
+    <string name="brief_sources_title">what brief reads</string>
     <string name="finance_delay_notice">quotes from google sheets may be delayed ~20 min</string>
     <string name="finance_hide_amounts">mask balances in public</string>
 
     <!-- Milestone 3: Health Connect & Air Quality -->
     <string name="health_connect_notice">google fit has retired. health metrics sync securely on-device through android health connect.</string>
-    <string name="health_manage_permissions">manage health connect permissions</string>
+    <string name="health_manage_permissions">manage health connect access</string>
     <string name="health_install_app">get health connect from play store</string>
     <string name="health_open_companion">open companion app</string>
     <string name="health_step_goal_title">step goal</string>
     <string name="health_sleep_goal_title">sleep goal</string>
     <string name="health_companion_title">companion app</string>
+    <string name="health_options_title">health options</string>
+
+    <!-- Apps Hub -->
+    <string name="apps_search_hint">search</string>
+    <string name="apps_empty">nothing called \"%1$s\"</string>
+    <string name="apps_jump_title">jump to</string>
+    <string name="apps_quick_actions">quick actions</string>
+
+    <!-- News Hub -->
+    <string name="news_local_rss">local news · rss feeds</string>
+    <string name="news_search_hint">search articles</string>
+    <string name="news_empty_query">nothing about \"%1$s\"</string>
+    <string name="news_empty_stories">no stories right now</string>
+    <string name="news_refresh">refresh</string>
+
+    <!-- About -->
+    <string name="about_motto">meena · built on meena ui: clean, light, open, fast</string>
+    <string name="about_version">version 1.0 · my.hana.meena</string>
+    <string name="about_charter">charter: clean · light · open · fast</string>
 </resources>

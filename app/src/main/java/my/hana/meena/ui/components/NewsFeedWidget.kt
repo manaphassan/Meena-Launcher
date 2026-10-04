@@ -164,7 +164,7 @@ fun NewsFeedWidget(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh Feeds",
+                        contentDescription = "refresh",
                         tint = if (isLoading) MaterialTheme.colorScheme.primary else MeenaTextMuted,
                         modifier = Modifier
                             .size(16.dp)
@@ -188,7 +188,7 @@ fun NewsFeedWidget(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (isLoading) "Loading latest headlines..." else "No articles found.",
+                        text = if (isLoading) "loading latest headlines..." else "no stories right now.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MeenaTextMuted
                     )
@@ -214,16 +214,16 @@ fun NewsFeedWidget(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "RSS feeds: amanz.my • suamisihat.com.my",
+                    text = "news feeds: amanz.my · suamisihat.com.my",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
-                    fontSize = 10.sp
+                    fontSize = 12.sp
                 )
                 Text(
-                    text = "Tap article to read",
+                    text = "tap article to read",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 10.sp
+                    fontSize = 12.sp
                 )
             }
         }
@@ -283,8 +283,8 @@ private fun NewsArticleRow(
                 // Category Tag
                 if (article.category.isNotBlank()) {
                     Text(
-                        text = "• ${article.category}",
-                        fontSize = 10.sp,
+                        text = "· ${article.category}",
+                        fontSize = 12.sp,
                         color = MeenaTextMuted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

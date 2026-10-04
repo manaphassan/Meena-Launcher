@@ -637,6 +637,88 @@ class MeenaLauncherLogicTest {
         val reducedAnim = my.hana.meena.ui.components.metroTurnstileTransition(forward = true, reducedMotion = true)
         assertNotNull(reducedAnim)
     }
+
+    private fun resolveStringsFile(): java.io.File {
+        val candidates = listOf(
+            java.io.File("src/main/res/values/strings.xml"),
+            java.io.File("app/src/main/res/values/strings.xml")
+        )
+        return candidates.firstOrNull { it.exists() }
+            ?: throw IllegalStateException("Cannot locate strings.xml in: ${candidates.map { it.absolutePath }}")
+    }
+
+    @Test
+    fun stringsXml_hasNoBannedWords() {
+        val stringsFile = resolveStringsFile()
+        assertTrue("strings.xml must exist", stringsFile.exists())
+        val builder = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(stringsFile)
+        val stringNodes = doc.getElementsByTagName("string")
+        
+        val bannedPattern = Regex("\\b(telemetry|ram|ltpo|realtime|permission|intent|package|canvas|proactive|context)\\b", RegexOption.IGNORE_CASE)
+        val violations = mutableListOf<String>()
+
+        for (i in 0 until stringNodes.length) {
+            val node = stringNodes.item(i) as org.w3c.dom.Element
+            val name = node.getAttribute("name")
+            val text = node.textContent
+            if (bannedPattern.containsMatchIn(text)) {
+                val matched = bannedPattern.findAll(text).map { it.value }.toList()
+                violations.add("string '$name' contains banned words $matched: '$text'")
+            }
+        }
+
+        assertTrue("Found banned words in strings.xml:\n${violations.joinToString("\n")}", violations.isEmpty())
+    }
+
+    @Test
+    fun stringsXml_isAllLowercaseExceptAppName() {
+        val stringsFile = resolveStringsFile()
+        assertTrue("strings.xml must exist", stringsFile.exists())
+        val builder = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(stringsFile)
+        val stringNodes = doc.getElementsByTagName("string")
+        
+        val uppercasePattern = Regex("[A-Z]")
+        val violations = mutableListOf<String>()
+
+        for (i in 0 until stringNodes.length) {
+            val node = stringNodes.item(i) as org.w3c.dom.Element
+            val name = node.getAttribute("name")
+            if (name == "app_name") continue // "Meena" is allowed
+            val text = node.textContent
+            if (uppercasePattern.containsMatchIn(text)) {
+                violations.add("string '$name' contains uppercase letters: '$text'")
+            }
+        }
+
+        assertTrue("Found uppercase letters in strings.xml:\n${violations.joinToString("\n")}", violations.isEmpty())
+    }
+
+    @Test
+    fun stringsXml_hasNoBannedSymbols() {
+        val stringsFile = resolveStringsFile()
+        assertTrue("strings.xml must exist", stringsFile.exists())
+        val builder = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(stringsFile)
+        val stringNodes = doc.getElementsByTagName("string")
+        
+        val bannedSymbols = listOf("•", "✕", "▲", "▼", "→", "⚡")
+        val violations = mutableListOf<String>()
+
+        for (i in 0 until stringNodes.length) {
+            val node = stringNodes.item(i) as org.w3c.dom.Element
+            val name = node.getAttribute("name")
+            val text = node.textContent
+            for (symbol in bannedSymbols) {
+                if (text.contains(symbol)) {
+                    violations.add("string '$name' contains banned symbol '$symbol': '$text'")
+                }
+            }
+        }
+
+        assertTrue("Found banned symbols in strings.xml:\n${violations.joinToString("\n")}", violations.isEmpty())
+    }
 }
 
 

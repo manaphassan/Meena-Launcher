@@ -199,8 +199,8 @@ fun DynamicSolatCelestialCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "MYT",
-                            fontSize = 10.sp,
+                            text = "myt",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF8AA3B5)
                         )
@@ -214,8 +214,8 @@ fun DynamicSolatCelestialCard(
                         .padding(start = 16.dp, top = 38.dp)
                 ) {
                     Text(
-                        text = "SETERUSNYA",
-                        fontSize = 10.sp,
+                        text = "next",
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color(0xFF8BA5B5),
                         letterSpacing = 1.sp
@@ -278,7 +278,7 @@ fun DynamicSolatCelestialCard(
                         ) {
                             Text(
                                 text = item.name.lowercase(),
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
                                 color = if (isHighlighted) Color(0xFF26C6DA) else Color(0xFF7E92A2),
                                 maxLines = 1,
@@ -309,14 +309,14 @@ fun DynamicSolatCelestialCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left: Gregorian & Hijri Date
                 Text(
-                    text = "${schedule.formattedGregorianDate}  •  ${schedule.hijriDate}".lowercase(),
-                    fontSize = 9.5.sp,
+                    text = "${schedule.formattedGregorianDate}  ·  ${schedule.hijriDate}".lowercase(),
+                    fontSize = 12.sp,
                     color = Color(0xFF8697A6),
                     maxLines = 1,
                     modifier = Modifier.weight(1f, fill = false)
@@ -327,30 +327,42 @@ fun DynamicSolatCelestialCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "monthly schedule",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF26C6DA),
-                        maxLines = 1,
-                        softWrap = false,
-                        modifier = Modifier.clickable {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            isMonthlyScheduleOpen = true
-                        }
-                    )
-                    Text(
-                        text = "change zone",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF26C6DA),
-                        maxLines = 1,
-                        softWrap = false,
-                        modifier = Modifier.clickable {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            isZonePickerOpen = true
-                        }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .metroClickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                isMonthlyScheduleOpen = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "monthly schedule",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF26C6DA),
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .metroClickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                isZonePickerOpen = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "change zone",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF26C6DA),
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
                 }
             }
         }
@@ -754,8 +766,8 @@ private fun ZonePickerDialog(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${zone.code} • ${zone.state}",
-                                    fontSize = 11.sp,
+                                    text = "${zone.code} · ${zone.state}",
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isSelected) Color(0xFF26C6DA) else MeenaTextMuted
                                 )
@@ -785,7 +797,7 @@ private fun MonthlyScheduleDialog(
     val now = Calendar.getInstance()
     val month = now.get(Calendar.MONTH)
     val year = now.get(Calendar.YEAR)
-    val monthNames = arrayOf("Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember")
+    val monthNames = arrayOf("january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december")
     var scheduleRows by remember(zone) { mutableStateOf<List<my.hana.meena.data.system.DailyPrayerRow>>(emptyList()) }
     
     LaunchedEffect(zone) {
@@ -813,13 +825,13 @@ private fun MonthlyScheduleDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Jadual Solat • ${monthNames[month]} $year",
+                            text = "prayer timetable · ${monthNames[month]} $year",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "$zone • $zoneName",
+                            text = "$zone · $zoneName",
                             fontSize = 12.sp,
                             color = Color(0xFF8AA3B5)
                         )
@@ -844,13 +856,13 @@ private fun MonthlyScheduleDialog(
                         .padding(vertical = 6.dp, horizontal = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Hari", modifier = Modifier.weight(1.1f), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
-                    Text("Subuh", modifier = Modifier.weight(1f), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
-                    Text("Syuruk", modifier = Modifier.weight(1f), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
-                    Text("Zohor", modifier = Modifier.weight(1f), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
-                    Text("Asar", modifier = Modifier.weight(1f), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
-                    Text("Maghrib", modifier = Modifier.weight(1.25f), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5), maxLines = 1, softWrap = false)
-                    Text("Isyak", modifier = Modifier.weight(1f), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
+                    Text("day", modifier = Modifier.weight(1.1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
+                    Text("subuh", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
+                    Text("syuruk", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
+                    Text("zohor", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
+                    Text("asar", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
+                    Text("maghrib", modifier = Modifier.weight(1.25f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5), maxLines = 1, softWrap = false)
+                    Text("isyak", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8AA3B5))
                 }
 
                 LazyColumn(
