@@ -112,6 +112,8 @@ import my.hana.meena.theme.MeenaTextWhite
 @Composable
 fun SettingsScreen(
     currentSettings: MeenaUserSettings,
+    initialTab: String = "widgets",
+    initialSubPage: String? = null,
     onSaveSettings: (MeenaUserSettings) -> Unit,
     onExportBackup: () -> Unit,
     onImportBackup: () -> Unit,
@@ -120,8 +122,8 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     var settingsState by remember { mutableStateOf(currentSettings) }
-    var activeTab by remember { mutableStateOf("widgets") }
-    var activeSubPage by remember { mutableStateOf<String?>(null) }
+    var activeTab by remember(initialTab) { mutableStateOf(initialTab) }
+    var activeSubPage by remember(initialSubPage) { mutableStateOf(initialSubPage) }
 
     val tabs = listOf("widgets", "accounts", "look & feel")
 
@@ -134,24 +136,28 @@ fun SettingsScreen(
         }
     }
 
-    // Windows Phone 7 Turnstile 3D Entrance Animation
-    var turnstileRotation by remember { mutableFloatStateOf(20f) }
-    var turnstileAlpha by remember { mutableFloatStateOf(0f) }
+    // Windows Phone 7 Turnstile 3D Entrance Animation (respects reduced motion)
+    var turnstileRotation by remember { mutableFloatStateOf(if (currentSettings.isReducedMotion) 0f else 20f) }
+    var turnstileAlpha by remember { mutableFloatStateOf(if (currentSettings.isReducedMotion) 1f else 0f) }
 
-    LaunchedEffect(Unit) {
-        animate(
-            initialValue = 20f,
-            targetValue = 0f,
-            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
-        ) { value, _ -> turnstileRotation = value }
+    LaunchedEffect(currentSettings.isReducedMotion) {
+        if (!currentSettings.isReducedMotion) {
+            animate(
+                initialValue = 20f,
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)
+            ) { value, _ -> turnstileRotation = value }
+        }
     }
 
-    LaunchedEffect(Unit) {
-        animate(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 200, easing = LinearEasing)
-        ) { value, _ -> turnstileAlpha = value }
+    LaunchedEffect(currentSettings.isReducedMotion) {
+        if (!currentSettings.isReducedMotion) {
+            animate(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 180, easing = LinearEasing)
+            ) { value, _ -> turnstileAlpha = value }
+        }
     }
 
     fun update(transform: (MeenaUserSettings) -> MeenaUserSettings) {
@@ -1663,6 +1669,14 @@ private fun SubPageContainer(
                     subtitle = "mirror navigation hub and swipe gestures",
                     checked = settingsState.isLeftHanded,
                     onCheckedChange = { onUpdate { it.copy(isLeftHanded = it.isLeftHanded.not()) } }
+                )
+            }
+            item {
+                SettingToggleRow(
+                    title = "reduced motion",
+                    subtitle = "subdued animations for transitions and turnstile",
+                    checked = settingsState.isReducedMotion,
+                    onCheckedChange = { onUpdate { it.copy(isReducedMotion = it.isReducedMotion.not()) } }
                 )
             }
             item {

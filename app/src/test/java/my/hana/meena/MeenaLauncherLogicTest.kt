@@ -10,6 +10,7 @@ import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.theme.calculateContrastRatio
 import my.hana.meena.theme.isAccessibleContrast
+import my.hana.meena.ui.navigation.ParallaxHelper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -549,6 +550,55 @@ class MeenaLauncherLogicTest {
         // Dark grey on black must fail WCAG regular text check
         val subtleBorder = Color(0xFF222222)
         assertFalse("Subtle border against black should not pass text contrast", isAccessibleContrast(subtleBorder, MeenaBlack))
+    }
+
+    @Test
+    fun userSettings_reducedMotionAndHandedness_defaults() {
+        val settings = MeenaUserSettings()
+        assertFalse("Reduced motion should be disabled by default", settings.isReducedMotion)
+        assertFalse("Left-handed mode should be disabled by default", settings.isLeftHanded)
+    }
+
+    @Test
+    fun parallaxHelper_titleSpanCalculation_guaranteesPeek() {
+        val screenWidthPx = 1080
+        val startMarginPx = 72
+        val peekWidthPx = 204
+
+        val span = ParallaxHelper.calculateTitleSpan(
+            screenWidthPx = screenWidthPx,
+            startMarginPx = startMarginPx,
+            peekWidthPx = peekWidthPx
+        )
+        // Span = 1080 - 204 - 72 = 804
+        assertEquals(804, span)
+
+        // At page 0, scroll offset must be 0
+        val offset0 = ParallaxHelper.calculatePanoramicScrollOffset(
+            continuousPage = 0f,
+            pageCount = 5,
+            titleSpanPx = span,
+            maxScroll = 4000
+        )
+        assertEquals(0, offset0)
+
+        // At page 1, scroll offset must equal 1 * span
+        val offset1 = ParallaxHelper.calculatePanoramicScrollOffset(
+            continuousPage = 1f,
+            pageCount = 5,
+            titleSpanPx = span,
+            maxScroll = 4000
+        )
+        assertEquals(804, offset1)
+
+        // At page 4, scroll offset must equal 4 * span
+        val offset4 = ParallaxHelper.calculatePanoramicScrollOffset(
+            continuousPage = 4f,
+            pageCount = 5,
+            titleSpanPx = span,
+            maxScroll = 4000
+        )
+        assertEquals(4 * 804, offset4)
     }
 }
 

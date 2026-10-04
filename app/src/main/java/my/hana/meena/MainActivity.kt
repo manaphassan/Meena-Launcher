@@ -16,6 +16,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,9 +26,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -77,9 +80,9 @@ import my.hana.meena.ui.hubs.FinanceHub
 import my.hana.meena.ui.hubs.InboxHub
 import my.hana.meena.ui.hubs.NewsHub
 import my.hana.meena.ui.hubs.TodayHub
-import my.hana.meena.ui.navigation.CornerNavHub
-import my.hana.meena.ui.settings.SettingsScreen
 import my.hana.meena.ui.components.MetroDialog
+import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -229,10 +232,10 @@ fun MeenaHomeScreen(
     onOpenCalculator: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val userSettings by settingsRepository.userSettingsFlow.collectAsState(initial = null)
+    val userSettingsState by settingsRepository.userSettingsFlow.collectAsState(initial = null)
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    if (userSettings == null) {
+    val userSettings = userSettingsState ?: run {
         androidx.compose.material3.Surface(
             modifier = Modifier.fillMaxSize(),
             color = androidx.compose.ui.graphics.Color.Black
@@ -241,7 +244,7 @@ fun MeenaHomeScreen(
     }
 
     var showFirstRunPermissionDialog by remember {
-        mutableStateOf(userSettings?.hasCompletedFirstRunSetup == false)
+        mutableStateOf(!userSettings.hasCompletedFirstRunSetup)
     }
     var showLocationDisclosure by remember { mutableStateOf(false) }
     var showCalendarDisclosure by remember { mutableStateOf(false) }
@@ -289,11 +292,11 @@ fun MeenaHomeScreen(
         my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
     }
 
-    LaunchedEffect(userSettings?.stepGoal, userSettings?.healthCompanionPackage) {
+    LaunchedEffect(userSettings.stepGoal, userSettings.healthCompanionPackage) {
         my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
     }
 
-    val defaultHubClamped = (userSettings?.defaultHubIndex ?: initialHubIndex).coerceIn(0, 4)
+    val defaultHubClamped = (userSettings.defaultHubIndex).coerceIn(0, 4)
 
     val pagerState = rememberPagerState(
         initialPage = defaultHubClamped,
@@ -306,8 +309,8 @@ fun MeenaHomeScreen(
         }
     }
 
-    LaunchedEffect(userSettings?.solatZone) {
-        val zone = userSettings?.solatZone
+    LaunchedEffect(userSettings.solatZone) {
+        val zone = userSettings.solatZone
         if (!zone.isNullOrBlank()) {
             my.hana.meena.data.system.JakimSolatRepository.setZone(zone)
             my.hana.meena.data.system.JakimSolatRepository.refresh()
@@ -321,7 +324,9 @@ fun MeenaHomeScreen(
     val hubAppsListState = rememberLazyListState()
 
     var isSettingsOpen by remember { mutableStateOf(false) }
+    var settingsInitialTab by remember { mutableStateOf("widgets") }
     var isActionCenterOpen by remember { mutableStateOf(false) }
+    var focusAppsSearch by remember { mutableStateOf(false) }
 
     // Intercept hardware/gesture Back button (return to today hub)
     BackHandler(enabled = isSettingsOpen || isActionCenterOpen || pagerState.currentPage != 0) {
@@ -385,7 +390,7 @@ fun MeenaHomeScreen(
                     .padding(top = 8.dp)
                     .pointerInput(Unit) {
                         detectVerticalDragGestures { _, dragAmount ->
-                            if (dragAmount > 25f) {
+                            if (dragAmount > 20f) {
                                 isActionCenterOpen = true
                             }
                         }
@@ -395,7 +400,7 @@ fun MeenaHomeScreen(
                 Text(
                     text = "meena",
                     style = MaterialTheme.typography.displayLarge,
-                    fontSize = 46.sp,
+                    fontSize = 44.sp,
                     fontWeight = FontWeight.Light,
                     letterSpacing = (-1).sp,
                     color = Color.White.copy(alpha = 0.22f),
@@ -409,6 +414,7 @@ fun MeenaHomeScreen(
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = {
+                                    settingsInitialTab = "widgets"
                                     isSettingsOpen = true
                                 }
                             )
@@ -425,7 +431,7 @@ fun MeenaHomeScreen(
                             Text(
                                 text = title,
                                 style = MaterialTheme.typography.displayLarge,
-                                fontSize = 38.sp,
+                                fontSize = 42.sp,
                                 fontWeight = FontWeight.Light,
                                 softWrap = false,
                                 maxLines = 1,
@@ -443,6 +449,7 @@ fun MeenaHomeScreen(
                                                 }
                                             },
                                             onLongPress = {
+                                                settingsInitialTab = "widgets"
                                                 isSettingsOpen = true
                                             }
                                         )
@@ -471,7 +478,7 @@ fun MeenaHomeScreen(
 
             val onTogglePin = { pkgId: String ->
                 coroutineScope.launch {
-                    val settingsNonNull = userSettings!!
+                    val settingsNonNull = userSettings
                     val currentList = settingsNonNull.pinnedAppIds.toMutableList()
                     if (currentList.contains(pkgId)) {
                         currentList.remove(pkgId)
@@ -483,6 +490,7 @@ fun MeenaHomeScreen(
             }
 
             // 5 Lateral Panoramic Canvas Hubs with Windows Phone 3D Turnstile Continuity
+            val isReduced = userSettings.isReducedMotion
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -494,20 +502,24 @@ fun MeenaHomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            // Signature Metro UI Turnstile Parallax & 3D Depth
-                            translationX = pageOffset * 36.dp.toPx()
-                            alpha = (1f - kotlin.math.abs(pageOffset) * 0.55f).coerceIn(0.20f, 1f)
-                            rotationY = (pageOffset * -6.5f).coerceIn(-16f, 16f)
-                            cameraDistance = 16f * density
+                            if (!isReduced) {
+                                // Signature Metro UI Turnstile Parallax & 3D Depth
+                                translationX = pageOffset * 36.dp.toPx()
+                                alpha = (1f - kotlin.math.abs(pageOffset) * 0.55f).coerceIn(0.20f, 1f)
+                                rotationY = (pageOffset * -6.5f).coerceIn(-16f, 16f)
+                                cameraDistance = 16f * density
+                            } else {
+                                alpha = (1f - kotlin.math.abs(pageOffset)).coerceIn(0f, 1f)
+                            }
                         }
                 ) {
                     when (page) {
                         0 -> TodayHub(
-                            settings = userSettings!!,
+                            settings = userSettings,
                             listState = hubTodayListState,
                             onUpdateSolatZone = { zone ->
                                 coroutineScope.launch {
-                                    val newSettings = userSettings!!.copy(solatZone = zone)
+                                    val newSettings = userSettings.copy(solatZone = zone)
                                     settingsRepository.saveSettings(newSettings)
                                     my.hana.meena.data.system.JakimSolatRepository.setZone(zone)
                                     my.hana.meena.data.system.JakimSolatRepository.refresh()
@@ -521,31 +533,39 @@ fun MeenaHomeScreen(
                             onOpenCalculator = onOpenCalculator,
                             onRequestCalendarPermission = { showCalendarDisclosure = true },
                             onRequestLocationPermission = { showLocationDisclosure = true },
-                            onOpenSettings = { isSettingsOpen = true }
+                            onOpenSettings = {
+                                settingsInitialTab = "widgets"
+                                isSettingsOpen = true
+                            }
                         )
                         1 -> InboxHub(
-                            settings = userSettings!!,
+                            settings = userSettings,
                             listState = hubInboxListState
                         )
                         2 -> NewsHub(
-                            settings = userSettings!!,
+                            settings = userSettings,
                             listState = hubNewsListState
                         )
                         3 -> FinanceHub(
-                            settings = userSettings!!,
+                            settings = userSettings,
                             listState = hubMoneyListState,
-                            onOpenSettings = { isSettingsOpen = true }
+                            onOpenSettings = {
+                                settingsInitialTab = "widgets"
+                                isSettingsOpen = true
+                            }
                         )
                         4 -> AppsHub(
                             listState = hubAppsListState,
-                            pinnedAppIds = userSettings!!.pinnedAppIds,
-                            pinnedAppSizes = userSettings!!.pinnedAppSizes,
+                            pinnedAppIds = userSettings.pinnedAppIds,
+                            pinnedAppSizes = userSettings.pinnedAppSizes,
+                            focusSearch = focusAppsSearch,
+                            onSearchFocused = { focusAppsSearch = false },
                             onTogglePinApp = { pkg -> onTogglePin(pkg) },
                             onSetTileSize = { appId, size ->
                                 coroutineScope.launch {
-                                    val currentMap = userSettings!!.pinnedAppSizes.toMutableMap()
+                                    val currentMap = userSettings.pinnedAppSizes.toMutableMap()
                                     currentMap[appId] = size
-                                    settingsRepository.saveSettings(userSettings!!.copy(pinnedAppSizes = currentMap))
+                                    settingsRepository.saveSettings(userSettings.copy(pinnedAppSizes = currentMap))
                                 }
                             },
                             onLaunchApp = onLaunchApp
@@ -555,6 +575,27 @@ fun MeenaHomeScreen(
             }
         }
 
+        // Edge Gesture: Swipe inward from edge opposite handedness to jump to apps with search focused
+        val isLeftHanded = userSettings.isLeftHanded
+        val edgeAlignment = if (isLeftHanded) Alignment.CenterEnd else Alignment.CenterStart
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(28.dp)
+                .align(edgeAlignment)
+                .pointerInput(isLeftHanded) {
+                    detectHorizontalDragGestures { _, dragAmount ->
+                        val inwardDrag = if (isLeftHanded) -dragAmount else dragAmount
+                        if (inwardDrag > 20f) {
+                            focusAppsSearch = true
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(4)
+                            }
+                        }
+                    }
+                }
+        )
+
         // Settings Pivot Dialog
         AnimatedVisibility(
             visible = isSettingsOpen,
@@ -562,13 +603,14 @@ fun MeenaHomeScreen(
             exit = slideOutVertically(targetOffsetY = { it })
         ) {
             SettingsScreen(
-                currentSettings = userSettings!!,
+                currentSettings = userSettings,
+                initialTab = settingsInitialTab,
                 onSaveSettings = { updated ->
                     coroutineScope.launch { settingsRepository.saveSettings(updated) }
                 },
                 onExportBackup = {
                     coroutineScope.launch {
-                        val exported = settingsRepository.exportToJson(userSettings!!)
+                        val exported = settingsRepository.exportToJson(userSettings)
                         try {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "application/json"
@@ -615,9 +657,11 @@ fun MeenaHomeScreen(
             exit = slideOutVertically(targetOffsetY = { -it })
         ) {
             ActionCenterSheet(
+                isLeftHanded = userSettings.isLeftHanded,
                 onClose = { isActionCenterOpen = false },
                 onOpenSettings = {
                     isActionCenterOpen = false
+                    settingsInitialTab = "look & feel"
                     isSettingsOpen = true
                 }
             )
@@ -661,7 +705,7 @@ fun MeenaHomeScreen(
                 onConfirm = {
                     showFirstRunPermissionDialog = false
                     coroutineScope.launch {
-                        settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
+                        settingsRepository.saveSettings(userSettings.copy(hasCompletedFirstRunSetup = true))
                     }
                     permissionLauncher.launch(
                         arrayOf(
@@ -673,7 +717,7 @@ fun MeenaHomeScreen(
                 onDismiss = {
                     showFirstRunPermissionDialog = false
                     coroutineScope.launch {
-                        settingsRepository.saveSettings(userSettings!!.copy(hasCompletedFirstRunSetup = true))
+                        settingsRepository.saveSettings(userSettings.copy(hasCompletedFirstRunSetup = true))
                     }
                 }
             )
@@ -683,6 +727,7 @@ fun MeenaHomeScreen(
 
 @Composable
 fun ActionCenterSheet(
+    isLeftHanded: Boolean = false,
     onClose: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -716,6 +761,13 @@ fun ActionCenterSheet(
                 }
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 14.dp)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { _, dragAmount ->
+                        if (dragAmount < -20f) {
+                            onClose()
+                        }
+                    }
+                }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -738,7 +790,10 @@ fun ActionCenterSheet(
                     text = "close",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
-                    modifier = Modifier.clickable(onClick = onClose)
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable(onClick = onClose)
+                        .padding(top = 12.dp)
                 )
             }
 
@@ -781,7 +836,7 @@ fun ActionCenterSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Notifications bar
+            // Notifications bar (mirrors based on handedness per §2.5)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -790,13 +845,23 @@ fun ActionCenterSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("notifications", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                Text(
-                    "all settings",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable(onClick = onOpenSettings)
-                )
+                if (isLeftHanded) {
+                    Text(
+                        text = "all settings",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.metroClickable(onClick = onOpenSettings)
+                    )
+                    Text("notifications", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                } else {
+                    Text("notifications", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                    Text(
+                        text = "all settings",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.metroClickable(onClick = onOpenSettings)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -837,8 +902,9 @@ private fun ActionTile(
 ) {
     Box(
         modifier = modifier
+            .heightIn(min = 52.dp)
             .background(if (isActive) MaterialTheme.colorScheme.primary else Color(0xFF1E1E1E))
-            .clickable(onClick = onClick)
+            .metroClickable(onClick = onClick)
             .padding(10.dp)
     ) {
         Column {
@@ -854,6 +920,7 @@ private fun ActionNotificationItem(app: String, text: String, time: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .background(Color(0xFF141414))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -863,7 +930,9 @@ private fun ActionNotificationItem(app: String, text: String, time: String) {
             Text(app, style = MaterialTheme.typography.labelSmall, color = Color.White)
             Text(text, style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
         }
-        Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+        if (time.isNotBlank()) {
+            Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+        }
     }
 }
 

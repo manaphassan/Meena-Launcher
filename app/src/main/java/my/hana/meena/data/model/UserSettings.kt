@@ -18,6 +18,7 @@ data class MeenaUserSettings(
     val language: String = "en",
     val isStatusBarHidden: Boolean = false,
     val isLeftHanded: Boolean = false,
+    val isReducedMotion: Boolean = false,
     val defaultHubIndex: Int = 0,
     val isHapticEnabled: Boolean = true,
     val baseTheme: String = "amoled", // "amoled", "slate", "light"

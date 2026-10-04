@@ -36,6 +36,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,6 +72,8 @@ fun AppsHub(
     listState: LazyListState,
     pinnedAppIds: List<String> = emptyList(),
     pinnedAppSizes: Map<String, String> = emptyMap(),
+    focusSearch: Boolean = false,
+    onSearchFocused: () -> Unit = {},
     onTogglePinApp: (String) -> Unit = {},
     onSetTileSize: (String, String) -> Unit = { _, _ -> },
     onLaunchApp: (String) -> Unit
@@ -77,6 +81,15 @@ fun AppsHub(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var searchQuery by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(focusSearch) {
+        if (focusSearch) {
+            listState.scrollToItem(0)
+            focusRequester.requestFocus()
+            onSearchFocused()
+        }
+    }
 
     val primaryColor = MaterialTheme.colorScheme.primary
     var selectedTargetForProperties by remember { mutableStateOf<DeviceAppInfo?>(null) }
@@ -137,14 +150,16 @@ fun AppsHub(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // Authentic WP8.1 Search Bar (White background, black text)
+            // Authentic WP8.1 Search Bar (White background, black text, 0dp corners)
             item {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search apps...", color = Color.Gray, fontSize = 14.sp) },
-                    leadingIcon = { Icon(Icons.Default.Search, "Search", tint = Color.Black) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    placeholder = { Text("search apps", color = Color.Gray, fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, "search", tint = Color.Black) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.White,
                         unfocusedContainerColor = Color.White,
