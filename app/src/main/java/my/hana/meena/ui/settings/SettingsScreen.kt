@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -72,8 +73,19 @@ import my.hana.meena.data.model.WidgetConfig
 import my.hana.meena.data.news.NewsRssRepository
 import my.hana.meena.data.system.NotificationRepository
 import my.hana.meena.ui.components.MetroDialog
+import my.hana.meena.ui.components.MetroListPicker
+import my.hana.meena.ui.components.MetroListPickerRow
+import my.hana.meena.ui.components.MetroPickerItem
+import my.hana.meena.ui.components.MetroToggle
+import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.theme.Meena10AccentSwatches
+import my.hana.meena.theme.isAccessibleContrast
+import my.hana.meena.theme.calculateContrastRatio
+import my.hana.meena.theme.MeenaLossRed
+import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaAmber
 import my.hana.meena.theme.MeenaBlack
+import my.hana.meena.theme.MeenaBlue
 import my.hana.meena.theme.MeenaBorder
 import my.hana.meena.theme.MeenaCobalt
 import my.hana.meena.theme.MeenaCrimson
@@ -1509,57 +1521,67 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Text("base theme", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf("amoled", "slate", "light").forEach { theme ->
-                        val isSelected = settingsState.baseTheme == theme
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .clickable { onUpdate { it.copy(baseTheme = theme) } }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(theme, style = MaterialTheme.typography.labelSmall, color = if (isSelected) Color.White else MeenaTextMuted)
-                        }
-                    }
-                }
+                SettingSegmentedRow(
+                    title = "base theme",
+                    subtitle = "choose surface background contrast",
+                    options = listOf(
+                        "amoled" to "amoled (pure black)",
+                        "slate" to "slate (dark gray)",
+                        "light" to "light (high key)"
+                    ),
+                    selectedKey = settingsState.baseTheme,
+                    onSelectKey = { theme -> onUpdate { it.copy(baseTheme = theme) } }
+                )
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("lumia accent swatches", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                val accents = listOf(
-                    "#00A4EF" to MeenaCyan,
-                    "#A4C400" to MeenaLime,
-                    "#FA6800" to MeenaOrange,
-                    "#D80073" to MeenaMagenta,
-                    "#0050EF" to MeenaCobalt,
-                    "#008A00" to MeenaEmerald,
-                    "#E51400" to MeenaCrimson,
-                    "#F0A30A" to MeenaAmber
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "lumia accent color",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val currentBg = when (settingsState.baseTheme) {
+                    "light" -> Color.White
+                    "slate" -> MeenaDarkSlate
+                    else -> MeenaBlack
+                }
+                val currentAccentColor = runCatching {
+                    Color(android.graphics.Color.parseColor(settingsState.accentHex))
+                }.getOrDefault(MeenaBlue)
+                val currentRatio = calculateContrastRatio(currentAccentColor, currentBg)
+                val isAccessible = isAccessibleContrast(currentAccentColor, currentBg)
+                val activeSwatch = Meena10AccentSwatches.find { it.hex.equals(settingsState.accentHex, ignoreCase = true) }
+                val swatchName = activeSwatch?.name ?: settingsState.accentHex.lowercase()
+
+                Text(
+                    text = "$swatchName • ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} • ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    accents.chunked(4).forEach { row ->
+                    Meena10AccentSwatches.chunked(5).forEach { row ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            row.forEach { (hex, col) ->
-                                val isSelected = settingsState.accentHex.equals(hex, ignoreCase = true)
+                            row.forEach { swatch ->
+                                val isSelected = settingsState.accentHex.equals(swatch.hex, ignoreCase = true)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(36.dp)
-                                        .background(col)
-                                        .border(if (isSelected) 2.dp else 0.dp, Color.White)
-                                        .clickable { onUpdate { it.copy(accentHex = hex) } }
+                                        .heightIn(min = 48.dp)
+                                        .aspectRatio(1f)
+                                        .background(swatch.color)
+                                        .border(
+                                            width = if (isSelected) 3.dp else 0.dp,
+                                            color = if (settingsState.baseTheme == "light") MeenaBlack else Color.White
+                                        )
+                                        .metroClickable { onUpdate { it.copy(accentHex = swatch.hex) } }
                                 )
                             }
                         }
@@ -1569,26 +1591,16 @@ private fun SubPageContainer(
 
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("border style", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf("purist" to "purist flat (0dp)", "modern" to "modern subtle (1dp)").forEach { (key, display) ->
-                        val isSelected = settingsState.borderStyle == key
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .clickable { onUpdate { it.copy(borderStyle = key) } }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(display, style = MaterialTheme.typography.labelSmall, color = if (isSelected) Color.White else MeenaTextMuted)
-                        }
-                    }
-                }
+                SettingSegmentedRow(
+                    title = "border style",
+                    subtitle = "content tile edge definition",
+                    options = listOf(
+                        "purist" to "purist flat (0dp)",
+                        "modern" to "modern subtle (1dp)"
+                    ),
+                    selectedKey = settingsState.borderStyle,
+                    onSelectKey = { border -> onUpdate { it.copy(borderStyle = border) } }
+                )
             }
         }
 
@@ -1601,27 +1613,18 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Text("font family", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                val fonts = listOf("Segoe UI", "Inter", "Outfit", "System")
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    fonts.forEach { font ->
-                        val isSelected = settingsState.fontFamily.equals(font, ignoreCase = true)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .clickable { onUpdate { it.copy(fontFamily = font) } }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(font.lowercase(), style = MaterialTheme.typography.labelSmall, color = if (isSelected) Color.White else MeenaTextMuted)
-                        }
-                    }
-                }
+                SettingSegmentedRow(
+                    title = "font family",
+                    subtitle = "system typeface pairing",
+                    options = listOf(
+                        "Segoe UI" to "segoe ui (metro)",
+                        "Inter" to "inter",
+                        "Outfit" to "outfit",
+                        "System" to "system default"
+                    ),
+                    selectedKey = settingsState.fontFamily,
+                    onSelectKey = { font -> onUpdate { it.copy(fontFamily = font) } }
+                )
             }
 
             item {
@@ -1839,8 +1842,9 @@ fun SettingLinkRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .heightIn(min = 52.dp)
+            .metroClickable(onClick = onClick)
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1848,7 +1852,6 @@ fun SettingLinkRow(
             Text(
                 text = title.lowercase(),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
                 color = Color.White
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -1871,19 +1874,24 @@ fun SettingToggleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(vertical = 10.dp),
+            .heightIn(min = 48.dp)
+            .metroClickable { onCheckedChange(!checked) }
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
             Text(
                 text = title.lowercase(),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.White
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle.lowercase(),
                     style = MaterialTheme.typography.bodySmall,
@@ -1891,15 +1899,10 @@ fun SettingToggleRow(
                 )
             }
         }
-        Switch(
+        MetroToggle(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                uncheckedThumbColor = MeenaTextMuted,
-                uncheckedTrackColor = MeenaSurface
-            )
+            showLabel = true
         )
     }
 }
@@ -1912,49 +1915,29 @@ fun SettingSegmentedRow(
     selectedKey: String,
     onSelectKey: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp)
-    ) {
-        Text(
-            text = title.lowercase(),
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.White
-        )
-        if (!subtitle.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = subtitle.lowercase(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MeenaTextMuted
-            )
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            options.forEach { (key, label) ->
-                val isSelected = selectedKey.equals(key, ignoreCase = true)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                        .clickable { onSelectKey(key) }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = label.lowercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) Color.White else MeenaTextMuted,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
+    var showPicker by remember { mutableStateOf(false) }
+    val currentLabel = options.find { it.first.equals(selectedKey, ignoreCase = true) }?.second ?: selectedKey
+
+    MetroListPickerRow(
+        title = title,
+        currentValue = currentLabel,
+        description = subtitle,
+        onClick = { showPicker = true }
+    )
+
+    if (showPicker) {
+        val pickerItems = remember(options) {
+            options.map { (key, label) ->
+                MetroPickerItem(key = key, title = label)
             }
         }
+        MetroListPicker(
+            title = title,
+            items = pickerItems,
+            selectedKey = selectedKey,
+            onSelect = onSelectKey,
+            onDismiss = { showPicker = false }
+        )
     }
 }
 

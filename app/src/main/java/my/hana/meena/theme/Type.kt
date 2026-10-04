@@ -90,38 +90,38 @@ fun getMeenaTypography(
             letterSpacing = ((-0.5) * scale).sp,
             color = MeenaTextWhite
         ),
-        // Widget Section Titles (12sp All-Caps, Semibold, Spaced)
+        // Widget Section Titles (16sp Light / Normal, Lowercase, Spaced)
         titleMedium = TextStyle(
             fontFamily = activeFont,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = (12 * scale).sp,
-            lineHeight = (16 * scale).sp,
-            letterSpacing = (1.5 * scale).sp,
+            fontWeight = FontWeight.Normal,
+            fontSize = (16 * scale).sp,
+            lineHeight = (20 * scale).sp,
+            letterSpacing = (0.5 * scale).sp,
             color = titleAccentColor
         ),
-        // Standard Content Body
+        // Standard Content Body (16sp Light per spec §2.4)
         bodyLarge = TextStyle(
             fontFamily = activeFont,
             fontWeight = FontWeight.Light,
-            fontSize = (14 * scale).sp,
-            lineHeight = (20 * scale).sp,
+            fontSize = (16 * scale).sp,
+            lineHeight = (22 * scale).sp,
             letterSpacing = (0.2 * scale).sp,
             color = MeenaTextWhite
         ),
         bodyMedium = TextStyle(
             fontFamily = activeFont,
             fontWeight = FontWeight.Normal,
-            fontSize = (13 * scale).sp,
-            lineHeight = (18 * scale).sp,
+            fontSize = (14 * scale).sp,
+            lineHeight = (19 * scale).sp,
             letterSpacing = (0.1 * scale).sp,
             color = MeenaTextSecondary
         ),
-        // Telemetry & Hardware Monospace Readouts
+        // Telemetry & Captions (12sp minimum per hard rule §2.4)
         labelSmall = TextStyle(
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Normal,
-            fontSize = (11 * scale).sp,
-            lineHeight = (14 * scale).sp,
+            fontSize = (12 * scale).sp,
+            lineHeight = (16 * scale).sp,
             letterSpacing = (0.5 * scale).sp,
             color = MeenaTextMuted
         )

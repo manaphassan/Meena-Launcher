@@ -16,8 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
+import my.hana.meena.ui.components.MetroDottedProgress
+import my.hana.meena.ui.components.MetroLineProgress
+import my.hana.meena.ui.components.metroClickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -321,11 +322,14 @@ fun TodayHub(
                                     )
                                 }
                                 is WidgetState.Loading -> {
-                                    Text(
-                                        text = "checking the skies...",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MeenaTextMuted
-                                    )
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            text = "checking the skies...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MeenaTextMuted
+                                        )
+                                        MetroDottedProgress()
+                                    }
                                 }
                                 is WidgetState.Error -> {
                                     Text(
@@ -898,11 +902,12 @@ fun TodayHub(
                                             color = Color.White
                                         )
                                     }
-                                    LinearProgressIndicator(
-                                        progress = { if (fitTelemetry.stepGoal > 0) (fitTelemetry.stepsToday.toFloat() / fitTelemetry.stepGoal.toFloat()).coerceIn(0f, 1f) else 0f },
-                                        modifier = Modifier.fillMaxWidth().height(2.dp),
+                                    MetroLineProgress(
+                                        progress = if (fitTelemetry.stepGoal > 0) (fitTelemetry.stepsToday.toFloat() / fitTelemetry.stepGoal.toFloat()).coerceIn(0f, 1f) else 0f,
+                                        modifier = Modifier.fillMaxWidth(),
                                         color = MeenaProfitGreen,
-                                        trackColor = Color(0xFF222222)
+                                        trackColor = Color(0xFF222222),
+                                        height = 3.dp
                                     )
 
                                     if (fitTelemetry.distanceKm > 0.0 || fitTelemetry.activeCaloriesKcal > 0) {
@@ -1042,11 +1047,12 @@ fun TodayHub(
                                         color = Color.White
                                     )
                                 }
-                                LinearProgressIndicator(
-                                    progress = { (telemetry.ramPercent / 100f).coerceIn(0f, 1f) },
-                                    modifier = Modifier.fillMaxWidth().height(2.dp),
+                                MetroLineProgress(
+                                    progress = (telemetry.ramPercent / 100f).coerceIn(0f, 1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     color = MaterialTheme.colorScheme.primary,
-                                    trackColor = Color(0xFF222222)
+                                    trackColor = Color(0xFF222222),
+                                    height = 2.dp
                                 )
                             }
 
@@ -1063,11 +1069,12 @@ fun TodayHub(
                                         color = Color.White
                                     )
                                 }
-                                LinearProgressIndicator(
-                                    progress = { (telemetry.storagePercent / 100f).coerceIn(0f, 1f) },
-                                    modifier = Modifier.fillMaxWidth().height(2.dp),
+                                MetroLineProgress(
+                                    progress = (telemetry.storagePercent / 100f).coerceIn(0f, 1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     color = Color.White,
-                                    trackColor = Color(0xFF222222)
+                                    trackColor = Color(0xFF222222),
+                                    height = 2.dp
                                 )
                             }
 

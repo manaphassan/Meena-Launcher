@@ -3,6 +3,13 @@ package my.hana.meena
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.JakimSolatRepository
 import my.hana.meena.data.system.SpendingRepository
+import androidx.compose.ui.graphics.Color
+import my.hana.meena.theme.Meena10AccentSwatches
+import my.hana.meena.theme.MeenaBlack
+import my.hana.meena.theme.MeenaTextMuted
+import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.calculateContrastRatio
+import my.hana.meena.theme.isAccessibleContrast
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -512,6 +519,36 @@ class MeenaLauncherLogicTest {
         assertEquals(8.0f, settings.sleepHoursGoal, 0.001f)
         assertEquals("", settings.healthCompanionPackage)
         assertEquals("", settings.healthCompanionName)
+    }
+
+    @Test
+    fun metroTheme_10AuthenticAccents_declaredCorrectly() {
+        assertEquals(10, Meena10AccentSwatches.size)
+        val uniqueHexCodes = mutableSetOf<String>()
+        Meena10AccentSwatches.forEach { swatch ->
+            assertTrue("Swatch ID should not be blank", swatch.id.isNotBlank())
+            assertTrue("Swatch Name should not be blank", swatch.name.isNotBlank())
+            assertTrue("Swatch Hex should start with #", swatch.hex.startsWith("#"))
+            assertEquals(7, swatch.hex.length)
+            uniqueHexCodes.add(swatch.hex.uppercase())
+        }
+        assertEquals("All 10 swatches must have unique hex codes", 10, uniqueHexCodes.size)
+    }
+
+    @Test
+    fun metroTheme_wcagContrast_calculatesAccurately() {
+        // Pure white on pure black must yield maximum 21:1 contrast ratio
+        val whiteOnBlackRatio = calculateContrastRatio(MeenaTextWhite, MeenaBlack)
+        assertTrue("White on black ratio ($whiteOnBlackRatio) must be >= 20.0", whiteOnBlackRatio >= 20.0f)
+
+        // MeenaTextMuted on MeenaBlack must strictly exceed the 4.5:1 WCAG AA threshold (per GEMINI.md rule 7)
+        val mutedOnBlackRatio = calculateContrastRatio(MeenaTextMuted, MeenaBlack)
+        assertTrue("Muted text ratio ($mutedOnBlackRatio) must be >= 4.5:1", mutedOnBlackRatio >= 4.5f)
+        assertTrue("Muted text on black must pass accessible contrast check", isAccessibleContrast(MeenaTextMuted, MeenaBlack))
+
+        // Dark grey on black must fail WCAG regular text check
+        val subtleBorder = Color(0xFF222222)
+        assertFalse("Subtle border against black should not pass text contrast", isAccessibleContrast(subtleBorder, MeenaBlack))
     }
 }
 
