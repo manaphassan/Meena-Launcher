@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import my.hana.meena.ui.components.metroClickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -711,8 +712,13 @@ private fun ZonePickerDialog(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .metroClickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "close", tint = Color.White, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -814,12 +820,17 @@ private fun MonthlyScheduleDialog(
                         )
                         Text(
                             text = "$zone • $zoneName",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = Color(0xFF8AA3B5)
                         )
                     }
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .metroClickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "close", tint = Color.White, modifier = Modifier.size(20.dp))
                     }
                 }
 

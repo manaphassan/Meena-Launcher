@@ -183,14 +183,19 @@ fun MetroListPicker(
                                 }
                             )
                             if (searchQuery.isNotEmpty()) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "clear search",
-                                    tint = MeenaTextMuted,
+                                Box(
                                     modifier = Modifier
-                                        .size(20.dp)
-                                        .clickable { searchQuery = "" }
-                                )
+                                        .size(48.dp)
+                                        .metroClickable { searchQuery = "" },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "clear search",
+                                        tint = MeenaTextMuted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }

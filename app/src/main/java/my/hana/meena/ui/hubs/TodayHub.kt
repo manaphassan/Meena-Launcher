@@ -783,7 +783,10 @@ fun TodayHub(
                                             text = "remove",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MeenaTextMuted,
-                                            modifier = Modifier.clickable { quickNotes.removeAt(index) }
+                                            modifier = Modifier
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable { quickNotes.removeAt(index) }
+                                                .padding(horizontal = 8.dp, vertical = 12.dp)
                                         )
                                     }
                                 }
@@ -814,7 +817,8 @@ fun TodayHub(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable {
                                                 HealthRepository.openFitnessApp(context)
                                             }
                                             .padding(vertical = 4.dp),

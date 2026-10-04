@@ -532,8 +532,9 @@ private fun SubPageContainer(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
+                                    .heightIn(min = 48.dp)
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                    .clickable {
+                                    .metroClickable {
                                         val newMap = settingsState.widgetConfigs.toMutableMap()
                                         newMap[widgetId] = config.copy(hubId = hub)
                                         onUpdate { it.copy(widgetConfigs = newMap) }
@@ -579,8 +580,9 @@ private fun SubPageContainer(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
+                                    .heightIn(min = 48.dp)
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                    .clickable {
+                                    .metroClickable {
                                         val newMap = settingsState.widgetConfigs.toMutableMap()
                                         newMap[widgetId] = config.copy(refreshMinutes = mins)
                                         onUpdate { it.copy(widgetConfigs = newMap) }
@@ -1349,9 +1351,11 @@ private fun SubPageContainer(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                    .clickable { onUpdate { it.copy(geminiModel = model) } }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                                    .metroClickable { onUpdate { it.copy(geminiModel = model) } }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                contentAlignment = Alignment.CenterStart
                             ) {
                                 Text(
                                     text = model,
@@ -2456,8 +2460,9 @@ private fun CalendarAccountSettings(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .heightIn(min = 48.dp)
                                 .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .clickable { onUpdate { it.copy(calendarDaysAhead = days) } }
+                                .metroClickable { onUpdate { it.copy(calendarDaysAhead = days) } }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -2624,8 +2629,9 @@ private fun NewsFeedManager(
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .background(if (alreadyAdded) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MeenaSurface)
-                        .clickable(enabled = !alreadyAdded) {
+                        .metroClickable(enabled = !alreadyAdded) {
                             onUpdateFeeds(currentFeeds + url)
                         }
                         .padding(vertical = 8.dp),
@@ -2634,7 +2640,7 @@ private fun NewsFeedManager(
                     Text(
                         text = if (alreadyAdded) "added • $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = if (alreadyAdded) Color.White else MeenaTextMuted
                     )
                 }
@@ -2649,8 +2655,9 @@ private fun NewsFeedManager(
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .background(if (alreadyAdded) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MeenaSurface)
-                        .clickable(enabled = !alreadyAdded) {
+                        .metroClickable(enabled = !alreadyAdded) {
                             onUpdateFeeds(currentFeeds + url)
                         }
                         .padding(vertical = 8.dp),
@@ -2659,7 +2666,7 @@ private fun NewsFeedManager(
                     Text(
                         text = if (alreadyAdded) "added • $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = if (alreadyAdded) Color.White else MeenaTextMuted
                     )
                 }
@@ -2697,9 +2704,12 @@ private fun NewsFeedManager(
                             text = "remove",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFF6B6B),
-                            modifier = Modifier.clickable {
-                                onUpdateFeeds(currentFeeds.filter { it != feedUrl })
-                            }
+                            modifier = Modifier
+                                .heightIn(min = 48.dp)
+                                .metroClickable {
+                                    onUpdateFeeds(currentFeeds.filter { it != feedUrl })
+                                }
+                                .padding(horizontal = 8.dp, vertical = 12.dp)
                         )
                     }
                 }
@@ -2728,7 +2738,8 @@ fun MetroSubPageHeader(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clickable(onClick = onBack)
+                .heightIn(min = 48.dp)
+                .metroClickable(onClick = onBack)
                 .padding(vertical = 6.dp)
         ) {
             Text(
@@ -2863,9 +2874,11 @@ private fun GeminiApiKeyInput(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                            .clickable { onModelSelect(model) }
-                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                            .metroClickable { onModelSelect(model) }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
                             text = model,
@@ -2912,9 +2925,11 @@ private fun SolatZonePicker(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                    .clickable { onSelectZone(code) }
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                    .metroClickable { onSelectZone(code) }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
                 Text(
                     text = label.lowercase(),
@@ -2976,8 +2991,9 @@ private fun DateTimeSettings(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                            .clickable { onUpdate { it.copy(dateFormatPattern = pattern) } }
+                            .metroClickable { onUpdate { it.copy(dateFormatPattern = pattern) } }
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         Row(
@@ -3024,8 +3040,9 @@ private fun DateTimeSettings(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .heightIn(min = 48.dp)
                                 .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .clickable { onUpdate { it.copy(hijriDayOffset = offset) } }
+                                .metroClickable { onUpdate { it.copy(hijriDayOffset = offset) } }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {

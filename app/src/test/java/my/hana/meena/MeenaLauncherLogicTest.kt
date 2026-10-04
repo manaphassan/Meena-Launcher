@@ -547,9 +547,23 @@ class MeenaLauncherLogicTest {
         assertTrue("Muted text ratio ($mutedOnBlackRatio) must be >= 4.5:1", mutedOnBlackRatio >= 4.5f)
         assertTrue("Muted text on black must pass accessible contrast check", isAccessibleContrast(MeenaTextMuted, MeenaBlack))
 
+        // Threshold #767676 (per GEMINI.md rule 7: muted text no darker than #767676 on black)
+        val thresholdMuted = Color(0xFF767676)
+        val thresholdRatio = calculateContrastRatio(thresholdMuted, MeenaBlack)
+        assertTrue("Threshold #767676 ratio ($thresholdRatio) must be >= 4.5:1", thresholdRatio >= 4.5f)
+        assertTrue("Threshold #767676 on black must pass accessible contrast check", isAccessibleContrast(thresholdMuted, MeenaBlack))
+
         // Dark grey on black must fail WCAG regular text check
         val subtleBorder = Color(0xFF222222)
         assertFalse("Subtle border against black should not pass text contrast", isAccessibleContrast(subtleBorder, MeenaBlack))
+    }
+
+    @Test
+    fun metroTheme_captionTypography_meets12spMinimum() {
+        val typography = my.hana.meena.theme.getMeenaTypography(fontScalePercent = 100)
+        assertTrue("labelSmall caption must be >= 12sp", typography.labelSmall.fontSize.value >= 12f)
+        assertTrue("bodyMedium text must be >= 14sp", typography.bodyMedium.fontSize.value >= 14f)
+        assertTrue("bodyLarge text must be >= 16sp", typography.bodyLarge.fontSize.value >= 16f)
     }
 
     @Test
