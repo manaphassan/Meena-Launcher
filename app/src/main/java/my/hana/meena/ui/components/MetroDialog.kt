@@ -9,12 +9,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -38,9 +44,24 @@ fun MetroDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
+        val animatable = remember { Animatable(0f) }
+        LaunchedEffect(Unit) {
+            animatable.animateTo(
+                targetValue = 1f,
+                animationSpec = tween<Float>(180, easing = FastOutSlowInEasing)
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = animatable.value
+                    scaleX = 0.96f + (0.04f * animatable.value)
+                    scaleY = 0.96f + (0.04f * animatable.value)
+                    rotationX = (1f - animatable.value) * 4f
+                    cameraDistance = 24f * density
+                }
                 .background(Color.Black)
                 .padding(24.dp)
         ) {
@@ -67,7 +88,7 @@ fun MetroDialog(
                             .weight(1f)
                             .heightIn(min = 48.dp)
                             .background(MaterialTheme.colorScheme.primary)
-                            .clickable(onClick = onConfirm),
+                            .metroClickable(onClick = onConfirm),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -81,7 +102,7 @@ fun MetroDialog(
                             .weight(1f)
                             .heightIn(min = 48.dp)
                             .background(Color(0xFF161616))
-                            .clickable(onClick = onDismiss),
+                            .metroClickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(

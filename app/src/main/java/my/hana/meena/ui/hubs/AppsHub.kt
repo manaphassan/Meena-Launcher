@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.ui.window.Dialog
 import my.hana.meena.data.system.DeviceAppInfo
 import my.hana.meena.data.system.InstalledAppsRepository
@@ -75,6 +76,7 @@ fun AppsHub(
     pinnedAppIds: List<String> = emptyList(),
     pinnedAppSizes: Map<String, String> = emptyMap(),
     focusSearch: Boolean = false,
+    reducedMotion: Boolean = false,
     onSearchFocused: () -> Unit = {},
     onTogglePinApp: (String) -> Unit = {},
     onSetTileSize: (String, String) -> Unit = { _, _ -> },
@@ -200,7 +202,9 @@ fun AppsHub(
                     // Metro Jump-List Header Tile (48x48dp, 0dp corner radius, metroClickable)
                     item(key = "header-$letter") {
                         Row(
-                            modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
+                            modifier = Modifier
+                                .metroFeatherIn(index = 0, reducedMotion = reducedMotion)
+                                .padding(top = 10.dp, bottom = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
@@ -229,6 +233,10 @@ fun AppsHub(
                         val notifCount = liveNotifications.count { it.packageName == app.packageName }
 
                         AppRow(
+                            modifier = Modifier.metroFeatherIn(
+                                index = idx,
+                                reducedMotion = reducedMotion
+                            ),
                             name = app.label,
                             iconBitmap = app.iconBitmap,
                             notificationSnippet = appNotif?.text?.ifBlank { appNotif.title },
@@ -556,6 +564,7 @@ fun AppsHub(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppRow(
+    modifier: Modifier = Modifier,
     name: String,
     icon: ImageVector? = null,
     iconBitmap: ImageBitmap? = null,
@@ -567,7 +576,7 @@ private fun AppRow(
     onLongClick: () -> Unit = {}
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,

@@ -60,6 +60,8 @@ data class MeenaUserSettings(
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {
+    val reducedMotion: Boolean get() = isReducedMotion
+
     fun migrate(): MeenaUserSettings {
         val updatedConfigs = widgetConfigs.toMutableMap()
         var changed = false

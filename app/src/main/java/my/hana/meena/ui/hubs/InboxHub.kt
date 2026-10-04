@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
@@ -134,7 +135,7 @@ fun InboxHub(
                                         .padding(vertical = 8.dp)
                                 )
                             } else if (notifications.isNotEmpty()) {
-                                notifications.take(8).forEach { notif ->
+                                notifications.take(8).forEachIndexed { idx, notif ->
                                     val notifColor = when {
                                         notif.packageName.contains("whatsapp", ignoreCase = true) -> Color(0xFF25D366)
                                         notif.packageName.contains("telegram", ignoreCase = true) -> Color(0xFF0088CC)
@@ -143,6 +144,10 @@ fun InboxHub(
                                         else -> MaterialTheme.colorScheme.primary
                                     }
                                     InboxNotificationRow(
+                                        modifier = Modifier.metroFeatherIn(
+                                            index = idx,
+                                            reducedMotion = settings.reducedMotion
+                                        ),
                                         badgeColor = notifColor,
                                         app = notif.appName,
                                         title = notif.title,
@@ -199,6 +204,7 @@ fun InboxHub(
 
 @Composable
 private fun InboxNotificationRow(
+    modifier: Modifier = Modifier,
     badgeColor: Color,
     app: String,
     title: String,
@@ -208,7 +214,7 @@ private fun InboxNotificationRow(
     onDismiss: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable(onClick = onClick)

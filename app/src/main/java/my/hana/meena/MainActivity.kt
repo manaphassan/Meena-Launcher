@@ -559,6 +559,7 @@ fun MeenaHomeScreen(
                             pinnedAppIds = userSettings.pinnedAppIds,
                             pinnedAppSizes = userSettings.pinnedAppSizes,
                             focusSearch = focusAppsSearch,
+                            reducedMotion = userSettings.reducedMotion,
                             onSearchFocused = { focusAppsSearch = false },
                             onTogglePinApp = { pkg -> onTogglePin(pkg) },
                             onSetTileSize = { appId, size ->

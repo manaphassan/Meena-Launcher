@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.MetroLineProgress
 import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -181,7 +182,12 @@ fun TodayHub(
 
         items(todayWidgets.size, key = { todayWidgets[it].key }) { index ->
             val widgetId = todayWidgets[index].key
-            when (widgetId) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .metroFeatherIn(index = index, reducedMotion = settings.reducedMotion)
+            ) {
+                when (widgetId) {
                 "widget-clock-weather" -> {
                     // Clock and current weather row
                     val clockWeatherConfig = settings.widgetConfigs["widget-clock-weather"]
@@ -1113,6 +1119,7 @@ fun TodayHub(
                 }
             }
         }
+    }
 
         // Quick Actions Row (phone, messages, email, camera, calc)
         item {

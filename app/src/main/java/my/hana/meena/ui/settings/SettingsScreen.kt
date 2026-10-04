@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.R
+import my.hana.meena.ui.components.MetroTurnstileContainer
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.health.HealthConnectAvailability
@@ -228,40 +229,47 @@ fun SettingsScreen(
             }
         }
 
-        // Sub-page view if active, otherwise main pivot view
-        if (activeSubPage != null) {
-            SubPageContainer(
-                subPageId = activeSubPage!!,
-                settingsState = settingsState,
-                onUpdate = { transform -> update(transform) },
-                onBack = { activeSubPage = null },
-                onExportBackup = onExportBackup,
-                onImportBackup = onImportBackup,
-                onResetDefaults = onResetDefaults
-            )
-        } else {
-            // Main Pivot Tabs Header
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                items(tabs) { tab ->
-                    val isActive = tab == activeTab
-                    Text(
-                        text = tab,
-                        style = MaterialTheme.typography.displayLarge,
-                        fontSize = 32.sp,
-                        color = if (isActive) Color.White else MeenaTextMuted,
+        // Sub-page view if active, otherwise main pivot view with Turnstile transition
+        MetroTurnstileContainer(
+            targetState = activeSubPage,
+            modifier = Modifier.fillMaxSize(),
+            isForward = activeSubPage != null,
+            reducedMotion = settingsState.reducedMotion
+        ) { currentSubPage ->
+            if (currentSubPage != null) {
+                SubPageContainer(
+                    subPageId = currentSubPage,
+                    settingsState = settingsState,
+                    onUpdate = { transform -> update(transform) },
+                    onBack = { activeSubPage = null },
+                    onExportBackup = onExportBackup,
+                    onImportBackup = onImportBackup,
+                    onResetDefaults = onResetDefaults
+                )
+            } else {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Main Pivot Tabs Header
+                    LazyRow(
                         modifier = Modifier
-                            .clickable { activeTab = tab }
-                            .padding(bottom = 6.dp)
-                    )
-                }
-            }
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        items(tabs) { tab ->
+                            val isActive = tab == activeTab
+                            Text(
+                                text = tab,
+                                style = MaterialTheme.typography.displayLarge,
+                                fontSize = 32.sp,
+                                color = if (isActive) Color.White else MeenaTextMuted,
+                                modifier = Modifier
+                                    .metroClickable { activeTab = tab }
+                                    .padding(bottom = 6.dp)
+                            )
+                        }
+                    }
 
-            Spacer(
+                    Spacer(
                 modifier = Modifier
                     .height(1.dp)
                     .fillMaxWidth()
@@ -443,6 +451,8 @@ fun SettingsScreen(
             }
         }
     }
+}
+}
 }
 
 /**

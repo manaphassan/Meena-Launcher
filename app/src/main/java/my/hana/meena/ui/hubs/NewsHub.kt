@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -245,8 +246,12 @@ fun NewsHub(
                             }
                         } else {
                             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                filteredList.forEach { article ->
+                                filteredList.forEachIndexed { index, article ->
                                     NewsArticleCard(
+                                        modifier = Modifier.metroFeatherIn(
+                                            index = index,
+                                            reducedMotion = settings.reducedMotion
+                                        ),
                                         article = article,
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -280,6 +285,7 @@ fun NewsHub(
 
 @Composable
 private fun NewsArticleCard(
+    modifier: Modifier = Modifier,
     article: NewsArticle,
     onClick: () -> Unit
 ) {
@@ -290,7 +296,7 @@ private fun NewsArticleCard(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable(onClick = onClick)

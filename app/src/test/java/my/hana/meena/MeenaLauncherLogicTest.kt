@@ -600,6 +600,29 @@ class MeenaLauncherLogicTest {
         )
         assertEquals(4 * 804, offset4)
     }
+
+    @Test
+    fun userSettings_reducedMotion_aliasReflectsIsReducedMotion() {
+        val defaultSettings = MeenaUserSettings()
+        assertFalse(defaultSettings.reducedMotion)
+        assertEquals(defaultSettings.isReducedMotion, defaultSettings.reducedMotion)
+
+        val reducedSettings = defaultSettings.copy(isReducedMotion = true)
+        assertTrue(reducedSettings.reducedMotion)
+        assertEquals(reducedSettings.isReducedMotion, reducedSettings.reducedMotion)
+    }
+
+    @Test
+    fun metroMotion_turnstileTransitions_instantiateWithoutCrashing() {
+        val forwardAnim = my.hana.meena.ui.components.metroTurnstileTransition(forward = true, reducedMotion = false)
+        assertNotNull(forwardAnim)
+
+        val backwardAnim = my.hana.meena.ui.components.metroTurnstileTransition(forward = false, reducedMotion = false)
+        assertNotNull(backwardAnim)
+
+        val reducedAnim = my.hana.meena.ui.components.metroTurnstileTransition(forward = true, reducedMotion = true)
+        assertNotNull(reducedAnim)
+    }
 }
 
 

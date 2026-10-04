@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
@@ -109,33 +111,39 @@ fun FinanceHub(
 
         items(financeWidgets.size, key = { financeWidgets[it].key }) { index ->
             val (widgetId, _) = financeWidgets[index]
-            when (widgetId) {
-                "widget-finance-charts" -> {
-                    PortfolioSection(
-                        state = financeState,
-                        showAmounts = localShowAmounts,
-                        onToggleShowAmounts = { localShowAmounts = !localShowAmounts },
-                        onDeleteHolding = { holding -> holdingToDelete = holding },
-                        onOpenSettings = onOpenSettings,
-                        onRefresh = { FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "") }
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .metroFeatherIn(index = index, reducedMotion = settings.reducedMotion)
+            ) {
+                when (widgetId) {
+                    "widget-finance-charts" -> {
+                        PortfolioSection(
+                            state = financeState,
+                            showAmounts = localShowAmounts,
+                            onToggleShowAmounts = { localShowAmounts = !localShowAmounts },
+                            onDeleteHolding = { holding -> holdingToDelete = holding },
+                            onOpenSettings = onOpenSettings,
+                            onRefresh = { FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "") }
+                        )
+                    }
 
-                "widget-exchange-rates" -> {
-                    ExchangeRatesSection(
-                        state = exchangeRateState,
-                        onRefresh = { ExchangeRateRepository.refresh(context, "MYR", force = true) },
-                        onOpenSettings = onOpenSettings
-                    )
-                }
+                    "widget-exchange-rates" -> {
+                        ExchangeRatesSection(
+                            state = exchangeRateState,
+                            onRefresh = { ExchangeRateRepository.refresh(context, "MYR", force = true) },
+                            onOpenSettings = onOpenSettings
+                        )
+                    }
 
-                "widget-spending-summary" -> {
-                    SpendingSection(
-                        state = spendingState,
-                        transactions = liveTransactions,
-                        totalSpentToday = totalSpentToday,
-                        onOpenSettings = onOpenSettings
-                    )
+                    "widget-spending-summary" -> {
+                        SpendingSection(
+                            state = spendingState,
+                            transactions = liveTransactions,
+                            totalSpentToday = totalSpentToday,
+                            onOpenSettings = onOpenSettings
+                        )
+                    }
                 }
             }
         }
