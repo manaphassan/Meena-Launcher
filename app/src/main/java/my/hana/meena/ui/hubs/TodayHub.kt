@@ -59,6 +59,7 @@ import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.CollapsibleWidget
 import my.hana.meena.ui.components.DynamicSolatCelestialCard
+import my.hana.meena.ui.components.ForecastTiles
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import kotlin.math.roundToInt
 import my.hana.meena.data.system.WeatherRepository
@@ -85,6 +86,7 @@ fun TodayHub(
     onRequestCalendarPermission: () -> Unit = {},
     onRequestLocationPermission: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenWeatherDetail: () -> Unit = {},
     onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
@@ -281,166 +283,16 @@ fun TodayHub(
 
                 "widget-weather-forecast" -> {
                     // 5-day Weather Forecast
-                    val forecastConfig = settings.widgetConfigs["widget-weather-forecast"]
                     val tempUnit = settings.widgetConfigs["widget-clock-weather"]?.customSettings?.get("temp_unit") ?: "c"
                     val isFahrenheit = tempUnit.equals("f", ignoreCase = true)
-                    val forecastDaysStr = forecastConfig?.customSettings?.get("forecast_days") ?: "5"
-                    val maxForecastDays = (forecastDaysStr.toIntOrNull() ?: 5).coerceIn(1, 7)
-                    val showRainProb = forecastConfig?.customSettings?.get("show_rain_prob") != "false"
-                    val showDetails = forecastConfig?.customSettings?.get("show_details") == "true"
 
-                    val weatherData = (weatherState as? WidgetState.Ready)?.data ?:
-                                      (weatherState as? WidgetState.Stale)?.data
-                    val forecastItems = weatherData?.daily?.take(maxForecastDays) ?: emptyList()
-
-                    CollapsibleWidget(
-                        title = "next $maxForecastDays days",
-                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
-                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
-                        collapsedSummary = {
-                            Text(
-                                text = when (weatherState) {
-                                    is WidgetState.NeedsSetup -> "allow location"
-                                    is WidgetState.Loading -> "loading"
-                                    is WidgetState.Ready, is WidgetState.Stale -> {
-                                        val loc = weatherData?.locationName ?: "local"
-                                        val first = forecastItems.firstOrNull()
-                                        if (first != null) {
-                                            val minVal = if (isFahrenheit) (first.minTemp * 9f / 5f + 32f).roundToInt() else first.minTemp.roundToInt()
-                                            val maxVal = if (isFahrenheit) (first.maxTemp * 9f / 5f + 32f).roundToInt() else first.maxTemp.roundToInt()
-                                            "$minVal° / $maxVal° · $loc"
-                                        } else {
-                                            loc
-                                        }
-                                    }
-                                    is WidgetState.Error -> "offline"
-                                    else -> "needs setup"
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextMuted
-                            )
-                        }
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            when (weatherState) {
-                                is WidgetState.NeedsSetup -> {
-                                    Text(
-                                        text = "meena needs location to check the weather. tap to allow.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MeenaTextMuted,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .metroClickable {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                onRequestLocationPermission()
-                                            }
-                                            .padding(vertical = 8.dp)
-                                    )
-                                }
-                                is WidgetState.Loading -> {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(
-                                            text = "checking the skies...",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MeenaTextMuted
-                                        )
-                                        MetroDottedProgress()
-                                    }
-                                }
-                                is WidgetState.Error -> {
-                                    Text(
-                                        text = "couldn't reach the weather. tap to try again.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MeenaTextMuted,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .metroClickable {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                WeatherRepository.refresh(context, force = true)
-                                            }
-                                            .padding(vertical = 8.dp)
-                                    )
-                                }
-                                is WidgetState.Ready, is WidgetState.Stale -> {
-                                    if (forecastItems.isEmpty()) {
-                                        Text(
-                                            text = "no forecast available",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MeenaTextMuted
-                                        )
-                                    } else {
-                                        forecastItems.forEach { day ->
-                                            val minVal = if (isFahrenheit) (day.minTemp * 9f / 5f + 32f).roundToInt() else day.minTemp.roundToInt()
-                                            val maxVal = if (isFahrenheit) (day.maxTemp * 9f / 5f + 32f).roundToInt() else day.maxTemp.roundToInt()
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 4.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    Text(
-                                                        text = day.dayLabel,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = MeenaTextWhite
-                                                    )
-                                                    Text(
-                                                        text = if (showRainProb && day.precipitationProbability > 0) {
-                                                            "${day.condition} · ${day.precipitationProbability}% rain"
-                                                        } else {
-                                                            day.condition
-                                                        },
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MeenaTextMuted
-                                                    )
-                                                }
-                                                Text(
-                                                    text = "$minVal° / $maxVal°",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                        }
-
-                                        // Atmospheric details if enabled
-                                        if (showDetails && weatherData != null) {
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(
-                                                    text = "humidity · ${weatherData.current.humidity}%",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MeenaTextMuted
-                                                )
-                                                Text(
-                                                    text = "wind · ${weatherData.current.windSpeed.toInt()} km/h",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MeenaTextMuted
-                                                )
-                                            }
-                                        }
-
-                                        // Freshness caption
-                                        val minutesAgo = ((System.currentTimeMillis() - weatherData!!.fetchedAt) / 60000L).coerceAtLeast(0)
-                                        val freshnessText = if (minutesAgo == 0L) "updated just now" else "updated ${minutesAgo}m ago"
-                                        Text(
-                                            text = "$freshnessText · open-meteo",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted,
-                                            modifier = Modifier.padding(top = 4.dp)
-                                        )
-                                    }
-                                }
-                                else -> {}
-                            }
-                        }
-                    }
+                    ForecastTiles(
+                        state = weatherState,
+                        isFahrenheit = isFahrenheit,
+                        onNavigateToDetail = onOpenWeatherDetail,
+                        onRequestLocation = onRequestLocationPermission,
+                        onRetry = { WeatherRepository.refresh(context, force = true) }
+                    )
                 }
 
                 "widget-today-summary" -> {

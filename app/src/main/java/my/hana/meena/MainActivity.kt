@@ -13,6 +13,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -327,11 +329,13 @@ fun MeenaHomeScreen(
     var isSettingsOpen by remember { mutableStateOf(false) }
     var settingsInitialTab by remember { mutableStateOf("widgets") }
     var isActionCenterOpen by remember { mutableStateOf(false) }
+    var isWeatherDetailOpen by remember { mutableStateOf(false) }
     var focusAppsSearch by remember { mutableStateOf(false) }
 
     // Intercept hardware/gesture Back button (return to today hub)
-    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || pagerState.currentPage != 0) {
+    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || pagerState.currentPage != 0) {
         when {
+            isWeatherDetailOpen -> isWeatherDetailOpen = false
             isSettingsOpen -> isSettingsOpen = false
             isActionCenterOpen -> isActionCenterOpen = false
             pagerState.currentPage != 0 -> {
@@ -538,6 +542,7 @@ fun MeenaHomeScreen(
                                 settingsInitialTab = "widgets"
                                 isSettingsOpen = true
                             },
+                            onOpenWeatherDetail = { isWeatherDetailOpen = true },
                             onToggleWidgetCollapse = { widgetId, isCollapsed ->
                                 coroutineScope.launch {
                                     val currentMap = userSettings.widgetConfigs.toMutableMap()
@@ -607,6 +612,30 @@ fun MeenaHomeScreen(
                     }
                 }
         )
+
+        // Weather Detail Sub-Page
+        AnimatedVisibility(
+            visible = isWeatherDetailOpen,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it })
+        ) {
+            val weatherState by my.hana.meena.data.system.WeatherRepository.state.collectAsState()
+            val weatherData = (weatherState as? my.hana.meena.ui.widgets.WidgetState.Ready)?.data ?:
+                              (weatherState as? my.hana.meena.ui.widgets.WidgetState.Stale)?.data
+            val healthState by my.hana.meena.data.health.HealthRepository.state.collectAsState()
+            val healthData = (healthState as? my.hana.meena.ui.widgets.WidgetState.Ready)?.data ?:
+                             (healthState as? my.hana.meena.ui.widgets.WidgetState.Stale)?.data
+            val aqi = healthData?.airIndex
+
+            val tempUnit = userSettings.widgetConfigs["widget-clock-weather"]?.customSettings?.get("temp_unit") ?: "c"
+            val isFahrenheit = tempUnit.equals("f", ignoreCase = true)
+
+            my.hana.meena.ui.hubs.WeatherDetailSubPage(
+                isFahrenheit = isFahrenheit,
+                aqiData = aqi,
+                onNavigateBack = { isWeatherDetailOpen = false }
+            )
+        }
 
         // Settings Pivot Dialog
         AnimatedVisibility(
