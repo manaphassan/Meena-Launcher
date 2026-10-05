@@ -107,19 +107,19 @@ data class MeenaUserSettings(
 
     companion object {
         fun defaultWidgetMap(): Map<String, WidgetConfig> = mapOf(
-            // Today Hub (clock, weather, brief, solat, calendar, tasks, notes, health, aqi, radar, phone)
+            // Today Hub (clock, forecast, solat, agenda, brief, followed by default-off widgets)
             "widget-clock-weather" to WidgetConfig("today", 0, isEnabled = true),
             "widget-weather-forecast" to WidgetConfig("today", 1, isEnabled = true),
-            "widget-today-summary" to WidgetConfig("today", 2, isEnabled = true),
-            "widget-solat" to WidgetConfig("today", 3, isEnabled = true),
-            "widget-calendar-month" to WidgetConfig("today", 4, isEnabled = true),
-            "widget-tasks" to WidgetConfig("today", 5, isEnabled = true),
-            "widget-notes" to WidgetConfig("today", 6, isEnabled = true),
-            "widget-health-device" to WidgetConfig("today", 7, isEnabled = true),
-            "widget-health-telemetry" to WidgetConfig("today", 8, isEnabled = true),
-            "widget-health-aqi" to WidgetConfig("today", 9, isEnabled = true),
-            "widget-map-radar" to WidgetConfig("today", 10, isEnabled = true),
-            "widget-device-telemetry" to WidgetConfig("today", 11, isEnabled = true),
+            "widget-solat" to WidgetConfig("today", 2, isEnabled = true),
+            "widget-tasks" to WidgetConfig("today", 3, isEnabled = true),
+            "widget-today-summary" to WidgetConfig("today", 4, isEnabled = true),
+            "widget-calendar-month" to WidgetConfig("today", 5, isEnabled = false),
+            "widget-notes" to WidgetConfig("today", 6, isEnabled = false),
+            "widget-health-device" to WidgetConfig("today", 7, isEnabled = false),
+            "widget-health-telemetry" to WidgetConfig("today", 8, isEnabled = false),
+            "widget-health-aqi" to WidgetConfig("today", 9, isEnabled = false),
+            "widget-map-radar" to WidgetConfig("today", 10, isEnabled = false),
+            "widget-device-telemetry" to WidgetConfig("today", 11, isEnabled = false),
 
             // Inbox Hub (conversations, alerts / notification stream)
             "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),

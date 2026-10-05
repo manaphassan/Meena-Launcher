@@ -107,7 +107,6 @@ fun TodayHub(
     val healthData = (healthState as? my.hana.meena.ui.widgets.WidgetState.Ready)?.data ?:
                      (healthState as? my.hana.meena.ui.widgets.WidgetState.Stale)?.data ?:
                      my.hana.meena.data.health.HealthData()
-    val deviceInfo = healthData.deviceInfo
     val fitTelemetry = healthData.fitTelemetry
     val airIndex = healthData.airIndex
 
@@ -177,7 +176,9 @@ fun TodayHub(
             .filter {
                 val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
                 val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications"
-                isTodayHub && isNotInboxWidget && it.value.isEnabled
+                val isBriefConfigured = it.key != "widget-today-summary" || settings.geminiApiKey.isNotBlank()
+                val isNotRemovedWidget = it.key != "widget-health-device"
+                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled && isBriefConfigured
             }
             .sortedBy { it.value.position }
 
@@ -675,74 +676,71 @@ fun TodayHub(
                 }
 
                 "widget-tasks" -> {
-                    // Today's schedule / agenda
+                    // Agenda: events first, then tasks
+                    val isNeedsPermission = calendarState is CalendarState.NeedsPermission
                     val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
-                    val todayEvents = calEvents.filter { it.formattedDate == "today" }
+                    val (timedEvents, tasks) = calEvents.partition { !it.isAllDay }
+                    val agendaItems = timedEvents + tasks
+                    val agendaConfig = settings.widgetConfigs[widgetId]
+                    val maxItems = agendaConfig?.maxLinesOrItems ?: 5
+
                     CollapsibleWidget(
-                        title = "today's events",
+                        title = "agenda",
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
-                                text = if (todayEvents.isEmpty()) "all quiet" else "${todayEvents.size} scheduled today",
+                                text = when {
+                                    isNeedsPermission -> "needs setup"
+                                    agendaItems.isEmpty() -> "all quiet"
+                                    else -> {
+                                        val todayCount = agendaItems.count { it.formattedDate == "today" }
+                                        if (todayCount > 0) "$todayCount scheduled today" else "${agendaItems.size} upcoming"
+                                    }
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (todayEvents.isEmpty()) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                                color = if (isNeedsPermission || agendaItems.isEmpty()) MeenaTextMuted else MaterialTheme.colorScheme.primary
                             )
                         }
                     ) {
-                        if (todayEvents.isEmpty()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "no more events today",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextMuted
-                                )
-                                Text(
-                                    text = "+ event",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .heightIn(min = 48.dp)
-                                        .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                        .padding(vertical = 12.dp, horizontal = 4.dp)
-                                )
-                            }
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                todayEvents.forEach { event ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .heightIn(min = 48.dp)
-                                            .metroClickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
-                                            .padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = event.title,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = Color.White
-                                            )
-                                            Text(
-                                                text = event.formattedTime,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MeenaTextMuted
-                                            )
-                                        }
-                                    }
-                                }
+                        when {
+                            isNeedsPermission -> {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                    horizontalArrangement = Arrangement.End
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { onRequestCalendarPermission() }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "+ new event",
+                                        text = "want your schedule here? tap to allow calendar access.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = "allow",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            agendaItems.isEmpty() -> {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "all quiet · no upcoming events",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                    Text(
+                                        text = "+ event",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
@@ -750,6 +748,56 @@ fun TodayHub(
                                             .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
                                             .padding(vertical = 12.dp, horizontal = 4.dp)
                                     )
+                                }
+                            }
+                            else -> {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    agendaItems.take(maxItems).forEach { item ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable { DeviceCalendarRepository.openEventDetail(context, item.id) }
+                                                .padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = item.title,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color.White
+                                                )
+                                                Text(
+                                                    text = buildString {
+                                                        append(item.formattedDate)
+                                                        append(" · ")
+                                                        append(item.formattedTime)
+                                                        if (item.location.isNotBlank()) {
+                                                            append(" · ")
+                                                            append(item.location)
+                                                        }
+                                                    },
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MeenaTextMuted
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        Text(
+                                            text = "+ new event",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
+                                                .padding(vertical = 12.dp, horizontal = 4.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -808,92 +856,8 @@ fun TodayHub(
                     }
                 }
 
-                "widget-health-device" -> {
-                    // Connected fitness device / companion app
-                    CollapsibleWidget(
-                        title = "companion app",
-                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
-                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
-                        collapsedSummary = {
-                            Text(
-                                text = when (healthState) {
-                                    is WidgetState.NeedsSetup -> "connect companion"
-                                    is WidgetState.Ready, is WidgetState.Stale -> deviceInfo.name.ifBlank { "connected" }.lowercase()
-                                    else -> "not connected"
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (healthState is WidgetState.Ready) MeenaProfitGreen else MeenaTextMuted
-                            )
-                        }
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            when (healthState) {
-                                is WidgetState.NeedsSetup, is WidgetState.Empty -> {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .heightIn(min = 48.dp)
-                                            .metroClickable {
-                                                HealthRepository.openFitnessApp(context)
-                                            }
-                                            .padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "open companion app (mi fitness, health connect, samsung health)",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = "open",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                                is WidgetState.Ready, is WidgetState.Stale -> {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = deviceInfo.name.lowercase(),
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White
-                                            )
-                                            if (deviceInfo.lastSyncTime.isNotBlank()) {
-                                                Text(
-                                                    text = "synced at ${deviceInfo.lastSyncTime}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MeenaTextMuted
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            text = "open app",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier
-                                                .heightIn(min = 48.dp)
-                                                .metroClickable { HealthRepository.openFitnessApp(context) }
-                                                .padding(vertical = 12.dp, horizontal = 4.dp)
-                                        )
-                                    }
-                                }
-                                else -> {}
-                            }
-                        }
-                    }
-                }
-
                 "widget-health-telemetry" -> {
-                    // Daily activity & health metrics
+                    // Merged health & activity widget
                     CollapsibleWidget(
                         title = "health",
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
@@ -902,7 +866,13 @@ fun TodayHub(
                             Text(
                                 text = when (healthState) {
                                     is WidgetState.NeedsSetup -> "connect health"
-                                    is WidgetState.Ready, is WidgetState.Stale -> "${fitTelemetry.stepsToday} steps"
+                                    is WidgetState.Ready, is WidgetState.Stale -> {
+                                        if (airIndex.aqiValue > 0) {
+                                            "${fitTelemetry.stepsToday} steps · aqi ${airIndex.aqiValue}"
+                                        } else {
+                                            "${fitTelemetry.stepsToday} steps"
+                                        }
+                                    }
                                     else -> "no data"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
@@ -993,6 +963,33 @@ fun TodayHub(
                                                 text = fitTelemetry.sleepHoursFormatted,
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = Color.White
+                                            )
+                                        }
+                                    }
+
+                                    // Merged Air quality
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 4.dp)
+                                            .metroClickable { HealthRepository.openAirQualityDetails(context) }
+                                    ) {
+                                        Text("air quality · ${airIndex.stationName.ifBlank { "local" }.lowercase()}", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = "${airIndex.aqiValue}",
+                                                fontSize = 24.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { Color.White }
+                                            )
+                                            Text(
+                                                text = airIndex.aqiStatus.lowercase(),
+                                                fontSize = 12.sp,
+                                                color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextMuted }
                                             )
                                         }
                                     }

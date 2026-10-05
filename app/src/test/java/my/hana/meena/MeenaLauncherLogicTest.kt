@@ -31,7 +31,81 @@ class MeenaLauncherLogicTest {
         assertEquals("inbox", settings.widgetConfigs["widget-conversations"]?.hubId)
         assertEquals("news", settings.widgetConfigs["widget-news-feed"]?.hubId)
         assertEquals("money", settings.widgetConfigs["widget-finance-charts"]?.hubId)
-        assertTrue(settings.widgetConfigs["widget-map-radar"]?.isEnabled == true)
+        assertFalse(settings.widgetConfigs["widget-map-radar"]?.isEnabled == true)
+    }
+
+    @Test
+    fun defaultWidgetMap_orderAndEnabledFlags_matchesPhase3Specification() {
+        val defaultMap = MeenaUserSettings.defaultWidgetMap()
+
+        // 1. Verify default-off widgets (isEnabled = false)
+        val expectedDisabled = listOf(
+            "widget-calendar-month",
+            "widget-notes",
+            "widget-health-device",
+            "widget-health-telemetry",
+            "widget-health-aqi",
+            "widget-map-radar",
+            "widget-device-telemetry"
+        )
+        for (widgetId in expectedDisabled) {
+            val config = defaultMap[widgetId]
+            assertNotNull("Widget $widgetId must exist in defaultWidgetMap", config)
+            assertFalse("Widget $widgetId must be default-off (isEnabled = false)", config!!.isEnabled)
+        }
+
+        // 2. Verify enabled today widgets and their relative positions
+        val enabledTodayWidgets = defaultMap.entries
+            .filter { it.value.hubId == "today" && it.value.isEnabled }
+            .sortedBy { it.value.position }
+            .map { it.key }
+
+        assertEquals(
+            listOf(
+                "widget-clock-weather",
+                "widget-weather-forecast",
+                "widget-solat",
+                "widget-tasks",
+                "widget-today-summary"
+            ),
+            enabledTodayWidgets
+        )
+
+        // 3. Acceptance verification: On fresh install (clear app data, no Gemini key configured),
+        // Today stream shows in order: clock + date, forecast, solat, agenda
+        val freshSettings = MeenaUserSettings()
+        val visibleTodayWidgetsOnFreshInstall = freshSettings.widgetConfigs.entries
+            .filter {
+                val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
+                val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications"
+                val isBriefConfigured = it.key != "widget-today-summary" || freshSettings.geminiApiKey.isNotBlank()
+                val isNotRemovedWidget = it.key != "widget-health-device"
+                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled && isBriefConfigured
+            }
+            .sortedBy { it.value.position }
+            .map { it.key }
+
+        assertEquals(
+            listOf(
+                "widget-clock-weather",    // clock + date
+                "widget-weather-forecast",// forecast
+                "widget-solat",           // solat
+                "widget-tasks"            // agenda
+            ),
+            visibleTodayWidgetsOnFreshInstall
+        )
+    }
+
+    @Test
+    fun userSettings_migration_preservesUserConfiguredEnabledStates() {
+        val existingUser = MeenaUserSettings(
+            widgetConfigs = mapOf(
+                "widget-map-radar" to my.hana.meena.data.model.WidgetConfig("today", 10, isEnabled = true)
+            )
+        )
+        val migrated = existingUser.migrate()
+        assertTrue("migrate() must preserve user's enabled widget-map-radar", migrated.widgetConfigs["widget-map-radar"]?.isEnabled == true)
+        assertFalse("Newly added missing widget-notes must receive default-off", migrated.widgetConfigs["widget-notes"]?.isEnabled == true)
     }
 
     @Test
