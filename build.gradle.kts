@@ -4,3 +4,8 @@ plugins {
   alias(libs.plugins.compose.compiler) apply false
   alias(libs.plugins.kotlin.serialization) apply false
 }
+
+tasks.register("testDebugUnitTest") {
+    dependsOn(":app:testLiveDebugUnitTest")
+    description = "Alias for :app:testLiveDebugUnitTest"
+}

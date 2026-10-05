@@ -1,0 +1,5 @@
+# Allowlist for StringsCaseTest
+# Proper nouns, string resource keys, and placeholder patterns permitted to contain uppercase letters
+app_name
+Meena
+%[0-9]+\$[a-zA-Z]
