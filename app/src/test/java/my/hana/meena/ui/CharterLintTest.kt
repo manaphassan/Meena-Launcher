@@ -268,7 +268,7 @@ class CharterLintTest {
     @Test
     fun charterGates_scannedFilesCountIsValid() {
         val files = getScannedUiFiles()
-        // There are 23 files in ui/ + MainActivity.kt = 24 files
-        assertTrue("Expected at least 23 UI files, found ${files.size}", files.size >= 23)
+        // After Phase 1 (StartHub, CornerNavHub, LiveTile deleted): 20 files in ui/ + MainActivity.kt = 21 files
+        assertTrue("Expected at least 20 UI files, found ${files.size}", files.size >= 20)
     }
 }
