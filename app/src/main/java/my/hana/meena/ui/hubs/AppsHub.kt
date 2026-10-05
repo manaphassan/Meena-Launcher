@@ -149,7 +149,7 @@ fun AppsHub(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 20.dp, end = 32.dp),
+                .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }

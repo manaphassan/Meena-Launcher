@@ -118,7 +118,7 @@ fun NewsHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         val newsWidgets = settings.widgetConfigs.entries

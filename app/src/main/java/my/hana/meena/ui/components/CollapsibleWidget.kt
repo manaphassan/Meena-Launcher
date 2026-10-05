@@ -23,78 +23,63 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
-import my.hana.meena.theme.MeenaBorderSubtle
-import my.hana.meena.theme.MeenaTextMuted
 
 @Composable
 fun CollapsibleWidget(
     title: String,
     modifier: Modifier = Modifier,
     collapsedSummary: (@Composable () -> Unit)? = null,
-    initiallyExpanded: Boolean = true,
+    isCollapsed: Boolean = false,
+    initiallyExpanded: Boolean = !isCollapsed,
+    onToggleCollapse: ((Boolean) -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    var isExpanded by remember { mutableStateOf(initiallyExpanded) }
+    var localCollapsed by remember(isCollapsed, initiallyExpanded) {
+        mutableStateOf(if (onToggleCollapse != null) isCollapsed else !initiallyExpanded)
+    }
+    val effectiveCollapsed = if (onToggleCollapse != null) isCollapsed else localCollapsed
     val interactionSource = remember { MutableInteractionSource() }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .drawBehind {
-                // Bottom hairline border (1px Metro line)
-                drawLine(
-                    color = MeenaBorderSubtle,
-                    start = Offset(0f, size.height),
-                    end = Offset(size.width, size.height),
-                    strokeWidth = 1.dp.toPx()
-                )
-            }
             .padding(bottom = 12.dp)
     ) {
-        // Widget Header
+        // Widget Header: tapping title collapses or expands
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null
-                ) { isExpanded = !isExpanded }
-                .padding(vertical = 4.dp),
+                ) {
+                    val next = !effectiveCollapsed
+                    localCollapsed = next
+                    onToggleCollapse?.invoke(next)
+                }
+                .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = title.lowercase(),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onBackground
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (!isExpanded && collapsedSummary != null) {
-                    collapsedSummary()
-                }
-
-                Text(
-                    text = if (isExpanded) "less" else "more",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted
-                )
+            if (effectiveCollapsed && collapsedSummary != null) {
+                collapsedSummary()
             }
         }
 
         // Expandable / Collapsible Body with Smooth Animation
         AnimatedVisibility(
-            visible = isExpanded,
+            visible = !effectiveCollapsed,
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut()
         ) {
-            Column(modifier = Modifier.padding(top = 8.dp)) {
+            Column(modifier = Modifier.padding(top = 6.dp)) {
                 content()
             }
         }

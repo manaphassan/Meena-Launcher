@@ -1,6 +1,6 @@
 # Meena UI Charter Baseline Counts
 # Format: key=count
-# Updated for Phase 1 (branch phase/01-dead-code)
+# Updated for Phase 2 (branch phase/02-chrome)
 # The test fails if any count rises above its baseline.
 
 CircleShape=0
@@ -15,5 +15,6 @@ ColorHex=105
 ColorNamed=186
 ColorLiterals=291
 emojiAndSymbols=2
-nonStandardSpacing=232
+nonStandardSpacing=225
 uppercaseDisplay=1
+

@@ -84,7 +84,8 @@ fun TodayHub(
     onOpenCalculator: () -> Unit = {},
     onRequestCalendarPermission: () -> Unit = {},
     onRequestLocationPermission: () -> Unit = {},
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -167,7 +168,7 @@ fun TodayHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -293,6 +294,8 @@ fun TodayHub(
 
                     CollapsibleWidget(
                         title = "next $maxForecastDays days",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = when (weatherState) {
@@ -446,6 +449,8 @@ fun TodayHub(
 
                     CollapsibleWidget(
                         title = "brief",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = when (briefState) {
@@ -529,6 +534,8 @@ fun TodayHub(
                     // Waktu Solat JAKIM with dynamic celestial arc
                     CollapsibleWidget(
                         title = "waktu solat · jakim",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = jakimSchedule.nextPrayerLabel.lowercase(),
@@ -550,6 +557,8 @@ fun TodayHub(
                     val isNeedsPermission = calendarState is CalendarState.NeedsPermission
                     CollapsibleWidget(
                         title = "calendar",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = when {
@@ -671,6 +680,8 @@ fun TodayHub(
                     val todayEvents = calEvents.filter { it.formattedDate == "today" }
                     CollapsibleWidget(
                         title = "today's events",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = if (todayEvents.isEmpty()) "all quiet" else "${todayEvents.size} scheduled today",
@@ -749,6 +760,8 @@ fun TodayHub(
                     // Quick notes
                     CollapsibleWidget(
                         title = "quick notes",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = if (quickNotes.isEmpty()) "empty" else "${quickNotes.size} notes",
@@ -799,6 +812,8 @@ fun TodayHub(
                     // Connected fitness device / companion app
                     CollapsibleWidget(
                         title = "companion app",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = when (healthState) {
@@ -881,6 +896,8 @@ fun TodayHub(
                     // Daily activity & health metrics
                     CollapsibleWidget(
                         title = "health",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = when (healthState) {
@@ -990,6 +1007,8 @@ fun TodayHub(
                     // Air quality
                     CollapsibleWidget(
                         title = "air quality",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = "${airIndex.stationName.ifBlank { "local" }.lowercase()} · aqi ${airIndex.aqiValue}",
@@ -1041,6 +1060,8 @@ fun TodayHub(
                     // Phone status
                     CollapsibleWidget(
                         title = "phone",
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = "battery ${telemetry.batteryPercent}% · ${String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)}",
@@ -1130,7 +1151,7 @@ fun TodayHub(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                    .padding(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
@@ -1179,7 +1200,7 @@ fun TodayHub(
                     text = "pinned",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp)
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
             }
             val chunked = settings.pinnedAppIds.chunked(3)
@@ -1187,7 +1208,7 @@ fun TodayHub(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     rowApps.forEach { pkgId ->

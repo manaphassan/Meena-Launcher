@@ -537,6 +537,16 @@ fun MeenaHomeScreen(
                             onOpenSettings = {
                                 settingsInitialTab = "widgets"
                                 isSettingsOpen = true
+                            },
+                            onToggleWidgetCollapse = { widgetId, isCollapsed ->
+                                coroutineScope.launch {
+                                    val currentMap = userSettings.widgetConfigs.toMutableMap()
+                                    val existing = currentMap[widgetId] ?: my.hana.meena.data.model.MeenaUserSettings.defaultWidgetMap()[widgetId]
+                                    if (existing != null) {
+                                        currentMap[widgetId] = existing.copy(isCollapsed = isCollapsed)
+                                        settingsRepository.saveSettings(userSettings.copy(widgetConfigs = currentMap))
+                                    }
+                                }
                             }
                         )
                         1 -> InboxHub(
