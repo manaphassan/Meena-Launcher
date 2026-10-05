@@ -74,12 +74,10 @@ import kotlinx.coroutines.launch
 fun AppsHub(
     listState: LazyListState,
     pinnedAppIds: List<String> = emptyList(),
-    pinnedAppSizes: Map<String, String> = emptyMap(),
     focusSearch: Boolean = false,
     reducedMotion: Boolean = false,
     onSearchFocused: () -> Unit = {},
     onTogglePinApp: (String) -> Unit = {},
-    onSetTileSize: (String, String) -> Unit = { _, _ -> },
     onLaunchApp: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -471,12 +469,12 @@ fun AppsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = if (isPinned) "unpin from today" else "pin to today",
+                                        text = if (isPinned) "remove from favourites" else "add to favourites",
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = if (isPinned) Color(0xFFFF5252) else primaryColor
                                     )
                                     Text(
-                                        text = if (isPinned) "remove tile from today" else "show tile on today",
+                                        text = if (isPinned) "remove tile from favourites" else "show tile on favourites",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )

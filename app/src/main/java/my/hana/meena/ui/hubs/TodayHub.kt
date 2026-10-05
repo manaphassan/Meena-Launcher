@@ -87,6 +87,9 @@ fun TodayHub(
     onRequestLocationPermission: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenWeatherDetail: () -> Unit = {},
+    onOpenApps: () -> Unit = {},
+    onTogglePin: (String) -> Unit = {},
+    onReorderPin: (Int, Int) -> Unit = { _, _ -> },
     onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
@@ -129,6 +132,11 @@ fun TodayHub(
             daysAhead = settings.calendarDaysAhead,
             showAllDay = settings.calendarShowAllDay
         )
+    }
+
+    val notifications by my.hana.meena.data.system.NotificationRepository.notificationsFlow.collectAsState(initial = emptyList())
+    val notificationCounts = remember(notifications) {
+        notifications.groupingBy { it.packageName }.eachCount()
     }
 
     val hijriDateStr = remember(currentDate, settings.showHijriDate, settings.hijriDayOffset) {
@@ -292,6 +300,18 @@ fun TodayHub(
                         onNavigateToDetail = onOpenWeatherDetail,
                         onRequestLocation = onRequestLocationPermission,
                         onRetry = { WeatherRepository.refresh(context, force = true) }
+                    )
+                }
+                
+                "widget-favourites" -> {
+                    my.hana.meena.ui.components.FavouriteTiles(
+                        pinnedAppIds = settings.pinnedAppIds,
+                        notificationCounts = notificationCounts,
+                        isMonochrome = settings.isMonochromeFavourites,
+                        onLaunchApp = onLaunchPackage,
+                        onOpenApps = onOpenApps,
+                        onTogglePin = onTogglePin,
+                        onMoveApp = onReorderPin
                     )
                 }
 

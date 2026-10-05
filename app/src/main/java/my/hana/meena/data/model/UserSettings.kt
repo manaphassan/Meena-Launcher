@@ -29,8 +29,8 @@ data class MeenaUserSettings(
     val wallpaperUri: String? = null,
     val wallpaperDimPercent: Int = 40,
     val borderStyle: String = "purist", // "purist" (0dp flat) or "modern" (1dp outline)
-    val pinnedAppIds: List<String> = listOf("com.google.android.gm", "org.telegram.messenger"),
-    val pinnedAppSizes: Map<String, String> = emptyMap(), // appId -> "1x1", "2x2", or "4x2" (default "2x2")
+    val isMonochromeFavourites: Boolean = true,
+    val pinnedAppIds: List<String> = emptyList(),
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),
     val widgetConfigs: Map<String, WidgetConfig> = defaultWidgetMap(),
@@ -110,16 +110,17 @@ data class MeenaUserSettings(
             // Today Hub (clock, forecast, solat, agenda, brief, followed by default-off widgets)
             "widget-clock-weather" to WidgetConfig("today", 0, isEnabled = true),
             "widget-weather-forecast" to WidgetConfig("today", 1, isEnabled = true),
-            "widget-solat" to WidgetConfig("today", 2, isEnabled = true),
-            "widget-tasks" to WidgetConfig("today", 3, isEnabled = true),
-            "widget-today-summary" to WidgetConfig("today", 4, isEnabled = true),
-            "widget-calendar-month" to WidgetConfig("today", 5, isEnabled = false),
-            "widget-notes" to WidgetConfig("today", 6, isEnabled = false),
-            "widget-health-device" to WidgetConfig("today", 7, isEnabled = false),
-            "widget-health-telemetry" to WidgetConfig("today", 8, isEnabled = false),
-            "widget-health-aqi" to WidgetConfig("today", 9, isEnabled = false),
-            "widget-map-radar" to WidgetConfig("today", 10, isEnabled = false),
-            "widget-device-telemetry" to WidgetConfig("today", 11, isEnabled = false),
+            "widget-favourites" to WidgetConfig("today", 2, maxLinesOrItems = 8, isEnabled = true),
+            "widget-solat" to WidgetConfig("today", 3, isEnabled = true),
+            "widget-tasks" to WidgetConfig("today", 4, isEnabled = true),
+            "widget-today-summary" to WidgetConfig("today", 5, isEnabled = true),
+            "widget-calendar-month" to WidgetConfig("today", 6, isEnabled = false),
+            "widget-notes" to WidgetConfig("today", 7, isEnabled = false),
+            "widget-health-device" to WidgetConfig("today", 8, isEnabled = false),
+            "widget-health-telemetry" to WidgetConfig("today", 9, isEnabled = false),
+            "widget-health-aqi" to WidgetConfig("today", 10, isEnabled = false),
+            "widget-map-radar" to WidgetConfig("today", 11, isEnabled = false),
+            "widget-device-telemetry" to WidgetConfig("today", 12, isEnabled = false),
 
             // Inbox Hub (conversations, alerts / notification stream)
             "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),

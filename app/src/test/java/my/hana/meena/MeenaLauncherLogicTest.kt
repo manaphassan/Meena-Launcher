@@ -64,6 +64,7 @@ class MeenaLauncherLogicTest {
             listOf(
                 "widget-clock-weather",
                 "widget-weather-forecast",
+                "widget-favourites",
                 "widget-solat",
                 "widget-tasks",
                 "widget-today-summary"
@@ -89,6 +90,7 @@ class MeenaLauncherLogicTest {
             listOf(
                 "widget-clock-weather",    // clock + date
                 "widget-weather-forecast",// forecast
+                "widget-favourites",      // favourites
                 "widget-solat",           // solat
                 "widget-tasks"            // agenda
             ),

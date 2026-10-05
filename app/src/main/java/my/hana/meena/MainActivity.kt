@@ -543,6 +543,20 @@ fun MeenaHomeScreen(
                                 isSettingsOpen = true
                             },
                             onOpenWeatherDetail = { isWeatherDetailOpen = true },
+                            onOpenApps = {
+                                coroutineScope.launch { pagerState.animateScrollToPage(4) }
+                            },
+                            onTogglePin = { pkg -> onTogglePin(pkg) },
+                            onReorderPin = { from, to ->
+                                coroutineScope.launch {
+                                    val currentList = userSettings.pinnedAppIds.toMutableList()
+                                    if (from in currentList.indices && to in currentList.indices) {
+                                        val item = currentList.removeAt(from)
+                                        currentList.add(to, item)
+                                        settingsRepository.saveSettings(userSettings.copy(pinnedAppIds = currentList))
+                                    }
+                                }
+                            },
                             onToggleWidgetCollapse = { widgetId, isCollapsed ->
                                 coroutineScope.launch {
                                     val currentMap = userSettings.widgetConfigs.toMutableMap()
@@ -573,18 +587,10 @@ fun MeenaHomeScreen(
                         4 -> AppsHub(
                             listState = hubAppsListState,
                             pinnedAppIds = userSettings.pinnedAppIds,
-                            pinnedAppSizes = userSettings.pinnedAppSizes,
                             focusSearch = focusAppsSearch,
                             reducedMotion = userSettings.reducedMotion,
                             onSearchFocused = { focusAppsSearch = false },
                             onTogglePinApp = { pkg -> onTogglePin(pkg) },
-                            onSetTileSize = { appId, size ->
-                                coroutineScope.launch {
-                                    val currentMap = userSettings.pinnedAppSizes.toMutableMap()
-                                    currentMap[appId] = size
-                                    settingsRepository.saveSettings(userSettings.copy(pinnedAppSizes = currentMap))
-                                }
-                            },
                             onLaunchApp = onLaunchApp
                         )
                     }
