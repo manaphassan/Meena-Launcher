@@ -47,6 +47,7 @@ import my.hana.meena.theme.MeenaSurface
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.ui.components.CollapsibleWidget
 import my.hana.meena.ui.components.DynamicSolatCelestialCard
 
@@ -71,8 +72,8 @@ fun AgendaHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
 
@@ -135,14 +136,14 @@ fun AgendaHub(
                             Text("${quickNotes.size} notes pinned", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                         }
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                             quickNotes.forEachIndexed { index, note ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(MeenaSurface)
                                         .border(1.dp, MeenaBorder)
-                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -161,7 +162,7 @@ fun AgendaHub(
                                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                                 quickNotes.removeAt(index)
                                             }
-                                            .padding(4.dp)
+                                            .padding(my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
                             }
@@ -171,8 +172,8 @@ fun AgendaHub(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    .padding(top = my.hana.meena.theme.MeenaSpacing.s),
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 OutlinedTextField(
@@ -187,8 +188,8 @@ fun AgendaHub(
                                         unfocusedContainerColor = MeenaSurface,
                                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                                         unfocusedBorderColor = MeenaBorder,
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White
+                                        focusedTextColor = MeenaTextWhite,
+                                        unfocusedTextColor = MeenaTextWhite
                                     )
                                 )
                                 Button(
@@ -202,7 +203,7 @@ fun AgendaHub(
                                     shape = RoundedCornerShape(0.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text("+", fontSize = 16.sp, color = Color.White)
+                                    Text("+", fontSize = 16.sp, color = MeenaTextWhite)
                                 }
                             }
                         }
@@ -235,7 +236,7 @@ private fun PrayerSlot(
                     else -> MeenaBorder
                 }
             )
-            .padding(8.dp),
+            .padding(my.hana.meena.theme.MeenaSpacing.s),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -243,7 +244,7 @@ private fun PrayerSlot(
                 name,
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isSolar) MeenaSolarAmber else if (isCurrent) MaterialTheme.colorScheme.primary else MeenaTextMuted,
-                fontSize = 9.sp
+                fontSize = 12.sp
             )
             Text(
                 time,
@@ -255,7 +256,7 @@ private fun PrayerSlot(
                 sub,
                 style = MaterialTheme.typography.labelSmall,
                 color = MeenaTextMuted,
-                fontSize = 8.sp
+                fontSize = 12.sp
             )
         }
     }
@@ -275,14 +276,14 @@ private fun CalendarWeekRow(days: List<Pair<String, Boolean>>, today: String? = 
                     .background(
                         if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent
                     )
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = d,
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
-                        isToday -> Color.Black
+                        isToday -> MeenaBlack
                         inMonth -> MeenaTextWhite
                         else -> MeenaTextMuted
                     }
@@ -308,7 +309,7 @@ private fun EventRow(title: String, location: String, time: String, duration: St
                     strokeWidth = stroke
                 )
             }
-            .padding(10.dp),
+            .padding(my.hana.meena.theme.MeenaSpacing.m),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

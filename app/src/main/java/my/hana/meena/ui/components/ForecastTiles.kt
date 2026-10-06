@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -51,15 +50,15 @@ fun ForecastTiles(
                 modifier = modifier
                     .fillMaxWidth()
                     .metroClickable(onClick = onRequestLocation)
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
             )
         }
         is WidgetState.Loading -> {
             Column(
                 modifier = modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
+                verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
             ) {
                 MetroDottedProgress()
             }
@@ -72,7 +71,7 @@ fun ForecastTiles(
                 modifier = modifier
                     .fillMaxWidth()
                     .metroClickable(onClick = onRetry)
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
             )
         }
         is WidgetState.Empty -> {
@@ -87,7 +86,7 @@ fun ForecastTiles(
                     modifier = modifier
                         .fillMaxWidth()
                         .metroClickable(onClick = onNavigateToDetail),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     forecastItems.forEachIndexed { index, day ->
                         val isToday = index == 0
@@ -119,8 +118,8 @@ fun ForecastTiles(
                                 contentDescription = null, // Handled by parent semantic node
                                 tint = MeenaTextWhite,
                                 modifier = Modifier
-                                    .padding(vertical = 6.dp)
-                                    .size(24.dp)
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                                    .size(my.hana.meena.theme.MeenaSpacing.l)
                             )
                             Row(
                                 verticalAlignment = Alignment.Bottom,

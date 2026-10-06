@@ -19,7 +19,7 @@ val MeenaMetroShapes = Shapes(
 )
 
 fun getMeenaColorScheme(
-    baseTheme: String = "amoled",
+    baseTheme: String = "dark",
     accent: Color = MeenaCyan
 ) = when (baseTheme) {
     "light" -> lightColorScheme(
@@ -31,16 +31,6 @@ fun getMeenaColorScheme(
         onSurface = Color(0xFF111111),
         surfaceVariant = Color(0xFFEFEFEF),
         outline = Color(0xFFCCCCCC)
-    )
-    "slate" -> darkColorScheme(
-        primary = accent,
-        onPrimary = Color.White,
-        background = Color(0xFF141418),
-        onBackground = Color.White,
-        surface = Color(0xFF1E1E24),
-        onSurface = Color.White,
-        surfaceVariant = Color(0xFF282830),
-        outline = Color(0xFF333333)
     )
     else -> darkColorScheme( // "amoled" default
         primary = accent,
@@ -56,17 +46,15 @@ fun getMeenaColorScheme(
 
 @Composable
 fun MeenaLauncherTheme(
-    baseTheme: String = "amoled",
+    baseTheme: String = "dark",
     accentColor: Color = MeenaCyan,
-    fontFamilyName: String = "Segoe UI",
-    fontScalePercent: Int = 100,
+        fontScalePercent: Int = 100,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = getMeenaColorScheme(baseTheme, accentColor)
-    val typography = androidx.compose.runtime.remember(fontFamilyName, fontScalePercent, accentColor) {
+    val typography = androidx.compose.runtime.remember(fontScalePercent, accentColor) {
         getMeenaTypography(
-            fontFamilyName = fontFamilyName,
-            fontScalePercent = fontScalePercent,
+                        fontScalePercent = fontScalePercent,
             titleAccentColor = accentColor
         )
     }
@@ -79,3 +67,9 @@ fun MeenaLauncherTheme(
     )
 }
 
+
+object MeenaSpacing {
+    val s = 6.dp
+    val m = 12.dp
+    val l = 24.dp
+}

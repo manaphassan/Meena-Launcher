@@ -49,8 +49,8 @@ fun WeatherDetailSubPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(my.hana.meena.theme.MeenaSpacing.l),
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
         ) {
             if (weatherData != null) {
                 // Today's details
@@ -83,7 +83,7 @@ fun WeatherDetailSubPage(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
 
                 DetailRow("rain chance", "$rainProb%")
                 DetailRow("humidity", "${current.humidity}%")
@@ -117,14 +117,14 @@ private fun MetroAppBar(title: String, onNavigateBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 12.dp),
+            .padding(top = my.hana.meena.theme.MeenaSpacing.l, start = my.hana.meena.theme.MeenaSpacing.l, end = my.hana.meena.theme.MeenaSpacing.l, bottom = my.hana.meena.theme.MeenaSpacing.m),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "←",
             style = MaterialTheme.typography.displayMedium,
             color = MeenaTextWhite,
-            modifier = Modifier.metroClickable { onNavigateBack() }.padding(end = 12.dp)
+            modifier = Modifier.metroClickable { onNavigateBack() }.padding(end = my.hana.meena.theme.MeenaSpacing.m)
         )
         Text(
             text = title,
@@ -139,7 +139,7 @@ private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(

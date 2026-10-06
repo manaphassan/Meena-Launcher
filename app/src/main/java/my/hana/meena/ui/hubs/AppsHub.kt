@@ -66,6 +66,7 @@ import my.hana.meena.data.system.NotificationRepository
 import my.hana.meena.theme.MeenaBorder
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.metroClickable
 import kotlinx.coroutines.launch
@@ -147,8 +148,8 @@ fun AppsHub(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
@@ -160,13 +161,13 @@ fun AppsHub(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
-                    placeholder = { Text("search apps", color = Color.Gray, fontSize = 14.sp) },
-                    leadingIcon = { Icon(Icons.Default.Search, "search", tint = Color.Black) },
+                    placeholder = { Text("search apps", color = MeenaTextMuted, fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, "search", tint = MeenaBlack) },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
+                        focusedContainerColor = MeenaTextWhite,
+                        unfocusedContainerColor = MeenaTextWhite,
+                        focusedTextColor = MeenaBlack,
+                        unfocusedTextColor = MeenaBlack,
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent
                     ),
@@ -180,7 +181,7 @@ fun AppsHub(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 32.dp),
+                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.l),
                         contentAlignment = Alignment.Center
                     ) {
                         MetroDottedProgress()
@@ -192,7 +193,7 @@ fun AppsHub(
                         text = if (searchQuery.isNotBlank()) "no apps matching \"$searchQuery\"" else "no apps available",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MeenaTextMuted,
-                        modifier = Modifier.padding(vertical = 32.dp)
+                        modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.l)
                     )
                 }
             } else {
@@ -202,7 +203,7 @@ fun AppsHub(
                         Row(
                             modifier = Modifier
                                 .metroFeatherIn(index = 0, reducedMotion = reducedMotion)
-                                .padding(top = 10.dp, bottom = 4.dp),
+                                .padding(top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.s),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
@@ -218,7 +219,7 @@ fun AppsHub(
                                 Text(
                                     text = letter.toString().lowercase(),
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
+                                    color = MeenaTextWhite,
                                     fontSize = 24.sp
                                 )
                             }
@@ -258,7 +259,7 @@ fun AppsHub(
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight()
                 .width(28.dp)
-                .padding(vertical = 24.dp, horizontal = 2.dp)
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.l, horizontal = 0.dp)
                 .pointerInput(alphabet, letterIndexMap) {
                     detectTapGestures(
                         onPress = { offset ->
@@ -324,9 +325,9 @@ fun AppsHub(
                     val hasApps = activeLetters.contains(char) || (char == '#' && activeLetters.contains('#'))
                     Text(
                         text = char.toString(),
-                        fontSize = 9.sp,
-                        fontWeight = if (hasApps) FontWeight.Bold else FontWeight.Normal,
-                        color = if (activeScrubLetter == char) primaryColor else if (hasApps) Color.White.copy(alpha = 0.9f) else Color.DarkGray
+                        fontSize = 12.sp,
+                        fontWeight = if (hasApps) FontWeight.Medium else FontWeight.Normal,
+                        color = if (activeScrubLetter == char) primaryColor else if (hasApps) MeenaTextWhite.copy(alpha = 0.9f) else MeenaTextMuted
                     )
                 }
             }
@@ -344,8 +345,8 @@ fun AppsHub(
                 Text(
                     text = activeScrubLetter.toString(),
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    fontWeight = FontWeight.Medium,
+                    color = MeenaTextWhite
                 )
             }
         }
@@ -378,16 +379,16 @@ fun AppsHub(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Black)
-                        .padding(24.dp)
+                        .background(MeenaBlack)
+                        .padding(my.hana.meena.theme.MeenaSpacing.l)
                 ) {
                     if (showUninstallConfirm) {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             Text(
                                 text = "uninstall app?",
                                 style = MaterialTheme.typography.displayMedium,
                                 fontSize = 24.sp,
-                                color = Color.White
+                                color = MeenaTextWhite
                             )
                             Text(
                                 text = "do you want to remove ${target.label.lowercase()} from your phone?",
@@ -397,8 +398,8 @@ fun AppsHub(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    .padding(top = my.hana.meena.theme.MeenaSpacing.m),
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -418,13 +419,13 @@ fun AppsHub(
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("yes", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                    Text("yes", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                                 }
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
                                         .heightIn(min = 48.dp)
-                                        .background(Color(0xFF161616))
+                                        .background(MaterialTheme.colorScheme.primary)
                                         .metroClickable { showUninstallConfirm = false },
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -433,7 +434,7 @@ fun AppsHub(
                             }
                         }
                     } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
@@ -444,12 +445,12 @@ fun AppsHub(
                                     if (target.iconBitmap != null) {
                                         Image(bitmap = target.iconBitmap, contentDescription = target.label, modifier = Modifier.size(32.dp))
                                     } else {
-                                        Text(target.firstLetter.toString().lowercase(), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                        Text(target.firstLetter.toString().lowercase(), fontSize = 24.sp, fontWeight = FontWeight.Medium, color = MeenaTextWhite)
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(14.dp))
                                 Column {
-                                    Text(target.label.lowercase(), style = MaterialTheme.typography.titleLarge, color = Color.White)
+                                    Text(target.label.lowercase(), style = MaterialTheme.typography.titleLarge, color = MeenaTextWhite)
                                     Text("quick actions", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                 }
                             }
@@ -464,14 +465,14 @@ fun AppsHub(
                                         onTogglePinApp(target.packageName)
                                         selectedTargetForProperties = null
                                     }
-                                    .padding(vertical = 8.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
                                     Text(
                                         text = if (isPinned) "remove from favourites" else "add to favourites",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = if (isPinned) Color(0xFFFF5252) else primaryColor
+                                        color = if (isPinned) MaterialTheme.colorScheme.error else primaryColor
                                     )
                                     Text(
                                         text = if (isPinned) "remove tile from favourites" else "show tile on favourites",
@@ -494,14 +495,14 @@ fun AppsHub(
                                         context.startActivity(intent)
                                         selectedTargetForProperties = null
                                     }
-                                    .padding(vertical = 8.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
                                     Text(
                                         text = "app info",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                     Text(
                                         text = "open system settings",
@@ -520,14 +521,14 @@ fun AppsHub(
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         showUninstallConfirm = true
                                     }
-                                    .padding(vertical = 8.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
                                     Text(
                                         text = "uninstall",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = Color(0xFFFF5252)
+                                        color = MaterialTheme.colorScheme.error
                                     )
                                     Text(
                                         text = "delete app from phone",
@@ -538,7 +539,7 @@ fun AppsHub(
                             }
 
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(top = my.hana.meena.theme.MeenaSpacing.s),
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 Text(
@@ -548,7 +549,7 @@ fun AppsHub(
                                     modifier = Modifier
                                         .heightIn(min = 48.dp)
                                         .metroClickable { selectedTargetForProperties = null }
-                                        .padding(vertical = 12.dp, horizontal = 8.dp)
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                 )
                             }
                         }
@@ -580,7 +581,7 @@ private fun AppRow(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .padding(vertical = 6.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // App Icon Box with badge
@@ -597,11 +598,11 @@ private fun AppRow(
                     modifier = Modifier.size(32.dp)
                 )
             } else if (icon != null) {
-                Icon(icon, contentDescription = name, tint = Color.White, modifier = Modifier.size(26.dp))
+                Icon(icon, contentDescription = name, tint = MeenaTextWhite, modifier = Modifier.size(26.dp))
             } else {
                 Text(
                     text = name.firstOrNull()?.uppercase() ?: "#",
-                    color = Color.White,
+                    color = MeenaTextWhite,
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 20.sp
                 )
@@ -610,13 +611,13 @@ private fun AppRow(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .background(Color(0xFFFF3B30), RoundedCornerShape(0.dp))
-                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
                         text = badge.toString(),
-                        fontSize = 9.sp,
-                        color = Color.White
+                        fontSize = 12.sp,
+                        color = MeenaTextWhite
                     )
                 }
             }
@@ -635,7 +636,7 @@ private fun AppRow(
                     text = name,
                     style = MaterialTheme.typography.headlineMedium,
                     fontSize = 17.sp,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 if (time != null && notificationSnippet != null) {
                     Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
@@ -649,7 +650,7 @@ private fun AppRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
-                    modifier = Modifier.padding(top = 2.dp)
+                    modifier = Modifier.padding(top = 0.dp)
                 )
             }
         }
@@ -678,17 +679,17 @@ private fun AlphabetJumpListOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.94f))
+            .background(MeenaBlack.copy(alpha = 0.94f))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onDismiss() }
-            .padding(horizontal = 24.dp, vertical = 40.dp),
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.l),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -699,7 +700,7 @@ private fun AlphabetJumpListOverlay(
                     text = "jump to",
                     style = MaterialTheme.typography.displayLarge,
                     fontSize = 28.sp,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Text(
                     text = "close",
@@ -708,16 +709,16 @@ private fun AlphabetJumpListOverlay(
                     modifier = Modifier
                         .heightIn(min = 48.dp)
                         .metroClickable { onDismiss() }
-                        .padding(vertical = 12.dp, horizontal = 8.dp)
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                 )
             }
 
             val rows = allChars.chunked(6)
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                 rows.forEach { rowChars ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
                     ) {
                         rowChars.forEach { char ->
                             val isAvailable = activeLetters.contains(char.uppercaseChar())
@@ -726,7 +727,7 @@ private fun AlphabetJumpListOverlay(
                                     .weight(1f)
                                     .height(48.dp)
                                     .background(
-                                        color = if (isAvailable) MaterialTheme.colorScheme.primary else Color(0xFF161616)
+                                        color = if (isAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
                                     )
                                     .metroClickable(enabled = isAvailable) {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -738,7 +739,7 @@ private fun AlphabetJumpListOverlay(
                                     text = char.toString(),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontSize = 20.sp,
-                                    color = if (isAvailable) Color.White else Color.DarkGray
+                                    color = if (isAvailable) MeenaTextWhite else MeenaTextMuted
                                 )
                             }
                         }

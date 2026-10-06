@@ -57,9 +57,9 @@ fun FavouriteTiles(
             modifier = Modifier
                 .fillMaxWidth()
                 .metroClickable(onClick = onOpenApps)
-                .padding(vertical = 12.dp),
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
         ) {
             Box(
                 modifier = Modifier
@@ -84,8 +84,8 @@ fun FavouriteTiles(
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
         maxItemsInEachRow = 4
     ) {
         pinnedApps.forEachIndexed { index, app ->
@@ -124,7 +124,7 @@ fun FavouriteTiles(
                     maxLines = 1,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(6.dp)
+                        .padding(my.hana.meena.theme.MeenaSpacing.s)
                 )
 
                 // Unread Badge
@@ -133,7 +133,7 @@ fun FavouriteTiles(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .offset(x = (-4).dp, y = 4.dp)
-                            .size(24.dp)
+                            .size(my.hana.meena.theme.MeenaSpacing.l)
                             .background(MaterialTheme.colorScheme.error),
                         contentAlignment = Alignment.Center
                     ) {
@@ -191,16 +191,16 @@ fun FavouriteTiles(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MeenaBlack)
-                        .padding(24.dp)
+                        .padding(my.hana.meena.theme.MeenaSpacing.l)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)) {
                         Text(
                             text = app.label.lowercase(),
                             style = MaterialTheme.typography.titleLarge,
                             color = MeenaTextWhite
                         )
                         
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             if (index > 0) {
                                 Text(
                                     text = "move left",
@@ -212,7 +212,7 @@ fun FavouriteTiles(
                                             onMoveApp(index, index - 1)
                                             selectedForMenu = null
                                         }
-                                        .padding(vertical = 12.dp)
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
                                 )
                             }
                             if (index < pinnedApps.size - 1) {
@@ -226,7 +226,7 @@ fun FavouriteTiles(
                                             onMoveApp(index, index + 1)
                                             selectedForMenu = null
                                         }
-                                        .padding(vertical = 12.dp)
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
                                 )
                             }
                             Text(
@@ -239,7 +239,7 @@ fun FavouriteTiles(
                                         onTogglePin(app.packageName)
                                         selectedForMenu = null
                                     }
-                                    .padding(vertical = 12.dp)
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
                             )
                         }
                     }

@@ -1,4 +1,4 @@
-# Meena UI Charter Baseline Counts
+﻿# Meena UI Charter Baseline Counts
 # Format: key=count
 # Updated for Phase 2 (branch phase/02-chrome)
 # The test fails if any count rises above its baseline.
@@ -9,12 +9,12 @@ Card=6
 elevation=0
 Toast=24
 Icons=17
-FontWeight=51
-fontSizeBelow12sp=30
-ColorHex=105
-ColorNamed=186
-ColorLiterals=291
+FontWeight=0
+fontSizeBelow12sp=0
+ColorHex=0
+ColorNamed=0
+ColorLiterals=0
 emojiAndSymbols=2
-nonStandardSpacing=225
+nonStandardSpacing=0
 uppercaseDisplay=1
 

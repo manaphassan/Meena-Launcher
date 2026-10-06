@@ -110,12 +110,12 @@ fun NewsFeedWidget(
         collapsedSummary = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
-                        .background(Color(0xFF00A4EF))
+                        .size(my.hana.meena.theme.MeenaSpacing.s)
+                        .background(MaterialTheme.colorScheme.primary)
                 )
                 Text(
                     text = "${newsArticles.size} stories ready",
@@ -128,7 +128,7 @@ fun NewsFeedWidget(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             // Header: Dynamic Filter Chips & Refresh Button
             Row(
@@ -138,7 +138,7 @@ fun NewsFeedWidget(
             ) {
                 Row(
                     modifier = Modifier.weight(1f, fill = false),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     availableSources.take(4).forEach { src ->
                         NewsFilterChip(
@@ -184,7 +184,7 @@ fun NewsFeedWidget(
                         .fillMaxWidth()
                         .background(MeenaSurface)
                         .border(1.dp, MeenaBorder)
-                        .padding(16.dp),
+                        .padding(my.hana.meena.theme.MeenaSpacing.m),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -209,7 +209,7 @@ fun NewsFeedWidget(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
+                    .padding(top = my.hana.meena.theme.MeenaSpacing.s),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -236,8 +236,8 @@ private fun NewsArticleRow(
     onClick: () -> Unit
 ) {
     val sourceColor = when {
-        article.source.contains("amanz", ignoreCase = true) -> Color(0xFF00A4EF)
-        else -> Color(0xFF107C10)
+        article.source.contains("amanz", ignoreCase = true) -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.primary
     }
 
     Row(
@@ -246,9 +246,9 @@ private fun NewsArticleRow(
             .background(MeenaSurface)
             .border(1.dp, MeenaBorder)
             .clickable(onClick = onClick)
-            .padding(10.dp),
+            .padding(my.hana.meena.theme.MeenaSpacing.m),
         verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         // Left Accent Source Indicator Bar
         Box(
@@ -263,19 +263,19 @@ private fun NewsArticleRow(
             // Badges: Source + Category + Time
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 // Source Tag
                 Box(
                     modifier = Modifier
                         .background(sourceColor.copy(alpha = 0.2f))
                         .border(1.dp, sourceColor.copy(alpha = 0.6f))
-                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
                         text = article.source.lowercase(),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
                         color = sourceColor
                     )
                 }
@@ -296,7 +296,7 @@ private fun NewsArticleRow(
                 // Time
                 Text(
                     text = article.formattedDate,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     color = MeenaTextMuted
                 )
             }
@@ -307,7 +307,7 @@ private fun NewsArticleRow(
             Text(
                 text = article.title,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Normal,
                 color = MeenaTextWhite,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -323,7 +323,7 @@ private fun NewsArticleRow(
                     color = MeenaTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    fontSize = 11.sp
+                    fontSize = 12.sp
                 )
             }
         }
@@ -335,7 +335,7 @@ private fun NewsArticleRow(
             tint = MeenaTextMuted,
             modifier = Modifier
                 .size(14.dp)
-                .padding(top = 2.dp)
+                .padding(top = 0.dp)
         )
     }
 }
@@ -352,13 +352,13 @@ private fun NewsFilterChip(
             .background(if (isSelected) accentColor else MeenaSurfaceElevated)
             .border(1.dp, if (isSelected) accentColor else MeenaBorder)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 3.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
     ) {
         Text(
             text = label,
-            fontSize = 10.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else MeenaTextMuted
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+            color = if (isSelected) MeenaTextWhite else MeenaTextMuted
         )
     }
 }

@@ -66,6 +66,7 @@ import my.hana.meena.theme.MeenaSurfaceElevated
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.MeenaBlack
 
 /**
  * Authentic Windows Phone / Metro style OpenMaps dark theme radar widget.
@@ -128,11 +129,11 @@ fun OpenMapsRadarWidget(
         collapsedSummary = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(my.hana.meena.theme.MeenaSpacing.s)
                         .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                 )
                 Text(
@@ -146,7 +147,7 @@ fun OpenMapsRadarWidget(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             // Top HUD Header: Coordinates, North Bearing, and 3km Radar status
             Row(
@@ -154,25 +155,25 @@ fun OpenMapsRadarWidget(
                     .fillMaxWidth()
                     .background(MeenaSurface)
                     .border(1.dp, MeenaBorder)
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(6.dp)
+                                .size(my.hana.meena.theme.MeenaSpacing.s)
                                 .graphicsLayer { alpha = radarPulseAlpha.value }
-                                .background(Color(0xFF00A4EF), RoundedCornerShape(0.dp))
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                         )
                         Text(
                             text = currentLocation.locationName.lowercase(),
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Medium,
                             color = MeenaTextWhite,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -181,7 +182,7 @@ fun OpenMapsRadarWidget(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${currentLocation.formattedCoordinates}  [${currentLocation.dmsCoordinates}]",
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
                     )
@@ -190,23 +191,23 @@ fun OpenMapsRadarWidget(
                 // North Bearing Indicator
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
                     modifier = Modifier
-                        .background(Color(0xFF141414))
-                        .border(1.dp, Color(0xFF00A4EF).copy(alpha = 0.5f))
-                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Navigation,
                         contentDescription = "north bearing",
-                        tint = Color(0xFF00A4EF),
-                        modifier = Modifier.size(12.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
                     )
                     Text(
                         text = "north 000°",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MeenaTextWhite
                     )
                 }
             }
@@ -216,7 +217,7 @@ fun OpenMapsRadarWidget(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(270.dp)
-                    .background(Color(0xFF080808))
+                    .background(MaterialTheme.colorScheme.primary)
                     .border(1.dp, MeenaBorder)
             ) {
                 // Embedded Dark Leaflet OpenStreetMap
@@ -267,16 +268,16 @@ fun OpenMapsRadarWidget(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.85f))
-                        .border(1.dp, Color(0xFF00A4EF).copy(alpha = 0.6f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .padding(my.hana.meena.theme.MeenaSpacing.s)
+                        .background(MeenaBlack.copy(alpha = 0.85f))
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
                         text = "radar: 3.0 km range",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF00A4EF)
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -284,10 +285,10 @@ fun OpenMapsRadarWidget(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.85f))
+                        .padding(my.hana.meena.theme.MeenaSpacing.s)
+                        .background(MeenaBlack.copy(alpha = 0.85f))
                         .border(1.dp, MeenaBorder)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
                         text = "openmaps · dark",
@@ -300,8 +301,8 @@ fun OpenMapsRadarWidget(
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                        .padding(my.hana.meena.theme.MeenaSpacing.s),
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     // Zoom In Button [+]
                     TacticalMapButton(
@@ -338,26 +339,26 @@ fun OpenMapsRadarWidget(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.85f))
-                        .border(1.dp, Color(0xFF00A4EF).copy(alpha = 0.6f))
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                        .padding(my.hana.meena.theme.MeenaSpacing.s)
+                        .background(MeenaBlack.copy(alpha = 0.85f))
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Navigation,
                             contentDescription = "north",
-                            tint = Color(0xFF00A4EF),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
                             text = "bearing: 000° n",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MeenaTextWhite
                         )
                     }
                 }
@@ -378,21 +379,21 @@ fun OpenMapsRadarWidget(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             DeviceLocationHelper.refreshLocation(context)
                         }
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Icon(
                         imageVector = Icons.Default.MyLocation,
                         contentDescription = "gps lock",
                         tint = if (currentLocation.isGpsActive) MeenaProfitGreen else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
                     )
                     Text(
                         text = if (currentLocation.isGpsActive) "gps locked (±${currentLocation.accuracyMeters.toInt()}m)" else "default location",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MeenaTextWhite
                     )
                 }
 
@@ -409,21 +410,21 @@ fun OpenMapsRadarWidget(
                                 label = currentLocation.locationName
                             )
                         }
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
                         text = "open in maps",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MeenaTextWhite
                     )
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                         contentDescription = "open in external maps",
-                        tint = Color.White,
-                        modifier = Modifier.size(12.dp)
+                        tint = MeenaTextWhite,
+                        modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
                     )
                 }
             }
@@ -439,16 +440,16 @@ private fun TacticalMapButton(
     Box(
         modifier = Modifier
             .size(32.dp)
-            .background(Color.Black.copy(alpha = 0.85f))
-            .border(1.dp, Color(0xFF00A4EF).copy(alpha = 0.8f))
+            .background(MeenaBlack.copy(alpha = 0.85f))
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF00A4EF)
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

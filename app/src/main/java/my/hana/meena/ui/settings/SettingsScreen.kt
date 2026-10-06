@@ -1,4 +1,4 @@
-package my.hana.meena.ui.settings
+﻿package my.hana.meena.ui.settings
 
 import android.content.Intent
 import android.net.Uri
@@ -182,7 +182,7 @@ fun SettingsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
+                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.m),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -201,7 +201,7 @@ fun SettingsScreen(
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "back",
-                        tint = Color.White,
+                        tint = MeenaTextWhite,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -213,10 +213,10 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "meena ui · settings",
+                    text = "meena ui Ã‚Â· settings",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
-                    letterSpacing = 1.sp
+                    letterSpacing = 12.sp
                 )
             }
             Box(
@@ -252,8 +252,8 @@ fun SettingsScreen(
                     LazyRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.s),
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)
                     ) {
                         items(tabs) { tab ->
                             val isActive = tab == activeTab
@@ -261,10 +261,10 @@ fun SettingsScreen(
                                 text = tab,
                                 style = MaterialTheme.typography.displayLarge,
                                 fontSize = 32.sp,
-                                color = if (isActive) Color.White else MeenaTextMuted,
+                                color = if (isActive) MeenaTextWhite else MeenaTextMuted,
                                 modifier = Modifier
                                     .metroClickable { activeTab = tab }
-                                    .padding(bottom = 6.dp)
+                                    .padding(bottom = my.hana.meena.theme.MeenaSpacing.s)
                             )
                         }
                     }
@@ -280,8 +280,8 @@ fun SettingsScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.m),
+                verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 when (activeTab) {
                     "widgets" -> {
@@ -290,7 +290,7 @@ fun SettingsScreen(
                                 text = "tap any widget to configure its page, order and options",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MeenaTextMuted,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
                             )
                         }
 
@@ -319,7 +319,7 @@ fun SettingsScreen(
                             val config = settingsState.widgetConfigs[id]
                             val isEnabled = config?.isEnabled != false
                             val hub = config?.hubId ?: "home"
-                            val statusText = if (isEnabled) "on · $hub" else "off"
+                            val statusText = if (isEnabled) "on Ã‚Â· $hub" else "off"
 
                             SettingLinkRow(
                                 title = title,
@@ -335,7 +335,7 @@ fun SettingsScreen(
                                 text = "connected services, local hooks and api keys",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MeenaTextMuted,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
                             )
                         }
 
@@ -401,7 +401,7 @@ fun SettingsScreen(
                             val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
                             SettingLinkRow(
                                 title = "date & time",
-                                status = "$timeMode · $hijriMode",
+                                status = "$timeMode Ã‚Â· $hijriMode",
                                 onClick = { activeSubPage = "look:datetime" }
                             )
                         }
@@ -409,7 +409,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "theme & accents",
-                                status = "${settingsState.baseTheme} · ${settingsState.accentHex.lowercase()}",
+                                status = "${settingsState.baseTheme} Ã‚Â· ${settingsState.accentHex.lowercase()}",
                                 onClick = { activeSubPage = "look:theme" }
                             )
                         }
@@ -417,7 +417,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "typography",
-                                status = "${settingsState.fontFamily} · ${settingsState.fontScalePercent}%",
+                                status = "${settingsState.fontScalePercent}% scale",
                                 onClick = { activeSubPage = "look:typography" }
                             )
                         }
@@ -426,7 +426,7 @@ fun SettingsScreen(
                             val hand = if (settingsState.isLeftHanded) "left-handed" else "right-handed"
                             SettingLinkRow(
                                 title = "ergonomics & layout",
-                                status = "$hand · haptics on",
+                                status = "$hand Ã‚Â· haptics on",
                                 onClick = { activeSubPage = "look:ergonomics" }
                             )
                         }
@@ -442,7 +442,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "privacy & data safety",
-                                status = "on-device only · zero cloud tracking",
+                                status = "on-device only Ã‚Â· zero cloud tracking",
                                 onClick = { activeSubPage = "look:privacy" }
                             )
                         }
@@ -496,8 +496,8 @@ private fun SubPageContainer(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.s),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         when {
             subPageId.startsWith("widget:") -> {
@@ -528,12 +528,12 @@ private fun SubPageContainer(
 
             item {
                 Column {
-                    Text("destination page", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("destination page", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                     val hubs = listOf("today", "inbox", "news", "money", "apps")
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                     ) {
                         hubs.forEach { hub ->
                             val isSelected = config.hubId == hub
@@ -547,13 +547,13 @@ private fun SubPageContainer(
                                         newMap[widgetId] = config.copy(hubId = hub)
                                         onUpdate { it.copy(widgetConfigs = newMap) }
                                     }
-                                    .padding(vertical = 8.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = hub,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isSelected) Color.White else MeenaTextMuted
+                                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                                 )
                             }
                         }
@@ -576,12 +576,12 @@ private fun SubPageContainer(
 
             item {
                 Column {
-                    Text("refresh cadence", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("refresh cadence", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                     val intervals = listOf(15 to "15m", 30 to "30m", 60 to "1h", 0 to "manual")
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                     ) {
                         intervals.forEach { (mins, label) ->
                             val isSelected = config.refreshMinutes == mins
@@ -595,13 +595,13 @@ private fun SubPageContainer(
                                         newMap[widgetId] = config.copy(refreshMinutes = mins)
                                         onUpdate { it.copy(widgetConfigs = newMap) }
                                     }
-                                    .padding(vertical = 8.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = label,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isSelected) Color.White else MeenaTextMuted
+                                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                                 )
                             }
                         }
@@ -656,7 +656,7 @@ private fun SubPageContainer(
                         SettingSegmentedRow(
                             title = "temperature scale",
                             subtitle = "display unit for local temperature",
-                            options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
+                            options = listOf("c" to "celsius (Ã‚Â°c)", "f" to "fahrenheit (Ã‚Â°f)"),
                             selectedKey = custom("temp_unit", "c"),
                             onSelectKey = { setCustom("temp_unit", it) }
                         )
@@ -696,7 +696,7 @@ private fun SubPageContainer(
                     item {
                         SettingSegmentedRow(
                             title = "temperature unit",
-                            options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
+                            options = listOf("c" to "celsius (Ã‚Â°c)", "f" to "fahrenheit (Ã‚Â°f)"),
                             selectedKey = custom("temp_unit", "c"),
                             onSelectKey = { setCustom("temp_unit", it) }
                         )
@@ -833,7 +833,7 @@ private fun SubPageContainer(
                         )
                     }
                     item {
-                        Text("what brief reads", style = MaterialTheme.typography.titleSmall, color = Color.White)
+                        Text("what brief reads", style = MaterialTheme.typography.titleSmall, color = MeenaTextWhite)
                     }
                     item {
                         SettingToggleRow(
@@ -1000,7 +1000,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -1041,7 +1041,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -1091,7 +1091,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -1111,7 +1111,7 @@ private fun SubPageContainer(
                     }
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("display options", style = MaterialTheme.typography.titleSmall, color = Color.White)
+                        Text("display options", style = MaterialTheme.typography.titleSmall, color = MeenaTextWhite)
                     }
                     item {
                         SettingSegmentedRow(
@@ -1242,7 +1242,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open bluetooth settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Text("open bluetooth settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -1288,7 +1288,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open health connect settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Text("open health connect settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -1350,10 +1350,10 @@ private fun SubPageContainer(
             }
             item {
                 Column {
-                    Text("model selection", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("model selection", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                     val models = listOf("gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro")
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                         models.forEach { model ->
                             val isSelected = settingsState.geminiModel == model
                             Box(
@@ -1362,13 +1362,13 @@ private fun SubPageContainer(
                                     .heightIn(min = 48.dp)
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
                                     .metroClickable { onUpdate { it.copy(geminiModel = model) } }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
                                 contentAlignment = Alignment.CenterStart
                             ) {
                                 Text(
                                     text = model,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isSelected) Color.White else MeenaTextMuted
+                                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                                 )
                             }
                         }
@@ -1376,7 +1376,7 @@ private fun SubPageContainer(
                 }
             }
             item {
-                Text("what brief is allowed to read", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                Text("what brief is allowed to read", style = MaterialTheme.typography.titleMedium, color = MeenaTextWhite)
             }
             item {
                 SettingToggleRow(
@@ -1457,7 +1457,7 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("open notification access settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("open notification access settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
         }
@@ -1557,8 +1557,7 @@ private fun SubPageContainer(
                     title = "base theme",
                     subtitle = "choose surface background contrast",
                     options = listOf(
-                        "amoled" to "amoled (pure black)",
-                        "slate" to "slate (dark gray)",
+                        "dark" to "dark (pure black)",
                         "light" to "light (high key)"
                     ),
                     selectedKey = settingsState.baseTheme,
@@ -1567,17 +1566,16 @@ private fun SubPageContainer(
             }
 
             item {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
                 Text(
                     text = "lumia accent color",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
 
                 val currentBg = when (settingsState.baseTheme) {
-                    "light" -> Color.White
-                    "slate" -> MeenaDarkSlate
+                    "light" -> MeenaTextWhite
                     else -> MeenaBlack
                 }
                 val currentAccentColor = runCatching {
@@ -1589,17 +1587,17 @@ private fun SubPageContainer(
                 val swatchName = activeSwatch?.name ?: settingsState.accentHex.lowercase()
 
                 Text(
-                    text = "$swatchName · ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} · ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
+                    text = "$swatchName Ã‚Â· ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} Ã‚Â· ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                     Meena10AccentSwatches.chunked(5).forEach { row ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                         ) {
                             row.forEach { swatch ->
                                 val isSelected = settingsState.accentHex.equals(swatch.hex, ignoreCase = true)
@@ -1611,7 +1609,7 @@ private fun SubPageContainer(
                                         .background(swatch.color)
                                         .border(
                                             width = if (isSelected) 3.dp else 0.dp,
-                                            color = if (settingsState.baseTheme == "light") MeenaBlack else Color.White
+                                            color = if (settingsState.baseTheme == "light") MeenaBlack else MeenaTextWhite
                                         )
                                         .metroClickable { onUpdate { it.copy(accentHex = swatch.hex) } }
                                 )
@@ -1621,19 +1619,7 @@ private fun SubPageContainer(
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                SettingSegmentedRow(
-                    title = "border style",
-                    subtitle = "content tile edge definition",
-                    options = listOf(
-                        "purist" to "purist flat (0dp)",
-                        "modern" to "modern subtle (1dp)"
-                    ),
-                    selectedKey = settingsState.borderStyle,
-                    onSelectKey = { border -> onUpdate { it.copy(borderStyle = border) } }
-                )
-            }
+
         }
 
         subPageId == "look:typography" -> {
@@ -1644,20 +1630,7 @@ private fun SubPageContainer(
                     onBack = onBack
                 )
             }
-            item {
-                SettingSegmentedRow(
-                    title = "font family",
-                    subtitle = "system typeface pairing",
-                    options = listOf(
-                        "Segoe UI" to "segoe ui (metro)",
-                        "Inter" to "inter",
-                        "Outfit" to "outfit",
-                        "System" to "system default"
-                    ),
-                    selectedKey = settingsState.fontFamily,
-                    onSelectKey = { font -> onUpdate { it.copy(fontFamily = font) } }
-                )
-            }
+
 
             item {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1665,7 +1638,7 @@ private fun SubPageContainer(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("font scale", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                    Text("font scale", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                     Text("${settingsState.fontScalePercent}%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 }
                 Slider(
@@ -1756,7 +1729,7 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("export settings json", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("export settings json", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
             item {
@@ -1766,17 +1739,17 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("import settings json", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("import settings json", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
             item {
                 Button(
                     onClick = onResetDefaults,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A1010)),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("reset to defaults", style = MaterialTheme.typography.labelSmall, color = Color(0xFFFFB4B4))
+                    Text("reset to defaults", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -1793,12 +1766,12 @@ private fun SubPageContainer(
                 Text(
                     text = "meena is a personal android launcher built with jetpack compose, designed around clean typography, generous whitespace, and pure speed.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
             }
             item {
                 Text(
-                    text = "charter: clean · light · open · fast",
+                    text = "charter: clean Ã‚Â· light Ã‚Â· open Ã‚Â· fast",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -1814,10 +1787,10 @@ private fun SubPageContainer(
                 Text(
                     text = "privacy & data safety",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                     Text(
                         text = "on-device processing: notifications and bank alerts are read locally in memory and never sent to any server or third party.",
                         style = MaterialTheme.typography.bodySmall,
@@ -1850,7 +1823,7 @@ private fun SubPageContainer(
                 Text(
                     text = "open source licenses",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -1862,10 +1835,10 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "version 1.0 · my.hana.meena",
+                    text = "version 1.0 Ã‚Â· my.hana.meena",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
-                    fontSize = 11.sp
+                    fontSize = 12.sp
                 )
             }
         }
@@ -1882,7 +1855,7 @@ private fun SubPageContainer(
                 Text(
                     text = "meena is designed from the ground up to respect your privacy. your data stays on your phone.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
             }
             item {
@@ -1902,10 +1875,10 @@ private fun SubPageContainer(
                 Text(
                     text = "what meena reads",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                     Text(
                         text = "approximate location: used solely to query public weather and jakim prayer times. never tracked in background or saved.",
                         style = MaterialTheme.typography.bodySmall,
@@ -1937,7 +1910,7 @@ private fun SubPageContainer(
                 Text(
                     text = "backup & data safety",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -1962,7 +1935,7 @@ fun SettingLinkRow(
             .fillMaxWidth()
             .heightIn(min = 52.dp)
             .metroClickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1970,7 +1943,7 @@ fun SettingLinkRow(
             Text(
                 text = title.lowercase(),
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White
+                color = MeenaTextWhite
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
@@ -1994,20 +1967,20 @@ fun SettingToggleRow(
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable { onCheckedChange(!checked) }
-            .padding(vertical = 8.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+                .padding(end = my.hana.meena.theme.MeenaSpacing.m),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             Text(
                 text = title.lowercase(),
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
+                color = MeenaTextWhite
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
@@ -2095,7 +2068,7 @@ private fun FinanceAccountSettings(
         )
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         // 1. Google Sheets Bridge
         Text(
             text = "google sheets bridge",
@@ -2117,8 +2090,8 @@ private fun FinanceAccountSettings(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MeenaSurface,
                 unfocusedContainerColor = MeenaSurface,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
+                focusedTextColor = MeenaTextWhite,
+                unfocusedTextColor = MeenaTextWhite,
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 unfocusedIndicatorColor = MeenaBorder
             )
@@ -2126,7 +2099,7 @@ private fun FinanceAccountSettings(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Button(
                 onClick = {
@@ -2136,7 +2109,7 @@ private fun FinanceAccountSettings(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(0.dp)
             ) {
-                Text("save & load sheet", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("save & load sheet", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
 
             if (sheetUrlInput.isNotBlank()) {
@@ -2145,10 +2118,10 @@ private fun FinanceAccountSettings(
                         sheetUrlInput = ""
                         FinanceRepository.setSheetUrl(context, "")
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("disconnect", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("disconnect", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
         }
@@ -2157,8 +2130,8 @@ private fun FinanceAccountSettings(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MeenaSurface)
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(my.hana.meena.theme.MeenaSpacing.m),
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Text(
                 text = "google sheets setup guide",
@@ -2203,12 +2176,12 @@ private fun FinanceAccountSettings(
         // Existing Holdings
         val holdings: List<my.hana.meena.data.finance.FinanceHolding> = data?.holdings ?: emptyList()
         if (holdings.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                 for (holding in holdings) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -2216,10 +2189,10 @@ private fun FinanceAccountSettings(
                             Text(
                                 text = "${holding.symbol.lowercase()} (${holding.groupName.lowercase()})",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White
+                                color = MeenaTextWhite
                             )
                             Text(
-                                text = "${holding.shares.toInt()} shares · cost rm %.2f · now rm %.2f".format(holding.averageCost, holding.currentPrice),
+                                text = "${holding.shares.toInt()} shares Ã‚Â· cost rm %.2f Ã‚Â· now rm %.2f".format(holding.averageCost, holding.currentPrice),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -2227,7 +2200,7 @@ private fun FinanceAccountSettings(
                         IconButton(
                             onClick = { holdingToDelete = holding }
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "delete", tint = Color(0xFFFF5252))
+                            Icon(Icons.Default.Close, contentDescription = "delete", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -2244,7 +2217,7 @@ private fun FinanceAccountSettings(
         Text(
             text = "add holding",
             style = MaterialTheme.typography.titleSmall,
-            color = Color.White
+            color = MeenaTextWhite
         )
 
         OutlinedTextField(
@@ -2256,14 +2229,14 @@ private fun FinanceAccountSettings(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MeenaSurface,
                 unfocusedContainerColor = MeenaSurface,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MeenaTextWhite,
+                unfocusedTextColor = MeenaTextWhite
             )
         )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             OutlinedTextField(
                 value = newShares,
@@ -2274,8 +2247,8 @@ private fun FinanceAccountSettings(
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MeenaSurface,
                     unfocusedContainerColor = MeenaSurface,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = MeenaTextWhite,
+                    unfocusedTextColor = MeenaTextWhite
                 )
             )
 
@@ -2288,15 +2261,15 @@ private fun FinanceAccountSettings(
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MeenaSurface,
                     unfocusedContainerColor = MeenaSurface,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = MeenaTextWhite,
+                    unfocusedTextColor = MeenaTextWhite
                 )
             )
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             OutlinedTextField(
                 value = newPrice,
@@ -2307,8 +2280,8 @@ private fun FinanceAccountSettings(
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MeenaSurface,
                     unfocusedContainerColor = MeenaSurface,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = MeenaTextWhite,
+                    unfocusedTextColor = MeenaTextWhite
                 )
             )
 
@@ -2321,8 +2294,8 @@ private fun FinanceAccountSettings(
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MeenaSurface,
                     unfocusedContainerColor = MeenaSurface,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = MeenaTextWhite,
+                    unfocusedTextColor = MeenaTextWhite
                 )
             )
         }
@@ -2355,7 +2328,7 @@ private fun FinanceAccountSettings(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("add holding", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            Text("add holding", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
     }
 }
@@ -2369,7 +2342,7 @@ private fun HealthAccountSettings(
     val availability = remember { HealthRepository.getHealthConnectAvailability(context) }
     val installedApps = remember { HealthRepository.getInstalledFitnessApps(context) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         Text(
             text = "google fit has retired. health metrics sync securely on-device through android health connect.",
             style = MaterialTheme.typography.bodyMedium,
@@ -2377,10 +2350,10 @@ private fun HealthAccountSettings(
         )
 
         val statusText = when (availability) {
-            HealthConnectAvailability.AVAILABLE -> "status · installed and ready"
-            HealthConnectAvailability.UPDATE_REQUIRED -> "status · update required"
-            HealthConnectAvailability.NOT_INSTALLED -> "status · not installed"
-            HealthConnectAvailability.NOT_SUPPORTED -> "status · not supported on this device"
+            HealthConnectAvailability.AVAILABLE -> "status Ã‚Â· installed and ready"
+            HealthConnectAvailability.UPDATE_REQUIRED -> "status Ã‚Â· update required"
+            HealthConnectAvailability.NOT_INSTALLED -> "status Ã‚Â· not installed"
+            HealthConnectAvailability.NOT_SUPPORTED -> "status Ã‚Â· not supported on this device"
         }
 
         Text(
@@ -2404,7 +2377,7 @@ private fun HealthAccountSettings(
             Text(
                 text = if (availability == HealthConnectAvailability.AVAILABLE) "manage health connect" else "get health connect",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White
+                color = MeenaTextWhite
             )
         }
 
@@ -2466,10 +2439,10 @@ private fun HealthAccountSettings(
                 HealthRepository.openFitnessApp(context, settingsState.healthCompanionPackage)
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("open companion app", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            Text("open companion app", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -2485,10 +2458,10 @@ private fun HealthAccountSettings(
                 HealthRepository.openAirQualityDetails(context)
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("view open-meteo air quality", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            Text("view open-meteo air quality", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
     }
 }
@@ -2505,7 +2478,7 @@ private fun CalendarAccountSettings(
         else emptyList()
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         Text(
             text = "meena reads your agenda directly from your android system calendar. no google login or cloud sync needed.",
             style = MaterialTheme.typography.bodyMedium,
@@ -2516,7 +2489,7 @@ private fun CalendarAccountSettings(
             Text(
                 text = "meena needs calendar access to show your upcoming agenda on today.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White
+                color = MeenaTextWhite
             )
             Button(
                 onClick = {
@@ -2531,15 +2504,15 @@ private fun CalendarAccountSettings(
                 shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("turn on calendar access in settings", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("turn on calendar access in settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
         } else {
             Column {
-                Text("agenda lookahead", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                Spacer(modifier = Modifier.height(6.dp))
+                Text("agenda lookahead", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     listOf(1 to "1 day", 3 to "3 days", 7 to "7 days", 14 to "14 days").forEach { (days, label) ->
                         val isSelected = settingsState.calendarDaysAhead == days
@@ -2549,13 +2522,13 @@ private fun CalendarAccountSettings(
                                 .heightIn(min = 48.dp)
                                 .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
                                 .metroClickable { onUpdate { it.copy(calendarDaysAhead = days) } }
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) Color.White else MeenaTextMuted
+                                color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                             )
                         }
                     }
@@ -2570,8 +2543,8 @@ private fun CalendarAccountSettings(
             )
 
             Column {
-                Text("synced calendars", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                Spacer(modifier = Modifier.height(6.dp))
+                Text("synced calendars", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                 if (availableCalendars.isEmpty()) {
                     Text(
                         text = "no local calendars found on this phone",
@@ -2580,12 +2553,12 @@ private fun CalendarAccountSettings(
                         fontSize = 12.sp
                     )
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                         availableCalendars.forEach { cal ->
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
                             ) {
                                 val swatchColor = if (cal.color != 0) Color(cal.color) else MaterialTheme.colorScheme.primary
                                 Box(
@@ -2597,7 +2570,7 @@ private fun CalendarAccountSettings(
                                     Text(
                                         text = cal.displayName.lowercase(),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                     if (cal.accountName.isNotBlank()) {
                                         Text(
@@ -2630,7 +2603,7 @@ private fun CalendarAccountSettings(
                 shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface)
             ) {
-                Text("open system calendar app", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("open system calendar app", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
         }
     }
@@ -2652,7 +2625,7 @@ private fun NewsFeedManager(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         Text(
             text = "manage feed sources",
@@ -2675,8 +2648,8 @@ private fun NewsFeedManager(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MeenaSurface,
                 unfocusedContainerColor = MeenaSurface,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
+                focusedTextColor = MeenaTextWhite,
+                unfocusedTextColor = MeenaTextWhite,
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 unfocusedIndicatorColor = MeenaBorder
             )
@@ -2696,19 +2669,19 @@ private fun NewsFeedManager(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("add feed source", style = MaterialTheme.typography.labelSmall, color = Color.White)
+            Text("add feed source", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
 
         // Quick presets
         Text(
             text = "quick presets",
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
-            modifier = Modifier.padding(top = 4.dp)
+            color = MeenaTextWhite,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             defaultPresetFeeds.take(3).forEach { (label, url) ->
                 val alreadyAdded = currentFeeds.contains(url)
@@ -2720,21 +2693,21 @@ private fun NewsFeedManager(
                         .metroClickable(enabled = !alreadyAdded) {
                             onUpdateFeeds(currentFeeds + url)
                         }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (alreadyAdded) "added · $label" else "+ $label",
+                        text = if (alreadyAdded) "added Ã‚Â· $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 12.sp,
-                        color = if (alreadyAdded) Color.White else MeenaTextMuted
+                        color = if (alreadyAdded) MeenaTextWhite else MeenaTextMuted
                     )
                 }
             }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             defaultPresetFeeds.drop(3).forEach { (label, url) ->
                 val alreadyAdded = currentFeeds.contains(url)
@@ -2746,14 +2719,14 @@ private fun NewsFeedManager(
                         .metroClickable(enabled = !alreadyAdded) {
                             onUpdateFeeds(currentFeeds + url)
                         }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (alreadyAdded) "added · $label" else "+ $label",
+                        text = if (alreadyAdded) "added Ã‚Â· $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 12.sp,
-                        color = if (alreadyAdded) Color.White else MeenaTextMuted
+                        color = if (alreadyAdded) MeenaTextWhite else MeenaTextMuted
                     )
                 }
             }
@@ -2765,22 +2738,22 @@ private fun NewsFeedManager(
             Text(
                 text = "${currentFeeds.size} configured feeds",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White
+                color = MeenaTextWhite
             )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                 currentFeeds.forEach { feedUrl ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MeenaSurface)
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = feedUrl.lowercase(),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White,
+                            color = MeenaTextWhite,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
@@ -2789,13 +2762,13 @@ private fun NewsFeedManager(
                         Text(
                             text = "remove",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFF6B6B),
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier
                                 .heightIn(min = 48.dp)
                                 .metroClickable {
                                     onUpdateFeeds(currentFeeds.filter { it != feedUrl })
                                 }
-                                .padding(horizontal = 8.dp, vertical = 12.dp)
+                                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.m)
                         )
                     }
                 }
@@ -2819,17 +2792,17 @@ fun MetroSubPageHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp)
+            .padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .heightIn(min = 48.dp)
                 .metroClickable(onClick = onBack)
-                .padding(vertical = 6.dp)
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Text(
-                text = "‹ $parentTitle".lowercase(),
+                text = "Ã¢â‚¬Â¹ $parentTitle".lowercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 14.sp
@@ -2840,7 +2813,7 @@ fun MetroSubPageHeader(
             text = pageTitle.lowercase(),
             style = MaterialTheme.typography.displayMedium,
             fontSize = 30.sp,
-            color = Color.White
+            color = MeenaTextWhite
         )
     }
 }
@@ -2875,8 +2848,8 @@ private fun GeminiApiKeyInput(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("api key", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-        Spacer(modifier = Modifier.height(6.dp))
+        Text("api key", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+        Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
         OutlinedTextField(
             value = keyText,
             onValueChange = {
@@ -2889,8 +2862,8 @@ private fun GeminiApiKeyInput(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MeenaSurface,
                 unfocusedContainerColor = MeenaSurface,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
+                focusedTextColor = MeenaTextWhite,
+                unfocusedTextColor = MeenaTextWhite,
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 unfocusedIndicatorColor = MeenaBorder
             )
@@ -2899,12 +2872,12 @@ private fun GeminiApiKeyInput(
             Text(
                 text = statusMessage,
                 style = MaterialTheme.typography.labelSmall,
-                color = if (statusMessage.contains("valid") || statusMessage.contains("securely")) MaterialTheme.colorScheme.primary else Color(0xFFE51400),
-                modifier = Modifier.padding(top = 4.dp)
+                color = if (statusMessage.contains("valid") || statusMessage.contains("securely")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
             Button(
                 onClick = {
                     my.hana.meena.data.system.KeystoreSecretsManager.saveGeminiApiKey(context, keyText.trim())
@@ -2913,7 +2886,7 @@ private fun GeminiApiKeyInput(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(0.dp)
             ) {
-                Text("save key", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text("save key", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
 
             if (keyText.isNotBlank()) {
@@ -2937,7 +2910,7 @@ private fun GeminiApiKeyInput(
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text(if (isTesting) "testing..." else "test key", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text(if (isTesting) "testing..." else "test key", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
 
                 Button(
@@ -2945,7 +2918,7 @@ private fun GeminiApiKeyInput(
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("forget key", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                    Text("forget key", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
         }
@@ -2954,7 +2927,7 @@ private fun GeminiApiKeyInput(
             Spacer(modifier = Modifier.height(10.dp))
             Text("live models available", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(4.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                 discoveredModels.forEach { model ->
                     val isSelected = currentModel == model
                     Box(
@@ -2963,13 +2936,13 @@ private fun GeminiApiKeyInput(
                             .heightIn(min = 48.dp)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
                             .metroClickable { onModelSelect(model) }
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
                             text = model,
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (isSelected) Color.White else MeenaTextMuted
+                            color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                         )
                     }
                 }
@@ -2992,20 +2965,20 @@ private fun SolatZonePicker(
 ) {
     val zones = listOf(
         "" to "auto-detect by location (gps)",
-        "WLY01" to "wly01 · kuala lumpur & putrajaya",
-        "SGR01" to "sgr01 · gombak, petaling, sepang, hulu langat",
-        "SGR02" to "sgr02 · kuala selangor, sabak bernam",
-        "SGR03" to "sgr03 · klang, kuala langat",
-        "JHR01" to "jhr01 · pulau aur & pemanggil",
-        "JHR02" to "jhr02 · johor bahru, kota tinggi, kulai",
-        "PNG01" to "png01 · pulau pinang",
-        "PRK01" to "prk01 · tapah, slim river, tanjung malim",
-        "PRK02" to "prk02 · ipoh, batu gajah, kampar",
-        "SBH01" to "sbh01 · kota kinabalu, ranau, penampang",
-        "SWK01" to "swk01 · kuching, bau, lundu, sematan"
+        "WLY01" to "wly01 Ã‚Â· kuala lumpur & putrajaya",
+        "SGR01" to "sgr01 Ã‚Â· gombak, petaling, sepang, hulu langat",
+        "SGR02" to "sgr02 Ã‚Â· kuala selangor, sabak bernam",
+        "SGR03" to "sgr03 Ã‚Â· klang, kuala langat",
+        "JHR01" to "jhr01 Ã‚Â· pulau aur & pemanggil",
+        "JHR02" to "jhr02 Ã‚Â· johor bahru, kota tinggi, kulai",
+        "PNG01" to "png01 Ã‚Â· pulau pinang",
+        "PRK01" to "prk01 Ã‚Â· tapah, slim river, tanjung malim",
+        "PRK02" to "prk02 Ã‚Â· ipoh, batu gajah, kampar",
+        "SBH01" to "sbh01 Ã‚Â· kota kinabalu, ranau, penampang",
+        "SWK01" to "swk01 Ã‚Â· kuching, bau, lundu, sematan"
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         zones.forEach { (code, label) ->
             val isSelected = currentZone.equals(code, ignoreCase = true)
             Box(
@@ -3014,13 +2987,13 @@ private fun SolatZonePicker(
                     .heightIn(min = 48.dp)
                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
                     .metroClickable { onSelectZone(code) }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Text(
                     text = label.lowercase(),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) Color.White else MeenaTextMuted
+                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                 )
             }
         }
@@ -3032,7 +3005,7 @@ private fun DateTimeSettings(
     settingsState: MeenaUserSettings,
     onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         Text(
             text = "customize clock display, date formats and islamic hijri calendar offset.",
             style = MaterialTheme.typography.bodyMedium,
@@ -3054,7 +3027,7 @@ private fun DateTimeSettings(
         )
 
         Column {
-            Text("date pattern", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+            Text("date pattern", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
             Spacer(modifier = Modifier.height(4.dp))
             Text("live preview using today's date", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(8.dp))
@@ -3066,7 +3039,7 @@ private fun DateTimeSettings(
                 "d MMM"
             )
             val today = java.util.Date()
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                 patterns.forEach { pattern ->
                     val isSelected = settingsState.dateFormatPattern == pattern
                     val preview = try {
@@ -3080,7 +3053,7 @@ private fun DateTimeSettings(
                             .heightIn(min = 48.dp)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
                             .metroClickable { onUpdate { it.copy(dateFormatPattern = pattern) } }
-                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -3090,12 +3063,12 @@ private fun DateTimeSettings(
                             Text(
                                 text = preview,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White
+                                color = MeenaTextWhite
                             )
                             Text(
                                 text = pattern,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (isSelected) Color.White.copy(alpha = 0.8f) else MeenaTextMuted,
+                                color = if (isSelected) MeenaTextWhite.copy(alpha = 0.8f) else MeenaTextMuted,
                                 fontSize = 12.sp
                             )
                         }
@@ -3113,13 +3086,13 @@ private fun DateTimeSettings(
 
         if (settingsState.showHijriDate) {
             Column {
-                Text("hijri day adjustment", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                Text("hijri day adjustment", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("compensate for moon sighting differences", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     listOf(-2 to "-2d", -1 to "-1d", 0 to "exact", 1 to "+1d", 2 to "+2d").forEach { (offset, label) ->
                         val isSelected = settingsState.hijriDayOffset == offset
@@ -3129,13 +3102,13 @@ private fun DateTimeSettings(
                                 .heightIn(min = 48.dp)
                                 .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
                                 .metroClickable { onUpdate { it.copy(hijriDayOffset = offset) } }
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) Color.White else MeenaTextMuted
+                                color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                             )
                         }
                     }
@@ -3144,4 +3117,5 @@ private fun DateTimeSettings(
         }
     }
 }
+
 

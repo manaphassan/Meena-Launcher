@@ -1,4 +1,4 @@
-package my.hana.meena.data.model
+﻿package my.hana.meena.data.model
 
 import kotlinx.serialization.Serializable
 
@@ -21,14 +21,14 @@ data class MeenaUserSettings(
     val isReducedMotion: Boolean = false,
     val defaultHubIndex: Int = 0,
     val isHapticEnabled: Boolean = true,
-    val baseTheme: String = "amoled", // "amoled", "slate", "light"
+    val baseTheme: String = "dark", // "dark", "light"
     val accentHex: String = "#00A4EF", // Meena Cyan default
-    val fontFamily: String = "Segoe UI",
+    
     val fontScalePercent: Int = 100,
-    val acrylicBlurDp: Int = 20,
+    
     val wallpaperUri: String? = null,
     val wallpaperDimPercent: Int = 40,
-    val borderStyle: String = "purist", // "purist" (0dp flat) or "modern" (1dp outline)
+    
     val isMonochromeFavourites: Boolean = true,
     val pinnedAppIds: List<String> = emptyList(),
     val solatZone: String = "",

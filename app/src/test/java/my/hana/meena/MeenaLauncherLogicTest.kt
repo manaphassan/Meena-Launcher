@@ -1,4 +1,4 @@
-package my.hana.meena
+﻿package my.hana.meena
 
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.JakimSolatRepository
@@ -23,7 +23,7 @@ class MeenaLauncherLogicTest {
     fun defaultUserSettings_hasValidConfiguration() {
         val settings = MeenaUserSettings()
         assertEquals("en", settings.language)
-        assertEquals("amoled", settings.baseTheme)
+        assertEquals("dark", settings.baseTheme)
         assertEquals(0, settings.defaultHubIndex)
         assertTrue(settings.widgetConfigs.isNotEmpty())
         assertTrue(settings.widgetConfigs["widget-clock-weather"]?.isEnabled == true)
@@ -388,7 +388,7 @@ class MeenaLauncherLogicTest {
             isAllDay = false,
             location = "room a",
             calendarColor = -16711936,
-            formattedTime = "10:00 – 11:00",
+            formattedTime = "10:00 â€“ 11:00",
             formattedDate = "today"
         )
         assertEquals(42L, event.id)
@@ -779,7 +779,7 @@ class MeenaLauncherLogicTest {
         val doc = builder.parse(stringsFile)
         val stringNodes = doc.getElementsByTagName("string")
         
-        val bannedSymbols = listOf("•", "✕", "▲", "▼", "→", "⚡")
+        val bannedSymbols = listOf("â€¢", "âœ•", "â–²", "â–¼", "â†’", "âš¡")
         val violations = mutableListOf<String>()
 
         for (i in 0 until stringNodes.length) {

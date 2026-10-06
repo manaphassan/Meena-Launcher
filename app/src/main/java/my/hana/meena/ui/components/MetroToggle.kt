@@ -25,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import my.hana.meena.theme.MeenaBlack
@@ -51,7 +50,7 @@ fun MetroToggle(
     showLabel: Boolean = true
 ) {
     val trackWidth = 52.dp
-    val trackHeight = 24.dp
+    val trackHeight = my.hana.meena.theme.MeenaSpacing.l
     val thumbWidth = 10.dp
     val thumbHeight = 18.dp
     val padding = 3.dp
@@ -80,7 +79,7 @@ fun MetroToggle(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
         modifier = modifier
             .heightIn(min = 48.dp)
             .clickable(
@@ -146,15 +145,15 @@ fun MetroToggleRow(
                 role = Role.Switch,
                 onClick = { onCheckedChange(!checked) }
             )
-            .padding(vertical = 8.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+                .padding(end = my.hana.meena.theme.MeenaSpacing.m),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             Text(
                 text = title.lowercase(),

@@ -177,8 +177,8 @@ fun TodayHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
 
@@ -213,7 +213,7 @@ fun TodayHub(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                            .padding(bottom = my.hana.meena.theme.MeenaSpacing.s)
                             .metroClickable {
                                 if (weatherState is WidgetState.NeedsSetup) {
                                     onRequestLocationPermission()
@@ -269,7 +269,7 @@ fun TodayHub(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 4.dp),
+                                .padding(top = my.hana.meena.theme.MeenaSpacing.s),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -340,7 +340,7 @@ fun TodayHub(
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                         ) {
                             when (briefState) {
                                 is WidgetState.NeedsSetup -> {
@@ -354,7 +354,7 @@ fun TodayHub(
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 onOpenSettings()
                                             }
-                                            .padding(vertical = 4.dp)
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
                                 is WidgetState.Loading -> {
@@ -376,7 +376,7 @@ fun TodayHub(
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 GeminiBriefRepository.refresh(context, settings, force = true)
                                             }
-                                            .padding(vertical = 4.dp)
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
                                 is WidgetState.Ready, is WidgetState.Stale -> {
@@ -393,7 +393,7 @@ fun TodayHub(
                                             text = "$freshnessText · ${briefData.modelUsed}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MeenaTextMuted,
-                                            modifier = Modifier.padding(top = 2.dp)
+                                            modifier = Modifier.padding(top = 0.dp)
                                         )
                                     }
                                 }
@@ -451,7 +451,7 @@ fun TodayHub(
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .metroClickable { onRequestCalendarPermission() }
-                                        .padding(vertical = 4.dp),
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -465,7 +465,7 @@ fun TodayHub(
                                         text = "allow",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
@@ -487,19 +487,19 @@ fun TodayHub(
                                         modifier = Modifier
                                             .heightIn(min = 48.dp)
                                             .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                            .padding(vertical = 12.dp, horizontal = 4.dp)
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
                             }
                             else -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                     calEvents.take(4).forEach { event ->
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .heightIn(min = 48.dp)
                                                 .metroClickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
-                                                .padding(vertical = 6.dp),
+                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
@@ -507,8 +507,8 @@ fun TodayHub(
                                                 Text(
                                                     text = event.title,
                                                     style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = Color.White
+                                                    fontWeight = FontWeight.Normal,
+                                                    color = MeenaTextWhite
                                                 )
                                                 Text(
                                                     text = buildString {
@@ -538,7 +538,7 @@ fun TodayHub(
                                             modifier = Modifier
                                                 .heightIn(min = 48.dp)
                                                 .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                                .padding(vertical = 12.dp, horizontal = 4.dp)
+                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                         )
                                     }
                                 }
@@ -582,7 +582,7 @@ fun TodayHub(
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .metroClickable { onRequestCalendarPermission() }
-                                        .padding(vertical = 4.dp),
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -596,7 +596,7 @@ fun TodayHub(
                                         text = "allow",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
@@ -618,19 +618,19 @@ fun TodayHub(
                                         modifier = Modifier
                                             .heightIn(min = 48.dp)
                                             .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                            .padding(vertical = 12.dp, horizontal = 4.dp)
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
                             }
                             else -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                     agendaItems.take(maxItems).forEach { item ->
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .heightIn(min = 48.dp)
                                                 .metroClickable { DeviceCalendarRepository.openEventDetail(context, item.id) }
-                                                .padding(vertical = 4.dp),
+                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
@@ -638,7 +638,7 @@ fun TodayHub(
                                                 Text(
                                                     text = item.title,
                                                     style = MaterialTheme.typography.bodyMedium,
-                                                    color = Color.White
+                                                    color = MeenaTextWhite
                                                 )
                                                 Text(
                                                     text = buildString {
@@ -657,7 +657,7 @@ fun TodayHub(
                                         }
                                     }
                                     Row(
-                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                        modifier = Modifier.fillMaxWidth().padding(top = my.hana.meena.theme.MeenaSpacing.s),
                                         horizontalArrangement = Arrangement.End
                                     ) {
                                         Text(
@@ -667,7 +667,7 @@ fun TodayHub(
                                             modifier = Modifier
                                                 .heightIn(min = 48.dp)
                                                 .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                                .padding(vertical = 12.dp, horizontal = 4.dp)
+                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                         )
                                     }
                                 }
@@ -697,12 +697,12 @@ fun TodayHub(
                                 color = MeenaTextMuted
                             )
                         } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                 quickNotes.forEachIndexed { index, note ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -719,7 +719,7 @@ fun TodayHub(
                                             modifier = Modifier
                                                 .heightIn(min = 48.dp)
                                                 .metroClickable { quickNotes.removeAt(index) }
-                                                .padding(horizontal = 8.dp, vertical = 12.dp)
+                                                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.m)
                                         )
                                     }
                                 }
@@ -748,7 +748,7 @@ fun TodayHub(
                                     else -> "no data"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (healthState is WidgetState.Ready) Color.White else MeenaTextMuted
+                                color = if (healthState is WidgetState.Ready) MeenaTextWhite else MeenaTextMuted
                             )
                         }
                     ) {
@@ -761,7 +761,7 @@ fun TodayHub(
                                         .metroClickable {
                                             HealthRepository.openHealthConnectSettings(context)
                                         }
-                                        .padding(vertical = 4.dp),
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -775,12 +775,12 @@ fun TodayHub(
                                         text = "connect",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
                             is WidgetState.Ready, is WidgetState.Stale -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -790,14 +790,14 @@ fun TodayHub(
                                         Text(
                                             text = "${fitTelemetry.stepsToday} / ${fitTelemetry.stepGoal}",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = Color.White
+                                            color = MeenaTextWhite
                                         )
                                     }
                                     MetroLineProgress(
                                         progress = if (fitTelemetry.stepGoal > 0) (fitTelemetry.stepsToday.toFloat() / fitTelemetry.stepGoal.toFloat()).coerceIn(0f, 1f) else 0f,
                                         modifier = Modifier.fillMaxWidth(),
                                         color = MeenaProfitGreen,
-                                        trackColor = Color(0xFF222222),
+                                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                         height = 3.dp
                                     )
 
@@ -834,29 +834,29 @@ fun TodayHub(
                                             Text(
                                                 text = fitTelemetry.sleepHoursFormatted,
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = Color.White
+                                                color = MeenaTextWhite
                                             )
                                         }
                                     }
 
                                     // Merged Air quality
                                     Column(
-                                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 4.dp)
+                                            .padding(top = my.hana.meena.theme.MeenaSpacing.s)
                                             .metroClickable { HealthRepository.openAirQualityDetails(context) }
                                     ) {
                                         Text("air quality · ${airIndex.stationName.ifBlank { "local" }.lowercase()}", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                                         ) {
                                             Text(
                                                 text = "${airIndex.aqiValue}",
                                                 fontSize = 24.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { Color.White }
+                                                fontWeight = FontWeight.Medium,
+                                                color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextWhite }
                                             )
                                             Text(
                                                 text = airIndex.aqiStatus.lowercase(),
@@ -887,7 +887,7 @@ fun TodayHub(
                         }
                     ) {
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .metroClickable { HealthRepository.openAirQualityDetails(context) }
@@ -895,13 +895,13 @@ fun TodayHub(
                             Text(airIndex.stationName.ifBlank { "local station" }.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                             ) {
                                 Text(
                                     text = "${airIndex.aqiValue}",
                                     fontSize = 32.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { Color.White }
+                                    fontWeight = FontWeight.Medium,
+                                    color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextWhite }
                                 )
                                 Text(
                                     text = airIndex.aqiStatus.lowercase(),
@@ -939,7 +939,7 @@ fun TodayHub(
                             )
                         }
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             // Battery
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -951,13 +951,13 @@ fun TodayHub(
                                     Text(
                                         text = "${telemetry.batteryPercent}% · ${if (telemetry.isCharging) "charging" else "on battery"}",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = if (telemetry.batteryPercent <= 20) Color(0xFFFF5252) else Color.White
+                                        color = if (telemetry.batteryPercent <= 20) MaterialTheme.colorScheme.error else MeenaTextWhite
                                     )
                                 }
                             }
 
                             // Memory
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -966,20 +966,20 @@ fun TodayHub(
                                     Text(
                                         text = String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                 }
                                 MetroLineProgress(
                                     progress = (telemetry.ramPercent / 100f).coerceIn(0f, 1f),
                                     modifier = Modifier.fillMaxWidth(),
                                     color = MaterialTheme.colorScheme.primary,
-                                    trackColor = Color(0xFF222222),
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                     height = 2.dp
                                 )
                             }
 
                             // Storage
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -988,14 +988,14 @@ fun TodayHub(
                                     Text(
                                         text = String.format(Locale.US, "%.1f gb free", telemetry.totalStorageGb - telemetry.usedStorageGb),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                 }
                                 MetroLineProgress(
                                     progress = (telemetry.storagePercent / 100f).coerceIn(0f, 1f),
                                     modifier = Modifier.fillMaxWidth(),
-                                    color = Color.White,
-                                    trackColor = Color(0xFF222222),
+                                    color = MeenaTextWhite,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                     height = 2.dp
                                 )
                             }
@@ -1006,7 +1006,7 @@ fun TodayHub(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("screen", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                Text("${telemetry.screenBrightnessPercent}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                Text("${telemetry.screenBrightnessPercent}%", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                             }
                         }
                     }
@@ -1020,17 +1020,17 @@ fun TodayHub(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
+                verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 Text(
                     text = "quick actions",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     val quickActions = listOf(
                         Triple("phone", MaterialTheme.colorScheme.primary, onOpenDialer),
@@ -1050,7 +1050,7 @@ fun TodayHub(
                         ) {
                             Text(
                                 text = label,
-                                color = Color.White,
+                                color = MeenaTextWhite,
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -1068,8 +1068,8 @@ fun TodayHub(
                 Text(
                     text = "pinned",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    color = MeenaTextWhite,
+                    modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.s)
                 )
             }
             val chunked = settings.pinnedAppIds.chunked(3)
@@ -1077,8 +1077,8 @@ fun TodayHub(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     rowApps.forEach { pkgId ->
                         // Read currentAppsVersion so recomposition triggers when cache is loaded
@@ -1091,7 +1091,7 @@ fun TodayHub(
                                 .height(88.dp)
                                 .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                                 .metroClickable { onLaunchPackage(pkgId) }
-                                .padding(8.dp)
+                                .padding(my.hana.meena.theme.MeenaSpacing.s)
                         ) {
                             if (app?.iconBitmap != null) {
                                 Image(
@@ -1104,7 +1104,7 @@ fun TodayHub(
                             }
                             Text(
                                 text = label,
-                                color = Color.White,
+                                color = MeenaTextWhite,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.align(Alignment.BottomStart),
                                 maxLines = 1,

@@ -118,8 +118,8 @@ fun NewsHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         val newsWidgets = settings.widgetConfigs.entries
             .filter { it.value.hubId == "news" && it.value.isEnabled }
@@ -129,9 +129,9 @@ fun NewsHub(
             val widgetId = newsWidgets[index].key
             when (widgetId) {
                 "widget-news-feed" -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                         // 1. TOP HEADER & SEARCH
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -142,8 +142,8 @@ fun NewsHub(
                                         text = "local news · rss feeds",
                                         style = MaterialTheme.typography.displaySmall,
                                         fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
+                                        fontWeight = FontWeight.Medium,
+                                        color = MeenaTextWhite
                                     )
                                     Text(
                                         text = "latest articles from amanz & suami sihat",
@@ -167,7 +167,7 @@ fun NewsHub(
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
                                         contentDescription = "refresh",
-                                        tint = if (isLoading) MaterialTheme.colorScheme.primary else Color.White,
+                                        tint = if (isLoading) MaterialTheme.colorScheme.primary else MeenaTextWhite,
                                         modifier = Modifier
                                             .size(20.dp)
                                             .graphicsLayer {
@@ -199,7 +199,7 @@ fun NewsHub(
                             // Source Filter Chips
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                             ) {
                                 NewsFilterPill(
                                     label = "all",
@@ -212,7 +212,7 @@ fun NewsHub(
                                 NewsFilterPill(
                                     label = "amanz",
                                     isSelected = selectedFilter == "amanz",
-                                    accentColor = Color(0xFF00A4EF),
+                                    accentColor = MaterialTheme.colorScheme.primary,
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         selectedFilter = "amanz"
@@ -221,7 +221,7 @@ fun NewsHub(
                                 NewsFilterPill(
                                     label = "suami sihat",
                                     isSelected = selectedFilter == "suami sihat",
-                                    accentColor = Color(0xFF107C10),
+                                    accentColor = MaterialTheme.colorScheme.primary,
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         selectedFilter = "suami sihat"
@@ -235,7 +235,7 @@ fun NewsHub(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(20.dp),
+                                    .padding(my.hana.meena.theme.MeenaSpacing.l),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -245,7 +245,7 @@ fun NewsHub(
                                 )
                             }
                         } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                                 filteredList.forEachIndexed { index, article ->
                                     NewsArticleCard(
                                         modifier = Modifier.metroFeatherIn(
@@ -269,9 +269,9 @@ fun NewsHub(
 
                         // 3. RSS FEED SOURCE MONITOR
                         CollapsibleWidget(title = "feed sources · live status") {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                FeedSourceStatusRow("Amanz.my", "https://amanz.my/feed/", Color(0xFF00A4EF))
-                                FeedSourceStatusRow("SuamiSihat.com.my", "https://suamisihat.com.my/feed/", Color(0xFF107C10))
+                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+                                FeedSourceStatusRow("Amanz.my", "https://amanz.my/feed/", MaterialTheme.colorScheme.primary)
+                                FeedSourceStatusRow("SuamiSihat.com.my", "https://suamisihat.com.my/feed/", MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -300,9 +300,9 @@ private fun NewsArticleCard(
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable(onClick = onClick)
-            .padding(vertical = 8.dp)
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
             // Source badge + time row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -311,18 +311,18 @@ private fun NewsArticleCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Box(
                         modifier = Modifier
                             .background(badgeColor, RoundedCornerShape(0.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                     ) {
                         Text(
                             text = article.source.lowercase(),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MeenaTextWhite
                         )
                     }
 
@@ -346,8 +346,8 @@ private fun NewsArticleCard(
             Text(
                 text = article.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
+                fontWeight = FontWeight.Medium,
+                color = MeenaTextWhite,
                 lineHeight = 20.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -368,10 +368,10 @@ private fun NewsArticleCard(
             // Read article prompt
             Text(
                 text = "read article",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
                 color = badgeColor,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier = Modifier.padding(top = 0.dp)
             )
         }
     }
@@ -388,18 +388,18 @@ private fun NewsFilterPill(
         modifier = Modifier
             .heightIn(min = 48.dp)
             .background(
-                if (isSelected) accentColor else Color(0xFF141414),
+                if (isSelected) accentColor else MaterialTheme.colorScheme.primary,
                 RoundedCornerShape(0.dp)
             )
             .metroClickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label.lowercase(),
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) Color.White else MeenaTextMuted
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium,
+            color = if (isSelected) MeenaTextWhite else MeenaTextMuted
         )
     }
 }
@@ -410,13 +410,13 @@ private fun FeedSourceStatusRow(name: String, url: String, badgeColor: Color) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .padding(vertical = 4.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Box(
                 modifier = Modifier
@@ -424,11 +424,11 @@ private fun FeedSourceStatusRow(name: String, url: String, badgeColor: Color) {
                     .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
             )
             Column {
-                Text(name.lowercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(url.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted, fontSize = 9.sp)
+                Text(name.lowercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MeenaTextWhite)
+                Text(url.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted, fontSize = 12.sp)
             }
         }
-        Text("active", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MeenaProfitGreen)
+        Text("active", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MeenaProfitGreen)
     }
 }
 

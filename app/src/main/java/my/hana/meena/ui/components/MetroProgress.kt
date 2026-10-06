@@ -1,4 +1,4 @@
-package my.hana.meena.ui.components
+﻿package my.hana.meena.ui.components
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import my.hana.meena.theme.MeenaBorder
 
 /**
- * Authentic Windows Phone 7/8 Metro indeterminate dotted progress indicator (§2.4):
+ * Authentic Windows Phone 7/8 Metro indeterminate dotted progress indicator (Â§2.4):
  * - Five accent-colored dots travel across the screen in waves
  * - Non-linear staggered movement
  * - Strictly 0dp square corners (dots are tiny squares or flat rectangles)
@@ -85,7 +85,7 @@ fun MetroDottedProgress(
 }
 
 /**
- * Authentic Windows Phone flat hairline determinate progress line (§2.4):
+ * Authentic Windows Phone flat hairline determinate progress line (Â§2.4):
  * - 0dp corner radius
  * - Thin line (3dp or custom height)
  * - Accent color fill with dark border track

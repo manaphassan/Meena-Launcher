@@ -1,4 +1,4 @@
-package my.hana.meena
+﻿package my.hana.meena
 
 import android.content.Intent
 import androidx.lifecycle.lifecycleScope
@@ -75,6 +75,8 @@ import my.hana.meena.data.system.NotificationRepository
 import my.hana.meena.data.system.QuickPanelHardwareHelper
 import my.hana.meena.theme.MeenaBorderSubtle
 import my.hana.meena.theme.MeenaLauncherTheme
+import my.hana.meena.theme.MeenaBlack
+import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.theme.MeenaProfitGreen
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.ui.hubs.AppsHub
@@ -104,7 +106,7 @@ class MainActivity : ComponentActivity() {
             val userSettings = userSettingsFlowState.value
 
             if (userSettings == null) {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                Box(modifier = Modifier.fillMaxSize().background(MeenaBlack))
                 return@setContent
             }
 
@@ -121,7 +123,6 @@ class MainActivity : ComponentActivity() {
             MeenaLauncherTheme(
                 baseTheme = userSettings.baseTheme,
                 accentColor = parsedAccent,
-                fontFamilyName = userSettings.fontFamily,
                 fontScalePercent = userSettings.fontScalePercent
             ) {
                 Surface(
@@ -241,7 +242,7 @@ fun MeenaHomeScreen(
     val userSettings = userSettingsState ?: run {
         androidx.compose.material3.Surface(
             modifier = Modifier.fillMaxSize(),
-            color = androidx.compose.ui.graphics.Color.Black
+            color = MeenaBlack
         ) {}
         return
     }
@@ -392,7 +393,7 @@ fun MeenaHomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(top = 8.dp)
+                    .padding(top = my.hana.meena.theme.MeenaSpacing.s)
                     .pointerInput(Unit) {
                         detectVerticalDragGestures { _, dragAmount ->
                             if (dragAmount > 20f) {
@@ -408,14 +409,14 @@ fun MeenaHomeScreen(
                     fontSize = 44.sp,
                     fontWeight = FontWeight.Light,
                     letterSpacing = (-1).sp,
-                    color = Color.White.copy(alpha = 0.22f),
+                    color = MeenaTextWhite.copy(alpha = 0.22f),
                     maxLines = 1,
                     softWrap = false,
                     modifier = Modifier
                         .graphicsLayer {
                             translationX = brandParallaxOffset
                         }
-                        .padding(start = 24.dp)
+                        .padding(start = my.hana.meena.theme.MeenaSpacing.l)
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = {
@@ -440,7 +441,7 @@ fun MeenaHomeScreen(
                                 fontWeight = FontWeight.Light,
                                 softWrap = false,
                                 maxLines = 1,
-                                color = Color.White.copy(alpha = titleAlpha),
+                                color = MeenaTextWhite.copy(alpha = titleAlpha),
                                 modifier = Modifier
                                     .graphicsLayer {
                                         scaleX = titleScale
@@ -465,7 +466,7 @@ fun MeenaHomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(headerScrollState, enabled = false)
-                        .padding(top = 2.dp, bottom = 8.dp)
+                        .padding(top = 0.dp, bottom = my.hana.meena.theme.MeenaSpacing.s)
                 ) { measurables, constraints ->
                     val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0)) }
                     val lastPlaceableWidth = placeables.lastOrNull()?.width ?: 0
@@ -794,7 +795,7 @@ fun ActionCenterSheet(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.88f))
+            .background(MeenaBlack.copy(alpha = 0.88f))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -804,7 +805,7 @@ fun ActionCenterSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black)
+                .background(MeenaBlack)
                 .drawBehind {
                     drawLine(
                         color = MeenaBorderSubtle,
@@ -814,7 +815,7 @@ fun ActionCenterSheet(
                     )
                 }
                 .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 14.dp)
+                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.m)
                 .pointerInput(Unit) {
                     detectVerticalDragGestures { _, dragAmount ->
                         if (dragAmount < -20f) {
@@ -838,7 +839,7 @@ fun ActionCenterSheet(
                     text = stringResource(R.string.quick_panel_title),
                     style = MaterialTheme.typography.displayLarge,
                     fontSize = 32.sp,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Text(
                     text = stringResource(R.string.action_close),
@@ -847,7 +848,7 @@ fun ActionCenterSheet(
                     modifier = Modifier
                         .heightIn(min = 48.dp)
                         .metroClickable(onClick = onClose)
-                        .padding(top = 12.dp)
+                        .padding(top = my.hana.meena.theme.MeenaSpacing.m)
                 )
             }
 
@@ -856,7 +857,7 @@ fun ActionCenterSheet(
             // 4 Quick Action Tiles (WP8.1 Style with Live Android Hardware State)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 ActionTile(
                     title = stringResource(R.string.quick_panel_wifi),
@@ -890,12 +891,12 @@ fun ActionCenterSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Notifications bar (mirrors based on handedness per §2.5)
+            // Notifications bar (mirrors based on handedness per Â§2.5)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF141414))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -922,7 +923,7 @@ fun ActionCenterSheet(
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 if (liveNotifications.isNotEmpty()) {
                     liveNotifications.take(4).forEach { item ->
@@ -957,14 +958,14 @@ private fun ActionTile(
     Box(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .background(if (isActive) MaterialTheme.colorScheme.primary else Color(0xFF1E1E1E))
+            .background(if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary)
             .metroClickable(onClick = onClick)
-            .padding(10.dp)
+            .padding(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         Column {
-            Text(title, style = MaterialTheme.typography.labelSmall, color = Color.White)
+            Text(title, style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(state, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
+            Text(state, style = MaterialTheme.typography.bodySmall, color = MeenaTextWhite.copy(alpha = 0.7f), fontSize = 12.sp)
         }
     }
 }
@@ -975,13 +976,13 @@ private fun ActionNotificationItem(app: String, text: String, time: String) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .background(Color(0xFF141414))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(app, style = MaterialTheme.typography.labelSmall, color = Color.White)
+            Text(app, style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             Text(text, style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
         }
         if (time.isNotBlank()) {

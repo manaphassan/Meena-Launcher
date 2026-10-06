@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +39,7 @@ import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.SpendingRepository
 import my.hana.meena.theme.MeenaProfitGreen
 import my.hana.meena.theme.MeenaTextMuted
+import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.ui.widgets.WidgetState
 
@@ -104,10 +104,10 @@ fun FinanceHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)
     ) {
-        item { Spacer(modifier = Modifier.height(12.dp)) }
+        item { Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m)) }
 
         items(financeWidgets.size, key = { financeWidgets[it].key }) { index ->
             val (widgetId, _) = financeWidgets[index]
@@ -167,7 +167,7 @@ private fun PortfolioSection(
     onOpenSettings: () -> Unit,
     onRefresh: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Text(
             text = "portfolio",
             style = MaterialTheme.typography.titleMedium,
@@ -181,13 +181,13 @@ private fun PortfolioSection(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .metroClickable { onOpenSettings() }
-                        .padding(vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
                         text = "needs setup",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White
+                        color = MeenaTextWhite
                     )
                     Text(
                         text = "add your holdings or connect a google sheet in settings. tap to configure.",
@@ -219,7 +219,7 @@ private fun PortfolioSection(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .metroClickable { onToggleShowAmounts() },
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -230,7 +230,7 @@ private fun PortfolioSection(
                             text = if (showAmounts) "rm %.2f".format(totalValue) else "rm ·····",
                             fontSize = 32.sp,
                             style = MaterialTheme.typography.displaySmall,
-                            color = Color.White
+                            color = MeenaTextWhite
                         )
                         if (data.holdings.isNotEmpty()) {
                             val changeText = if (showAmounts) {
@@ -241,7 +241,7 @@ private fun PortfolioSection(
                             Text(
                                 text = changeText,
                                 style = MaterialTheme.typography.titleSmall,
-                                color = if (isProfit) MeenaProfitGreen else Color(0xFFFF5252)
+                                color = if (isProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -256,7 +256,7 @@ private fun PortfolioSection(
                 // Holdings List
                 if (data.holdings.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                         data.holdings.forEach { holding ->
                             val hProfit = holding.profitLoss >= 0
                             Row(
@@ -273,7 +273,7 @@ private fun PortfolioSection(
                                             onDeleteHolding(holding)
                                         }
                                     )
-                                    .padding(vertical = 4.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -281,7 +281,7 @@ private fun PortfolioSection(
                                     Text(
                                         text = holding.symbol.lowercase(),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                     val sharesText = if (showAmounts) {
                                         "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost)
@@ -299,7 +299,7 @@ private fun PortfolioSection(
                                     Text(
                                         text = valText,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                     val profitText = if (showAmounts) {
                                         "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent)
@@ -309,7 +309,7 @@ private fun PortfolioSection(
                                     Text(
                                         text = profitText,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (hProfit) MeenaProfitGreen else Color(0xFFFF5252)
+                                        color = if (hProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error
                                     )
                                 }
                             }
@@ -325,7 +325,7 @@ private fun PortfolioSection(
                         style = MaterialTheme.typography.titleSmall,
                         color = MeenaTextMuted
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                         data.watchlist.forEach { item ->
                             val isBull = item.change >= 0
                             Row(
@@ -335,7 +335,7 @@ private fun PortfolioSection(
                                     .metroClickable {
                                         FinanceRepository.openQuote(context, item)
                                     }
-                                    .padding(vertical = 4.dp),
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -343,7 +343,7 @@ private fun PortfolioSection(
                                     Text(
                                         text = item.tickerDisplay.lowercase(),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                     if (item.name.isNotBlank() && item.name != item.symbol) {
                                         Text(
@@ -357,12 +357,12 @@ private fun PortfolioSection(
                                     Text(
                                         text = "%.2f".format(item.price),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                     Text(
                                         text = "${if (isBull) "+" else ""}%.2f (%.1f%%)".format(item.change, item.changePercent),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (isBull) MeenaProfitGreen else Color(0xFFFF5252)
+                                        color = if (isBull) MeenaProfitGreen else MaterialTheme.colorScheme.error
                                     )
                                 }
                             }
@@ -381,7 +381,7 @@ private fun PortfolioSection(
                     Text(
                         text = state.message.lowercase(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFFF6B68)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = "tap to retry",
@@ -412,7 +412,7 @@ private fun ExchangeRatesSection(
     onRefresh: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Text(
             text = "exchange rates",
             style = MaterialTheme.typography.titleMedium,
@@ -430,7 +430,7 @@ private fun ExchangeRatesSection(
                     Text(
                         text = "needs setup",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
+                        color = MeenaTextWhite
                     )
                     Text(
                         text = "pick currencies in settings. tap to configure.",
@@ -462,7 +462,7 @@ private fun ExchangeRatesSection(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 // Rate rows
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                     data.rates.chunked(2).forEach { pair ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -487,7 +487,7 @@ private fun ExchangeRatesSection(
                                     Text(
                                         text = "%.2f $base".format(price),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.White
+                                        color = MeenaTextWhite
                                     )
                                 }
                             }
@@ -509,7 +509,7 @@ private fun ExchangeRatesSection(
                     Text(
                         text = state.message.lowercase(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFFF6B68)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = "tap to retry",
@@ -541,7 +541,7 @@ private fun SpendingSection(
     totalSpentToday: Double,
     onOpenSettings: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -556,7 +556,7 @@ private fun SpendingSection(
                 Text(
                     text = "rm %.2f today".format(totalSpentToday),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
             }
         }
@@ -568,12 +568,12 @@ private fun SpendingSection(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .metroClickable { onOpenSettings() },
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
                         text = "turn on spending",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White
+                        color = MeenaTextWhite
                     )
                     Text(
                         text = "tap to opt in and track payments from allowlisted banking apps.",
@@ -588,12 +588,12 @@ private fun SpendingSection(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .metroClickable { onOpenSettings() },
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
                         text = "all quiet today",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White
+                        color = MeenaTextWhite
                     )
                     Text(
                         text = "banking notifications from allowlisted payment apps will appear here.",
@@ -603,7 +603,7 @@ private fun SpendingSection(
                 }
             }
             else -> {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                 transactions.take(6).forEach { tx ->
                     Row(
                         modifier = Modifier
@@ -616,7 +616,7 @@ private fun SpendingSection(
                             Text(
                                 text = tx.merchant.lowercase(),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White
+                                color = MeenaTextWhite
                             )
                             Text(
                                 text = "${tx.bank.lowercase()} · ${tx.formattedTime}",
@@ -627,7 +627,7 @@ private fun SpendingSection(
                         Text(
                             text = "-rm %.2f".format(tx.amount),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFFFF5252)
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }

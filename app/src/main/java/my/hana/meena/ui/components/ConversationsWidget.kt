@@ -1,4 +1,4 @@
-package my.hana.meena.ui.components
+﻿package my.hana.meena.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -39,7 +38,9 @@ import my.hana.meena.data.system.LiveConversationItem
 import my.hana.meena.data.system.NotificationRepository
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
+import my.hana.meena.theme.MeenaProfitGreen
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.MeenaBlack
 
 /**
  * Authentic Meena UI widget for messaging conversations (WhatsApp, Telegram, Messages, SMS).
@@ -107,7 +108,7 @@ fun ConversationsWidget(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
         ) {
             if (!isPermissionGranted) {
                 Text(
@@ -121,14 +122,7 @@ fun ConversationsWidget(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             showNotificationDisclosure = true
                         }
-                        .padding(vertical = 8.dp)
-                )
-            } else if (conversations.isEmpty()) {
-                Text(
-                    text = "all quiet",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MeenaTextMuted,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                 )
             } else {
                 conversations.take(6).forEach { item ->
@@ -150,21 +144,14 @@ private fun ConversationRow(
     item: LiveConversationItem,
     onClick: () -> Unit
 ) {
-    val appColor = when {
-        item.packageName.contains("whatsapp", ignoreCase = true) -> Color(0xFF25D366)
-        item.packageName.contains("telegram", ignoreCase = true) -> Color(0xFF0088CC)
-        item.packageName.contains("messaging", ignoreCase = true) || item.packageName.contains("mms", ignoreCase = true) -> Color(0xFF00A4EF)
-        item.packageName.contains("discord", ignoreCase = true) -> Color(0xFF5865F2)
-        item.packageName.contains("slack", ignoreCase = true) -> Color(0xFF4A154B)
-        else -> MaterialTheme.colorScheme.primary
-    }
+    val appColor = MeenaTextWhite
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable(onClick = onClick)
-            .padding(vertical = 6.dp)
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
     ) {
         // Line 1: Contact name + time + unread count
         Row(
@@ -175,17 +162,17 @@ private fun ConversationRow(
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(my.hana.meena.theme.MeenaSpacing.s)
                         .background(appColor)
                 )
                 Text(
                     text = item.senderOrContact.lowercase(),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Normal,
                     color = MeenaTextWhite,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -194,19 +181,19 @@ private fun ConversationRow(
             Spacer(modifier = Modifier.width(8.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 if (item.unreadCount > 1) {
                     Box(
                         modifier = Modifier
                             .background(appColor)
-                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                     ) {
                         Text(
                             text = "${item.unreadCount}",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MeenaBlack
                         )
                     }
                 }
@@ -223,7 +210,7 @@ private fun ConversationRow(
             text = item.appName.lowercase(),
             style = MaterialTheme.typography.labelSmall,
             color = appColor,
-            modifier = Modifier.padding(start = 14.dp, top = 2.dp)
+            modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m, top = 0.dp)
         )
 
         // Line 3: Message preview (Vertical stack with multi-line wrap, up to 4 lines)
@@ -235,8 +222,9 @@ private fun ConversationRow(
                 maxLines = 4,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 18.sp,
-                modifier = Modifier.padding(start = 14.dp, top = 4.dp)
+                modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.s)
             )
         }
     }
 }
+

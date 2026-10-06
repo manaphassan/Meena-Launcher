@@ -44,7 +44,7 @@ fun CollapsibleWidget(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp)
+            .padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
     ) {
         // Widget Header: tapping title collapses or expands
         Row(
@@ -58,7 +58,7 @@ fun CollapsibleWidget(
                     localCollapsed = next
                     onToggleCollapse?.invoke(next)
                 }
-                .padding(vertical = 6.dp),
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -79,7 +79,7 @@ fun CollapsibleWidget(
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut()
         ) {
-            Column(modifier = Modifier.padding(top = 6.dp)) {
+            Column(modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)) {
                 content()
             }
         }

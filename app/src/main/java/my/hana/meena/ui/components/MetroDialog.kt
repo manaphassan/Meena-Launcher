@@ -19,12 +19,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import my.hana.meena.theme.MeenaTextMuted
+import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.MeenaBlack
 
 /**
  * Standard Meena UI dialog complying strictly with Windows Phone Metro charter:
@@ -62,15 +63,15 @@ fun MetroDialog(
                     rotationX = (1f - animatable.value) * 4f
                     cameraDistance = 24f * density
                 }
-                .background(Color.Black)
-                .padding(24.dp)
+                .background(MeenaBlack)
+                .padding(my.hana.meena.theme.MeenaSpacing.l)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                 Text(
                     text = title.lowercase(),
                     style = MaterialTheme.typography.displayMedium,
                     fontSize = 24.sp,
-                    color = Color.White
+                    color = MeenaTextWhite
                 )
                 Text(
                     text = message.lowercase(),
@@ -80,8 +81,8 @@ fun MetroDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(top = my.hana.meena.theme.MeenaSpacing.m),
+                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
                 ) {
                     Box(
                         modifier = Modifier
@@ -94,14 +95,14 @@ fun MetroDialog(
                         Text(
                             text = confirmText.lowercase(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White
+                            color = MeenaTextWhite
                         )
                     }
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 48.dp)
-                            .background(Color(0xFF161616))
+                            .background(MaterialTheme.colorScheme.primary)
                             .metroClickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {

@@ -1,4 +1,4 @@
-package my.hana.meena.ui.hubs
+﻿package my.hana.meena.ui.hubs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +43,7 @@ import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.NotificationRepository
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
+import my.hana.meena.theme.MeenaProfitGreen
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.CollapsibleWidget
 import my.hana.meena.ui.components.ConversationsWidget
@@ -83,8 +85,8 @@ fun InboxHub(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
 
@@ -118,7 +120,7 @@ fun InboxHub(
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                         ) {
                             if (!isNotificationAccessGranted) {
                                 Text(
@@ -132,17 +134,11 @@ fun InboxHub(
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             showNotificationDisclosure = true
                                         }
-                                        .padding(vertical = 8.dp)
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                 )
                             } else if (notifications.isNotEmpty()) {
                                 notifications.take(8).forEachIndexed { idx, notif ->
-                                    val notifColor = when {
-                                        notif.packageName.contains("whatsapp", ignoreCase = true) -> Color(0xFF25D366)
-                                        notif.packageName.contains("telegram", ignoreCase = true) -> Color(0xFF0088CC)
-                                        notif.packageName.contains("gmail", ignoreCase = true) -> Color(0xFFEA4335)
-                                        notif.packageName.contains("messaging", ignoreCase = true) -> Color(0xFF00A4EF)
-                                        else -> MaterialTheme.colorScheme.primary
-                                    }
+                                    val notifColor = MeenaTextWhite
                                     InboxNotificationRow(
                                         modifier = Modifier.metroFeatherIn(
                                             index = idx,
@@ -168,7 +164,7 @@ fun InboxHub(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 4.dp),
+                                        .padding(top = my.hana.meena.theme.MeenaSpacing.s),
                                     horizontalArrangement = Arrangement.End
                                 ) {
                                     Text(
@@ -176,23 +172,15 @@ fun InboxHub(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier
-                                            .heightIn(min = 48.dp)
+                                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                             .metroClickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 NotificationRepository.clearAll()
                                             }
-                                            .padding(vertical = 8.dp, horizontal = 4.dp)
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
-                            } else {
-                                Text(
-                                    text = "all quiet",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MeenaTextMuted,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
-                            }
-                        }
+                            } }
                     }
                 }
             }
@@ -218,14 +206,14 @@ private fun InboxNotificationRow(
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable(onClick = onClick)
-            .padding(vertical = 6.dp),
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
         verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         Box(
             modifier = Modifier
-                .padding(top = 6.dp)
-                .size(6.dp)
+                .padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                .size(my.hana.meena.theme.MeenaSpacing.s)
                 .background(badgeColor)
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -250,7 +238,7 @@ private fun InboxNotificationRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Normal,
                 color = MeenaTextWhite,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -280,3 +268,4 @@ private fun InboxNotificationRow(
         }
     }
 }
+

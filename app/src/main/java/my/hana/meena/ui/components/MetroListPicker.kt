@@ -91,7 +91,7 @@ fun MetroListPicker(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MeenaBlack)
-                .padding(horizontal = 24.dp, vertical = 20.dp)
+                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.l)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Top Header Row with Back icon
@@ -110,7 +110,7 @@ fun MetroListPicker(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "back",
                             tint = MeenaTextMuted,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.l)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -149,8 +149,8 @@ fun MetroListPicker(
                             .fillMaxWidth()
                             .height(48.dp)
                             .border(1.dp, MeenaBorder)
-                            .background(Color(0xFF0F0F0F))
-                            .padding(horizontal = 12.dp),
+                            .background(MaterialTheme.colorScheme.primary)
+                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Row(
@@ -206,7 +206,7 @@ fun MetroListPicker(
                 // Items list
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     items(filteredItems, key = { it.key }) { item ->
                         val isSelected = item.key == selectedKey
@@ -221,7 +221,7 @@ fun MetroListPicker(
                                         onDismiss()
                                     }
                                 )
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Left selection indicator (accent bar)
@@ -275,8 +275,8 @@ fun MetroListPickerRow(
             .fillMaxWidth()
             .heightIn(min = 52.dp)
             .metroClickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
     ) {
         Text(
             text = title.lowercase(),
