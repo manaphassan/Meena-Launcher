@@ -1,4 +1,4 @@
-package my.hana.meena.ui.hubs
+﻿package my.hana.meena.ui.hubs
 
 import android.content.Intent
 import android.net.Uri
@@ -28,8 +28,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+
+
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +59,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.ui.components.metroFeatherIn
+import my.hana.meena.ui.components.MetroDialog
+
 import androidx.compose.ui.window.Dialog
 import my.hana.meena.data.system.DeviceAppInfo
 import my.hana.meena.data.system.InstalledAppsRepository
@@ -162,14 +164,14 @@ fun AppsHub(
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
                     placeholder = { Text("search apps", color = MeenaTextMuted, fontSize = 14.sp) },
-                    leadingIcon = { Icon(Icons.Default.Search, "search", tint = MeenaBlack) },
+                    
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MeenaTextWhite,
                         unfocusedContainerColor = MeenaTextWhite,
                         focusedTextColor = MeenaBlack,
                         unfocusedTextColor = MeenaBlack,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent
+                        focusedBorderColor = MeenaTextWhite.copy(alpha=0f),
+                        unfocusedBorderColor = MeenaTextWhite.copy(alpha=0f)
                     ),
                     shape = RoundedCornerShape(0.dp),
                     singleLine = true
@@ -324,7 +326,7 @@ fun AppsHub(
                 alphabet.forEach { char ->
                     val hasApps = activeLetters.contains(char) || (char == '#' && activeLetters.contains('#'))
                     Text(
-                        text = char.toString(),
+                        text = char.toString().lowercase(),
                         fontSize = 12.sp,
                         fontWeight = if (hasApps) FontWeight.Medium else FontWeight.Normal,
                         color = if (activeScrubLetter == char) primaryColor else if (hasApps) MeenaTextWhite.copy(alpha = 0.9f) else MeenaTextMuted
@@ -343,7 +345,7 @@ fun AppsHub(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = activeScrubLetter.toString(),
+                    text = activeScrubLetter.toString().lowercase(),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Medium,
                     color = MeenaTextWhite
@@ -372,68 +374,34 @@ fun AppsHub(
         val target = selectedTargetForProperties
         if (target != null) {
             val isPinned = pinnedAppIds.contains(target.packageName)
-            Dialog(onDismissRequest = {
-                selectedTargetForProperties = null
-                showUninstallConfirm = false
-            }) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MeenaBlack)
-                        .padding(my.hana.meena.theme.MeenaSpacing.l)
-                ) {
-                    if (showUninstallConfirm) {
-                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                            Text(
-                                text = "uninstall app?",
-                                style = MaterialTheme.typography.displayMedium,
-                                fontSize = 24.sp,
-                                color = MeenaTextWhite
-                            )
-                            Text(
-                                text = "do you want to remove ${target.label.lowercase()} from your phone?",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MeenaTextMuted
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = my.hana.meena.theme.MeenaSpacing.m),
-                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .heightIn(min = 48.dp)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                        .metroClickable {
-                                            try {
-                                                InstalledAppsRepository.invalidateCache()
-                                                val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${target.packageName}"))
-                                                context.startActivity(intent)
-                                            } catch (_: Exception) {
-                                                Toast.makeText(context, "couldn't uninstall app", Toast.LENGTH_SHORT).show()
-                                            }
-                                            showUninstallConfirm = false
-                                            selectedTargetForProperties = null
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("yes", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .heightIn(min = 48.dp)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                        .metroClickable { showUninstallConfirm = false },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("no", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                }
-                            }
-                        }
-                    } else {
+            if (showUninstallConfirm) {
+                MetroDialog(
+                    title = "uninstall app?",
+                    message = "do you want to remove " + target.label.lowercase() + " from your phone?",
+                    confirmText = "yes",
+                    dismissText = "no",
+                    onConfirm = {
+                        try {
+                            InstalledAppsRepository.invalidateCache()
+                            val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:"))
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                        showUninstallConfirm = false
+                        selectedTargetForProperties = null
+                    },
+                    onDismiss = { showUninstallConfirm = false }
+                )
+            } else {
+                Dialog(onDismissRequest = {
+                    selectedTargetForProperties = null
+                    showUninstallConfirm = false
+                }) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MeenaBlack)
+                            .padding(my.hana.meena.theme.MeenaSpacing.l)
+                    ) {
                         Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
@@ -736,7 +704,7 @@ private fun AlphabetJumpListOverlay(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = char.toString(),
+                                    text = char.toString().lowercase(),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontSize = 20.sp,
                                     color = if (isAvailable) MeenaTextWhite else MeenaTextMuted
