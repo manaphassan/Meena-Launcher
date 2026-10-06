@@ -1,4 +1,4 @@
-package my.hana.meena.ui.hubs
+﻿package my.hana.meena.ui.hubs
 
 import android.content.Intent
 import android.net.Uri
@@ -28,9 +28,9 @@ import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Icon
+
+
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -139,7 +139,7 @@ fun NewsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = "local news · rss feeds",
+                                        text = "local news Â· rss feeds",
                                         style = MaterialTheme.typography.displaySmall,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Medium,
@@ -164,12 +164,11 @@ fun NewsHub(
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = "refresh",
-                                        tint = if (isLoading) MaterialTheme.colorScheme.primary else MeenaTextWhite,
+                                    Text(
+                                        text = "sync",
+                                        fontSize = 12.sp,
+                                        color = if (isLoading) MaterialTheme.colorScheme.primary else MeenaTextWhite,
                                         modifier = Modifier
-                                            .size(20.dp)
                                             .graphicsLayer {
                                                 if (isLoading) {
                                                     rotationZ = refreshRotation.value
@@ -268,7 +267,7 @@ fun NewsHub(
                         }
 
                         // 3. RSS FEED SOURCE MONITOR
-                        CollapsibleWidget(title = "feed sources · live status") {
+                        CollapsibleWidget(title = "feed sources Â· live status") {
                             Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                 FeedSourceStatusRow("Amanz.my", "https://amanz.my/feed/", MaterialTheme.colorScheme.primary)
                                 FeedSourceStatusRow("SuamiSihat.com.my", "https://suamisihat.com.my/feed/", MaterialTheme.colorScheme.primary)
@@ -328,7 +327,7 @@ private fun NewsArticleCard(
 
                     if (article.category.isNotBlank()) {
                         Text(
-                            text = "· ${article.category.lowercase()}",
+                            text = "Â· ${article.category.lowercase()}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MeenaTextMuted
                         )
