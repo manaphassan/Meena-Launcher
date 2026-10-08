@@ -5,7 +5,6 @@ import androidx.lifecycle.lifecycleScope
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -125,6 +124,7 @@ class MainActivity : ComponentActivity() {
                 accentColor = parsedAccent,
                 fontScalePercent = userSettings.fontScalePercent
             ) {
+                my.hana.meena.ui.components.MetroMessageContainer()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
                 if (launchIntent != null) {
                     startActivity(launchIntent)
                 } else {
-                    android.widget.Toast.makeText(this@MainActivity, getString(R.string.error_app_not_installed, packageName), android.widget.Toast.LENGTH_SHORT).show()
+                    my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_app_not_installed, packageName))
                 }
             }
         }
@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.error_open_messages), Toast.LENGTH_SHORT).show()
+            my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_open_messages))
         }
     }
 
@@ -197,7 +197,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.error_open_email), Toast.LENGTH_SHORT).show()
+            my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_open_email))
         }
     }
 
@@ -206,7 +206,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.error_open_camera), Toast.LENGTH_SHORT).show()
+            my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_open_camera))
         }
     }
 
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.error_open_calculator), Toast.LENGTH_SHORT).show()
+            my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_open_calculator))
         }
     }
 }
@@ -674,7 +674,7 @@ fun MeenaHomeScreen(
                             }
                             context.startActivity(Intent.createChooser(shareIntent, backupSharedMsg))
                         } catch (e: Exception) {
-                            android.widget.Toast.makeText(context, backupShareFailedMsg, android.widget.Toast.LENGTH_SHORT).show()
+                            my.hana.meena.ui.components.MetroMessage.show(backupShareFailedMsg)
                         }
                     }
                 },
@@ -686,16 +686,16 @@ fun MeenaHomeScreen(
                             coroutineScope.launch {
                                 val success = settingsRepository.importFromJson(clip)
                                 if (success) {
-                                    android.widget.Toast.makeText(context, backupRestoredMsg, android.widget.Toast.LENGTH_SHORT).show()
+                                    my.hana.meena.ui.components.MetroMessage.show(backupRestoredMsg)
                                 } else {
-                                    android.widget.Toast.makeText(context, backupParseFailedMsg, android.widget.Toast.LENGTH_SHORT).show()
+                                    my.hana.meena.ui.components.MetroMessage.show(backupParseFailedMsg)
                                 }
                             }
                         } else {
-                            android.widget.Toast.makeText(context, backupClipboardHintMsg, android.widget.Toast.LENGTH_LONG).show()
+                            my.hana.meena.ui.components.MetroMessage.show(backupClipboardHintMsg)
                         }
                     } catch (e: Exception) {
-                        android.widget.Toast.makeText(context, backupImportFailedMsg, android.widget.Toast.LENGTH_SHORT).show()
+                        my.hana.meena.ui.components.MetroMessage.show(backupImportFailedMsg)
                     }
                 },
                 onResetDefaults = {
