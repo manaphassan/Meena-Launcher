@@ -4,11 +4,11 @@
 # The test fails if any count rises above its baseline.
 
 CircleShape=0
-border=21
+border=20
 Card=6
 elevation=0
 Toast=22
-Icons=15
+Icons=12
 FontWeight=0
 fontSizeBelow12sp=0
 ColorHex=0

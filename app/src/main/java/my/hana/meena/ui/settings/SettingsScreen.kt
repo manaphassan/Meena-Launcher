@@ -10,7 +10,7 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +29,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
+
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -199,7 +199,7 @@ fun SettingsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_arrow_back),
                         contentDescription = "back",
                         tint = MeenaTextWhite,
                         modifier = Modifier.size(20.dp)
@@ -225,7 +225,7 @@ fun SettingsScreen(
                     .metroClickable(onClick = onClose),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Close, contentDescription = "close", tint = MeenaTextMuted)
+                Icon(ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_close), contentDescription = "close", tint = MeenaTextMuted)
             }
         }
 
@@ -1607,10 +1607,7 @@ private fun SubPageContainer(
                                         .heightIn(min = 48.dp)
                                         .aspectRatio(1f)
                                         .background(swatch.color)
-                                        .border(
-                                            width = if (isSelected) 3.dp else 0.dp,
-                                            color = if (settingsState.baseTheme == "light") MeenaBlack else MeenaTextWhite
-                                        )
+                                        .graphicsLayer { scaleX = if (isSelected) 1f else 0.7f; scaleY = if (isSelected) 1f else 0.7f }
                                         .metroClickable { onUpdate { it.copy(accentHex = swatch.hex) } }
                                 )
                             }
@@ -2200,7 +2197,7 @@ private fun FinanceAccountSettings(
                         IconButton(
                             onClick = { holdingToDelete = holding }
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "delete", tint = MaterialTheme.colorScheme.error)
+                            Icon(ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_close), contentDescription = "delete", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
