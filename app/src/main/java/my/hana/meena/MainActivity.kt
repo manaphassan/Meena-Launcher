@@ -382,11 +382,6 @@ fun MeenaHomeScreen(
             }
 
             val currentContinuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
-            val brandParallaxOffset = ParallaxHelper.calculateBrandParallaxOffset(
-                continuousPage = currentContinuousPage,
-                screenWidthPx = screenWidthPx,
-                speedRatio = 0.32f
-            )
 
             // Authentic WP7 Multi-Speed Panoramic Header (slow brand watermark + continuous peek titles)
             Column(
@@ -414,7 +409,12 @@ fun MeenaHomeScreen(
                     softWrap = false,
                     modifier = Modifier
                         .graphicsLayer {
-                            translationX = brandParallaxOffset
+                            val currentContinuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                            translationX = ParallaxHelper.calculateBrandParallaxOffset(
+                                continuousPage = currentContinuousPage,
+                                screenWidthPx = screenWidthPx,
+                                speedRatio = 0.32f
+                            )
                         }
                         .padding(start = my.hana.meena.theme.MeenaSpacing.l)
                         .pointerInput(Unit) {
@@ -503,11 +503,11 @@ fun MeenaHomeScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) { page ->
-                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
+                            val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
                             if (!isReduced) {
                                 // Signature Metro UI Turnstile Parallax & 3D Depth
                                 translationX = pageOffset * 36.dp.toPx()

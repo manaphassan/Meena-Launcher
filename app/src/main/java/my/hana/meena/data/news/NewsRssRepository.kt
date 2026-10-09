@@ -56,7 +56,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
 
     private val rfc822DateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US)
     private val rfc822DateFormatFallback = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
-    private val displayDateFormat = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+    private val displayDateFormat get() = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
 
     // No hardcoded demo data as per rules; empty until fetched
     private val initialFallbackArticles = emptyList<NewsArticle>()

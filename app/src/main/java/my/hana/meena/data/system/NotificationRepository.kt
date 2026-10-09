@@ -52,7 +52,7 @@ data class LiveConversationItem(
 
 object NotificationRepository {
     private const val TAG = "NotificationRepo"
-    private val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+    private val timeFormat get() = SimpleDateFormat("hh:mm a", Locale.getDefault())
 
     // Known messaging & chat apps package names
     private val MESSAGING_PACKAGES = setOf(

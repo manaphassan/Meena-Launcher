@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.toColorInt
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -856,12 +857,12 @@ fun TodayHub(
                                                 text = "${airIndex.aqiValue}",
                                                 fontSize = 24.sp,
                                                 fontWeight = FontWeight.Medium,
-                                                color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextWhite }
+                                                color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
                                             )
                                             Text(
                                                 text = airIndex.aqiStatus.lowercase(),
                                                 fontSize = 12.sp,
-                                                color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextMuted }
+                                                color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextMuted }
                                             )
                                         }
                                     }
@@ -901,12 +902,12 @@ fun TodayHub(
                                     text = "${airIndex.aqiValue}",
                                     fontSize = 32.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextWhite }
+                                    color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
                                 )
                                 Text(
                                     text = airIndex.aqiStatus.lowercase(),
                                     fontSize = 13.sp,
-                                    color = try { Color(android.graphics.Color.parseColor(airIndex.aqiColorHex)) } catch (_: Exception) { MeenaTextMuted }
+                                    color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextMuted }
                                 )
                             }
                             if (airIndex.advisory.isNotBlank()) {

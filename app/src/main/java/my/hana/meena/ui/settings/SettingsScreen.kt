@@ -57,6 +57,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.toColorInt
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -1579,7 +1580,7 @@ private fun SubPageContainer(
                     else -> MeenaBlack
                 }
                 val currentAccentColor = runCatching {
-                    Color(android.graphics.Color.parseColor(settingsState.accentHex))
+                    Color(settingsState.accentHex.toColorInt())
                 }.getOrDefault(MeenaBlue)
                 val currentRatio = calculateContrastRatio(currentAccentColor, currentBg)
                 val isAccessible = isAccessibleContrast(currentAccentColor, currentBg)

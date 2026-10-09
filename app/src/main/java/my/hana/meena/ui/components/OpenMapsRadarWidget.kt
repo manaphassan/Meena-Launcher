@@ -227,7 +227,6 @@ fun OpenMapsRadarWidget(
                             settings.apply {
                                 javaScriptEnabled = true
                                 domStorageEnabled = true
-                                databaseEnabled = true
                                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                                 allowContentAccess = true
                                 allowFileAccess = true
@@ -245,6 +244,7 @@ fun OpenMapsRadarWidget(
                             }
 
                             // Disallow parent LazyColumn & HorizontalPager from intercepting pan/zoom gestures!
+                            @android.annotation.SuppressLint("ClickableViewAccessibility")
                             setOnTouchListener { v, event ->
                                 when (event.action) {
                                     MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
