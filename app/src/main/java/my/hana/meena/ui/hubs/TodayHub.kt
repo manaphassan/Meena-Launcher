@@ -287,6 +287,28 @@ fun TodayHub(
                                 )
                             }
                         }
+                        // Next line: the sooner of the next event or prayer. Hidden when there is no data.
+                        val nextUp = remember(currentTime, calendarState, jakimSchedule) {
+                            val events = (calendarState as? my.hana.meena.data.system.CalendarState.Ready)?.events ?: emptyList()
+                            my.hana.meena.data.system.NextUpCalculator.compute(System.currentTimeMillis(), events, jakimSchedule.slots)
+                        }
+                        if (nextUp != null) {
+                            val nowMs = System.currentTimeMillis()
+                            val nextText = if (nextUp.isPrayer) {
+                                "${nextUp.title.lowercase()} ${my.hana.meena.data.system.NextUpCalculator.formatRemaining(nextUp.minutesUntil(nowMs))}"
+                            } else {
+                                val pattern = if (settings.is24HourFormat) "HH:mm" else "h:mm a"
+                                "${nextUp.title.lowercase()} ${SimpleDateFormat(pattern, Locale.getDefault()).format(Date(nextUp.startMillis)).lowercase()}"
+                            }
+                            Text(
+                                text = nextText,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MeenaTextWhite,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                        }
                     }
                 }
 
