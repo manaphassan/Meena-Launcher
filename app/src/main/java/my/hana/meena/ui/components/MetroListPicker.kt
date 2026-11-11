@@ -1,5 +1,7 @@
 package my.hana.meena.ui.components
 
+import my.hana.meena.R
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,10 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -107,7 +105,7 @@ fun MetroListPicker(
                             .metroClickable(onClick = onDismiss)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(R.drawable.ic_thin_back),
                             contentDescription = "back",
                             tint = MeenaTextMuted,
                             modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.l)
@@ -125,7 +123,7 @@ fun MetroListPicker(
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            painter = painterResource(R.drawable.ic_thin_close),
                             contentDescription = "close",
                             tint = MeenaTextMuted
                         )
@@ -148,7 +146,6 @@ fun MetroListPicker(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
-                            .border(1.dp, MeenaBorder)
                             .background(MaterialTheme.colorScheme.primary)
                             .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m),
                         contentAlignment = Alignment.CenterStart
@@ -158,7 +155,7 @@ fun MetroListPicker(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Search,
+                                painter = painterResource(R.drawable.ic_thin_search),
                                 contentDescription = "search",
                                 tint = MeenaTextMuted,
                                 modifier = Modifier.size(20.dp)
@@ -190,7 +187,7 @@ fun MetroListPicker(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Close,
+                                        painter = painterResource(R.drawable.ic_thin_close),
                                         contentDescription = "clear search",
                                         tint = MeenaTextMuted,
                                         modifier = Modifier.size(20.dp)

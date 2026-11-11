@@ -1,5 +1,7 @@
 package my.hana.meena.ui.components
 
+import my.hana.meena.R
+import androidx.compose.ui.res.painterResource
 import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
 import android.view.MotionEvent
@@ -27,12 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.Navigation
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -154,7 +150,6 @@ fun OpenMapsRadarWidget(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MeenaSurface)
-                    .border(1.dp, MeenaBorder)
                     .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -194,11 +189,10 @@ fun OpenMapsRadarWidget(
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.primary)
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Navigation,
+                        painter = painterResource(R.drawable.ic_thin_navigate),
                         contentDescription = "north bearing",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
@@ -218,7 +212,6 @@ fun OpenMapsRadarWidget(
                     .fillMaxWidth()
                     .height(270.dp)
                     .background(MaterialTheme.colorScheme.primary)
-                    .border(1.dp, MeenaBorder)
             ) {
                 // Embedded Dark Leaflet OpenStreetMap
                 AndroidView(
@@ -270,7 +263,6 @@ fun OpenMapsRadarWidget(
                         .align(Alignment.TopStart)
                         .padding(my.hana.meena.theme.MeenaSpacing.s)
                         .background(MeenaBlack.copy(alpha = 0.85f))
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
@@ -287,7 +279,6 @@ fun OpenMapsRadarWidget(
                         .align(Alignment.TopEnd)
                         .padding(my.hana.meena.theme.MeenaSpacing.s)
                         .background(MeenaBlack.copy(alpha = 0.85f))
-                        .border(1.dp, MeenaBorder)
                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
@@ -341,7 +332,6 @@ fun OpenMapsRadarWidget(
                         .align(Alignment.BottomStart)
                         .padding(my.hana.meena.theme.MeenaSpacing.s)
                         .background(MeenaBlack.copy(alpha = 0.85f))
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Row(
@@ -349,7 +339,7 @@ fun OpenMapsRadarWidget(
                         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Navigation,
+                            painter = painterResource(R.drawable.ic_thin_navigate),
                             contentDescription = "north",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
@@ -374,7 +364,6 @@ fun OpenMapsRadarWidget(
                 Row(
                     modifier = Modifier
                         .background(MeenaSurface)
-                        .border(1.dp, MeenaBorder)
                         .clickable {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             DeviceLocationHelper.refreshLocation(context)
@@ -384,7 +373,7 @@ fun OpenMapsRadarWidget(
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.MyLocation,
+                        painter = painterResource(R.drawable.ic_thin_locate),
                         contentDescription = "gps lock",
                         tint = if (currentLocation.isGpsActive) MeenaProfitGreen else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
@@ -421,7 +410,7 @@ fun OpenMapsRadarWidget(
                         color = MeenaTextWhite
                     )
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        painter = painterResource(R.drawable.ic_thin_open),
                         contentDescription = "open in external maps",
                         tint = MeenaTextWhite,
                         modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
@@ -441,7 +430,6 @@ private fun TacticalMapButton(
         modifier = Modifier
             .size(32.dp)
             .background(MeenaBlack.copy(alpha = 0.85f))
-            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

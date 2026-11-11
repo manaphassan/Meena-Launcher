@@ -160,7 +160,7 @@ class CharterLintTest {
             borderCount += Regex("""\.border\(""").findAll(content).count()
 
             // 3. Card(
-            cardCount += Regex("""Card\(""").findAll(content).count()
+            cardCount += Regex("""Card\(""").findAll(content).count()
 
             // 4. Surface( with elevation
             elevationCount += Regex("""Surface\s*\([^)]*elevation""").findAll(content).count()
@@ -256,6 +256,14 @@ class CharterLintTest {
 
             if (count > baseCount) {
                 violations.add("$key rose above baseline: current=$count > baseline=$baseCount (+$${count - baseCount})")
+            }
+        }
+
+        // Ratchet down: a baseline above the real count is stale and hides regressions.
+        for ((key, count) in currentMap) {
+            val baseCount = baseline[key] ?: continue
+            if (count < baseCount) {
+                violations.add("$key baseline is stale: current=$count < baseline=$baseCount (lower charter-baseline.txt)")
             }
         }
 

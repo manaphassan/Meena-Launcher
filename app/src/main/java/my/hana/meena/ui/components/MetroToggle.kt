@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import my.hana.meena.theme.MeenaBlack
@@ -96,7 +97,15 @@ fun MetroToggle(
                 .width(trackWidth)
                 .height(trackHeight)
                 .background(trackColor)
-                .border(width = 2.dp, color = borderColor)
+                .drawBehind {
+                    val w = 2.dp.toPx()
+                    drawRect(
+                        color = borderColor,
+                        topLeft = androidx.compose.ui.geometry.Offset(w / 2, w / 2),
+                        size = androidx.compose.ui.geometry.Size(size.width - w, size.height - w),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = w)
+                    )
+                }
                 .padding(padding),
             contentAlignment = Alignment.CenterStart
         ) {

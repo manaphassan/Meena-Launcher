@@ -569,7 +569,7 @@ private fun AppRow(
                 Icon(icon, contentDescription = name, tint = MeenaTextWhite, modifier = Modifier.size(26.dp))
             } else {
                 Text(
-                    text = name.firstOrNull()?.uppercase() ?: "#",
+                    text = name.firstOrNull()?.lowercase() ?: "#",
                     color = MeenaTextWhite,
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 20.sp

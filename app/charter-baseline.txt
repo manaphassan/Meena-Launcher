@@ -1,20 +1,20 @@
-﻿# Meena UI Charter Baseline Counts
+# Meena UI Charter Baseline Counts
 # Format: key=count
-# Updated for Phase 2 (branch phase/02-chrome)
+# Updated for P0 design-audit fixes (all zero)
 # The test fails if any count rises above its baseline.
 
 CircleShape=0
-border=20
-Card=6
+border=0
+Card=0
 elevation=0
 Toast=0
-Icons=12
+Icons=0
 FontWeight=0
 fontSizeBelow12sp=0
 ColorHex=0
 ColorNamed=0
 ColorLiterals=0
-emojiAndSymbols=2
+emojiAndSymbols=0
 nonStandardSpacing=0
-uppercaseDisplay=1
+uppercaseDisplay=0
 

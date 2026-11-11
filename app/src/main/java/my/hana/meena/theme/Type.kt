@@ -1,4 +1,4 @@
-﻿package my.hana.meena.theme
+package my.hana.meena.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.graphics.Color
@@ -78,6 +78,70 @@ fun getMeenaTypography(
             lineHeight = (19 * scale).sp,
             letterSpacing = (0.1 * scale).sp,
             color = MeenaTextSecondary
+        ),
+        displaySmall = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Light,
+            fontSize = (48 * scale).sp,
+            lineHeight = (52 * scale).sp,
+            letterSpacing = (-1.0 * scale).sp,
+            color = Color.Unspecified
+        ),
+        headlineLarge = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Light,
+            fontSize = (32 * scale).sp,
+            lineHeight = (36 * scale).sp,
+            letterSpacing = (-0.5 * scale).sp,
+            color = Color.Unspecified
+        ),
+        headlineSmall = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Light,
+            fontSize = (20 * scale).sp,
+            lineHeight = (24 * scale).sp,
+            letterSpacing = (0 * scale).sp,
+            color = Color.Unspecified
+        ),
+        titleLarge = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Light,
+            fontSize = (22 * scale).sp,
+            lineHeight = (26 * scale).sp,
+            letterSpacing = (0 * scale).sp,
+            color = Color.Unspecified
+        ),
+        titleSmall = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = (14 * scale).sp,
+            lineHeight = (18 * scale).sp,
+            letterSpacing = (0.3 * scale).sp,
+            color = Color.Unspecified
+        ),
+        bodySmall = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = (12 * scale).sp,
+            lineHeight = (16 * scale).sp,
+            letterSpacing = (0.2 * scale).sp,
+            color = Color.Unspecified
+        ),
+        labelLarge = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = (14 * scale).sp,
+            lineHeight = (18 * scale).sp,
+            letterSpacing = (0.3 * scale).sp,
+            color = Color.Unspecified
+        ),
+        labelMedium = TextStyle(
+            fontFamily = activeFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = (12 * scale).sp,
+            lineHeight = (16 * scale).sp,
+            letterSpacing = (0.4 * scale).sp,
+            color = Color.Unspecified
         ),
         // captions at least 12sp
         labelSmall = TextStyle(

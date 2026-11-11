@@ -1,5 +1,7 @@
 ﻿package my.hana.meena.ui.components
 
+import my.hana.meena.R
+import androidx.compose.ui.res.painterResource
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -28,8 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -131,13 +131,10 @@ fun DynamicSolatCelestialCard(
         label = "sunAlpha"
     )
 
-    Card(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(0.dp))
-            .border(1.dp, MeenaBorder, RoundedCornerShape(0.dp)),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-        shape = RoundedCornerShape(0.dp)
+            .background(MaterialTheme.colorScheme.primary)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
 
@@ -265,7 +262,6 @@ fun DynamicSolatCelestialCard(
                                 if (isHighlighted) {
                                     Modifier
                                         .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
-                                        .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                 } else {
                                     Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
@@ -732,7 +728,7 @@ private fun ZonePickerDialog(
                             .metroClickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "close", tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
+                        Icon(painterResource(R.drawable.ic_thin_close), contentDescription = "close", tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -751,11 +747,6 @@ private fun ZonePickerDialog(
                                 .fillMaxWidth()
                                 .background(
                                     if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface,
-                                    RoundedCornerShape(0.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    if (isSelected) MaterialTheme.colorScheme.primary else MeenaBorder,
                                     RoundedCornerShape(0.dp)
                                 )
                                 .clickable {
@@ -844,7 +835,7 @@ private fun MonthlyScheduleDialog(
                             .metroClickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "close", tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
+                        Icon(painterResource(R.drawable.ic_thin_close), contentDescription = "close", tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
                     }
                 }
 

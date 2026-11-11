@@ -1,5 +1,7 @@
 package my.hana.meena.ui.components
 
+import my.hana.meena.R
+import androidx.compose.ui.res.painterResource
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.Animatable
@@ -23,9 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -163,7 +162,7 @@ fun NewsFeedWidget(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        painter = painterResource(R.drawable.ic_thin_refresh),
                         contentDescription = "refresh",
                         tint = if (isLoading) MaterialTheme.colorScheme.primary else MeenaTextMuted,
                         modifier = Modifier
@@ -183,7 +182,6 @@ fun NewsFeedWidget(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MeenaSurface)
-                        .border(1.dp, MeenaBorder)
                         .padding(my.hana.meena.theme.MeenaSpacing.m),
                     contentAlignment = Alignment.Center
                 ) {
@@ -244,7 +242,6 @@ private fun NewsArticleRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
             .clickable(onClick = onClick)
             .padding(my.hana.meena.theme.MeenaSpacing.m),
         verticalAlignment = Alignment.Top,
@@ -269,7 +266,6 @@ private fun NewsArticleRow(
                 Box(
                     modifier = Modifier
                         .background(sourceColor.copy(alpha = 0.2f))
-                        .border(1.dp, sourceColor.copy(alpha = 0.6f))
                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(
@@ -330,7 +326,7 @@ private fun NewsArticleRow(
 
         // Open in browser indicator icon
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+            painter = painterResource(R.drawable.ic_thin_open),
             contentDescription = "Open in browser",
             tint = MeenaTextMuted,
             modifier = Modifier
@@ -350,7 +346,6 @@ private fun NewsFilterChip(
     Box(
         modifier = Modifier
             .background(if (isSelected) accentColor else MeenaSurfaceElevated)
-            .border(1.dp, if (isSelected) accentColor else MeenaBorder)
             .clickable(onClick = onClick)
             .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
     ) {
