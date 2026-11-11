@@ -1,5 +1,7 @@
 package my.hana.meena.ui.hubs
 
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,7 +89,7 @@ fun AgendaHub(
                 "widget-solat" -> {
                     // 1. WAKTU SOLAT JAKIM TIMELINE (With Celestial Animated Sun Arc)
                     CollapsibleWidget(
-                        title = "waktu solat • jakim",
+                        title = "waktu solat, jakim",
                         collapsedSummary = {
                             Text(jakimSchedule.nextPrayerLabel, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                         }
@@ -142,7 +144,6 @@ fun AgendaHub(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(MeenaSurface)
-                                        .border(1.dp, MeenaBorder)
                                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
@@ -153,16 +154,17 @@ fun AgendaHub(
                                         color = MeenaTextWhite,
                                         modifier = Modifier.weight(1f)
                                     )
-                                    Text(
-                                        text = "✕",
-                                        fontSize = 12.sp,
-                                        color = MeenaTextMuted,
+                                    androidx.compose.material3.Icon(
+                                        painter = androidx.compose.ui.res.painterResource(my.hana.meena.R.drawable.ic_thin_close),
+                                        contentDescription = "remove note",
+                                        tint = MeenaTextMuted,
                                         modifier = Modifier
+                                            .size(48.dp)
                                             .clickable {
                                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                                 quickNotes.removeAt(index)
                                             }
-                                            .padding(my.hana.meena.theme.MeenaSpacing.s)
+                                            .padding(12.dp)
                                     )
                                 }
                             }
@@ -225,17 +227,16 @@ private fun PrayerSlot(
     isSolar: Boolean = false,
     isCurrent: Boolean = false
 ) {
+    val accent = MaterialTheme.colorScheme.primary
     Box(
         modifier = modifier
             .background(MeenaSurface)
-            .border(
-                width = if (isCurrent) 2.dp else 1.dp,
-                color = when {
-                    isCurrent -> MaterialTheme.colorScheme.primary
-                    isSolar -> MeenaSolarAmber.copy(alpha = 0.5f)
-                    else -> MeenaBorder
+            .drawBehind {
+                if (isCurrent) {
+                    val h = 3.dp.toPx()
+                    drawRect(accent, topLeft = Offset(0f, size.height - h), size = Size(size.width, h))
                 }
-            )
+            }
             .padding(my.hana.meena.theme.MeenaSpacing.s),
         contentAlignment = Alignment.Center
     ) {
@@ -299,7 +300,6 @@ private fun EventRow(title: String, location: String, time: String, duration: St
         modifier = Modifier
             .fillMaxWidth()
             .background(MeenaSurface)
-            .border(1.dp, MeenaBorder)
             .drawBehind {
                 val stroke = 3.dp.toPx()
                 drawLine(

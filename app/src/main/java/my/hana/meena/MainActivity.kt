@@ -1,4 +1,4 @@
-﻿package my.hana.meena
+package my.hana.meena
 
 import android.content.Intent
 import androidx.lifecycle.lifecycleScope
@@ -437,7 +437,8 @@ fun MeenaHomeScreen(
                             Text(
                                 text = title,
                                 style = MaterialTheme.typography.displayLarge,
-                                fontSize = 42.sp,
+                                fontSize = 56.sp,
+                                lineHeight = 60.sp,
                                 fontWeight = FontWeight.Light,
                                 softWrap = false,
                                 maxLines = 1,
