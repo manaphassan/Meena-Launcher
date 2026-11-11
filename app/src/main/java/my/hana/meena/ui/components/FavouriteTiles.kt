@@ -69,7 +69,7 @@ fun FavouriteTiles(
             ) {
                 Text(
                     text = "+",
-                    style = MaterialTheme.typography.displayMedium,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MeenaTextWhite
                 )
             }
@@ -159,7 +159,7 @@ fun FavouriteTiles(
             ) {
                 Text(
                     text = "+",
-                    style = MaterialTheme.typography.displayMedium,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }

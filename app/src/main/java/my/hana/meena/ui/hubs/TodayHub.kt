@@ -440,10 +440,23 @@ fun TodayHub(
                             )
                         }
                     ) {
-                        DynamicSolatCelestialCard(
-                            schedule = jakimSchedule,
-                            onZoneChanged = onUpdateSolatZone
-                        )
+                        if (jakimSchedule.slots.isEmpty()) {
+                            // Honest state instead of an empty card.
+                            Text(
+                                text = when (solatState) {
+                                    is my.hana.meena.ui.widgets.WidgetState.Loading -> "loading prayer times..."
+                                    is my.hana.meena.ui.widgets.WidgetState.Error -> "couldn't load prayer times. check your connection."
+                                    else -> "no prayer times for this place yet."
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MeenaTextMuted
+                            )
+                        } else {
+                            DynamicSolatCelestialCard(
+                                schedule = jakimSchedule,
+                                onZoneChanged = onUpdateSolatZone
+                            )
+                        }
                     }
                 }
 

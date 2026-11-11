@@ -94,7 +94,7 @@ fun MetroDialog(
                     ) {
                         Text(
                             text = confirmText.lowercase(),
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = MeenaTextWhite
                         )
                     }
@@ -102,14 +102,14 @@ fun MetroDialog(
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 48.dp)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .background(my.hana.meena.theme.MeenaTextDisabled)
                             .metroClickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = dismissText.lowercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MeenaTextWhite
                         )
                     }
                 }
