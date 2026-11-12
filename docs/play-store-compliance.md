@@ -50,7 +50,7 @@ Source: `GeminiBriefRepository.buildContextString` and `generateContent` (endpoi
 
 - **Not ephemeral:** under the [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms) (effective 23 Mar 2026), Unpaid Services content is used by Google "to provide, improve, and develop Google products" and "human reviewers may read, annotate, and process your API input and output." Data sent by the brief must therefore not be marked as processed ephemerally.
 - **Collected vs shared:** per [Provide information for Google Play's Data safety section](https://support.google.com/googleplay/android-developer/answer/10787469), data transmitted off the device counts as **collected**. Transfers "based on a specific user-initiated action, where the user reasonably expects the data to be shared, or based on a prominent in-app disclosure and consent" do not need to be declared as **shared**. The app shows a disclosure (`disclosure_gemini_body`) before setup, so "not shared" may apply. **[S] Owner to decide**; declaring "shared" is the conservative choice.
-- **Disclosure:** the in-app text says details are sent to Google when generating a brief. It does not say this happens automatically when the Today hub opens. **[S] Owner to decide** whether to add that.
+- **Disclosure:** the in-app text (`disclosure_gemini_body`) says what is sent, that it updates when Today opens (at most every 2 hours) and on tap, that Google may keep and review free-tier input, and that users must be 18+.
 
 ---
 
@@ -58,7 +58,7 @@ Source: `GeminiBriefRepository.buildContextString` and `generateContent` (endpoi
 
 ### 2.1 Calendar Access (`android.permission.READ_CALENDAR`)
 - **Justification for Google Play Review:**  
-  *"Meena is an Android home screen launcher replacement. The `READ_CALENDAR` permission is used strictly to display the user's upcoming appointments and events on the 'Today' panoramic home hub via Android's native CalendarContract. All event details are read locally in memory and never transmitted off the user's device. No write permissions (`WRITE_CALENDAR`) are requested; event creation delegates to the system calendar application via standard Android intents."*
+  *"Meena is an Android home screen launcher replacement. The `READ_CALENDAR` permission is used to display the user's upcoming appointments and events on the 'Today' panoramic home hub via Android's native CalendarContract. Event details are read locally and are not transmitted off the device, except when the user turns on the optional Gemini brief with its calendar source ticked; then today's event titles and times are sent to Google's Gemini API with the user's own key, after an in-app disclosure. No write permissions (`WRITE_CALENDAR`) are requested; event creation delegates to the system calendar application via standard Android intents."*
 
 ### 2.2 Notification Listener Service (`BIND_NOTIFICATION_LISTENER_SERVICE`)
 - **Justification for Google Play Review:**  
@@ -87,7 +87,7 @@ In accordance with Google Play Developer Policy and Meena architecture rules:
 - **App Category:** Personalization / Tools (Android Launcher).
 - **Financial Services Declaration:**  
   Meena **does not** provide, facilitate, or promote financial services, banking, lending, credit issuance, or investment brokerage. The financial widget consists of:
-  1. A manual local asset portfolio tracker (stored on-device with Android Keystore encryption).
+  1. A manual local asset portfolio tracker (stored in app-private storage on the device; not sent anywhere).
   2. A read-only Google Sheets bridge where the user views their personal spreadsheet.
   3. An optional offline spending ledger parsed from device notification text.
 
@@ -95,5 +95,5 @@ In accordance with Google Play Developer Policy and Meena architecture rules:
 
 ## 5. Target Audience & Content Rating
 
-- **Target Audience:** 13 years and older (or 18+ depending on region). Meena is not specifically targeted toward children.
+- **Target Audience:** **18 and older only.** Select only the 18+ age group in Play Console. Required by the [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms): "You also will not use the Services as part of a website, application, or other service ... that is directed towards or is likely to be accessed by individuals under the age of 18."
 - **Content Rating (IARC):** **Everyone** (Contains no violence, sexual content, gambling, user-generated content, or uncensored social interactions).
