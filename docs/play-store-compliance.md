@@ -3,7 +3,7 @@
 **Application:** Meena (`my.hana.meena`)  
 **Target SDK:** 36 (Android 16 / 15)  
 **Track:** Closed Test (Personal Developer Account)  
-**Document Date:** October 2026  
+**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed)  
 
 ---
 
@@ -13,9 +13,9 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 ### 1.1 Overview Questions
 - **Does your app collect or share any of the required user data types?**  
-  **Yes.** Most data is only processed on the device. The exception is the optional Gemini brief (§1.3): when the user adds their own Gemini API key, the items they tick are sent to Google's Generative Language API.
+  **Yes.** Approximate location is sent to Open-Meteo for weather and air quality (§1.2). Everything else listed below is only processed on the device.
 - **Is all of the user data collected by your app encrypted in transit?**  
-  **Yes** (all requests for weather, news RSS, solat schedules and the Gemini API use HTTPS; cleartext traffic is blocked by default at target SDK 36).
+  **Yes** (all requests for weather, news RSS, solat schedules and exchange rates use HTTPS; cleartext traffic is blocked by default at target SDK 36).
 - **Do you provide a way for users to request that their data be deleted?**  
   **Yes** (users can clear all data directly via Android system App Settings or the in-app "reset to defaults" button; no remote servers store user data).
 
@@ -25,32 +25,16 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 | Data Category | Data Type | Collected? | Shared? | Processed Ephemerally? | Required or Optional? | Purpose |
 |---|---|---|---|---|---|---|
-| **Location** | Approximate Location (`ACCESS_COARSE_LOCATION`) | Yes | See §1.3 | **No** if the Gemini brief is on, otherwise **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather & JAKIM prayer times; place name in the Gemini brief) |
-| **Financial Info** | Purchase history (spending count and total for today) | Yes, only if the brief's spending source is ticked | See §1.3 | **No** (sent to Gemini) | Optional (spending opt-in and brief source both off by default) | App functionality (Gemini brief). Parsing of bank notifications itself stays on-device |
+| **Location** | Approximate Location (`ACCESS_COARSE_LOCATION`) | Yes | **No** | **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather, air quality & JAKIM prayer times) |
+| **Financial Info** | Purchase history (parsed bank alerts) | **No** (on-device only) | **No** | N/A | Optional (spending opt-in, off by default) | Not transmitted; parsed and stored on the device |
 | **Health & Fitness** | Fitness info (Steps, distance, calories) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying daily activity summary on Today hub) |
 | **Health & Fitness** | Health info (Sleep duration, heart rate) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying health metrics on Today hub) |
-| **Calendar** | Calendar events (today's event titles and times) | Yes, when the Gemini brief is on | See §1.3 | **No** (sent to Gemini) | Optional (calendar permission, Gemini key, and the brief's calendar source) | App functionality (Gemini brief). Agenda display on the Today hub is on-device only |
+| **Calendar** | Calendar events | **No** (on-device only) | **No** | N/A | Optional (requires calendar permission) | Not transmitted; agenda shown on the Today hub |
 | **Messages** | Other in-app messages / notification text | Yes | **No** | **Yes** | Optional (requires notification listener permission) | App functionality (Inbox hub alerts, chat summaries, and spending parser) |
 | **App Info & Performance** | Installed apps | Yes | **No** | **Yes** | **Required** | Core launcher functionality (discovering, launching, and organizing apps) |
 | **Personal Identifiers** | Name, Email, Phone, Device IDs | **No** | **No** | N/A | N/A | Meena collects zero personal identifiers or device IDs |
 
-### 1.3 Gemini brief: data sent to Google
-
-Source: `GeminiBriefRepository.buildContextString` and `generateContent` (endpoint `generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`).
-
-- **When:** only after the user saves their own Gemini API key. The brief then refreshes automatically when the Today hub opens (cached for 2 hours) and when the user taps it.
-- **What is sent, per ticked source:**
-
-| Brief source | Default | Sent to Google |
-|---|---|---|
-| calendar | on | today's event times and titles |
-| weather | on | temperature, condition, place name |
-| solat | on | next prayer name and time |
-| spending | off | number of payments today and total in rm |
-
-- **Not ephemeral:** under the [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms) (effective 23 Mar 2026), Unpaid Services content is used by Google "to provide, improve, and develop Google products" and "human reviewers may read, annotate, and process your API input and output." Data sent by the brief must therefore not be marked as processed ephemerally.
-- **Collected vs shared:** per [Provide information for Google Play's Data safety section](https://support.google.com/googleplay/android-developer/answer/10787469), data transmitted off the device counts as **collected**. Transfers "based on a specific user-initiated action, where the user reasonably expects the data to be shared, or based on a prominent in-app disclosure and consent" do not need to be declared as **shared**. The app shows a disclosure (`disclosure_gemini_body`) before setup, so "not shared" may apply. **[S] Owner to decide**; declaring "shared" is the conservative choice.
-- **Disclosure:** the in-app text (`disclosure_gemini_body`) says what is sent, that it updates when Today opens (at most every 2 hours) and on tap, that Google may keep and review free-tier input, and that users must be 18+.
+**[S] Check before submitting:** health, messages and installed-apps rows say "Collected: Yes" but are never sent off the device. Play's [Data safety help](https://support.google.com/googleplay/android-developer/answer/10787469) says on-device-only data "does **not** need to be disclosed". Confirm whether to keep them or mark them not collected.
 
 ---
 
@@ -58,7 +42,7 @@ Source: `GeminiBriefRepository.buildContextString` and `generateContent` (endpoi
 
 ### 2.1 Calendar Access (`android.permission.READ_CALENDAR`)
 - **Justification for Google Play Review:**  
-  *"Meena is an Android home screen launcher replacement. The `READ_CALENDAR` permission is used to display the user's upcoming appointments and events on the 'Today' panoramic home hub via Android's native CalendarContract. Event details are read locally and are not transmitted off the device, except when the user turns on the optional Gemini brief with its calendar source ticked; then today's event titles and times are sent to Google's Gemini API with the user's own key, after an in-app disclosure. No write permissions (`WRITE_CALENDAR`) are requested; event creation delegates to the system calendar application via standard Android intents."*
+  *"Meena is an Android home screen launcher replacement. The `READ_CALENDAR` permission is used to display the user's upcoming appointments and events on the 'Today' panoramic home hub via Android's native CalendarContract. Event details are read locally and are never transmitted off the device. No write permissions (`WRITE_CALENDAR`) are requested; event creation delegates to the system calendar application via standard Android intents."*
 
 ### 2.2 Notification Listener Service (`BIND_NOTIFICATION_LISTENER_SERVICE`)
 - **Justification for Google Play Review:**  
@@ -95,5 +79,5 @@ In accordance with Google Play Developer Policy and Meena architecture rules:
 
 ## 5. Target Audience & Content Rating
 
-- **Target Audience:** **18 and older only.** Select only the 18+ age group in Play Console. Required by the [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms): "You also will not use the Services as part of a website, application, or other service ... that is directed towards or is likely to be accessed by individuals under the age of 18."
+- **Target Audience:** 13 years and older. Meena is not specifically targeted toward children. (Was 18+ only while the Gemini brief existed; see plan D13.)
 - **Content Rating (IARC):** **Everyone** (Contains no violence, sexual content, gambling, user-generated content, or uncensored social interactions).

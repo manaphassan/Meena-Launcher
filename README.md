@@ -17,7 +17,7 @@ Meena organizes your mobile workflow across five panoramic canvas hubs:
 
 | Hub | Purpose | Default Modules |
 |---|---|---|
-| **today** | Daily essentials & health | Clock, forecast, AI brief, JAKIM prayer times, calendar, tasks, notes, health telemetry, air quality, map radar, and phone status. |
+| **today** | Daily essentials & health | Clock, forecast, JAKIM prayer times, calendar, tasks, notes, health telemetry, air quality, map radar, and phone status. |
 | **inbox** | Communications center | Realtime conversation threads (WhatsApp, Telegram, SMS) and unified actionable notifications. |
 | **news** | Curated reading | Dynamic RSS/Atom reader with source filters, instant categorization, and live article parsing. |
 | **money** | Personal finance | Watchlist candlestick charts, live exchange rates, and bank notification spending insights. |

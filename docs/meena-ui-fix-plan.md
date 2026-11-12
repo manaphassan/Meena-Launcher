@@ -16,7 +16,7 @@ Scope grew a lot versus the earlier plan. **Estimate: ~55–70 focused working d
 | Milestone | Contains | Gate |
 |---|---|---|
 | **M1: closed-test build** | Foundation, widget framework, full Settings shell, Meena UI skin, solat, weather, calendar, news, apps, alerts, phone, copy, compliance | Play closed test |
-| **M2: money + brief** | Finance (portfolio, rates, quotes, Sheets bridge), Gemini brief | Production rollout |
+| **M2: money** | Finance (portfolio, rates, quotes, Sheets bridge). Gemini brief dropped (D13) | Production rollout |
 | **M3: health + mail API** | Health Connect, AQI, Gmail API unread count | Staged update |
 
 Three things you asked for **cannot be built literally**; the plan substitutes (details in §1):
@@ -42,6 +42,7 @@ Three things you asked for **cannot be built literally**; the plan substitutes (
 | D10 | Language | **English only** (no `ms` strings, no language setting) | Your decision; cuts localisation work |
 | D11 | APIs | **Free tiers only** (details in §5) | Your decision; some sources will be delayed or lack coverage |
 | D12 | Play account | **Personal** account | The 12-tester / 14-day closed test applies if the account was created after 13 Nov 2023 |
+| D13 | Gemini brief | **Dropped** (owner, 12 Nov 2026). Target audience stays 13+. | [Gemini API terms](https://ai.google.dev/gemini-api/terms): 18+ only, "not for consumer use", paid-only in EEA/CH/UK, free-tier input used to improve products and may be human-reviewed. Default model `gemini-1.5-flash` and fallback `gemini-2.0-flash` are shut down ([deprecations](https://ai.google.dev/gemini-api/docs/deprecations)) |
 
 ---
 
@@ -137,7 +138,7 @@ Every widget gets, in **settings → widgets → [widget name]**: `show on [page
 | **weather** (today) | `widget-clock-weather`, `widget-weather-forecast` | Weather API (§5.6) | location (auto / city), units °C/°F, forecast days 0–5 | "pick a place" |
 | **solat** (today) | agenda hub | JAKIM e-solat by zone (§5.5) | zone / auto, which prayers show, imsak/syuruk on/off, jumaat label | "where are you?" |
 | **agenda** (today) | `widget-calendar-month`, `widget-today-summary` | CalendarContract (§5.2) | calendars on/off, days ahead 1–14, all-day on/off, month grid on/off | "allow calendar" |
-| **brief** (today) | `widget-today-summary` | Gemini using only the data you allow (§5.1) | key, model, what it may read, refresh time | "add your gemini key" |
+| **brief** (today) | `widget-today-summary` | Dropped (D13); the old key is removed on upgrade | n/a | n/a |
 | **health** (today) | `widget-health-*` | Health Connect (§5.7) | metrics on/off, goals, data-from app | "connect health" |
 | **air** (today) | `widget-health-aqi` | AQI API (§5.6) | location, unit | "pick a place" |
 | **alerts** (inbox) | `widget-notifications` | NotificationListenerService | max items, which apps, show text on/off | "allow notification access" |
@@ -186,8 +187,7 @@ settings (pivot, link lists only; no switches here)
 │   ├─ calendar           → pick calendars
 │   ├─ mail               → gmail
 │   ├─ finance            → provider key, sheet bridge, portfolio, rates
-│   ├─ health             → health connect, data-from app, companion app
-│   └─ brief (gemini)     → key, model, what it can read
+│   └─ health             → health connect, data-from app, companion app
 └─ look & feel
     ├─ date & time
     ├─ theme
@@ -202,7 +202,7 @@ settings (pivot, link lists only; no switches here)
 | # | Requirement | Fields & behaviour | Storage / validation |
 |---|---|---|---|
 | 1 | **Date & time format** | 12h / 24h / follow system · date pattern (list picker with **live preview using today's date**) · first day of week · seconds on/off · hijri on/off + adjust −2…+2 days · week numbers | DataStore; preview rendered via `DateTimeFormatter` |
-| 2 | **Gemini API key** | Paste key · "test key" (calls the models list) · model picker **populated from the live models list** (no hardcoded model IDs) · "what brief may read" toggles (calendar, weather, solat, money, mail subjects) · brief time · "forget key" | Key in Android Keystore-backed encrypted storage (Tink AEAD), never in plain DataStore, never logged, excluded from backup. Disclose that selected data is sent to Google when the brief runs. |
+| 2 | **Gemini API key** | Dropped (D13). | Any saved key is deleted on upgrade. |
 | 3 | **Theme management** | Base: dark / light / follow system · accent: 10 WP swatches + custom hex · wallpaper picker + dim · font (Selawik / system) + size · motion: full / reduced / off · haptics · handedness · export / import theme (JSON) · reset | Contrast check blocks accents that make text < 3:1 in large text or < 4.5:1 in body; warn instead of silently allowing |
 | 4 | **Waktu solat location** | "use my location (coarse)" or pick **state → zone** (two list-picker steps) · shows zone code and name · prayers shown · show imsak/syuruk · jumaat label on Fridays | Zone catalogue refreshed from JAKIM when reachable; coarse location only; if location denied, fall back to manual |
 | 5 | **Google Calendar integration** | Allow calendar access · list of device calendars grouped by account, each with on/off + colour dot · days ahead · all-day on/off · "add account" (opens system) · "new event" opens the calendar app via intent | READ_CALENDAR only; we never write |
@@ -221,7 +221,8 @@ settings (pivot, link lists only; no switches here)
 
 ## 5. Integration notes
 
-### 5.1 Gemini brief
+### 5.1 Gemini brief (dropped, D13)
+- Removed on 12 Nov 2026. Notes kept for history only.
 - Produces a 2–3 line summary from **only** the sources the user ticks. No key → widget shows "add your gemini key".
 - Cost and quota are the user's. Handle 429/blocked with a human message.
 - Disclose in Data Safety that selected content is sent to Google's API on user action.
@@ -354,7 +355,7 @@ Confirm D1–D12 (§1), search Play and MyIPO for "Meena" collisions, and regist
 | Notifications: alerts/chats/mail(notif), spending opt-in + allowlist | 3 | M1 |
 | Quick panel live state (wi-fi, bluetooth, torch) | 1 | M1 |
 | Finance: provider, portfolio CRUD, FX, Sheets bridge | 6–8 | M2 |
-| Gemini brief | 3 | M2 |
+| Gemini brief (dropped, D13) | 0 | n/a |
 | Health Connect | 3 | M3 |
 | Gmail API unread count (if scope check passes) | 3–4 + review wait | M3 |
 
@@ -371,7 +372,7 @@ Confirm D1–D12 (§1), search Play and MyIPO for "Meena" collisions, and regist
 Move every string to resources, apply §6, spell-check in CI, review all error and empty states.
 
 ### Phase 6: Compliance (3 days + external waits)
-- Prominent disclosure before notification access; privacy policy; Data Safety (apps list, coarse location, notification-derived financial info, calendar, health, data sent to Gemini on user action); financial-features declaration; Health Connect permissions declaration; content rating; target audience.
+- Prominent disclosure before notification access; privacy policy; Data Safety (apps list, coarse location, notification-derived financial info, calendar, health); financial-features declaration; Health Connect permissions declaration; content rating; target audience.
 - Remove `QUERY_ALL_PACKAGES`; coarse location only; justify READ_CALENDAR.
 - Replace Yahoo scraping and any trademark-style naming (`GoogleFinance*`).
 
@@ -393,7 +394,7 @@ Internal → closed test (personal account: 12 testers opted in for 14 continuou
 | All data realtime, not hardcoded | §3 | CI guards green; no literals in `data/**`; every widget shows "updated x ago" |
 | Each widget configurable + on/off in Settings | §3.2–3.3, §4 | All 19 widgets have a settings sub-page with a working toggle |
 | Date & time format | §4.2 #1 | Preview matches the widget immediately |
-| Gemini API key | §4.2 #2 | Test key passes; brief uses only ticked sources |
+| Gemini API key | §4.2 #2 | Dropped (D13); no Gemini code or saved key remains |
 | Theme management | §4.2 #3 | Dark/light/accent/wallpaper/export-import work and pass contrast rules |
 | Waktu solat location | §4.2 #4 | Auto and manual zone both produce correct times for that zone |
 | Google Calendar integration + manage | §4.2 #5 | Calendars can be hidden/shown; events update live |
@@ -431,6 +432,7 @@ Internal → closed test (personal account: 12 testers opted in for 14 continuou
 | Quote API budget | Free only |
 | UI language | English only |
 | Play account | Personal |
+| Gemini brief (12 Nov 2026) | Dropped; target audience 13+ (D13) |
 
 ## 11. Sources to verify before building
 
