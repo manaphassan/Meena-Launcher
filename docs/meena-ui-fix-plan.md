@@ -178,6 +178,25 @@ Each widget shows its own "updated x ago" in the caption line.
 
 ### 4.1 Information architecture
 
+Updated 13 Nov 2026 (owner: regroup settings, Zune HD look). Four pivots, link lists only; toggles stay on sub-pages.
+
+```
+settings (pivot, link lists only; no switches here)
+├─ pages                 → widgets grouped by the page they are on (today, inbox, news, money); on/off status; tap → widget sub-page
+├─ connections
+│   ├─ where you are     → prayer times (zone)
+│   ├─ your day          → calendar, notifications, health
+│   └─ reading and money → news feeds, money (portfolio, sheet link, rates)
+├─ personalize
+│   ├─ look              → theme and accent, text size
+│   └─ feel              → date and time, hand and touch (hand, vibration, motion)
+└─ system
+    ├─ your data         → privacy, backup and restore
+    └─ meena             → about meena ui
+```
+
+Original plan, kept for history:
+
 ```
 settings (pivot, link lists only; no switches here)
 ├─ widgets

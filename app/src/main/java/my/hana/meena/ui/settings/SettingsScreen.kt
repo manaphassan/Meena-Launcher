@@ -26,8 +26,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.ui.res.vectorResource
@@ -106,17 +111,16 @@ import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
 
 /**
- * Authentic Meena UI Settings Screen.
- * Design language: Clean, light, open, fast (inspired by Windows Phone Metro UI & AIO Launcher).
+ * Meena UI settings, laid out like a Zune HD pivot: pages, connections, personalize, system.
  * Rules:
- * - Pivot contains link lists only (no switches, sliders, or scrollers directly inside pivot).
- * - Tapping any link navigates to a dedicated sub-page with a clean Metro back header.
- * - Everything lowercase, square corners everywhere, no cards/boxes, 24dp margins.
+ * - Pivots hold link lists only (no switches, sliders or scrollers); toggles live on sub-pages.
+ * - Groups are small accent labels, rows are large light titles with a grey status line.
+ * - Everything lowercase, square corners, no cards or boxes, 24dp margins.
  */
 @Composable
 fun SettingsScreen(
     currentSettings: MeenaUserSettings,
-    initialTab: String = "widgets",
+    initialTab: String = SETTINGS_TAB_PAGES,
     initialSubPage: String? = null,
     onSaveSettings: (MeenaUserSettings) -> Unit,
     onExportBackup: () -> Unit,
@@ -126,21 +130,24 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     var settingsState by remember { mutableStateOf(currentSettings) }
-    var activeTab by remember(initialTab) { mutableStateOf(initialTab) }
     var activeSubPage by remember(initialSubPage) { mutableStateOf(initialSubPage) }
 
-    val tabs = listOf("widgets", "accounts", "look & feel")
+    val tabs = SETTINGS_TABS
+    val tabLabels = listOf(
+        stringResource(R.string.settings_tab_pages),
+        stringResource(R.string.settings_tab_connections),
+        stringResource(R.string.settings_tab_personalize),
+        stringResource(R.string.settings_tab_system)
+    )
+    val pagerState = rememberPagerState(initialPage = tabs.indexOf(normalizeSettingsTab(initialTab)).coerceAtLeast(0)) { tabs.size }
+    val scope = rememberCoroutineScope()
 
-    // Handle back button: if in a sub-page, return to pivot; otherwise close settings
+    // Back: leave a sub-page first, otherwise close settings
     BackHandler {
-        if (activeSubPage != null) {
-            activeSubPage = null
-        } else {
-            onClose()
-        }
+        if (activeSubPage != null) activeSubPage = null else onClose()
     }
 
-    // Windows Phone 7 Turnstile 3D Entrance Animation (respects reduced motion)
+    // Windows Phone turnstile entrance (respects reduced motion)
     var turnstileRotation by remember { mutableFloatStateOf(if (currentSettings.isReducedMotion) 0f else 20f) }
     var turnstileAlpha by remember { mutableFloatStateOf(if (currentSettings.isReducedMotion) 1f else 0f) }
 
@@ -180,58 +187,33 @@ fun SettingsScreen(
                 cameraDistance = 16f * density
             }
     ) {
-        // Top Global Bar
+        // Small caption bar, Zune HD style: back target on the left, nothing else competing
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.m),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .metroClickable {
-                        if (activeSubPage != null) activeSubPage = null else onClose()
-                    }
-            ) {
-                Box(
-                    modifier = Modifier.size(48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_arrow_back),
-                        contentDescription = "back",
-                        tint = MeenaTextWhite,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.ic_meena_emblem),
-                    contentDescription = "meena",
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "meena ui · settings",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted,
-                    letterSpacing = 12.sp
-                )
-            }
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .metroClickable(onClick = onClose),
+                    .metroClickable { if (activeSubPage != null) activeSubPage = null else onClose() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_close), contentDescription = "close", tint = MeenaTextMuted)
+                Icon(
+                    ImageVector.vectorResource(id = R.drawable.ic_arrow_back),
+                    contentDescription = stringResource(R.string.settings_back),
+                    tint = MeenaTextWhite,
+                    modifier = Modifier.size(20.dp)
+                )
             }
+            Text(
+                text = stringResource(R.string.settings_caption),
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaTextMuted
+            )
         }
 
-        // Sub-page view if active, otherwise main pivot view with Turnstile transition
         MetroTurnstileContainer(
             targetState = activeSubPage,
             modifier = Modifier.fillMaxSize(),
@@ -250,204 +232,51 @@ fun SettingsScreen(
                 )
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // Main Pivot Tabs Header
-                    LazyRow(
+                    // Pivot headers: the current one first in white, the rest trail off the edge in grey
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)
+                            .clipToBounds()
+                            .padding(start = my.hana.meena.theme.MeenaSpacing.l)
                     ) {
-                        items(tabs) { tab ->
-                            val isActive = tab == activeTab
-                            Text(
-                                text = tab,
-                                style = MaterialTheme.typography.displayLarge,
-                                fontSize = 32.sp,
-                                color = if (isActive) MeenaTextWhite else MeenaTextMuted,
-                                modifier = Modifier
-                                    .metroClickable { activeTab = tab }
-                                    .padding(bottom = my.hana.meena.theme.MeenaSpacing.s)
-                            )
-                        }
-                    }
-
-                    Spacer(
-                modifier = Modifier
-                    .height(1.dp)
-                    .fillMaxWidth()
-                    .background(MeenaBorder)
-            )
-
-            // Main Pivot Content Area (Link Lists only)
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l, vertical = my.hana.meena.theme.MeenaSpacing.m),
-                verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-            ) {
-                when (activeTab) {
-                    "widgets" -> {
-                        item {
-                            Text(
-                                text = "tap any widget to configure its page, order and options",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MeenaTextMuted,
-                                modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
-                            )
-                        }
-
-                        val widgetList = listOf(
-                            "widget-clock-weather" to "clock",
-                            "widget-weather-forecast" to "weather forecast",
-                            "widget-solat" to "prayer times (solat)",
-                            "widget-calendar-month" to "month",
-                            "widget-tasks" to "tasks",
-                            "widget-notes" to "notes",
-                            "widget-exchange-rates" to "rates",
-                            "widget-finance-charts" to "portfolio",
-                            "widget-spending-summary" to "spending",
-                            "widget-notifications" to "alerts",
-                            "widget-conversations" to "chats",
-                            "widget-news-feed" to "news feed",
-                            "widget-device-telemetry" to "phone",
-                            "widget-map-radar" to "map radar",
-                            "widget-health-device" to "companion device",
-                            "widget-health-telemetry" to "health",
-                            "widget-health-aqi" to "air",
-                            "widget-frequent-apps" to "frequent apps",
-                            "widget-bluetooth-devices" to "connected devices",
-                            "widget-wikipedia" to "wikipedia"
-                        )
-
-                        items(widgetList) { (id, title) ->
-                            val config = settingsState.widgetConfigs[id]
-                            val isEnabled = config?.isEnabled != false
-                            val hub = config?.hubId ?: "home"
-                            val statusText = if (isEnabled) "on · $hub" else "off"
-
-                            SettingLinkRow(
-                                title = title,
-                                status = statusText,
-                                onClick = { activeSubPage = "widget:$id" }
-                            )
-                        }
-                    }
-
-                    "accounts" -> {
-                        item {
-                            Text(
-                                text = "connected services, local hooks and api keys",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MeenaTextMuted,
-                                modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
-                            )
-                        }
-
-                        item {
-                            val solatStatus = if (settingsState.solatZone.isNotBlank()) settingsState.solatZone.lowercase() else "auto by gps"
-                            SettingLinkRow(
-                                title = "waktu solat (jakim)",
-                                status = solatStatus,
-                                onClick = { activeSubPage = "account:solat" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "alerts & chats",
-                                status = "access for alerts, chats & spending",
-                                onClick = { activeSubPage = "account:notifications" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "finance & portfolio",
-                                status = "quotes & sheets bridge",
-                                onClick = { activeSubPage = "account:finance" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "health",
-                                status = "activity & health connect",
-                                onClick = { activeSubPage = "account:health" }
-                            )
-                        }
-
-                        item {
-                            val calStatus = if (my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)) {
-                                "${settingsState.calendarDaysAhead}d lookahead"
-                            } else {
-                                "needs a quick okay"
+                        Row(
+                            modifier = Modifier.wrapContentWidth(Alignment.Start, unbounded = true),
+                            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)
+                        ) {
+                            val current = pagerState.currentPage
+                            for (offset in tabs.indices) {
+                                val index = (current + offset) % tabs.size
+                                Text(
+                                    text = tabLabels[index],
+                                    style = MaterialTheme.typography.displayLarge,
+                                    color = if (offset == 0) MeenaTextWhite else MeenaTextMuted,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    modifier = Modifier.metroClickable {
+                                        scope.launch { pagerState.animateScrollToPage(index) }
+                                    }
+                                )
                             }
-                            SettingLinkRow(
-                                title = "calendar",
-                                status = calStatus,
-                                onClick = { activeSubPage = "account:calendar" }
-                            )
                         }
                     }
 
-                    "look & feel" -> {
-                        item {
-                            val timeMode = if (settingsState.is24HourFormat) "24-hour" else "12-hour"
-                            val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
-                            SettingLinkRow(
-                                title = "date & time",
-                                status = "$timeMode · $hijriMode",
-                                onClick = { activeSubPage = "look:datetime" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "theme & accents",
-                                status = "${settingsState.baseTheme} · ${settingsState.accentHex.lowercase()}",
-                                onClick = { activeSubPage = "look:theme" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "typography",
-                                status = "${settingsState.fontScalePercent}% scale",
-                                onClick = { activeSubPage = "look:typography" }
-                            )
-                        }
-
-                        item {
-                            val hand = if (settingsState.isLeftHanded) "left-handed" else "right-handed"
-                            SettingLinkRow(
-                                title = "ergonomics & layout",
-                                status = "$hand · haptics on",
-                                onClick = { activeSubPage = "look:ergonomics" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "backup & restore",
-                                status = "export or import settings json",
-                                onClick = { activeSubPage = "look:backup" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "privacy & data safety",
-                                status = stringResource(R.string.privacy_status),
-                                onClick = { activeSubPage = "look:privacy" }
-                            )
-                        }
-
-                        item {
-                            SettingLinkRow(
-                                title = "about meena ui",
-                                status = "clean, light, open, fast",
-                                onClick = { activeSubPage = "look:about" }
-                            )
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
+                            verticalArrangement = Arrangement.spacedBy(0.dp)
+                        ) {
+                            when (tabs[page]) {
+                                SETTINGS_TAB_PAGES -> pagesTab(settingsState) { activeSubPage = it }
+                                SETTINGS_TAB_CONNECTIONS -> connectionsTab(settingsState, context) { activeSubPage = it }
+                                SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState) { activeSubPage = it }
+                                SETTINGS_TAB_SYSTEM -> systemTab(context) { activeSubPage = it }
+                            }
+                            item { Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.l)) }
                         }
                     }
                 }
@@ -455,7 +284,266 @@ fun SettingsScreen(
         }
     }
 }
+
+const val SETTINGS_TAB_PAGES = "pages"
+const val SETTINGS_TAB_CONNECTIONS = "connections"
+const val SETTINGS_TAB_PERSONALIZE = "personalize"
+const val SETTINGS_TAB_SYSTEM = "system"
+private val SETTINGS_TABS = listOf(SETTINGS_TAB_PAGES, SETTINGS_TAB_CONNECTIONS, SETTINGS_TAB_PERSONALIZE, SETTINGS_TAB_SYSTEM)
+
+/** Old callers still pass "widgets", "accounts" or "look & feel"; map them to the new pivots. */
+fun normalizeSettingsTab(tab: String): String = when (tab) {
+    "widgets" -> SETTINGS_TAB_PAGES
+    "accounts" -> SETTINGS_TAB_CONNECTIONS
+    "look & feel" -> SETTINGS_TAB_PERSONALIZE
+    in SETTINGS_TABS -> tab
+    else -> SETTINGS_TAB_PAGES
 }
+
+/** Widget id to the name used on its row and sub-page. */
+internal val SETTINGS_WIDGET_TITLES = linkedMapOf(
+    "widget-clock-weather" to "clock",
+    "widget-weather-forecast" to "weather forecast",
+    "widget-favourites" to "favourites",
+    "widget-frequent-apps" to "frequent apps",
+    "widget-solat" to "prayer times",
+    "widget-tasks" to "agenda",
+    "widget-calendar-month" to "month",
+    "widget-notes" to "notes",
+    "widget-health-telemetry" to "health",
+    "widget-health-aqi" to "air",
+    "widget-map-radar" to "nearby",
+    "widget-bluetooth-devices" to "connected devices",
+    "widget-device-telemetry" to "phone",
+    "widget-wikipedia" to "wikipedia",
+    "widget-conversations" to "chats",
+    "widget-notifications" to "alerts",
+    "widget-news-feed" to "news feed",
+    "widget-finance-charts" to "portfolio",
+    "widget-exchange-rates" to "rates",
+    "widget-spending-summary" to "spending"
+)
+
+/**
+ * Groups widgets by the page they are on (so a moved widget shows under its new page), in page
+ * order, each group sorted by position. Widgets without a known title are skipped.
+ */
+internal fun groupWidgetsByPage(configs: Map<String, WidgetConfig>): List<Pair<String, List<String>>> {
+    val pageOrder = listOf("today", "inbox", "news", "money")
+    return configs.entries
+        .filter { it.key in SETTINGS_WIDGET_TITLES }
+        .groupBy { it.value.hubId }
+        .toList()
+        .sortedBy { (hub, _) -> pageOrder.indexOf(hub).let { if (it < 0) pageOrder.size else it } }
+        .map { (hub, entries) -> hub to entries.sortedBy { it.value.position }.map { it.key } }
+}
+
+private fun LazyListScope.settingsGroupLabel(labelRes: Int) {
+    item {
+        Text(
+            text = stringResource(labelRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(
+                top = my.hana.meena.theme.MeenaSpacing.l,
+                bottom = my.hana.meena.theme.MeenaSpacing.s
+            )
+        )
+    }
+}
+
+private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, open: (String) -> Unit) {
+    item {
+        Text(
+            text = stringResource(R.string.settings_pages_intro),
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m)
+        )
+    }
+    groupWidgetsByPage(settingsState.widgetConfigs).forEach { (hub, ids) ->
+        item(key = "page-$hub") {
+            val label = when (hub) {
+                "today" -> stringResource(R.string.settings_page_today)
+                "inbox" -> stringResource(R.string.settings_page_inbox)
+                "news" -> stringResource(R.string.settings_page_news)
+                "money" -> stringResource(R.string.settings_page_money)
+                else -> hub
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(
+                    top = my.hana.meena.theme.MeenaSpacing.l,
+                    bottom = my.hana.meena.theme.MeenaSpacing.s
+                )
+            )
+        }
+        ids.forEach { id ->
+            item(key = id) {
+                val isOn = settingsState.widgetConfigs[id]?.isEnabled != false
+                SettingsPivotRow(
+                    title = SETTINGS_WIDGET_TITLES.getValue(id),
+                    status = stringResource(if (isOn) R.string.settings_widget_on else R.string.settings_widget_off),
+                    isDimmed = !isOn,
+                    onClick = { open("widget:$id") }
+                )
+            }
+        }
+    }
+}
+
+private fun LazyListScope.connectionsTab(settingsState: MeenaUserSettings, context: android.content.Context, open: (String) -> Unit) {
+    settingsGroupLabel(R.string.settings_group_where)
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_solat_title),
+            status = settingsState.solatZone.ifBlank { stringResource(R.string.settings_solat_auto) }.lowercase(),
+            onClick = { open("account:solat") }
+        )
+    }
+    settingsGroupLabel(R.string.settings_group_your_day)
+    item {
+        val hasCalendar = my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_calendar_title),
+            status = if (hasCalendar) stringResource(R.string.settings_calendar_on, settingsState.calendarDaysAhead) else stringResource(R.string.settings_needs_okay),
+            onClick = { open("account:calendar") }
+        )
+    }
+    item {
+        val hasAccess = NotificationRepository.isNotificationAccessGranted(context)
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_notifications_title),
+            status = if (hasAccess) stringResource(R.string.settings_notifications_on) else stringResource(R.string.settings_needs_okay),
+            onClick = { open("account:notifications") }
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_health_title),
+            status = stringResource(R.string.settings_health_status),
+            onClick = { open("account:health") }
+        )
+    }
+    settingsGroupLabel(R.string.settings_group_reading_money)
+    item {
+        val count = settingsState.newsFeeds.size
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_news_title),
+            status = if (count > 0) stringResource(R.string.settings_news_status, count) else stringResource(R.string.settings_news_default),
+            onClick = { open("account:news") }
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_money_title),
+            status = stringResource(R.string.settings_money_status),
+            onClick = { open("account:finance") }
+        )
+    }
+}
+
+private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open: (String) -> Unit) {
+    settingsGroupLabel(R.string.settings_group_look)
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_theme_title),
+            status = "${settingsState.baseTheme} · ${settingsState.accentHex.lowercase()}",
+            onClick = { open("look:theme") }
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_text_title),
+            status = stringResource(R.string.settings_text_status, settingsState.fontScalePercent),
+            onClick = { open("look:typography") }
+        )
+    }
+    settingsGroupLabel(R.string.settings_group_feel)
+    item {
+        val timeMode = if (settingsState.is24HourFormat) "24-hour" else "12-hour"
+        val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_datetime_title),
+            status = "$timeMode · $hijriMode",
+            onClick = { open("look:datetime") }
+        )
+    }
+    item {
+        val parts = buildList {
+            add(stringResource(if (settingsState.isLeftHanded) R.string.settings_hand_left else R.string.settings_hand_right))
+            add(stringResource(if (settingsState.isHapticEnabled) R.string.settings_haptics_on else R.string.settings_haptics_off))
+            if (settingsState.isReducedMotion) add(stringResource(R.string.settings_motion_reduced))
+        }
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_hand_title),
+            status = parts.joinToString(" · "),
+            onClick = { open("look:ergonomics") }
+        )
+    }
+}
+
+private fun LazyListScope.systemTab(context: android.content.Context, open: (String) -> Unit) {
+    settingsGroupLabel(R.string.settings_group_your_data)
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_privacy_title),
+            status = stringResource(R.string.privacy_status),
+            onClick = { open("look:privacy") }
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_backup_title),
+            status = stringResource(R.string.settings_backup_status),
+            onClick = { open("look:backup") }
+        )
+    }
+    settingsGroupLabel(R.string.settings_group_meena)
+    item {
+        val version = remember {
+            runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "1.0"
+        }
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_about_title),
+            status = stringResource(R.string.settings_about_status, version),
+            onClick = { open("look:about") }
+        )
+    }
+}
+
+/** Zune HD style list row: large light title, small grey status underneath, nothing boxed. */
+@Composable
+private fun SettingsPivotRow(
+    title: String,
+    status: String,
+    isDimmed: Boolean = false,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .metroClickable(onClick = onClick)
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+    ) {
+        Text(
+            text = title.lowercase(),
+            style = MaterialTheme.typography.titleLarge,
+            color = if (isDimmed) MeenaTextMuted else MeenaTextWhite,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = status.lowercase(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }
 
 /**
@@ -501,8 +589,8 @@ private fun SubPageContainer(
 
             item {
                 MetroSubPageHeader(
-                    parentTitle = "widgets",
-                    pageTitle = widgetId.replace("widget-", "").replace("-", " "),
+                    parentTitle = "pages",
+                    pageTitle = SETTINGS_WIDGET_TITLES[widgetId] ?: widgetId.replace("widget-", "").replace("-", " "),
                     onBack = onBack
                 )
             }
@@ -1292,8 +1380,8 @@ private fun SubPageContainer(
         subPageId == "account:solat" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "accounts",
-                    pageTitle = "waktu solat location",
+                    parentTitle = "connections",
+                    pageTitle = "prayer times",
                     onBack = onBack
                 )
             }
@@ -1315,8 +1403,8 @@ private fun SubPageContainer(
         subPageId == "account:notifications" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "accounts",
-                    pageTitle = "notification access",
+                    parentTitle = "connections",
+                    pageTitle = "notifications",
                     onBack = onBack
                 )
             }
@@ -1342,8 +1430,8 @@ private fun SubPageContainer(
         subPageId == "account:finance" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "accounts",
-                    pageTitle = "finance & portfolio",
+                    parentTitle = "connections",
+                    pageTitle = "money",
                     onBack = onBack
                 )
             }
@@ -1358,7 +1446,7 @@ private fun SubPageContainer(
         subPageId == "account:news" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "accounts",
+                    parentTitle = "connections",
                     pageTitle = "news feeds",
                     onBack = onBack
                 )
@@ -1375,8 +1463,8 @@ private fun SubPageContainer(
         subPageId == "account:health" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "accounts",
-                    pageTitle = "health connect",
+                    parentTitle = "connections",
+                    pageTitle = "health",
                     onBack = onBack
                 )
             }
@@ -1391,8 +1479,8 @@ private fun SubPageContainer(
         subPageId == "account:calendar" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "accounts",
-                    pageTitle = "device calendar",
+                    parentTitle = "connections",
+                    pageTitle = "calendar",
                     onBack = onBack
                 )
             }
@@ -1408,8 +1496,8 @@ private fun SubPageContainer(
         subPageId == "look:datetime" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
-                    pageTitle = "date & time",
+                    parentTitle = "personalize",
+                    pageTitle = "date and time",
                     onBack = onBack
                 )
             }
@@ -1424,8 +1512,8 @@ private fun SubPageContainer(
         subPageId == "look:theme" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
-                    pageTitle = "theme & accents",
+                    parentTitle = "personalize",
+                    pageTitle = "theme and accent",
                     onBack = onBack
                 )
             }
@@ -1499,8 +1587,8 @@ private fun SubPageContainer(
         subPageId == "look:typography" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
-                    pageTitle = "typography",
+                    parentTitle = "personalize",
+                    pageTitle = "text size",
                     onBack = onBack
                 )
             }
@@ -1531,8 +1619,8 @@ private fun SubPageContainer(
         subPageId == "look:ergonomics" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
-                    pageTitle = "ergonomics & layout",
+                    parentTitle = "personalize",
+                    pageTitle = "hand and touch",
                     onBack = onBack
                 )
             }
@@ -1591,8 +1679,8 @@ private fun SubPageContainer(
         subPageId == "look:backup" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
-                    pageTitle = "backup & restore",
+                    parentTitle = "system",
+                    pageTitle = "backup and restore",
                     onBack = onBack
                 )
             }
@@ -1631,7 +1719,7 @@ private fun SubPageContainer(
         subPageId == "look:about" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
+                    parentTitle = "system",
                     pageTitle = "about meena ui",
                     onBack = onBack
                 )
@@ -1720,8 +1808,8 @@ private fun SubPageContainer(
         subPageId == "look:privacy" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "look & feel",
-                    pageTitle = "privacy & data safety",
+                    parentTitle = "system",
+                    pageTitle = "privacy",
                     onBack = onBack
                 )
             }
@@ -2663,6 +2751,7 @@ fun MetroSubPageHeader(
             .fillMaxWidth()
             .padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
     ) {
+        // Parent pivot name as a small accent link (Zune HD), no arrow symbol (Meena UI rule 7)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -2671,18 +2760,18 @@ fun MetroSubPageHeader(
                 .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Text(
-                text = "‹ $parentTitle".lowercase(),
+                text = parentTitle.lowercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 14.sp
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = pageTitle.lowercase(),
-            style = MaterialTheme.typography.displayMedium,
-            fontSize = 30.sp,
-            color = MeenaTextWhite
+            style = MaterialTheme.typography.displayLarge,
+            color = MeenaTextWhite,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
