@@ -4,6 +4,10 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -23,6 +27,11 @@ object KeystoreSecretsManager {
     private const val GCM_TAG_LENGTH = 128
     private const val PREFS_NAME = "meena_encrypted_secrets"
     private const val PREF_GEMINI_KEY = "enc_gemini_api_key"
+
+    private val _geminiKeyVersion = MutableStateFlow(0)
+
+    /** Bumps whenever the Gemini key is saved or cleared, so screens can react without polling the Keystore. */
+    val geminiKeyVersion: StateFlow<Int> = _geminiKeyVersion.asStateFlow()
 
     private fun getOrCreateSecretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -90,6 +99,7 @@ object KeystoreSecretsManager {
             val encrypted = encrypt(key.trim())
             prefs.edit().putString(PREF_GEMINI_KEY, encrypted).apply()
         }
+        _geminiKeyVersion.update { it + 1 }
     }
 
     fun getGeminiApiKey(context: Context): String {
@@ -105,5 +115,26 @@ object KeystoreSecretsManager {
     fun clearGeminiApiKey(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().remove(PREF_GEMINI_KEY).apply()
+        _geminiKeyVersion.update { it + 1 }
+    }
+
+    /**
+     * Moves a Gemini key that older builds kept in plain settings into encrypted storage.
+     * Returns true when the plain copy is safe to erase: the key was already stored encrypted,
+     * or it was just stored and reads back intact.
+     */
+    fun moveLegacyGeminiKey(context: Context, legacyKey: String): Boolean {
+        if (legacyKey.isBlank()) return true
+        return try {
+            if (hasGeminiApiKey(context)) return true
+            val key = legacyKey.trim()
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            // commit(), not apply(): the plain copy is erased right after, so this write must be on disk first.
+            val written = prefs.edit().putString(PREF_GEMINI_KEY, encrypt(key)).commit()
+            _geminiKeyVersion.update { it + 1 }
+            written && getGeminiApiKey(context) == key
+        } catch (_: Exception) {
+            false
+        }
     }
 }

@@ -67,6 +67,7 @@ import my.hana.meena.data.system.WeatherRepository
 import my.hana.meena.ui.widgets.WidgetState
 import my.hana.meena.data.system.GeminiBriefRepository
 import my.hana.meena.data.system.InstalledAppsRepository
+import my.hana.meena.data.system.KeystoreSecretsManager
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -119,6 +120,8 @@ fun TodayHub(
     val weatherState by WeatherRepository.state.collectAsState()
     val calendarState by DeviceCalendarRepository.state.collectAsState()
     val briefState by GeminiBriefRepository.state.collectAsState()
+    val geminiKeyVersion by KeystoreSecretsManager.geminiKeyVersion.collectAsState()
+    val isBriefEnabled = settings.widgetConfigs["widget-today-summary"]?.isEnabled == true
     val quickNotes = remember { mutableStateListOf<String>() }
     var appsVersion by remember { mutableStateOf(0) }
 
@@ -154,6 +157,11 @@ fun TodayHub(
         } else null
     }
 
+    // Only contact gemini while the brief widget is on; re-run when the key is saved or forgotten.
+    LaunchedEffect(isBriefEnabled, geminiKeyVersion) {
+        if (isBriefEnabled) GeminiBriefRepository.refresh(context, settings)
+    }
+
     LaunchedEffect(settings.is24HourFormat, settings.dateFormatPattern, settings.showClockSeconds) {
         val timePattern = when {
             settings.is24HourFormat && settings.showClockSeconds -> "HH:mm:ss"
@@ -164,7 +172,6 @@ fun TodayHub(
         val timeFormat = SimpleDateFormat(timePattern, Locale.getDefault())
         val dateFormat = SimpleDateFormat(settings.dateFormatPattern, Locale.getDefault())
         WeatherRepository.refresh(context)
-        GeminiBriefRepository.refresh(context, settings)
         while (true) {
             val now = Date()
             currentTime = timeFormat.format(now).lowercase()
@@ -187,7 +194,7 @@ fun TodayHub(
             .filter {
                 val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
                 val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications"
-                val isBriefConfigured = it.key != "widget-today-summary" || settings.geminiApiKey.isNotBlank()
+                val isBriefConfigured = it.key != "widget-today-summary" || briefState !is WidgetState.NeedsSetup
                 val isNotRemovedWidget = it.key != "widget-health-device"
                 isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled && isBriefConfigured
             }

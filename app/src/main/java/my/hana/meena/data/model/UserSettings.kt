@@ -35,6 +35,8 @@ data class MeenaUserSettings(
     val newsFeeds: List<String> = emptyList(),
     val widgetConfigs: Map<String, WidgetConfig> = defaultWidgetMap(),
     // Gemini Flash Brief Settings
+    // Legacy: builds before 2026-10-03 kept the key here in plain text. Only read so
+    // SettingsRepository.migrateLegacySecrets can move it; the real key lives in KeystoreSecretsManager.
     val geminiApiKey: String = "",
     val geminiModel: String = "gemini-1.5-flash",
     val geminiIncludeCalendar: Boolean = true,

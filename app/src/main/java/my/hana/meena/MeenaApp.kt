@@ -18,7 +18,13 @@ class MeenaApp : Application() {
     override fun onCreate() {
         super.onCreate()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        scope.launch { runCatching { SettingsRepository(this@MeenaApp).userSettingsFlow.first() } }
+        scope.launch {
+            runCatching {
+                val settingsRepository = SettingsRepository(this@MeenaApp)
+                settingsRepository.migrateLegacySecrets()
+                settingsRepository.userSettingsFlow.first()
+            }
+        }
         scope.launch { runCatching { InstalledAppsRepository.loadInstalledApps(this@MeenaApp) } }
     }
 }
