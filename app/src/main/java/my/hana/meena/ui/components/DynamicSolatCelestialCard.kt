@@ -312,7 +312,7 @@ fun DynamicSolatCelestialCard(
             ) {
                 // Left: Gregorian & Hijri Date
                 Text(
-                    text = "${schedule.formattedGregorianDate}  Â·  ${schedule.hijriDate}".lowercase(),
+                    text = "${schedule.formattedGregorianDate}  ·  ${schedule.hijriDate}".lowercase(),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
@@ -518,7 +518,7 @@ private fun CelestialSkyCanvas(
         }
         val sunY = getY(sunX)
 
-        // Target Focus Ring marker right next to sun (matches reference âŠ™)
+        // Target Focus Ring marker right next to sun (matches reference ⊙)
         val targetX = (sunX + 13.dp.toPx()).coerceAtMost(w * 0.94f)
         val targetY = getY(targetX)
 
@@ -636,7 +636,7 @@ private fun CelestialSkyCanvas(
             center = Offset(sunX, sunY)
         )
 
-        // Target Focus Ring marker right next to sun (matches reference âŠ™)
+        // Target Focus Ring marker right next to sun (matches reference ⊙)
         drawCircle(
             color = MeenaTextWhite,
             radius = 4.5.dp.toPx(),
@@ -759,7 +759,7 @@ private fun ZonePickerDialog(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${zone.code} Â· ${zone.state}",
+                                    text = "${zone.code} · ${zone.state}",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = if (isSelected) MaterialTheme.colorScheme.primary else MeenaTextMuted
@@ -771,7 +771,7 @@ private fun ZonePickerDialog(
                                 )
                             }
                             if (isSelected) {
-                                Text("âœ“", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                                Text("✓", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -818,13 +818,13 @@ private fun MonthlyScheduleDialog(
                 ) {
                     Column {
                         Text(
-                            text = "prayer timetable Â· ${monthNames[month]} $year",
+                            text = "prayer timetable · ${monthNames[month]} $year",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium,
                             color = MeenaTextWhite
                         )
                         Text(
-                            text = "$zone Â· $zoneName",
+                            text = "$zone · $zoneName",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.primary
                         )

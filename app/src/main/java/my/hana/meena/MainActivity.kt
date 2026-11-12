@@ -892,7 +892,7 @@ fun ActionCenterSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Notifications bar (mirrors based on handedness per Â§2.5)
+            // Notifications bar (mirrors based on handedness per §2.5)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

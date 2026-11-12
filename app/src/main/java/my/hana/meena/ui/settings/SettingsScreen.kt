@@ -214,7 +214,7 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "meena ui Ã‚Â· settings",
+                    text = "meena ui · settings",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     letterSpacing = 12.sp
@@ -320,7 +320,7 @@ fun SettingsScreen(
                             val config = settingsState.widgetConfigs[id]
                             val isEnabled = config?.isEnabled != false
                             val hub = config?.hubId ?: "home"
-                            val statusText = if (isEnabled) "on Ã‚Â· $hub" else "off"
+                            val statusText = if (isEnabled) "on · $hub" else "off"
 
                             SettingLinkRow(
                                 title = title,
@@ -402,7 +402,7 @@ fun SettingsScreen(
                             val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
                             SettingLinkRow(
                                 title = "date & time",
-                                status = "$timeMode Ã‚Â· $hijriMode",
+                                status = "$timeMode · $hijriMode",
                                 onClick = { activeSubPage = "look:datetime" }
                             )
                         }
@@ -410,7 +410,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "theme & accents",
-                                status = "${settingsState.baseTheme} Ã‚Â· ${settingsState.accentHex.lowercase()}",
+                                status = "${settingsState.baseTheme} · ${settingsState.accentHex.lowercase()}",
                                 onClick = { activeSubPage = "look:theme" }
                             )
                         }
@@ -427,7 +427,7 @@ fun SettingsScreen(
                             val hand = if (settingsState.isLeftHanded) "left-handed" else "right-handed"
                             SettingLinkRow(
                                 title = "ergonomics & layout",
-                                status = "$hand Ã‚Â· haptics on",
+                                status = "$hand · haptics on",
                                 onClick = { activeSubPage = "look:ergonomics" }
                             )
                         }
@@ -443,7 +443,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "privacy & data safety",
-                                status = "on-device only Ã‚Â· zero cloud tracking",
+                                status = "on-device only · zero cloud tracking",
                                 onClick = { activeSubPage = "look:privacy" }
                             )
                         }
@@ -657,7 +657,7 @@ private fun SubPageContainer(
                         SettingSegmentedRow(
                             title = "temperature scale",
                             subtitle = "display unit for local temperature",
-                            options = listOf("c" to "celsius (Ã‚Â°c)", "f" to "fahrenheit (Ã‚Â°f)"),
+                            options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
                             selectedKey = custom("temp_unit", "c"),
                             onSelectKey = { setCustom("temp_unit", it) }
                         )
@@ -697,7 +697,7 @@ private fun SubPageContainer(
                     item {
                         SettingSegmentedRow(
                             title = "temperature unit",
-                            options = listOf("c" to "celsius (Ã‚Â°c)", "f" to "fahrenheit (Ã‚Â°f)"),
+                            options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
                             selectedKey = custom("temp_unit", "c"),
                             onSelectKey = { setCustom("temp_unit", it) }
                         )
@@ -1588,7 +1588,7 @@ private fun SubPageContainer(
                 val swatchName = activeSwatch?.name ?: settingsState.accentHex.lowercase()
 
                 Text(
-                    text = "$swatchName Ã‚Â· ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} Ã‚Â· ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
+                    text = "$swatchName · ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} · ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
                 )
@@ -1769,7 +1769,7 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "charter: clean Ã‚Â· light Ã‚Â· open Ã‚Â· fast",
+                    text = "charter: clean · light · open · fast",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -1833,7 +1833,7 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "version 1.0 Ã‚Â· my.hana.meena",
+                    text = "version 1.0 · my.hana.meena",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     fontSize = 12.sp
@@ -2190,7 +2190,7 @@ private fun FinanceAccountSettings(
                                 color = MeenaTextWhite
                             )
                             Text(
-                                text = "${holding.shares.toInt()} shares Ã‚Â· cost rm %.2f Ã‚Â· now rm %.2f".format(holding.averageCost, holding.currentPrice),
+                                text = "${holding.shares.toInt()} shares · cost rm %.2f · now rm %.2f".format(holding.averageCost, holding.currentPrice),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -2348,10 +2348,10 @@ private fun HealthAccountSettings(
         )
 
         val statusText = when (availability) {
-            HealthConnectAvailability.AVAILABLE -> "status Ã‚Â· installed and ready"
-            HealthConnectAvailability.UPDATE_REQUIRED -> "status Ã‚Â· update required"
-            HealthConnectAvailability.NOT_INSTALLED -> "status Ã‚Â· not installed"
-            HealthConnectAvailability.NOT_SUPPORTED -> "status Ã‚Â· not supported on this device"
+            HealthConnectAvailability.AVAILABLE -> "status · installed and ready"
+            HealthConnectAvailability.UPDATE_REQUIRED -> "status · update required"
+            HealthConnectAvailability.NOT_INSTALLED -> "status · not installed"
+            HealthConnectAvailability.NOT_SUPPORTED -> "status · not supported on this device"
         }
 
         Text(
@@ -2695,7 +2695,7 @@ private fun NewsFeedManager(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (alreadyAdded) "added Ã‚Â· $label" else "+ $label",
+                        text = if (alreadyAdded) "added · $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 12.sp,
                         color = if (alreadyAdded) MeenaTextWhite else MeenaTextMuted
@@ -2721,7 +2721,7 @@ private fun NewsFeedManager(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (alreadyAdded) "added Ã‚Â· $label" else "+ $label",
+                        text = if (alreadyAdded) "added · $label" else "+ $label",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 12.sp,
                         color = if (alreadyAdded) MeenaTextWhite else MeenaTextMuted
@@ -2800,7 +2800,7 @@ fun MetroSubPageHeader(
                 .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Text(
-                text = "Ã¢â‚¬Â¹ $parentTitle".lowercase(),
+                text = "‹ $parentTitle".lowercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 14.sp
@@ -2963,17 +2963,17 @@ private fun SolatZonePicker(
 ) {
     val zones = listOf(
         "" to "auto-detect by location (gps)",
-        "WLY01" to "wly01 Ã‚Â· kuala lumpur & putrajaya",
-        "SGR01" to "sgr01 Ã‚Â· gombak, petaling, sepang, hulu langat",
-        "SGR02" to "sgr02 Ã‚Â· kuala selangor, sabak bernam",
-        "SGR03" to "sgr03 Ã‚Â· klang, kuala langat",
-        "JHR01" to "jhr01 Ã‚Â· pulau aur & pemanggil",
-        "JHR02" to "jhr02 Ã‚Â· johor bahru, kota tinggi, kulai",
-        "PNG01" to "png01 Ã‚Â· pulau pinang",
-        "PRK01" to "prk01 Ã‚Â· tapah, slim river, tanjung malim",
-        "PRK02" to "prk02 Ã‚Â· ipoh, batu gajah, kampar",
-        "SBH01" to "sbh01 Ã‚Â· kota kinabalu, ranau, penampang",
-        "SWK01" to "swk01 Ã‚Â· kuching, bau, lundu, sematan"
+        "WLY01" to "wly01 · kuala lumpur & putrajaya",
+        "SGR01" to "sgr01 · gombak, petaling, sepang, hulu langat",
+        "SGR02" to "sgr02 · kuala selangor, sabak bernam",
+        "SGR03" to "sgr03 · klang, kuala langat",
+        "JHR01" to "jhr01 · pulau aur & pemanggil",
+        "JHR02" to "jhr02 · johor bahru, kota tinggi, kulai",
+        "PNG01" to "png01 · pulau pinang",
+        "PRK01" to "prk01 · tapah, slim river, tanjung malim",
+        "PRK02" to "prk02 · ipoh, batu gajah, kampar",
+        "SBH01" to "sbh01 · kota kinabalu, ranau, penampang",
+        "SWK01" to "swk01 · kuching, bau, lundu, sematan"
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {

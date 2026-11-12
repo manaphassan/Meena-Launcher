@@ -230,7 +230,7 @@ private fun PortfolioSection(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = if (showAmounts) "rm %.2f".format(totalValue) else "rm Â·Â·Â·Â·Â·",
+                            text = if (showAmounts) "rm %.2f".format(totalValue) else "rm ·····",
                             fontSize = 32.sp,
                             style = MaterialTheme.typography.displaySmall,
                             color = MeenaTextWhite
@@ -239,7 +239,7 @@ private fun PortfolioSection(
                             val changeText = if (showAmounts) {
                                 "${if (isProfit) "+" else ""}rm %.2f (${if (isProfit) "+" else ""}%.1f%%)".format(totalChange, changePct)
                             } else {
-                                "${if (isProfit) "+" else ""}Â·Â·.Â·Â· (${if (isProfit) "+" else ""}%.1f%%)".format(changePct)
+                                "${if (isProfit) "+" else ""}··.·· (${if (isProfit) "+" else ""}%.1f%%)".format(changePct)
                             }
                             Text(
                                 text = changeText,
@@ -250,7 +250,7 @@ private fun PortfolioSection(
                     }
 
                     Text(
-                        text = if (data.sheetConnected) "updated just now Â· google sheets bridge" else "updated just now Â· local portfolio",
+                        text = if (data.sheetConnected) "updated just now · google sheets bridge" else "updated just now · local portfolio",
                         style = MaterialTheme.typography.labelSmall,
                         color = MeenaTextMuted
                     )
@@ -290,9 +290,9 @@ private fun PortfolioSection(
                                         color = MeenaTextWhite
                                     )
                                     val sharesText = if (showAmounts) {
-                                        "${holding.shares.toInt()} shares Â· avg rm %.2f".format(holding.averageCost)
+                                        "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost)
                                     } else {
-                                        "Â·Â·Â· shares Â· avg rm Â·Â·.Â·Â·"
+                                        "··· shares · avg rm ··.··"
                                     }
                                     Text(
                                         text = sharesText,
@@ -301,7 +301,7 @@ private fun PortfolioSection(
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
-                                    val valText = if (showAmounts) "rm %.2f".format(holding.currentValue) else "rm Â·Â·.Â·Â·"
+                                    val valText = if (showAmounts) "rm %.2f".format(holding.currentValue) else "rm ··.··"
                                     Text(
                                         text = valText,
                                         style = MaterialTheme.typography.bodyMedium,
@@ -310,7 +310,7 @@ private fun PortfolioSection(
                                     val profitText = if (showAmounts) {
                                         "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent)
                                     } else {
-                                        "${if (hProfit) "+" else ""}Â·Â·.Â·Â· (%.1f%%)".format(holding.profitLossPercent)
+                                        "${if (hProfit) "+" else ""}··.·· (%.1f%%)".format(holding.profitLossPercent)
                                     }
                                     Text(
                                         text = profitText,
@@ -460,7 +460,7 @@ private fun ExchangeRatesSection(
                 val isStale = state is WidgetState.Stale
 
                 Text(
-                    text = if (isStale) "updated earlier Â· offline cache" else "updated today Â· european central bank",
+                    text = if (isStale) "updated earlier · offline cache" else "updated today · european central bank",
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
@@ -625,7 +625,7 @@ private fun SpendingSection(
                                 color = MeenaTextWhite
                             )
                             Text(
-                                text = "${tx.bank.lowercase()} Â· ${tx.formattedTime}",
+                                text = "${tx.bank.lowercase()} · ${tx.formattedTime}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )

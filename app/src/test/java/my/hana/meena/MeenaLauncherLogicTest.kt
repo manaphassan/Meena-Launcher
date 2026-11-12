@@ -388,7 +388,7 @@ class MeenaLauncherLogicTest {
             isAllDay = false,
             location = "room a",
             calendarColor = -16711936,
-            formattedTime = "10:00 â€“ 11:00",
+            formattedTime = "10:00 – 11:00",
             formattedDate = "today"
         )
         assertEquals(42L, event.id)
@@ -779,7 +779,7 @@ class MeenaLauncherLogicTest {
         val doc = builder.parse(stringsFile)
         val stringNodes = doc.getElementsByTagName("string")
         
-        val bannedSymbols = listOf("â€¢", "âœ•", "â–²", "â–¼", "â†’", "âš¡")
+        val bannedSymbols = listOf("•", "✕", "▲", "▼", "→", "⚡")
         val violations = mutableListOf<String>()
 
         for (i in 0 until stringNodes.length) {

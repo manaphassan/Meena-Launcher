@@ -139,7 +139,7 @@ fun NewsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = "local news Â· rss feeds",
+                                        text = "local news · rss feeds",
                                         style = MaterialTheme.typography.displaySmall,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Medium,
@@ -267,7 +267,7 @@ fun NewsHub(
                         }
 
                         // 3. RSS FEED SOURCE MONITOR
-                        CollapsibleWidget(title = "feed sources Â· live status") {
+                        CollapsibleWidget(title = "feed sources · live status") {
                             Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                 FeedSourceStatusRow("Amanz.my", "https://amanz.my/feed/", MaterialTheme.colorScheme.primary)
                                 FeedSourceStatusRow("SuamiSihat.com.my", "https://suamisihat.com.my/feed/", MaterialTheme.colorScheme.primary)
@@ -327,7 +327,7 @@ private fun NewsArticleCard(
 
                     if (article.category.isNotBlank()) {
                         Text(
-                            text = "Â· ${article.category.lowercase()}",
+                            text = "· ${article.category.lowercase()}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MeenaTextMuted
                         )
