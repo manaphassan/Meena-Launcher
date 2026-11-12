@@ -1,0 +1,5 @@
+# Baseline profile: pre-compile Meena's own code so the first cold start after install
+# does not run interpreted. Wildcards cover every class and method in the app package.
+# Compose and AndroidX libraries ship their own profiles inside their AARs.
+HSPLmy/hana/meena/**->**(**)**
+Lmy/hana/meena/**;
