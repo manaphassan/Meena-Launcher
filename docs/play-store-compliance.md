@@ -13,9 +13,9 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 ### 1.1 Overview Questions
 - **Does your app collect or share any of the required user data types?**  
-  **Yes** (collected ephemerally on-device to power core launcher features; **Zero data is shared** with third parties).
+  **Yes.** Most data is only processed on the device. The exception is the optional Gemini brief (§1.3): when the user adds their own Gemini API key, the items they tick are sent to Google's Generative Language API.
 - **Is all of the user data collected by your app encrypted in transit?**  
-  **Yes** (all outbound HTTP requests for weather, news RSS, solat schedules, and Gemini API use HTTPS / TLS 1.3).
+  **Yes** (all requests for weather, news RSS, solat schedules and the Gemini API use HTTPS; cleartext traffic is blocked by default at target SDK 36).
 - **Do you provide a way for users to request that their data be deleted?**  
   **Yes** (users can clear all data directly via Android system App Settings or the in-app "reset to defaults" button; no remote servers store user data).
 
@@ -25,14 +25,32 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 | Data Category | Data Type | Collected? | Shared? | Processed Ephemerally? | Required or Optional? | Purpose |
 |---|---|---|---|---|---|---|
-| **Location** | Approximate Location (`ACCESS_COARSE_LOCATION`) | Yes | **No** | **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather & JAKIM prayer times) |
-| **Financial Info** | Other financial info (Purchase / Transaction amounts) | Yes | **No** | **Yes** | Optional (requires explicit opt-in toggle) | Personal finance tracking (parsed locally in memory from selected bank push notifications) |
+| **Location** | Approximate Location (`ACCESS_COARSE_LOCATION`) | Yes | See §1.3 | **No** if the Gemini brief is on, otherwise **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather & JAKIM prayer times; place name in the Gemini brief) |
+| **Financial Info** | Purchase history (spending count and total for today) | Yes, only if the brief's spending source is ticked | See §1.3 | **No** (sent to Gemini) | Optional (spending opt-in and brief source both off by default) | App functionality (Gemini brief). Parsing of bank notifications itself stays on-device |
 | **Health & Fitness** | Fitness info (Steps, distance, calories) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying daily activity summary on Today hub) |
 | **Health & Fitness** | Health info (Sleep duration, heart rate) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying health metrics on Today hub) |
-| **Calendar** | Calendar events | Yes | **No** | **Yes** | Optional (requires calendar permission) | App functionality (displaying upcoming agenda events on Today hub) |
+| **Calendar** | Calendar events (today's event titles and times) | Yes, when the Gemini brief is on | See §1.3 | **No** (sent to Gemini) | Optional (calendar permission, Gemini key, and the brief's calendar source) | App functionality (Gemini brief). Agenda display on the Today hub is on-device only |
 | **Messages** | Other in-app messages / notification text | Yes | **No** | **Yes** | Optional (requires notification listener permission) | App functionality (Inbox hub alerts, chat summaries, and spending parser) |
 | **App Info & Performance** | Installed apps | Yes | **No** | **Yes** | **Required** | Core launcher functionality (discovering, launching, and organizing apps) |
 | **Personal Identifiers** | Name, Email, Phone, Device IDs | **No** | **No** | N/A | N/A | Meena collects zero personal identifiers or device IDs |
+
+### 1.3 Gemini brief: data sent to Google
+
+Source: `GeminiBriefRepository.buildContextString` and `generateContent` (endpoint `generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`).
+
+- **When:** only after the user saves their own Gemini API key. The brief then refreshes automatically when the Today hub opens (cached for 2 hours) and when the user taps it.
+- **What is sent, per ticked source:**
+
+| Brief source | Default | Sent to Google |
+|---|---|---|
+| calendar | on | today's event times and titles |
+| weather | on | temperature, condition, place name |
+| solat | on | next prayer name and time |
+| spending | off | number of payments today and total in rm |
+
+- **Not ephemeral:** under the [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms) (effective 23 Mar 2026), Unpaid Services content is used by Google "to provide, improve, and develop Google products" and "human reviewers may read, annotate, and process your API input and output." Data sent by the brief must therefore not be marked as processed ephemerally.
+- **Collected vs shared:** per [Provide information for Google Play's Data safety section](https://support.google.com/googleplay/android-developer/answer/10787469), data transmitted off the device counts as **collected**. Transfers "based on a specific user-initiated action, where the user reasonably expects the data to be shared, or based on a prominent in-app disclosure and consent" do not need to be declared as **shared**. The app shows a disclosure (`disclosure_gemini_body`) before setup, so "not shared" may apply. **[S] Owner to decide**; declaring "shared" is the conservative choice.
+- **Disclosure:** the in-app text says details are sent to Google when generating a brief. It does not say this happens automatically when the Today hub opens. **[S] Owner to decide** whether to add that.
 
 ---
 
