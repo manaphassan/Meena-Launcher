@@ -22,7 +22,7 @@ Meena talks directly to these services from your phone; it has no servers of its
 | Service | When | What it receives |
 |---|---|---|
 | Open-Meteo (weather and air quality) | Weather or air quality widget is on | Approximate coordinates |
-| CARTO map tiles, unpkg (map library) | Map widget is on | The map area around your approximate location |
+| OpenFreeMap map tiles (may be served through Cloudflare), unpkg (map libraries: Leaflet, MapLibre) | Map widget is on | The map area around your approximate location |
 | JAKIM e-Solat | Prayer times widget is on | Your prayer zone code |
 | Frankfurter (exchange rates) | Rates widget is on | Your base currency |
 | Google Sheets | You link a sheet | A request for the sheet you linked |

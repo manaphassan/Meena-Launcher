@@ -68,8 +68,9 @@ import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.theme.MeenaBlack
 
 /**
- * Map of the user's rough area on a dark OpenStreetMap basemap (CARTO Dark Matter tiles).
- * Shown only after a real location fix; credits OpenStreetMap and CARTO as their terms require.
+ * Map of the user's rough area on OpenFreeMap's dark vector style (OpenStreetMap data), drawn by
+ * MapLibre inside Leaflet. Shown only after a real location fix; credits OpenFreeMap, OpenMapTiles
+ * and OpenStreetMap as their terms require.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -299,21 +300,22 @@ private fun generateDarkOpenMapsHtml(
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- OpenFreeMap vector tiles need MapLibre; the connector lets Leaflet host them (approved 13 Nov 2026). -->
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css" />
+<script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body, #map {
+  html, body {
     width: 100%;
     height: 100%;
     background: #080808;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
+  /* Height is set from window.innerHeight in script: CSS vh and % resolve to 0 in this WebView. */
+  #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: #080808; }
   .leaflet-container { background: #080808; }
-  
-  /* High contrast dark theme tiles using CartoDB Dark Matter / OSM fallback */
-  .leaflet-tile {
-    filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.2) brightness(0.7);
-  }
 
   /* Animated Expanding Radar Pulse Waves (3km Geodesic) */
   @keyframes radarWavePulse {
@@ -423,14 +425,11 @@ private fun generateDarkOpenMapsHtml(
   }
 
   .range-text-label {
-    background: rgba(0, 0, 0, 0.85);
     color: #00A4EF;
-    border: 1px solid rgba(0, 164, 239, 0.8);
-    font-size: 8px;
-    font-weight: bold;
-    padding: 1px 4px;
+    font-size: 12px;
     white-space: nowrap;
     text-align: center;
+    text-shadow: 0 0 3px #000, 0 0 3px #000;
   }
 </style>
 </head>
@@ -448,11 +447,26 @@ private fun generateDarkOpenMapsHtml(
     maxZoom: 18,
     preferCanvas: true
   }).setView([lat, lng], 13);
+  // The WebView is laid out at 0 height inside Today's list and CSS heights stay 0, so size the
+  // map from innerHeight in pixels and tell Leaflet whenever that changes.
+  function fitToWindow() {
+    var el = document.getElementById('map');
+    var h = window.innerHeight;
+    if (h > 0 && el.clientHeight !== h) {
+      el.style.height = h + 'px';
+      map.invalidateSize();
+    }
+  }
+  window.addEventListener('resize', fitToWindow);
+  var fitTries = 0;
+  var fitTimer = setInterval(function () {
+    fitToWindow();
+    if (++fitTries > 40) clearInterval(fitTimer);
+  }, 250);
 
-  // CartoDB Dark Matter tiles
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png', {
-    subdomains: 'abcd',
-    maxZoom: 19
+  // OpenFreeMap dark vector style (free, no key; https://openfreemap.org). Credit is shown below the map.
+  L.maplibreGL({
+    style: 'https://tiles.openfreemap.org/styles/dark'
   }).addTo(map);
 
   // 1.0 km & 2.0 km concentric radar guide rings
@@ -487,7 +501,7 @@ private fun generateDarkOpenMapsHtml(
   var rangeTagIcon = L.divIcon({
     className: 'range-text-label',
     html: '3 km around you',
-    iconSize: [120, 16],
+    iconSize: [160, 18],
     iconAnchor: [60, 8]
   });
   var rangeTagMarker = L.marker([northPerimeterLat, lng], { icon: rangeTagIcon }).addTo(map);

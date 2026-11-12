@@ -54,7 +54,7 @@
     <string name="disclosure_notification_body">meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.</string>
     <string name="disclosure_notification_question">do you want to open notification access settings?</string>
     <string name="disclosure_location_title">approximate location</string>
-    <string name="disclosure_location_body">meena uses your rough location for local weather and prayer times. your rough area goes to open-meteo for the weather and to carto for the map. no background tracking.</string>
+    <string name="disclosure_location_body">meena uses your rough location for local weather and prayer times. your rough area goes to open-meteo for the weather and to openfreemap for the map. no background tracking.</string>
     <string name="disclosure_location_question">allow location access?</string>
     <string name="disclosure_calendar_title">calendar access</string>
     <string name="disclosure_calendar_body">meena reads your calendar to show today\'s events. your events stay on your phone.</string>
@@ -65,7 +65,7 @@
     <string name="privacy_intro">meena keeps your data on your phone. a few features need the internet, and each one is listed below.</string>
     <string name="privacy_on_device_body">notifications, bank alerts, calendar events and health stats are read on your phone and never leave it. no analytics, no ads, no tracking.</string>
     <string name="privacy_notifications_line">notifications and bank alerts: read on your phone and never sent anywhere.</string>
-    <string name="privacy_location_line">rough location: used for weather, air quality and the map. open-meteo and carto get your rough area. no background tracking.</string>
+    <string name="privacy_location_line">rough location: used for weather, air quality and the map. open-meteo and openfreemap get your rough area. no background tracking.</string>
     <string name="privacy_calendar_line">calendar: read on your phone to show your agenda. never sent anywhere.</string>
     <string name="privacy_backup_line">no cloud backup: android backup is off, so your settings never sync anywhere.</string>
 
@@ -152,7 +152,7 @@
     <string name="map_no_location">your area shows up here once your phone finds your rough location. tap to try again.</string>
     <string name="map_no_location_short">finding your area</string>
     <string name="map_accuracy">%1$s · rough location, within about %2$s km</string>
-    <string name="map_attribution">map data © openstreetmap contributors (odbl), tiles © carto</string>
+    <string name="map_attribution">openfreemap © openmaptiles · data from openstreetmap contributors (odbl)</string>
     <string name="map_zoom_in">zoom in</string>
     <string name="map_zoom_out">zoom out</string>
     <string name="map_recenter">recenter</string>
