@@ -309,6 +309,7 @@ internal val SETTINGS_WIDGET_TITLES = linkedMapOf(
     "widget-frequent-apps" to "frequent apps",
     "widget-solat" to "prayer times",
     "widget-tasks" to "agenda",
+    "widget-week-strip" to "week",
     "widget-calendar-month" to "month",
     "widget-notes" to "notes",
     "widget-health-telemetry" to "health",

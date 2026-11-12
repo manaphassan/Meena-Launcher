@@ -111,6 +111,7 @@ data class MeenaUserSettings(
             "widget-favourites" to WidgetConfig("today", 2, maxLinesOrItems = 8, isEnabled = true),
             "widget-solat" to WidgetConfig("today", 3, isEnabled = true),
             "widget-tasks" to WidgetConfig("today", 4, isEnabled = true),
+            "widget-week-strip" to WidgetConfig("today", 5, isEnabled = false),
             "widget-calendar-month" to WidgetConfig("today", 6, isEnabled = false),
             "widget-notes" to WidgetConfig("today", 7, isEnabled = false),
             "widget-health-device" to WidgetConfig("today", 8, isEnabled = false),

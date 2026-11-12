@@ -69,6 +69,7 @@ import my.hana.meena.data.system.InstalledAppsRepository
 import my.hana.meena.data.system.ClockInfo
 import my.hana.meena.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -585,6 +586,56 @@ fun TodayHub(
                                 schedule = jakimSchedule,
                                 onZoneChanged = onUpdateSolatZone
                             )
+                        }
+                    }
+                }
+
+                "widget-week-strip" -> {
+                    // Today and the next six days with event marks (AIO content, D14).
+                    val isNeedsPermission = calendarState is CalendarState.NeedsPermission
+                    val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
+                    val stripDays = remember(currentDate, calEvents, settings.calendarDaysAhead) {
+                        my.hana.meena.data.system.WeekStripBuilder.build(
+                            nowMillis = System.currentTimeMillis(),
+                            events = calEvents.map { my.hana.meena.data.system.StripEvent(it.startTime, it.isAllDay) },
+                            knownDays = settings.calendarDaysAhead
+                        )
+                    }
+                    val weekCount = stripDays.sumOf { it.eventCount }
+                    CollapsibleWidget(
+                        title = stringResource(R.string.week_strip_title),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
+                        collapsedSummary = {
+                            Text(
+                                text = when {
+                                    isNeedsPermission -> stringResource(R.string.settings_needs_okay)
+                                    weekCount == 0 -> stringResource(R.string.week_strip_summary_none)
+                                    else -> pluralStringResource(R.plurals.week_strip_summary, weekCount, weekCount)
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isNeedsPermission || weekCount == 0) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    ) {
+                        Column {
+                            my.hana.meena.ui.components.WeekStrip(
+                                days = stripDays,
+                                showEvents = calendarState is CalendarState.Ready,
+                                onDayClick = { DeviceCalendarRepository.openDay(context, it.startMillis) }
+                            )
+                            if (isNeedsPermission) {
+                                Text(
+                                    text = stringResource(R.string.week_strip_allow),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { onRequestCalendarPermission() }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
                         }
                     }
                 }

@@ -46,7 +46,8 @@ class MeenaLauncherLogicTest {
             "widget-health-telemetry",
             "widget-health-aqi",
             "widget-map-radar",
-            "widget-device-telemetry"
+            "widget-device-telemetry",
+            "widget-week-strip"
         )
         for (widgetId in expectedDisabled) {
             val config = defaultMap[widgetId]

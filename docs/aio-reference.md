@@ -45,7 +45,7 @@ Reference only: we study layout and behaviour. We do not copy AIO code, icons, f
 | 1 | Clock info line: place, low and high, wind | time, date, hijri only | nothing new (Open-Meteo data already fetched) | **done** |
 | 2 | Next alarm under the clock | none | `AlarmManager.getNextAlarmClock()`, no permission ([docs](https://developer.android.com/reference/android/app/AlarmManager#getNextAlarmClock())) | **done** |
 | 3 | Battery percent and battery temperature | phone widget (off by default) | check what it shows | todo |
-| 4 | 7-day calendar strip with event dots, weekends marked | month grid, agenda list | nothing new | todo |
+| 4 | 7-day calendar strip with event dots, weekends marked | month grid, agenda list | nothing new | **done** (off by default; all-day events placed by UTC date; tap a day opens the calendar) |
 | 5 | Week numbers in the month grid | month grid | nothing new | **done** (ISO weeks, event dots, weekends muted; replaces the duplicate event list) |
 | 6 | Quote list "symbol price (date)" with a dash when missing | portfolio, watchlist from sheet | nothing new | todo |
 | 7 | Multi-symbol price chart | none | chart drawn with Compose canvas, no library | todo |

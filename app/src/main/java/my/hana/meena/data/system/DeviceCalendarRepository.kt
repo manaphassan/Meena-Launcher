@@ -267,4 +267,16 @@ object DeviceCalendarRepository {
             context.startActivity(intent)
         } catch (_: Exception) {}
     }
+
+    /** Opens the calendar app on a day (VIEW content://com.android.calendar/time/<ms>). */
+    fun openDay(context: Context, dayStartMillis: Long) {
+        try {
+            val builder = CalendarContract.CONTENT_URI.buildUpon().appendPath("time")
+            ContentUris.appendId(builder, dayStartMillis)
+            val intent = Intent(Intent.ACTION_VIEW)
+                .setData(builder.build())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (_: Exception) {}
+    }
 }
