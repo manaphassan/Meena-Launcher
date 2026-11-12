@@ -66,6 +66,9 @@ import kotlin.math.roundToInt
 import my.hana.meena.data.system.WeatherRepository
 import my.hana.meena.ui.widgets.WidgetState
 import my.hana.meena.data.system.InstalledAppsRepository
+import my.hana.meena.data.system.ClockInfo
+import my.hana.meena.R
+import androidx.compose.ui.res.stringResource
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -117,6 +120,7 @@ fun TodayHub(
 
     val weatherState by WeatherRepository.state.collectAsState()
     val calendarState by DeviceCalendarRepository.state.collectAsState()
+    val deviceLocation by my.hana.meena.data.system.DeviceLocationHelper.locationFlow.collectAsState()
     val quickNotes = remember { mutableStateListOf<String>() }
     var appsVersion by remember { mutableStateOf(0) }
 
@@ -282,6 +286,44 @@ fun TodayHub(
                                     color = MeenaTextMuted
                                 )
                             }
+                        }
+                        // Info lines (content from AIO, D14): place, today's low and high, wind; next alarm.
+                        val infoLine = run {
+                            val parts = mutableListOf<String>()
+                            ClockInfo.placeName(deviceLocation.locationName, deviceLocation.isGpsActive)?.let { parts += it }
+                            val today = weatherData?.daily?.firstOrNull()
+                            if (today != null) {
+                                fun unit(c: Float) = if (isFahrenheit) (c * 9f / 5f + 32f).roundToInt() else c.roundToInt()
+                                parts += stringResource(R.string.clock_low_high, unit(today.minTemp), unit(today.maxTemp))
+                            }
+                            if (weatherData != null) {
+                                parts += stringResource(R.string.clock_wind, weatherData.current.windSpeed.roundToInt())
+                            }
+                            parts.joinToString("  ·  ")
+                        }
+                        if (infoLine.isNotBlank()) {
+                            Text(
+                                text = infoLine,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                            )
+                        }
+                        val nextAlarm = remember(currentTime) {
+                            (context.getSystemService(android.content.Context.ALARM_SERVICE) as? android.app.AlarmManager)
+                                ?.nextAlarmClock?.triggerTime
+                        }
+                        if (nextAlarm != null) {
+                            Text(
+                                text = stringResource(
+                                    R.string.clock_next_alarm,
+                                    ClockInfo.formatAlarm(nextAlarm, System.currentTimeMillis(), settings.is24HourFormat)
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
                         }
                         // Next line: the sooner of the next event or prayer. Hidden when there is no data.
                         val nextUp = remember(currentTime, calendarState, jakimSchedule) {

@@ -130,6 +130,9 @@
     <string name="dialog_reset_portfolio_question">delete your saved portfolio and sheet link, then start fresh?</string>
     <string name="finance_unlock_failed_hint">this phone can\'t open your saved portfolio. tap to start over.</string>
     <string name="updated_just_now">updated just now</string>
+    <string name="clock_low_high">%1$d° to %2$d°</string>
+    <string name="clock_wind">wind %1$d km/h</string>
+    <string name="clock_next_alarm">alarm %1$s</string>
     <string name="updated_minutes_ago">updated %1$dm ago</string>
     <string name="updated_hours_ago">updated %1$dh ago</string>
     <string name="updated_days_ago">updated %1$dd ago</string>

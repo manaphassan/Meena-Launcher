@@ -37,3 +37,23 @@ Reference only: we study layout and behaviour. We do not copy AIO code, icons, f
 | Exchange rates | One line: "1 USD = 4.08 MYR    1 JPY = 0.03 MYR" |
 | Finance | "name = price currency change%" per line; "name = -" when no data |
 | Notes | Coloured highlight blocks with date; blurred on the home screen [I: privacy mode] |
+
+## Content to bring into Meena (D14: content only, Metro layout)
+
+| # | AIO content | Meena today | Needs | Status |
+|---|---|---|---|---|
+| 1 | Clock info line: place, low and high, wind | time, date, hijri only | nothing new (Open-Meteo data already fetched) | **done** |
+| 2 | Next alarm under the clock | none | `AlarmManager.getNextAlarmClock()`, no permission ([docs](https://developer.android.com/reference/android/app/AlarmManager#getNextAlarmClock())) | **done** |
+| 3 | Battery percent and battery temperature | phone widget (off by default) | check what it shows | todo |
+| 4 | 7-day calendar strip with event dots, weekends marked | month grid, agenda list | nothing new | todo |
+| 5 | Week numbers in the month grid | month grid | nothing new | todo |
+| 6 | Quote list "symbol price (date)" with a dash when missing | portfolio, watchlist from sheet | nothing new | todo |
+| 7 | Multi-symbol price chart | none | chart drawn with Compose canvas, no library | todo |
+| 8 | More currency pairs | 9 pairs grid | nothing new | todo |
+| 9 | Frequent apps row | favourites only | count launches inside Meena (no permission); system usage stats need a special permission, so not that | needs OK |
+| 10 | Notes hidden on home until tapped | notes widget | nothing new | todo |
+| 11 | Connected Bluetooth devices | none | `BLUETOOTH_CONNECT` on Android 12+ (new permission) | needs OK |
+| 12 | Wikipedia article of the day | none | Wikimedia REST API, free [S: verify terms and endpoint] | needs OK |
+| 13 | Gmail and Telegram lists | inbox alerts and chats from notifications | per-app filter on existing notifications, no new permission | todo |
+| 14 | Calculator | none | nothing new | todo |
+| 15 | Map with place name | map radar widget | already shows map | check |

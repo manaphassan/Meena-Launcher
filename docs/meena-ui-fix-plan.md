@@ -43,6 +43,7 @@ Three things you asked for **cannot be built literally**; the plan substitutes (
 | D11 | APIs | **Free tiers only** (details in §5) | Your decision; some sources will be delayed or lack coverage |
 | D12 | Play account | **Personal** account | The 12-tester / 14-day closed test applies if the account was created after 13 Nov 2023 |
 | D13 | Gemini brief | **Dropped** (owner, 12 Nov 2026). Target audience stays 13+. | [Gemini API terms](https://ai.google.dev/gemini-api/terms): 18+ only, "not for consumer use", paid-only in EEA/CH/UK, free-tier input used to improve products and may be human-reviewed. Default model `gemini-1.5-flash` and fallback `gemini-2.0-flash` are shut down ([deprecations](https://ai.google.dev/gemini-api/docs/deprecations)) |
+| D14 | AIO Launcher as reference | **Copy content, not layout** (owner, 12 Nov 2026). Meena shows the same kinds of information AIO does (see `docs/aio-reference.md`, content gap list below); every screen keeps the Metro/Zune layout, type, spacing and rules in §2. | Owner decision. Taking ideas for what to show is fine; copying the look risks Play impersonation issues [S: verify policy before release] |
 
 ---
 
@@ -433,6 +434,7 @@ Internal → closed test (personal account: 12 testers opted in for 14 continuou
 | UI language | English only |
 | Play account | Personal |
 | Gemini brief (12 Nov 2026) | Dropped; target audience 13+ (D13) |
+| AIO Launcher (12 Nov 2026) | Copy AIO's **content** (what each widget shows), never its layout. Layout, type, spacing and every rule in §2 stay Metro/Zune (D14) |
 
 ## 11. Sources to verify before building
 
