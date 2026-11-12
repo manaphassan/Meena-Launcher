@@ -26,5 +26,7 @@ class MeenaApp : Application() {
             }
         }
         scope.launch { runCatching { InstalledAppsRepository.loadInstalledApps(this@MeenaApp) } }
+        // Link changes are only announced as they happen, so start listening as early as possible.
+        runCatching { my.hana.meena.data.system.BluetoothDevicesRepository.startListening(this) }
     }
 }

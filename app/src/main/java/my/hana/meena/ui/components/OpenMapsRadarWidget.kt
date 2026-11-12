@@ -2,6 +2,9 @@ package my.hana.meena.ui.components
 
 import my.hana.meena.R
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.layout.heightIn
+import my.hana.meena.data.system.ClockInfo
 import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
 import android.view.MotionEvent
@@ -65,14 +68,8 @@ import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.theme.MeenaBlack
 
 /**
- * Authentic Windows Phone / Metro style OpenMaps dark theme radar widget.
- * Features:
- * - OpenStreetMap dark theme (CartoDB Dark Matter)
- * - Current location POI with coordinates readout
- * - 3km radius radar wave with animated pulse & sweep
- * - Arrow pointing True North bearing (000°)
- * - Full interactive pan/reposition & zoom in/out
- * - Recenter & Open in External Maps buttons
+ * Map of the user's rough area on a dark OpenStreetMap basemap (CARTO Dark Matter tiles).
+ * Shown only after a real location fix; credits OpenStreetMap and CARTO as their terms require.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -100,17 +97,8 @@ fun OpenMapsRadarWidget(
         }
     }
 
-    // Pulse animation for radar status LED
-    val infiniteTransition = rememberInfiniteTransition(label = "radarPulse")
-    val radarPulseAlpha = infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "radarPulseAlpha"
-    )
+    val hasRealFix = currentLocation.isGpsActive
+    val placeName = ClockInfo.placeName(currentLocation.locationName, hasRealFix)
 
     val mapHtml = remember(currentLocation.latitude, currentLocation.longitude) {
         generateDarkOpenMapsHtml(
@@ -121,99 +109,61 @@ fun OpenMapsRadarWidget(
     }
 
     CollapsibleWidget(
-        title = "nearby · openmaps",
+        title = stringResource(R.string.map_title),
         collapsedSummary = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(my.hana.meena.theme.MeenaSpacing.s)
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
-                )
-                Text(
-                    text = "${currentLocation.formattedCoordinates} · 3km radar",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted
-                )
-            }
+            Text(
+                text = placeName ?: stringResource(R.string.map_no_location_short),
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaTextMuted
+            )
         },
         modifier = modifier
     ) {
+        // Without a real fix the map would centre on the built-in default; show that honestly instead.
+        if (!hasRealFix) {
+            Text(
+                text = stringResource(R.string.map_no_location),
+                style = MaterialTheme.typography.bodySmall,
+                color = MeenaTextMuted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .metroClickable { DeviceLocationHelper.refreshLocation(context) }
+            )
+            return@CollapsibleWidget
+        }
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
-            // Top HUD Header: Coordinates, North Bearing, and 3km Radar status
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MeenaSurface)
-                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(my.hana.meena.theme.MeenaSpacing.s)
-                                .graphicsLayer { alpha = radarPulseAlpha.value }
-                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
-                        )
-                        Text(
-                            text = currentLocation.locationName.lowercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MeenaTextWhite,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(2.dp))
+            Column {
+                if (placeName != null) {
                     Text(
-                        text = "${currentLocation.formattedCoordinates}  [${currentLocation.dmsCoordinates}]",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
+                        text = placeName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MeenaTextWhite,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-
-                // North Bearing Indicator
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_thin_navigate),
-                        contentDescription = "north bearing",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
-                    )
-                    Text(
-                        text = "north 000°",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MeenaTextWhite
-                    )
-                }
+                Text(
+                    text = stringResource(
+                        R.string.map_accuracy,
+                        currentLocation.formattedCoordinates,
+                        ((currentLocation.accuracyMeters / 1000f).coerceAtLeast(0.1f)).let { "%.1f".format(it) }
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
             }
 
-            // Interactive OpenMaps Dark Radar Container (270dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(270.dp)
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(MeenaBlack)
             ) {
-                // Embedded Dark Leaflet OpenStreetMap
                 AndroidView(
                     factory = { ctx ->
                         WebView(ctx).apply {
@@ -236,12 +186,20 @@ fun OpenMapsRadarWidget(
                                 }
                             }
 
-                            // Disallow parent LazyColumn & HorizontalPager from intercepting pan/zoom gestures!
+                            // Two fingers or a mostly sideways drag belong to the map; vertical drags scroll Today.
+                            var downX = 0f
+                            var downY = 0f
                             @android.annotation.SuppressLint("ClickableViewAccessibility")
                             setOnTouchListener { v, event ->
-                                when (event.action) {
-                                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                                        v.parent?.requestDisallowInterceptTouchEvent(true)
+                                when (event.actionMasked) {
+                                    MotionEvent.ACTION_DOWN -> {
+                                        downX = event.x
+                                        downY = event.y
+                                    }
+                                    MotionEvent.ACTION_POINTER_DOWN -> v.parent?.requestDisallowInterceptTouchEvent(true)
+                                    MotionEvent.ACTION_MOVE -> {
+                                        val sideways = kotlin.math.abs(event.x - downX) > kotlin.math.abs(event.y - downY)
+                                        if (event.pointerCount > 1 || sideways) v.parent?.requestDisallowInterceptTouchEvent(true)
                                     }
                                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                                         v.parent?.requestDisallowInterceptTouchEvent(false)
@@ -256,164 +214,53 @@ fun OpenMapsRadarWidget(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-
-                // Top-Left: 3km Radar Active Badge
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(my.hana.meena.theme.MeenaSpacing.s)
-                        .background(MeenaBlack.copy(alpha = 0.85f))
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
-                ) {
-                    Text(
-                        text = "radar: 3.0 km range",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                // Top-Right: Map Tile Attribution
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(my.hana.meena.theme.MeenaSpacing.s)
-                        .background(MeenaBlack.copy(alpha = 0.85f))
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
-                ) {
-                    Text(
-                        text = "openmaps · dark",
-                        fontSize = 12.sp,
-                        color = MeenaTextMuted
-                    )
-                }
-
-                // Bottom-Right: Tactical Metro Zoom & Navigation Controls
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(my.hana.meena.theme.MeenaSpacing.s),
-                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    // Zoom In Button [+]
-                    TacticalMapButton(
-                        text = "+",
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            webViewRef?.evaluateJavascript("window.zoomIn && window.zoomIn();", null)
-                        }
-                    )
-
-                    // Zoom Out Button [-]
-                    TacticalMapButton(
-                        text = "−",
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            webViewRef?.evaluateJavascript("window.zoomOut && window.zoomOut();", null)
-                        }
-                    )
-
-                    // Recenter to POI Button [⌖]
-                    TacticalMapButton(
-                        text = "⌖",
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            webViewRef?.evaluateJavascript(
-                                "window.recenter && window.recenter(${currentLocation.latitude}, ${currentLocation.longitude});",
-                                null
-                            )
-                        }
-                    )
-                }
-
-                // Bottom-Left: North Needle Compass Icon
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(my.hana.meena.theme.MeenaSpacing.s)
-                        .background(MeenaBlack.copy(alpha = 0.85f))
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_thin_navigate),
-                            contentDescription = "north",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = "bearing: 000° n",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MeenaTextWhite
-                        )
-                    }
-                }
             }
 
-            // Bottom Action Strip: Real GPS Refresh & Open in External Maps
+            // Required credit for the map data (ODbL) and tiles.
+            Text(
+                text = stringResource(R.string.map_attribution),
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaTextMuted,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .metroClickable {
+                        try {
+                            context.startActivity(
+                                android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.openstreetmap.org/copyright"))
+                                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        } catch (_: Exception) {}
+                    }
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)
             ) {
-                // GPS Refresh Button
-                Row(
-                    modifier = Modifier
-                        .background(MeenaSurface)
-                        .clickable {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            DeviceLocationHelper.refreshLocation(context)
-                        }
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_thin_locate),
-                        contentDescription = "gps lock",
-                        tint = if (currentLocation.isGpsActive) MeenaProfitGreen else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
-                    )
-                    Text(
-                        text = if (currentLocation.isGpsActive) "gps locked (±${currentLocation.accuracyMeters.toInt()}m)" else "default location",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MeenaTextWhite
+                MapTextAction(stringResource(R.string.map_zoom_in)) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    webViewRef?.evaluateJavascript("window.zoomIn && window.zoomIn();", null)
+                }
+                MapTextAction(stringResource(R.string.map_zoom_out)) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    webViewRef?.evaluateJavascript("window.zoomOut && window.zoomOut();", null)
+                }
+                MapTextAction(stringResource(R.string.map_recenter)) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    DeviceLocationHelper.refreshLocation(context)
+                    webViewRef?.evaluateJavascript(
+                        "window.recenter && window.recenter(${currentLocation.latitude}, ${currentLocation.longitude});",
+                        null
                     )
                 }
-
-                // Open in External Maps Navigation
-                Row(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            DeviceLocationHelper.openInExternalMaps(
-                                context = context,
-                                lat = currentLocation.latitude,
-                                lng = currentLocation.longitude,
-                                label = currentLocation.locationName
-                            )
-                        }
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    Text(
-                        text = "open in maps",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MeenaTextWhite
-                    )
-                    Icon(
-                        painter = painterResource(R.drawable.ic_thin_open),
-                        contentDescription = "open in external maps",
-                        tint = MeenaTextWhite,
-                        modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.m)
+                Spacer(modifier = Modifier.weight(1f))
+                MapTextAction(stringResource(R.string.map_open)) {
+                    DeviceLocationHelper.openInExternalMaps(
+                        context = context,
+                        lat = currentLocation.latitude,
+                        lng = currentLocation.longitude,
+                        label = currentLocation.locationName
                     )
                 }
             }
@@ -422,24 +269,16 @@ fun OpenMapsRadarWidget(
 }
 
 @Composable
-private fun TacticalMapButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Box(
+private fun MapTextAction(text: String, onClick: () -> Unit) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
-            .size(32.dp)
-            .background(MeenaBlack.copy(alpha = 0.85f))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
+            .heightIn(min = 48.dp)
+            .metroClickable(onClick = onClick)
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+    )
 }
 
 /**
@@ -647,7 +486,7 @@ private fun generateDarkOpenMapsHtml(
   var northPerimeterLat = lat + (3000 / 111320.0);
   var rangeTagIcon = L.divIcon({
     className: 'range-text-label',
-    html: '3.0 KM RADAR PERIMETER',
+    html: '3 km around you',
     iconSize: [120, 16],
     iconAnchor: [60, 8]
   });

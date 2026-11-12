@@ -460,10 +460,10 @@ fun TodayHub(
                                                 color = MeenaTextWhite
                                             )
                                             Text(
-                                                text = if (device.kind == my.hana.meena.data.system.BluetoothDevicesRepository.KIND_AUDIO) {
-                                                    stringResource(R.string.devices_kind_audio)
-                                                } else {
-                                                    stringResource(R.string.devices_kind_wearable)
+                                                text = when (device.kind) {
+                                                    my.hana.meena.data.system.BluetoothDevicesRepository.KIND_AUDIO -> stringResource(R.string.devices_kind_audio)
+                                                    my.hana.meena.data.system.BluetoothDevicesRepository.KIND_WEARABLE -> stringResource(R.string.devices_kind_wearable)
+                                                    else -> stringResource(R.string.devices_kind_other)
                                                 },
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MeenaTextMuted
@@ -590,11 +590,11 @@ fun TodayHub(
                 }
 
                 "widget-calendar-month" -> {
-                    // Device calendar events & agenda
+                    // Month grid with event dots (AIO content, D14); events themselves are listed by agenda.
                     val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
                     val isNeedsPermission = calendarState is CalendarState.NeedsPermission
                     CollapsibleWidget(
-                        title = "calendar",
+                        title = stringResource(R.string.calendar_month_title),
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
@@ -634,79 +634,12 @@ fun TodayHub(
                                     )
                                 }
                             }
-                            calEvents.isEmpty() -> {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "all quiet · no upcoming events",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextMuted
-                                    )
-                                    Text(
-                                        text = "+ event",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier
-                                            .heightIn(min = 48.dp)
-                                            .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
-                                    )
-                                }
-                            }
                             else -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                                    calEvents.take(4).forEach { event ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .heightIn(min = 48.dp)
-                                                .metroClickable { DeviceCalendarRepository.openEventDetail(context, event.id) }
-                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = event.title,
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.Normal,
-                                                    color = MeenaTextWhite
-                                                )
-                                                Text(
-                                                    text = buildString {
-                                                        append(event.formattedDate)
-                                                        append(" · ")
-                                                        append(event.formattedTime)
-                                                        if (event.location.isNotBlank()) {
-                                                            append(" · ")
-                                                            append(event.location)
-                                                        }
-                                                    },
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MeenaTextMuted,
-                                                    fontSize = 12.sp
-                                                )
-                                            }
-                                        }
-                                    }
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.End
-                                    ) {
-                                        Text(
-                                            text = "+ new event",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier
-                                                .heightIn(min = 48.dp)
-                                                .metroClickable { DeviceCalendarRepository.openNewEvent(context) }
-                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m, horizontal = my.hana.meena.theme.MeenaSpacing.s)
-                                        )
-                                    }
-                                }
+                                // Month grid only; the event list lives in the agenda widget.
+                                my.hana.meena.ui.components.MonthCalendarGrid(
+                                    nowMillis = System.currentTimeMillis(),
+                                    eventStartTimes = calEvents.map { it.startTime }
+                                )
                             }
                         }
                     }

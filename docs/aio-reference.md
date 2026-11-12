@@ -46,14 +46,14 @@ Reference only: we study layout and behaviour. We do not copy AIO code, icons, f
 | 2 | Next alarm under the clock | none | `AlarmManager.getNextAlarmClock()`, no permission ([docs](https://developer.android.com/reference/android/app/AlarmManager#getNextAlarmClock())) | **done** |
 | 3 | Battery percent and battery temperature | phone widget (off by default) | check what it shows | todo |
 | 4 | 7-day calendar strip with event dots, weekends marked | month grid, agenda list | nothing new | todo |
-| 5 | Week numbers in the month grid | month grid | nothing new | todo |
+| 5 | Week numbers in the month grid | month grid | nothing new | **done** (ISO weeks, event dots, weekends muted; replaces the duplicate event list) |
 | 6 | Quote list "symbol price (date)" with a dash when missing | portfolio, watchlist from sheet | nothing new | todo |
 | 7 | Multi-symbol price chart | none | chart drawn with Compose canvas, no library | todo |
 | 8 | More currency pairs | 9 pairs grid | nothing new | todo |
 | 9 | Frequent apps row | favourites only | count launches inside Meena (no permission); system usage stats need a special permission, so not that | **done** (approved) |
 | 10 | Notes hidden on home until tapped | notes widget | nothing new | todo |
-| 11 | Connected Bluetooth devices | none | `BLUETOOTH_CONNECT` on Android 12+ (approved) | **done** |
+| 11 | Connected Bluetooth devices | none | `BLUETOOTH_CONNECT` on Android 12+ (approved) | **done**: profile queries plus `ACTION_ACL_CONNECTED`/`DISCONNECTED` broadcasts, so input-device (HID) bands appear once they connect while Meena runs; HID host has no public query API |
 | 12 | Wikipedia article | none | Wikimedia REST API `page/random/summary` with an identifying User-Agent ([access policy](https://www.mediawiki.org/wiki/Wikimedia_APIs/Access_policy)); the Wikifeeds featured feed is avoided because it is scheduled for deprecation from July 2026 ([Wikifeeds API](https://www.mediawiki.org/wiki/Wikifeeds_API)). Content is CC BY-SA, so the widget credits Wikipedia | **done** |
 | 13 | Gmail and Telegram lists | inbox alerts and chats from notifications | per-app filter on existing notifications, no new permission | todo |
 | 14 | Calculator | none | nothing new | todo |
-| 15 | Map with place name | map radar widget | already shows map | check |
+| 15 | Map with place name | map radar widget | already shows map | **blocked**: CARTO raster tiles now return an "API key required" image without a key ([basemap-styles](https://github.com/CartoDB/basemap-styles)); owner to pick a tile source |

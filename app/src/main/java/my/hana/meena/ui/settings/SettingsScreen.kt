@@ -300,7 +300,7 @@ fun SettingsScreen(
                             "widget-clock-weather" to "clock",
                             "widget-weather-forecast" to "weather forecast",
                             "widget-solat" to "prayer times (solat)",
-                            "widget-calendar-month" to "calendar",
+                            "widget-calendar-month" to "month",
                             "widget-tasks" to "tasks",
                             "widget-notes" to "notes",
                             "widget-exchange-rates" to "rates",

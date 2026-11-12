@@ -134,7 +134,6 @@ fun DynamicSolatCelestialCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
 
@@ -258,15 +257,7 @@ fun DynamicSolatCelestialCard(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .then(
-                                if (isHighlighted) {
-                                    Modifier
-                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
-                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-                                } else {
-                                    Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-                                }
-                            ),
+                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
@@ -277,7 +268,7 @@ fun DynamicSolatCelestialCard(
                                 text = item.name.lowercase(),
                                 fontSize = 12.sp,
                                 fontWeight = if (isHighlighted) FontWeight.Medium else FontWeight.Normal,
-                                color = if (isHighlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
+                                color = if (isHighlighted) MaterialTheme.colorScheme.primary else MeenaTextMuted,
                                 maxLines = 1,
                                 softWrap = false
                             )
@@ -413,56 +404,12 @@ private fun CelestialSkyCanvas(
         val peakY = h * 0.28f
         val centerX = w * 0.50f
 
-        // Draw Sky Gradient above Horizon
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    primaryColor,
-                    primaryColor,
-                    primaryColor,
-                    primaryColor
-                ),
-                startY = 0f,
-                endY = horizonY
-            ),
-            topLeft = Offset.Zero,
-            size = Size(w, horizonY)
-        )
-
-        // Draw Below Horizon Surface
-        drawRect(
-            color = primaryColor,
-            topLeft = Offset(0f, horizonY),
-            size = Size(w, h - horizonY)
-        )
-
-        // Draw Horizon Separator Line
+        // Horizon line only: no filled sky, ground or cloud blocks (no boxes, Meena UI).
         drawLine(
             color = primaryColor,
             start = Offset(0f, horizonY),
             end = Offset(w, horizonY),
             strokeWidth = 1.4.dp.toPx()
-        )
-
-        // Draw Soft Cloudy Shapes in the Sky (pure Metro geometric rectangles)
-        val cloudColor = primaryColor
-        drawRoundRect(
-            color = cloudColor,
-            topLeft = Offset(w * 0.10f, h * 0.12f),
-            size = Size(85.dp.toPx(), 20.dp.toPx()),
-            cornerRadius = CornerRadius.Zero
-        )
-        drawRoundRect(
-            color = cloudColor,
-            topLeft = Offset(w * 0.63f, h * 0.20f),
-            size = Size(90.dp.toPx(), 22.dp.toPx()),
-            cornerRadius = CornerRadius.Zero
-        )
-        drawRoundRect(
-            color = cloudColor,
-            topLeft = Offset(w * 0.65f, h * 0.38f),
-            size = Size(70.dp.toPx(), 18.dp.toPx()),
-            cornerRadius = CornerRadius.Zero
         )
 
         // Parabola equation: y = peakY + A * (x - centerX)^2
@@ -631,7 +578,7 @@ private fun CelestialSkyCanvas(
 
         // Sun bright white center shine
         drawCircle(
-            color = primaryColor,
+            color = MeenaTextWhite,
             radius = 2.2.dp.toPx(),
             center = Offset(sunX, sunY)
         )
