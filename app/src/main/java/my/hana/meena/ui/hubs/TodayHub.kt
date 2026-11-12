@@ -65,9 +65,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import kotlin.math.roundToInt
 import my.hana.meena.data.system.WeatherRepository
 import my.hana.meena.ui.widgets.WidgetState
-import my.hana.meena.data.system.GeminiBriefRepository
 import my.hana.meena.data.system.InstalledAppsRepository
-import my.hana.meena.data.system.KeystoreSecretsManager
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -119,9 +117,6 @@ fun TodayHub(
 
     val weatherState by WeatherRepository.state.collectAsState()
     val calendarState by DeviceCalendarRepository.state.collectAsState()
-    val briefState by GeminiBriefRepository.state.collectAsState()
-    val geminiKeyVersion by KeystoreSecretsManager.geminiKeyVersion.collectAsState()
-    val isBriefEnabled = settings.widgetConfigs["widget-today-summary"]?.isEnabled == true
     val quickNotes = remember { mutableStateListOf<String>() }
     var appsVersion by remember { mutableStateOf(0) }
 
@@ -157,11 +152,6 @@ fun TodayHub(
         } else null
     }
 
-    // Only contact gemini while the brief widget is on; re-run when the key is saved or forgotten.
-    LaunchedEffect(isBriefEnabled, geminiKeyVersion) {
-        if (isBriefEnabled) GeminiBriefRepository.refresh(context, settings)
-    }
-
     LaunchedEffect(settings.is24HourFormat, settings.dateFormatPattern, settings.showClockSeconds) {
         val timePattern = when {
             settings.is24HourFormat && settings.showClockSeconds -> "HH:mm:ss"
@@ -194,9 +184,8 @@ fun TodayHub(
             .filter {
                 val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
                 val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications"
-                val isBriefConfigured = it.key != "widget-today-summary" || briefState !is WidgetState.NeedsSetup
                 val isNotRemovedWidget = it.key != "widget-health-device"
-                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled && isBriefConfigured
+                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled
             }
             .sortedBy { it.value.position }
 
@@ -343,94 +332,6 @@ fun TodayHub(
                         onTogglePin = onTogglePin,
                         onMoveApp = onReorderPin
                     )
-                }
-
-                "widget-today-summary" -> {
-                    // Gemini AI Brief
-                    val briefData = (briefState as? WidgetState.Ready)?.data ?:
-                                    (briefState as? WidgetState.Stale)?.data
-
-                    CollapsibleWidget(
-                        title = "brief",
-                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
-                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
-                        collapsedSummary = {
-                            Text(
-                                text = when (briefState) {
-                                    is WidgetState.NeedsSetup -> "needs setup"
-                                    is WidgetState.Loading -> "writing brief..."
-                                    is WidgetState.Ready, is WidgetState.Stale -> "brief is on"
-                                    is WidgetState.Error -> "offline"
-                                    else -> "needs setup"
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (briefState is WidgetState.Ready || briefState is WidgetState.Stale) MaterialTheme.colorScheme.primary else MeenaTextMuted
-                            )
-                        }
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                        ) {
-                            when (briefState) {
-                                is WidgetState.NeedsSetup -> {
-                                    Text(
-                                        text = "add your gemini key to get a brief. tap to configure.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MeenaTextMuted,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .metroClickable {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                onOpenSettings()
-                                            }
-                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-                                    )
-                                }
-                                is WidgetState.Loading -> {
-                                    Text(
-                                        text = "writing your daily brief...",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MeenaTextMuted
-                                    )
-                                }
-                                is WidgetState.Error -> {
-                                    val err = (briefState as WidgetState.Error).message
-                                    Text(
-                                        text = "$err. tap to retry.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MeenaTextMuted,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .metroClickable {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                GeminiBriefRepository.refresh(context, settings, force = true)
-                                            }
-                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-                                    )
-                                }
-                                is WidgetState.Ready, is WidgetState.Stale -> {
-                                    if (briefData != null) {
-                                        Text(
-                                            text = briefData.summaryText,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MeenaTextWhite,
-                                            lineHeight = 20.sp
-                                        )
-                                        val minutesAgo = ((System.currentTimeMillis() - briefData.generatedAt) / 60000L).coerceAtLeast(0)
-                                        val freshnessText = if (minutesAgo == 0L) "updated just now" else "updated ${minutesAgo}m ago"
-                                        Text(
-                                            text = "$freshnessText · ${briefData.modelUsed}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted,
-                                            modifier = Modifier.padding(top = 0.dp)
-                                        )
-                                    }
-                                }
-                                else -> {}
-                            }
-                        }
-                    }
                 }
 
                 "widget-solat" -> {

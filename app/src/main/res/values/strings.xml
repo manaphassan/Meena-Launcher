@@ -54,21 +54,20 @@
     <string name="disclosure_notification_body">meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.</string>
     <string name="disclosure_notification_question">do you want to open notification access settings?</string>
     <string name="disclosure_location_title">approximate location</string>
-    <string name="disclosure_location_body">meena uses your rough location for local weather and prayer times. your rough area goes to open-meteo for the weather and to carto for the map. if your brief includes weather, the place name goes to google. no background tracking.</string>
+    <string name="disclosure_location_body">meena uses your rough location for local weather and prayer times. your rough area goes to open-meteo for the weather and to carto for the map. no background tracking.</string>
     <string name="disclosure_location_question">allow location access?</string>
     <string name="disclosure_calendar_title">calendar access</string>
-    <string name="disclosure_calendar_body">meena reads your calendar to show today\'s events. if your brief includes calendar, today\'s event titles and times go to google to write it. nothing else leaves your phone.</string>
+    <string name="disclosure_calendar_body">meena reads your calendar to show today\'s events. your events stay on your phone.</string>
     <string name="disclosure_calendar_question">allow calendar access?</string>
     <string name="about_privacy_title">privacy charter</string>
-    <string name="about_privacy_body">no analytics, no ads and no background tracking. your keys are stored encrypted on your phone. only what weather, prayer times, news, rates and your brief need goes online.</string>
+    <string name="about_privacy_body">no analytics, no ads and no background tracking. your portfolio is stored encrypted on your phone. only what weather, prayer times, news and rates need goes online.</string>
     <string name="privacy_status">no ads · no tracking</string>
     <string name="privacy_intro">meena keeps your data on your phone. a few features need the internet, and each one is listed below.</string>
-    <string name="privacy_on_device_body">notifications, bank alerts and health stats are read on your phone and never leave it. calendar, weather and spending only leave if you add them to your brief. no analytics, no ads, no tracking.</string>
-    <string name="privacy_notifications_line">notifications and bank alerts: read on your phone and never sent anywhere. if your brief includes spending, only today\'s count and total go to google.</string>
+    <string name="privacy_on_device_body">notifications, bank alerts, calendar events and health stats are read on your phone and never leave it. no analytics, no ads, no tracking.</string>
+    <string name="privacy_notifications_line">notifications and bank alerts: read on your phone and never sent anywhere.</string>
     <string name="privacy_location_line">rough location: used for weather, air quality and the map. open-meteo and carto get your rough area. no background tracking.</string>
-    <string name="privacy_calendar_line">calendar: read on your phone to show your agenda. if your brief includes calendar, today\'s event titles and times go to google.</string>
+    <string name="privacy_calendar_line">calendar: read on your phone to show your agenda. never sent anywhere.</string>
     <string name="privacy_backup_line">no cloud backup: android backup is off, so your settings never sync anywhere.</string>
-    <string name="privacy_brief_line">brief: off until you add your own gemini key. then the items you pick go to google each time it updates. your key is stored encrypted.</string>
 
     <!-- First Run Setup -->
     <string name="welcome_title">welcome to meena</string>
@@ -109,7 +108,6 @@
     <string name="widget_weather">weather</string>
     <string name="widget_solat">solat</string>
     <string name="widget_agenda">agenda</string>
-    <string name="widget_brief">brief</string>
     <string name="widget_health">health</string>
     <string name="widget_air">air</string>
     <string name="widget_alerts">alerts</string>
@@ -125,17 +123,12 @@
     <string name="widget_phone">phone</string>
     <string name="widget_nearby">nearby</string>
 
-    <!-- Milestone 2: Finance & Gemini Brief -->
+    <!-- Milestone 2: Finance -->
     <string name="dialog_delete_holding_title">delete holding</string>
     <string name="dialog_delete_holding_question">delete this holding?</string>
     <string name="dialog_reset_portfolio_title">start over</string>
     <string name="dialog_reset_portfolio_question">delete your saved portfolio and sheet link, then start fresh?</string>
     <string name="finance_unlock_failed_hint">this phone can\'t open your saved portfolio. tap to start over.</string>
-    <string name="dialog_forget_gemini_title">forget api key</string>
-    <string name="dialog_forget_gemini_question">remove your gemini api key from encrypted storage?</string>
-    <string name="disclosure_gemini_title">gemini daily brief</string>
-    <string name="disclosure_gemini_body">your brief sends the items you pick (calendar, weather, prayer times or spending) from your phone to google\'s gemini service, using your own key. it updates when you open today (at most every 2 hours) and when you tap it. on the free tier google may keep and review what it gets, so leave out anything private. you need to be 18 or older to use it.</string>
-    <string name="brief_sources_title">what brief reads</string>
     <string name="finance_delay_notice">quotes from google sheets may be delayed ~20 min</string>
     <string name="finance_hide_amounts">mask balances in public</string>
 

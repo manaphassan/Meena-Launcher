@@ -4,10 +4,6 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -15,9 +11,8 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /**
- * Manages encrypted storage of sensitive user API keys using Android Keystore-backed AES-256 GCM.
- * Keys are generated and stored hardware-backed where supported, never in plain DataStore,
- * never logged, and excluded from backup per Meena UI Hard Rule 6.
+ * Encrypts small values (portfolio holdings, sheet link) with an Android Keystore-backed
+ * AES-256-GCM key. Values are never logged and are excluded from backup per hard rule 6.
  */
 object KeystoreSecretsManager {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
@@ -26,12 +21,8 @@ object KeystoreSecretsManager {
     private const val GCM_IV_LENGTH = 12
     private const val GCM_TAG_LENGTH = 128
     private const val PREFS_NAME = "meena_encrypted_secrets"
-    private const val PREF_GEMINI_KEY = "enc_gemini_api_key"
-
-    private val _geminiKeyVersion = MutableStateFlow(0)
-
-    /** Bumps whenever the Gemini key is saved or cleared, so screens can react without polling the Keystore. */
-    val geminiKeyVersion: StateFlow<Int> = _geminiKeyVersion.asStateFlow()
+    // Only used to delete keys saved by builds that had the gemini brief.
+    private const val PREF_LEGACY_GEMINI_KEY = "enc_gemini_api_key"
 
     private fun getOrCreateSecretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -99,50 +90,11 @@ object KeystoreSecretsManager {
         override fun decryptOrNull(encoded: String): String? = KeystoreSecretsManager.decryptOrNull(encoded)
     }
 
-    fun saveGeminiApiKey(context: Context, key: String) {
+    /** The gemini brief was removed; delete any key it saved. */
+    fun deleteLegacyGeminiKey(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (key.isBlank()) {
-            prefs.edit().remove(PREF_GEMINI_KEY).apply()
-        } else {
-            val encrypted = encrypt(key.trim())
-            prefs.edit().putString(PREF_GEMINI_KEY, encrypted).apply()
-        }
-        _geminiKeyVersion.update { it + 1 }
-    }
-
-    fun getGeminiApiKey(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val encrypted = prefs.getString(PREF_GEMINI_KEY, null) ?: return ""
-        return decrypt(encrypted)
-    }
-
-    fun hasGeminiApiKey(context: Context): Boolean {
-        return getGeminiApiKey(context).isNotBlank()
-    }
-
-    fun clearGeminiApiKey(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(PREF_GEMINI_KEY).apply()
-        _geminiKeyVersion.update { it + 1 }
-    }
-
-    /**
-     * Moves a Gemini key that older builds kept in plain settings into encrypted storage.
-     * Returns true when the plain copy is safe to erase: the key was already stored encrypted,
-     * or it was just stored and reads back intact.
-     */
-    fun moveLegacyGeminiKey(context: Context, legacyKey: String): Boolean {
-        if (legacyKey.isBlank()) return true
-        return try {
-            if (hasGeminiApiKey(context)) return true
-            val key = legacyKey.trim()
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            // commit(), not apply(): the plain copy is erased right after, so this write must be on disk first.
-            val written = prefs.edit().putString(PREF_GEMINI_KEY, encrypt(key)).commit()
-            _geminiKeyVersion.update { it + 1 }
-            written && getGeminiApiKey(context) == key
-        } catch (_: Exception) {
-            false
+        if (prefs.contains(PREF_LEGACY_GEMINI_KEY)) {
+            prefs.edit().remove(PREF_LEGACY_GEMINI_KEY).commit()
         }
     }
 }

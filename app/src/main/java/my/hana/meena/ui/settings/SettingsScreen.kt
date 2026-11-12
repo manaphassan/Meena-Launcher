@@ -302,7 +302,6 @@ fun SettingsScreen(
                             "widget-solat" to "prayer times (solat)",
                             "widget-calendar-month" to "calendar",
                             "widget-tasks" to "tasks",
-                            "widget-today-summary" to "brief",
                             "widget-notes" to "notes",
                             "widget-exchange-rates" to "rates",
                             "widget-finance-charts" to "portfolio",
@@ -338,15 +337,6 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MeenaTextMuted,
                                 modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
-                            )
-                        }
-
-                        item {
-                            val geminiStatus = if (my.hana.meena.data.system.KeystoreSecretsManager.hasGeminiApiKey(context)) "configured" else "needs key"
-                            SettingLinkRow(
-                                title = "brief (gemini api)",
-                                status = geminiStatus,
-                                onClick = { activeSubPage = "account:gemini" }
                             )
                         }
 
@@ -813,64 +803,6 @@ private fun SubPageContainer(
                     }
                 }
 
-                "widget-today-summary" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("brief specific options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        GeminiApiKeyInput()
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "gemini model",
-                            subtitle = "model used to synthesize daily briefing",
-                            options = listOf(
-                                "gemini-1.5-flash" to "1.5 flash",
-                                "gemini-2.0-flash" to "2.0 flash",
-                                "gemini-1.5-pro" to "1.5 pro"
-                            ),
-                            selectedKey = settingsState.geminiModel,
-                            onSelectKey = { onUpdate { s -> s.copy(geminiModel = it) } }
-                        )
-                    }
-                    item {
-                        Text("what brief reads", style = MaterialTheme.typography.titleSmall, color = MeenaTextWhite)
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "include calendar in brief",
-                            subtitle = "summarize upcoming agenda items",
-                            checked = settingsState.geminiIncludeCalendar,
-                            onCheckedChange = { onUpdate { it.copy(geminiIncludeCalendar = it.geminiIncludeCalendar.not()) } }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "include weather in brief",
-                            subtitle = "summarize today's conditions",
-                            checked = settingsState.geminiIncludeWeather,
-                            onCheckedChange = { onUpdate { it.copy(geminiIncludeWeather = it.geminiIncludeWeather.not()) } }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "include prayer times in brief",
-                            subtitle = "mention next upcoming prayer",
-                            checked = settingsState.geminiIncludeSolat,
-                            onCheckedChange = { onUpdate { it.copy(geminiIncludeSolat = it.geminiIncludeSolat.not()) } }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "include spending totals in brief",
-                            subtitle = "summarize money spent today",
-                            checked = settingsState.geminiIncludeFinance,
-                            onCheckedChange = { onUpdate { it.copy(geminiIncludeFinance = it.geminiIncludeFinance.not()) } }
-                        )
-                    }
-                }
-
                 "widget-notes" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -1329,91 +1261,6 @@ private fun SubPageContainer(
         }
 
         // Dedicated Account Sub-Pages
-        subPageId == "account:gemini" -> {
-            item {
-                MetroSubPageHeader(
-                    parentTitle = "accounts",
-                    pageTitle = "brief (gemini api)",
-                    onBack = onBack
-                )
-            }
-            item {
-                Text(
-                    text = "add your gemini api key to generate an intelligent morning and evening brief. your key stays strictly on your phone.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MeenaTextMuted
-                )
-            }
-            item {
-                GeminiApiKeyInput(
-                    currentModel = settingsState.geminiModel,
-                    onModelSelect = { model -> onUpdate { it.copy(geminiModel = model) } }
-                )
-            }
-            item {
-                Column {
-                    Text("model selection", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
-                    val models = listOf("gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro")
-                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                        models.forEach { model ->
-                            val isSelected = settingsState.geminiModel == model
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 48.dp)
-                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                    .metroClickable { onUpdate { it.copy(geminiModel = model) } }
-                                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Text(
-                                    text = model,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            item {
-                Text("what brief is allowed to read", style = MaterialTheme.typography.titleMedium, color = MeenaTextWhite)
-            }
-            item {
-                SettingToggleRow(
-                    title = "calendar events",
-                    subtitle = "allow brief to read today's schedule",
-                    checked = settingsState.geminiIncludeCalendar,
-                    onCheckedChange = { onUpdate { it.copy(geminiIncludeCalendar = it.geminiIncludeCalendar.not()) } }
-                )
-            }
-            item {
-                SettingToggleRow(
-                    title = "weather conditions",
-                    subtitle = "allow brief to read local temperature and rain",
-                    checked = settingsState.geminiIncludeWeather,
-                    onCheckedChange = { onUpdate { it.copy(geminiIncludeWeather = it.geminiIncludeWeather.not()) } }
-                )
-            }
-            item {
-                SettingToggleRow(
-                    title = "waktu solat",
-                    subtitle = "allow brief to read prayer timetable",
-                    checked = settingsState.geminiIncludeSolat,
-                    onCheckedChange = { onUpdate { it.copy(geminiIncludeSolat = it.geminiIncludeSolat.not()) } }
-                )
-            }
-            item {
-                SettingToggleRow(
-                    title = "spending totals",
-                    subtitle = "allow brief to summarize money spent today",
-                    checked = settingsState.geminiIncludeFinance,
-                    onCheckedChange = { onUpdate { it.copy(geminiIncludeFinance = it.geminiIncludeFinance.not()) } }
-                )
-            }
-        }
-
         subPageId == "account:solat" -> {
             item {
                 MetroSubPageHeader(
@@ -1895,11 +1742,6 @@ private fun SubPageContainer(
                     )
                     Text(
                         text = "health connect: reads daily step counts, distance, active calories, sleep, and heart rate for display. never shared.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MeenaTextMuted
-                    )
-                    Text(
-                        text = stringResource(R.string.privacy_brief_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -2813,146 +2655,6 @@ fun MetroSubPageHeader(
             style = MaterialTheme.typography.displayMedium,
             fontSize = 30.sp,
             color = MeenaTextWhite
-        )
-    }
-}
-
-@Composable
-private fun GeminiApiKeyInput(
-    currentModel: String = "gemini-1.5-flash",
-    onModelSelect: (String) -> Unit = {}
-) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    var keyText by remember { mutableStateOf(my.hana.meena.data.system.KeystoreSecretsManager.getGeminiApiKey(context)) }
-    var statusMessage by remember { mutableStateOf("") }
-    var isTesting by remember { mutableStateOf(false) }
-    var showForgetDialog by remember { mutableStateOf(false) }
-    var discoveredModels by remember { mutableStateOf<List<String>>(emptyList()) }
-
-    if (showForgetDialog) {
-        MetroDialog(
-            title = "forget api key",
-            message = "remove your gemini api key from encrypted storage?",
-            confirmText = "yes",
-            dismissText = "no",
-            onConfirm = {
-                keyText = ""
-                my.hana.meena.data.system.KeystoreSecretsManager.clearGeminiApiKey(context)
-                statusMessage = "key forgotten"
-                showForgetDialog = false
-            },
-            onDismiss = { showForgetDialog = false }
-        )
-    }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("api key", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-        Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
-        OutlinedTextField(
-            value = keyText,
-            onValueChange = {
-                keyText = it
-                statusMessage = ""
-            },
-            placeholder = { Text("paste your gemini key here...", color = MeenaTextMuted) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MeenaSurface,
-                unfocusedContainerColor = MeenaSurface,
-                focusedTextColor = MeenaTextWhite,
-                unfocusedTextColor = MeenaTextWhite,
-                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                unfocusedIndicatorColor = MeenaBorder
-            )
-        )
-        if (statusMessage.isNotBlank()) {
-            Text(
-                text = statusMessage,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (statusMessage.contains("valid") || statusMessage.contains("securely")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-            Button(
-                onClick = {
-                    my.hana.meena.data.system.KeystoreSecretsManager.saveGeminiApiKey(context, keyText.trim())
-                    statusMessage = "key saved securely in keystore"
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(0.dp)
-            ) {
-                Text("save key", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-            }
-
-            if (keyText.isNotBlank()) {
-                Button(
-                    onClick = {
-                        isTesting = true
-                        statusMessage = "testing key..."
-                        coroutineScope.launch {
-                            val res = my.hana.meena.data.system.GeminiBriefRepository.testApiKeyAndFetchModels(keyText.trim())
-                            isTesting = false
-                            statusMessage = if (res.isSuccess) {
-                                val list = res.getOrNull() ?: emptyList()
-                                discoveredModels = list
-                                "key is valid (${list.size} models ready)"
-                            } else {
-                                "test failed: ${res.exceptionOrNull()?.message ?: "network error"}"
-                            }
-                        }
-                    },
-                    enabled = !isTesting,
-                    colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
-                    shape = RoundedCornerShape(0.dp)
-                ) {
-                    Text(if (isTesting) "testing..." else "test key", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-                }
-
-                Button(
-                    onClick = { showForgetDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
-                    shape = RoundedCornerShape(0.dp)
-                ) {
-                    Text("forget key", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-                }
-            }
-        }
-
-        if (discoveredModels.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text("live models available", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(4.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                discoveredModels.forEach { model ->
-                    val isSelected = currentModel == model
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                            .metroClickable { onModelSelect(model) }
-                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = model,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = stringResource(R.string.disclosure_gemini_body),
-            style = MaterialTheme.typography.labelSmall,
-            color = MeenaTextMuted
         )
     }
 }

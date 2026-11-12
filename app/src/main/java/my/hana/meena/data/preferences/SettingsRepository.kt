@@ -50,10 +50,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun importFromJson(jsonString: String): Boolean {
         return try {
+            // Old backups may carry gemini fields; they are not in MeenaUserSettings, so decoding drops them.
             val parsed = json.decodeFromString<MeenaUserSettings>(jsonString)
-            // Never keep a key in plain settings; old backups may still carry one.
-            KeystoreSecretsManager.moveLegacyGeminiKey(context, parsed.geminiApiKey)
-            saveSettings(parsed.copy(geminiApiKey = ""))
+            saveSettings(parsed.migrate())
             true
         } catch (e: Exception) {
             false
@@ -61,17 +60,16 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * Builds before the Keystore store saved the Gemini key in plain settings. Move it into
-     * encrypted storage, and erase the plain copy only once the encrypted copy reads back.
+     * The gemini brief was removed. Delete its saved key (builds before 2026-10-03 also kept a
+     * plain copy in the settings JSON) and rewrite settings without its fields and widget.
      */
-    suspend fun migrateLegacySecrets() {
+    suspend fun removeGeminiLeftovers() {
+        KeystoreSecretsManager.deleteLegacyGeminiKey(context)
         context.dataStore.edit { preferences ->
             val rawJson = preferences[KEY_SETTINGS_JSON] ?: return@edit
+            if (!rawJson.contains("\"gemini") && !rawJson.contains("widget-today-summary")) return@edit
             val parsed = runCatching { json.decodeFromString<MeenaUserSettings>(rawJson) }.getOrNull() ?: return@edit
-            if (parsed.geminiApiKey.isBlank()) return@edit
-            if (KeystoreSecretsManager.moveLegacyGeminiKey(context, parsed.geminiApiKey)) {
-                preferences[KEY_SETTINGS_JSON] = json.encodeToString(parsed.copy(geminiApiKey = ""))
-            }
+            preferences[KEY_SETTINGS_JSON] = json.encodeToString(parsed.migrate())
         }
     }
 

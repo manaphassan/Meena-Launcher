@@ -21,7 +21,7 @@ class MeenaApp : Application() {
         scope.launch {
             runCatching {
                 val settingsRepository = SettingsRepository(this@MeenaApp)
-                settingsRepository.migrateLegacySecrets()
+                settingsRepository.removeGeminiLeftovers()
                 settingsRepository.userSettingsFlow.first()
             }
         }

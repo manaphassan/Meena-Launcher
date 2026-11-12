@@ -66,22 +66,20 @@ class MeenaLauncherLogicTest {
                 "widget-weather-forecast",
                 "widget-favourites",
                 "widget-solat",
-                "widget-tasks",
-                "widget-today-summary"
+                "widget-tasks"
             ),
             enabledTodayWidgets
         )
 
-        // 3. Acceptance verification: On fresh install (clear app data, no Gemini key configured),
+        // 3. Acceptance verification: On fresh install (clear app data),
         // Today stream shows in order: clock + date, forecast, solat, agenda
         val freshSettings = MeenaUserSettings()
         val visibleTodayWidgetsOnFreshInstall = freshSettings.widgetConfigs.entries
             .filter {
                 val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
                 val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications"
-                val isBriefConfigured = it.key != "widget-today-summary" || freshSettings.geminiApiKey.isNotBlank()
                 val isNotRemovedWidget = it.key != "widget-health-device"
-                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled && isBriefConfigured
+                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled
             }
             .sortedBy { it.value.position }
             .map { it.key }
@@ -339,9 +337,24 @@ class MeenaLauncherLogicTest {
     }
 
     @Test
-    fun geminiBriefRepository_initialStateIsNeedsSetup() {
-        val state = my.hana.meena.data.system.GeminiBriefRepository.state.value
-        assertTrue(state is my.hana.meena.ui.widgets.WidgetState.NeedsSetup)
+    fun migrate_dropsRemovedBriefWidget() {
+        val legacy = MeenaUserSettings(
+            widgetConfigs = MeenaUserSettings.defaultWidgetMap() +
+                ("widget-today-summary" to my.hana.meena.data.model.WidgetConfig("today", 5, isEnabled = true))
+        )
+        val migrated = legacy.migrate()
+        assertFalse(migrated.widgetConfigs.containsKey("widget-today-summary"))
+        assertEquals(MeenaUserSettings.defaultWidgetMap().keys, migrated.widgetConfigs.keys)
+    }
+
+    @Test
+    fun settingsJson_withGeminiFields_decodesAndDropsThem() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val legacyJson = """{"geminiApiKey":"AIza-test","geminiModel":"gemini-1.5-flash","geminiIncludeCalendar":true}"""
+        val parsed = json.decodeFromString(MeenaUserSettings.serializer(), legacyJson)
+        val reencoded = json.encodeToString(MeenaUserSettings.serializer(), parsed.migrate())
+        assertFalse(reencoded.contains("gemini"))
+        assertFalse(reencoded.contains("AIza-test"))
     }
 
     @Test

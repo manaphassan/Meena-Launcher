@@ -34,15 +34,6 @@ data class MeenaUserSettings(
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),
     val widgetConfigs: Map<String, WidgetConfig> = defaultWidgetMap(),
-    // Gemini Flash Brief Settings
-    // Legacy: builds before 2026-10-03 kept the key here in plain text. Only read so
-    // SettingsRepository.migrateLegacySecrets can move it; the real key lives in KeystoreSecretsManager.
-    val geminiApiKey: String = "",
-    val geminiModel: String = "gemini-1.5-flash",
-    val geminiIncludeCalendar: Boolean = true,
-    val geminiIncludeWeather: Boolean = true,
-    val geminiIncludeSolat: Boolean = true,
-    val geminiIncludeFinance: Boolean = false,
     // Calendar settings
     val calendarDaysAhead: Int = 7,
     val calendarShowAllDay: Boolean = true,
@@ -74,6 +65,11 @@ data class MeenaUserSettings(
                 updatedConfigs[key] = defaultConfig
                 changed = true
             }
+        }
+
+        // Drop widgets that no longer exist
+        if (updatedConfigs.keys.retainAll(defaultWidgetMap().keys)) {
+            changed = true
         }
 
         // Migrate legacy hubIds
@@ -109,13 +105,12 @@ data class MeenaUserSettings(
 
     companion object {
         fun defaultWidgetMap(): Map<String, WidgetConfig> = mapOf(
-            // Today Hub (clock, forecast, solat, agenda, brief, followed by default-off widgets)
+            // Today Hub (clock, forecast, solat, agenda, followed by default-off widgets)
             "widget-clock-weather" to WidgetConfig("today", 0, isEnabled = true),
             "widget-weather-forecast" to WidgetConfig("today", 1, isEnabled = true),
             "widget-favourites" to WidgetConfig("today", 2, maxLinesOrItems = 8, isEnabled = true),
             "widget-solat" to WidgetConfig("today", 3, isEnabled = true),
             "widget-tasks" to WidgetConfig("today", 4, isEnabled = true),
-            "widget-today-summary" to WidgetConfig("today", 5, isEnabled = true),
             "widget-calendar-month" to WidgetConfig("today", 6, isEnabled = false),
             "widget-notes" to WidgetConfig("today", 7, isEnabled = false),
             "widget-health-device" to WidgetConfig("today", 8, isEnabled = false),
