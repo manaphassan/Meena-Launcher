@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import my.hana.meena.data.system.KeystoreSecretsManager
+import my.hana.meena.data.system.SecureFields
+import my.hana.meena.data.system.SecureRead
+import my.hana.meena.data.system.SharedPrefsStore
 import my.hana.meena.ui.widgets.RefreshPolicy
 import my.hana.meena.ui.widgets.WidgetSpec
 import my.hana.meena.ui.widgets.WidgetState
@@ -103,9 +107,12 @@ data class FinanceData(
 object FinanceRepository : WidgetSpec<FinanceData> {
     private const val TAG = "FinanceRepository"
     private const val PREFS_NAME = "meena_finance_data"
+    // Plain keys are only read to move data from older builds; new data goes to the enc_ keys.
     private const val KEY_HOLDINGS_JSON = "user_holdings_json"
-    private const val KEY_WATCHLIST_JSON = "user_watchlist_json"
     private const val KEY_SHEET_URL = "user_sheet_url"
+    private const val KEY_HOLDINGS_ENC = "enc_user_holdings_json"
+    private const val KEY_SHEET_URL_ENC = "enc_user_sheet_url"
+    private const val UNLOCK_FAILED_MESSAGE = "couldn't unlock your portfolio"
 
     override val id = "widget-finance-charts"
     override val title = "portfolio & watchlist"
@@ -126,17 +133,37 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     private val watchlistItems = mutableListOf<FinanceTicker>()
     private var sheetUrlConfigured: String = ""
 
+    /**
+     * True when saved holdings exist but can't be decrypted. Saving is blocked so the
+     * saved data is never overwritten; only [resetPortfolioStorage] clears it.
+     */
+    var isStorageLocked: Boolean = false
+        private set
+
     fun initialize(context: Context) {
         loadSavedData(context)
+        if (isStorageLocked) return
         evaluateState()
         if (sheetUrlConfigured.isNotBlank()) {
             refreshSheetData(context, sheetUrlConfigured)
         }
     }
 
+    /** Deletes saved holdings and the sheet link. Only call after the user says yes. */
+    fun resetPortfolioStorage(context: Context) {
+        val store = SharedPrefsStore(context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
+        listOf(KEY_HOLDINGS_ENC, KEY_HOLDINGS_JSON, KEY_SHEET_URL_ENC, KEY_SHEET_URL).forEach { store.remove(it) }
+        holdingsList.clear()
+        watchlistItems.clear()
+        sheetUrlConfigured = ""
+        isStorageLocked = false
+        evaluateState()
+    }
+
     override fun fetchInitialState(): WidgetState<FinanceData> = _state.value
 
     override suspend fun refresh(): WidgetState<FinanceData> {
+        if (isStorageLocked) return _state.value
         if (sheetUrlConfigured.isNotBlank()) {
             refreshSheetInternal(sheetUrlConfigured)
         } else {
@@ -160,6 +187,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     fun addHolding(context: Context, holding: FinanceHolding) {
+        if (isStorageLocked) return
         holdingsList.removeAll { it.id == holding.id }
         holdingsList.add(holding)
         saveData(context)
@@ -167,12 +195,14 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     fun removeHolding(context: Context, holdingId: String) {
+        if (isStorageLocked) return
         holdingsList.removeAll { it.id == holdingId }
         saveData(context)
         evaluateState()
     }
 
     fun setSheetUrl(context: Context, url: String) {
+        if (isStorageLocked) return
         sheetUrlConfigured = url.trim()
         saveData(context)
         if (sheetUrlConfigured.isNotBlank()) {
@@ -183,6 +213,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     fun refreshSheetData(context: Context, url: String) {
+        if (isStorageLocked) return
         scope.launch {
             refreshSheetInternal(url, context)
         }
@@ -393,17 +424,25 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     private fun loadSavedData(context: Context) {
-        try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            sheetUrlConfigured = prefs.getString(KEY_SHEET_URL, "") ?: ""
+        isStorageLocked = false
+        val store = SharedPrefsStore(context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
+        val cipher = KeystoreSecretsManager.fieldCipher
 
-            val holdingsStr = prefs.getString(KEY_HOLDINGS_JSON, null)
+        val sheet = SecureFields.read(store, cipher, KEY_SHEET_URL_ENC, KEY_SHEET_URL)
+        val holdings = SecureFields.read(store, cipher, KEY_HOLDINGS_ENC, KEY_HOLDINGS_JSON)
+        if (sheet !is SecureRead.Value || holdings !is SecureRead.Value) {
+            lockStorage("saved portfolio can't be decrypted")
+            return
+        }
+
+        try {
+            val loaded = mutableListOf<FinanceHolding>()
+            val holdingsStr = holdings.text
             if (!holdingsStr.isNullOrBlank()) {
                 val arr = JSONArray(holdingsStr)
-                holdingsList.clear()
                 for (i in 0 until arr.length()) {
                     val obj = arr.getJSONObject(i)
-                    holdingsList.add(
+                    loaded.add(
                         FinanceHolding(
                             id = obj.optString("id", UUID.randomUUID().toString()),
                             symbol = obj.optString("symbol"),
@@ -417,14 +456,27 @@ object FinanceRepository : WidgetSpec<FinanceData> {
                     )
                 }
             }
+            holdingsList.clear()
+            holdingsList.addAll(loaded)
+            sheetUrlConfigured = sheet.text.orEmpty()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed loading saved finance data", e)
+            // JSONException messages quote the input, so log the type only (hard rule 6).
+            lockStorage("saved portfolio can't be parsed: ${e.javaClass.simpleName}")
         }
     }
 
+    private fun lockStorage(reason: String) {
+        Log.w(TAG, reason)
+        isStorageLocked = true
+        holdingsList.clear()
+        watchlistItems.clear()
+        sheetUrlConfigured = ""
+        _state.value = WidgetState.Error(UNLOCK_FAILED_MESSAGE)
+    }
+
     private fun saveData(context: Context) {
+        if (isStorageLocked) return
         try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val arr = JSONArray()
             for (h in holdingsList) {
                 val obj = JSONObject().apply {
@@ -440,12 +492,13 @@ object FinanceRepository : WidgetSpec<FinanceData> {
                 arr.put(obj)
             }
 
-            prefs.edit()
-                .putString(KEY_HOLDINGS_JSON, arr.toString())
-                .putString(KEY_SHEET_URL, sheetUrlConfigured)
-                .apply()
+            val store = SharedPrefsStore(context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
+            val cipher = KeystoreSecretsManager.fieldCipher
+            val savedHoldings = SecureFields.write(store, cipher, KEY_HOLDINGS_ENC, KEY_HOLDINGS_JSON, arr.toString())
+            val savedSheet = SecureFields.write(store, cipher, KEY_SHEET_URL_ENC, KEY_SHEET_URL, sheetUrlConfigured)
+            if (!savedHoldings || !savedSheet) Log.w(TAG, "Couldn't save finance data")
         } catch (e: Exception) {
-            Log.w(TAG, "Failed saving finance data", e)
+            Log.w(TAG, "Couldn't save finance data: ${e.javaClass.simpleName}")
         }
     }
 }

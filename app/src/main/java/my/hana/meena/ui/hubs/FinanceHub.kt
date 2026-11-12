@@ -33,8 +33,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import my.hana.meena.R
 import my.hana.meena.data.finance.ExchangeRateRepository
 import my.hana.meena.data.finance.FinanceHolding
 import my.hana.meena.data.finance.FinanceRepository
@@ -65,6 +67,7 @@ fun FinanceHub(
     val context = LocalContext.current
     var localShowAmounts by remember(settings.showFinanceAmounts) { mutableStateOf(settings.showFinanceAmounts) }
     var holdingToDelete by remember { mutableStateOf<FinanceHolding?>(null) }
+    var showResetPortfolioDialog by remember { mutableStateOf(false) }
 
     // Initialize repositories on entry
     LaunchedEffect(Unit) {
@@ -87,6 +90,20 @@ fun FinanceHub(
     val financeWidgets = settings.widgetConfigs.entries
         .filter { (it.value.hubId == "money" || it.value.hubId == "finance") && it.value.isEnabled }
         .sortedBy { it.value.position }
+
+    if (showResetPortfolioDialog) {
+        MetroDialog(
+            title = stringResource(R.string.dialog_reset_portfolio_title),
+            message = stringResource(R.string.dialog_reset_portfolio_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
+            onConfirm = {
+                FinanceRepository.resetPortfolioStorage(context)
+                showResetPortfolioDialog = false
+            },
+            onDismiss = { showResetPortfolioDialog = false }
+        )
+    }
 
     if (holdingToDelete != null) {
         val holding = holdingToDelete!!
@@ -127,7 +144,14 @@ fun FinanceHub(
                             onToggleShowAmounts = { localShowAmounts = !localShowAmounts },
                             onDeleteHolding = { holding -> holdingToDelete = holding },
                             onOpenSettings = onOpenSettings,
-                            onRefresh = { FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "") }
+                            errorHint = if (FinanceRepository.isStorageLocked) stringResource(R.string.finance_unlock_failed_hint) else "tap to retry",
+                            onRefresh = {
+                                if (FinanceRepository.isStorageLocked) {
+                                    showResetPortfolioDialog = true
+                                } else {
+                                    FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "")
+                                }
+                            }
                         )
                     }
 
@@ -168,6 +192,7 @@ private fun PortfolioSection(
     onToggleShowAmounts: () -> Unit,
     onDeleteHolding: (FinanceHolding) -> Unit,
     onOpenSettings: () -> Unit,
+    errorHint: String,
     onRefresh: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
@@ -390,7 +415,7 @@ private fun PortfolioSection(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "tap to retry",
+                        text = errorHint,
                         style = MaterialTheme.typography.labelSmall,
                         color = MeenaTextMuted
                     )

@@ -87,7 +87,7 @@ In accordance with Google Play Developer Policy and Meena architecture rules:
 - **App Category:** Personalization / Tools (Android Launcher).
 - **Financial Services Declaration:**  
   Meena **does not** provide, facilitate, or promote financial services, banking, lending, credit issuance, or investment brokerage. The financial widget consists of:
-  1. A manual local asset portfolio tracker (stored in app-private storage on the device; not sent anywhere).
+  1. A manual local asset portfolio tracker (stored on-device, encrypted with an Android Keystore key; not sent anywhere).
   2. A read-only Google Sheets bridge where the user views their personal spreadsheet.
   3. An optional offline spending ledger parsed from device notification text.
 

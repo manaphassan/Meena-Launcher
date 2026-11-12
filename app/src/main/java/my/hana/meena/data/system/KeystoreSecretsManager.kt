@@ -69,11 +69,14 @@ object KeystoreSecretsManager {
         return Base64.encodeToString(combined, Base64.NO_WRAP)
     }
 
-    fun decrypt(encodedText: String): String {
+    fun decrypt(encodedText: String): String = decryptOrNull(encodedText) ?: ""
+
+    /** Like [decrypt], but returns null on failure so callers can tell "unreadable" from "empty". */
+    fun decryptOrNull(encodedText: String): String? {
         if (encodedText.isEmpty()) return ""
         try {
             val combined = Base64.decode(encodedText, Base64.NO_WRAP)
-            if (combined.size < GCM_IV_LENGTH) return ""
+            if (combined.size < GCM_IV_LENGTH) return null
             val iv = ByteArray(GCM_IV_LENGTH)
             System.arraycopy(combined, 0, iv, 0, GCM_IV_LENGTH)
             val cipherTextSize = combined.size - GCM_IV_LENGTH
@@ -87,8 +90,13 @@ object KeystoreSecretsManager {
             val decryptedBytes = cipher.doFinal(cipherText)
             return String(decryptedBytes, Charsets.UTF_8)
         } catch (_: Exception) {
-            return ""
+            return null
         }
+    }
+
+    val fieldCipher: FieldCipher = object : FieldCipher {
+        override fun encrypt(plain: String): String = KeystoreSecretsManager.encrypt(plain)
+        override fun decryptOrNull(encoded: String): String? = KeystoreSecretsManager.decryptOrNull(encoded)
     }
 
     fun saveGeminiApiKey(context: Context, key: String) {
