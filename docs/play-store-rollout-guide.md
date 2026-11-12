@@ -13,8 +13,8 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 
 - [x] Package Name: `my.hana.meena` (Permanent unique identifier)
 - [x] Compilation: Target SDK 36, Min SDK 24, Compose 2026 BOM
-- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, 12 Nov 2026)
-- [x] Bundle Size: **5.06 MiB** (5,300,851 bytes; within the 15 MB charter limit)
+- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, 12 Nov 2026, rerun after holdings encryption)
+- [x] Bundle Size: **5.06 MiB** (5,310,093 bytes; within the 15 MB charter limit)
 - [x] Baseline profile: `baseline.prof` packaged in the bundle
 - [ ] Release signing: bundle is **unsigned**; create `keystore.properties` from `keystore.properties.example` (or use Play App Signing with an upload key)
 - [x] R8 & ProGuard: Minification enabled, resource shrinking enabled
