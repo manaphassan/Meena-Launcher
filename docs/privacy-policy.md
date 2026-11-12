@@ -27,6 +27,7 @@ Meena talks directly to these services from your phone; it has no servers of its
 | Frankfurter (exchange rates) | Rates widget is on | Your base currency |
 | Google Sheets | You link a sheet | A request for the sheet you linked |
 | News feeds you add | News page is on | A request for each feed |
+| Wikipedia (Wikimedia REST API) | Wikipedia widget is on | A request for a random article; nothing about you |
 
 ---
 
@@ -58,7 +59,15 @@ Meena requests only the minimal set of Android permissions necessary to provide 
   - Data is fetched locally and rendered in memory.
   - Health data is never transmitted across the network, never sold, and never shared with advertisers or third parties.
 
-### 2.5 Installed Applications (`LauncherApps` & Queries)
+### 2.5 Nearby Devices (`android.permission.BLUETOOTH_CONNECT`; `BLUETOOTH` on Android 11 and older)
+- **Purpose:** The optional connected devices widget shows which Bluetooth devices are connected right now, such as a band, watch or headphones.
+- **Handling:** Meena only reads the names of devices that are already connected. It does not scan for new devices, does not connect to anything, and never logs, stores or sends device names. The permission is asked for only when you turn the widget on, after a short explanation.
+
+### 2.6 Apps You Open
+- **Purpose:** The optional frequent apps widget shows the apps you open most from Meena.
+- **Handling:** Meena counts launches it makes itself, on your phone only. It does not read Android's usage history. You can wipe the counts at any time with **clear app history** in the widget's settings.
+
+### 2.7 Installed Applications (`LauncherApps` & Queries)
 - **Purpose:** Core launcher functionality to discover and display installed applications on the Apps hub, and allow launching, pinning, or uninstalling apps.
 - **Handling:** Applications are queried locally via the Android system `LauncherApps` API. The broad `QUERY_ALL_PACKAGES` permission has been completely eliminated in favor of targeted intent filters. Your app list is never shared or profiled.
 

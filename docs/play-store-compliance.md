@@ -32,6 +32,8 @@ Use the following exact values when completing the Google Play Console **Data Sa
 | **Calendar** | Calendar events | **No** (on-device only) | **No** | N/A | Optional (requires calendar permission) | Not transmitted; agenda shown on the Today hub |
 | **Messages** | Other in-app messages / notification text | Yes | **No** | **Yes** | Optional (requires notification listener permission) | App functionality (Inbox hub alerts, chat summaries, and spending parser) |
 | **App Info & Performance** | Installed apps | Yes | **No** | **Yes** | **Required** | Core launcher functionality (discovering, launching, and organizing apps) |
+| **App activity** | App interactions (how often apps are opened from Meena) | **No** (on-device only) | **No** | N/A | Optional (frequent apps widget, off by default) | Not transmitted; ranks the frequent apps widget |
+| **Device or other IDs** | Names of connected Bluetooth devices | **No** (on-device only) | **No** | N/A | Optional (connected devices widget, off by default) | Not transmitted; shown on the Today hub |
 | **Personal Identifiers** | Name, Email, Phone, Device IDs | **No** | **No** | N/A | N/A | Meena collects zero personal identifiers or device IDs |
 
 **[S] Check before submitting:** health, messages and installed-apps rows say "Collected: Yes" but are never sent off the device. Play's [Data safety help](https://support.google.com/googleplay/android-developer/answer/10787469) says on-device-only data "does **not** need to be disclosed". Confirm whether to keep them or mark them not collected.
@@ -53,6 +55,10 @@ Use the following exact values when completing the Google Play Console **Data Sa
 ### 2.3 Health Connect Read Scopes (`READ_STEPS`, `READ_DISTANCE`, etc.)
 - **Justification for Google Play Review:**  
   *"Meena replaces the retired Google Fit APIs with Android Health Connect. Read-only permissions are used to aggregate and display the user's daily step count, active calories, sleep duration, and resting heart rate on the primary launcher home screen. Meena declares the mandatory `ACTION_SHOW_PERMISSIONS_RATIONALE` activity filter and links directly to its in-app privacy policy."*
+
+### 2.4 Nearby Devices (`BLUETOOTH_CONNECT`, plus `BLUETOOTH` with `maxSdkVersion=30`)
+- **Use:** the optional connected devices widget lists Bluetooth devices that are already connected (`BluetoothManager.getConnectedDevices(GATT)` and the A2DP and HEADSET profile proxies) and shows their names. No scanning (`BLUETOOTH_SCAN` is not requested), no connecting, no location use.
+- **Prominent disclosure:** a yes/no dialog (`disclosure_bluetooth_*`) explains what is read before the system permission prompt, and only appears when the user turns the widget on.
 
 ---
 

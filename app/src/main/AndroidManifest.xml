@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <!-- Connected devices widget: BLUETOOTH_CONNECT on Android 12+, the install-time BLUETOOTH permission before that. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <!-- Health Connect Read Permissions -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />

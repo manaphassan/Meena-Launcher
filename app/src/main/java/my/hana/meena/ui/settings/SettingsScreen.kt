@@ -313,7 +313,10 @@ fun SettingsScreen(
                             "widget-map-radar" to "map radar",
                             "widget-health-device" to "companion device",
                             "widget-health-telemetry" to "health",
-                            "widget-health-aqi" to "air"
+                            "widget-health-aqi" to "air",
+                            "widget-frequent-apps" to "frequent apps",
+                            "widget-bluetooth-devices" to "connected devices",
+                            "widget-wikipedia" to "wikipedia"
                         )
 
                         items(widgetList) { (id, title) ->
@@ -799,6 +802,31 @@ private fun SubPageContainer(
                             options = listOf("3" to "3 items", "5" to "5 items", "8" to "8 items", "12" to "12 items"),
                             selectedKey = custom("max_events", "5"),
                             onSelectKey = { setCustom("max_events", it) }
+                        )
+                    }
+                }
+
+                "widget-frequent-apps" -> {
+                    item {
+                        val settingsContext = LocalContext.current
+                        var confirmClear by remember { mutableStateOf(false) }
+                        if (confirmClear) {
+                            MetroDialog(
+                                title = stringResource(R.string.dialog_clear_app_history_title),
+                                message = stringResource(R.string.dialog_clear_app_history_question),
+                                confirmText = stringResource(R.string.action_yes),
+                                dismissText = stringResource(R.string.action_no),
+                                onConfirm = {
+                                    my.hana.meena.data.system.AppLaunchStats.clear(settingsContext)
+                                    confirmClear = false
+                                },
+                                onDismiss = { confirmClear = false }
+                            )
+                        }
+                        SettingLinkRow(
+                            title = stringResource(R.string.frequent_apps_clear),
+                            status = stringResource(R.string.frequent_apps_clear_hint),
+                            onClick = { confirmClear = true }
                         )
                     }
                 }

@@ -857,6 +857,9 @@ class MeenaLauncherLogicTest {
             "android.permission.ACCESS_NETWORK_STATE",
             "android.permission.ACCESS_COARSE_LOCATION",
             "android.permission.READ_CALENDAR",
+            // Connected devices widget, approved by the owner on 12 Nov 2026 (plan D14).
+            "android.permission.BLUETOOTH",
+            "android.permission.BLUETOOTH_CONNECT",
             "android.permission.health.READ_STEPS",
             "android.permission.health.READ_DISTANCE",
             "android.permission.health.READ_TOTAL_CALORIES_BURNED",

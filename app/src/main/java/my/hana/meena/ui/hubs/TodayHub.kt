@@ -88,6 +88,7 @@ fun TodayHub(
     onOpenCalculator: () -> Unit = {},
     onRequestCalendarPermission: () -> Unit = {},
     onRequestLocationPermission: () -> Unit = {},
+    onRequestBluetoothPermission: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenWeatherDetail: () -> Unit = {},
     onOpenApps: () -> Unit = {},
@@ -121,6 +122,11 @@ fun TodayHub(
     val weatherState by WeatherRepository.state.collectAsState()
     val calendarState by DeviceCalendarRepository.state.collectAsState()
     val deviceLocation by my.hana.meena.data.system.DeviceLocationHelper.locationFlow.collectAsState()
+    val launchVersion by my.hana.meena.data.system.AppLaunchStats.version.collectAsState()
+    val bluetoothState by my.hana.meena.data.system.BluetoothDevicesRepository.state.collectAsState()
+    val wikipediaState by my.hana.meena.data.system.WikipediaRepository.state.collectAsState()
+    val isBluetoothWidgetOn = settings.widgetConfigs["widget-bluetooth-devices"]?.isEnabled == true
+    val isWikipediaWidgetOn = settings.widgetConfigs["widget-wikipedia"]?.isEnabled == true
     val quickNotes = remember { mutableStateListOf<String>() }
     var appsVersion by remember { mutableStateOf(0) }
 
@@ -154,6 +160,18 @@ fun TodayHub(
                 null
             }
         } else null
+    }
+
+    // Connection changes have no callback here, so poll gently while the widget is on screen.
+    LaunchedEffect(isBluetoothWidgetOn) {
+        while (isBluetoothWidgetOn) {
+            my.hana.meena.data.system.BluetoothDevicesRepository.refresh(context)
+            delay(30_000L)
+        }
+    }
+
+    LaunchedEffect(isWikipediaWidgetOn) {
+        if (isWikipediaWidgetOn) my.hana.meena.data.system.WikipediaRepository.refresh(context)
     }
 
     LaunchedEffect(settings.is24HourFormat, settings.dateFormatPattern, settings.showClockSeconds) {
@@ -374,6 +392,167 @@ fun TodayHub(
                         onTogglePin = onTogglePin,
                         onMoveApp = onReorderPin
                     )
+                }
+
+                "widget-frequent-apps" -> {
+                    val limit = settings.widgetConfigs[widgetId]?.maxLinesOrItems ?: 8
+                    val frequentApps = remember(launchVersion, appsVersion, settings.pinnedAppIds, limit) {
+                        val stats = my.hana.meena.data.system.AppLaunchStats.load(context)
+                        val installed = stats.keys.filter { InstalledAppsRepository.getCachedApp(it) != null }.toSet()
+                        my.hana.meena.data.system.AppLaunchStats.rank(stats, installed, settings.pinnedAppIds.toSet(), limit)
+                    }
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_frequent_apps_title),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) }
+                    ) {
+                        my.hana.meena.ui.components.FrequentAppTiles(
+                            packageNames = frequentApps,
+                            isMonochrome = settings.isMonochromeFavourites,
+                            onLaunchApp = onLaunchPackage
+                        )
+                    }
+                }
+
+                "widget-bluetooth-devices" -> {
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_devices_title),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) }
+                    ) {
+                        when (val state = bluetoothState) {
+                            is WidgetState.NeedsSetup -> Text(
+                                text = stringResource(R.string.devices_needs_setup),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { onRequestBluetoothPermission() }
+                            )
+                            is WidgetState.Loading -> Text(
+                                text = stringResource(R.string.devices_loading),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
+                            is WidgetState.Empty -> Text(
+                                text = stringResource(R.string.devices_empty),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
+                            is WidgetState.Error -> Text(
+                                text = "${state.message}. ${stringResource(R.string.tap_to_retry)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { my.hana.meena.data.system.BluetoothDevicesRepository.refresh(context) }
+                            )
+                            is WidgetState.Ready, is WidgetState.Stale -> {
+                                val devices = (state as? WidgetState.Ready)?.data ?: (state as WidgetState.Stale).data
+                                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+                                    devices.forEach { device ->
+                                        Column {
+                                            Text(
+                                                text = device.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MeenaTextWhite
+                                            )
+                                            Text(
+                                                text = if (device.kind == my.hana.meena.data.system.BluetoothDevicesRepository.KIND_AUDIO) {
+                                                    stringResource(R.string.devices_kind_audio)
+                                                } else {
+                                                    stringResource(R.string.devices_kind_wearable)
+                                                },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MeenaTextMuted
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                "widget-wikipedia" -> {
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_wikipedia_title),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) }
+                    ) {
+                        when (val state = wikipediaState) {
+                            is WidgetState.Ready, is WidgetState.Stale -> {
+                                val article = (state as? WidgetState.Ready)?.data ?: (state as WidgetState.Stale).data
+                                val updatedAt = (state as? WidgetState.Ready)?.updatedAt ?: (state as WidgetState.Stale).updatedAt
+                                val openFailedMessage = stringResource(R.string.error_generic)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .metroClickable {
+                                            try {
+                                                context.startActivity(
+                                                    android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(article.url))
+                                                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                )
+                                            } catch (_: Exception) {
+                                                my.hana.meena.ui.components.MetroMessage.show(openFailedMessage)
+                                            }
+                                        },
+                                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                                ) {
+                                    Text(
+                                        text = article.title.lowercase(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MeenaTextWhite
+                                    )
+                                    if (article.description.isNotBlank()) {
+                                        Text(
+                                            text = article.description.lowercase(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextMuted
+                                        )
+                                    }
+                                    Text(
+                                        text = article.extract,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MeenaTextWhite,
+                                        maxLines = 4,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.wikipedia_source, my.hana.meena.ui.widgets.updatedAgoText(updatedAt)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.wikipedia_another),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { my.hana.meena.data.system.WikipediaRepository.refresh(context, force = true) }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                            is WidgetState.Error -> Text(
+                                text = "${state.message}. ${stringResource(R.string.tap_to_retry)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { my.hana.meena.data.system.WikipediaRepository.refresh(context, force = true) }
+                            )
+                            else -> Text(
+                                text = stringResource(R.string.wikipedia_loading),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                    }
                 }
 
                 "widget-solat" -> {

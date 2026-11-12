@@ -50,10 +50,10 @@ Reference only: we study layout and behaviour. We do not copy AIO code, icons, f
 | 6 | Quote list "symbol price (date)" with a dash when missing | portfolio, watchlist from sheet | nothing new | todo |
 | 7 | Multi-symbol price chart | none | chart drawn with Compose canvas, no library | todo |
 | 8 | More currency pairs | 9 pairs grid | nothing new | todo |
-| 9 | Frequent apps row | favourites only | count launches inside Meena (no permission); system usage stats need a special permission, so not that | needs OK |
+| 9 | Frequent apps row | favourites only | count launches inside Meena (no permission); system usage stats need a special permission, so not that | **done** (approved) |
 | 10 | Notes hidden on home until tapped | notes widget | nothing new | todo |
-| 11 | Connected Bluetooth devices | none | `BLUETOOTH_CONNECT` on Android 12+ (new permission) | needs OK |
-| 12 | Wikipedia article of the day | none | Wikimedia REST API, free [S: verify terms and endpoint] | needs OK |
+| 11 | Connected Bluetooth devices | none | `BLUETOOTH_CONNECT` on Android 12+ (approved) | **done** |
+| 12 | Wikipedia article | none | Wikimedia REST API `page/random/summary` with an identifying User-Agent ([access policy](https://www.mediawiki.org/wiki/Wikimedia_APIs/Access_policy)); the Wikifeeds featured feed is avoided because it is scheduled for deprecation from July 2026 ([Wikifeeds API](https://www.mediawiki.org/wiki/Wikifeeds_API)). Content is CC BY-SA, so the widget credits Wikipedia | **done** |
 | 13 | Gmail and Telegram lists | inbox alerts and chats from notifications | per-app filter on existing notifications, no new permission | todo |
 | 14 | Calculator | none | nothing new | todo |
 | 15 | Map with place name | map radar widget | already shows map | check |

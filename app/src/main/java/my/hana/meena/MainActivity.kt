@@ -163,10 +163,12 @@ class MainActivity : ComponentActivity() {
             if (app?.componentName != null && app.userHandle != null) {
                 val launcherApps = getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE) as android.content.pm.LauncherApps
                 launcherApps.startMainActivity(app.componentName, app.userHandle, null, null)
+                my.hana.meena.data.system.AppLaunchStats.record(this@MainActivity, packageName)
             } else {
                 val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
                 if (launchIntent != null) {
                     startActivity(launchIntent)
+                    my.hana.meena.data.system.AppLaunchStats.record(this@MainActivity, packageName)
                 } else {
                     my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_app_not_installed, packageName))
                 }
@@ -252,6 +254,13 @@ fun MeenaHomeScreen(
     }
     var showLocationDisclosure by remember { mutableStateOf(false) }
     var showCalendarDisclosure by remember { mutableStateOf(false) }
+    var showBluetoothDisclosure by remember { mutableStateOf(false) }
+
+    val bluetoothPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { _ ->
+        my.hana.meena.data.system.BluetoothDevicesRepository.refresh(context)
+    }
 
     val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
@@ -540,6 +549,9 @@ fun MeenaHomeScreen(
                             onOpenCalculator = onOpenCalculator,
                             onRequestCalendarPermission = { showCalendarDisclosure = true },
                             onRequestLocationPermission = { showLocationDisclosure = true },
+                            onRequestBluetoothPermission = {
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) showBluetoothDisclosure = true
+                            },
                             onOpenSettings = {
                                 settingsInitialTab = "widgets"
                                 isSettingsOpen = true
@@ -748,6 +760,20 @@ fun MeenaHomeScreen(
                     calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR)
                 },
                 onDismiss = { showCalendarDisclosure = false }
+            )
+        }
+
+        if (showBluetoothDisclosure && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            MetroDialog(
+                title = stringResource(R.string.disclosure_bluetooth_title),
+                message = "${stringResource(R.string.disclosure_bluetooth_body)}\n\n${stringResource(R.string.disclosure_bluetooth_question)}",
+                confirmText = stringResource(R.string.action_yes),
+                dismissText = stringResource(R.string.action_no),
+                onConfirm = {
+                    showBluetoothDisclosure = false
+                    bluetoothPermissionLauncher.launch(android.Manifest.permission.BLUETOOTH_CONNECT)
+                },
+                onDismiss = { showBluetoothDisclosure = false }
             )
         }
 
