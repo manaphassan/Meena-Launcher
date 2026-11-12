@@ -47,6 +47,7 @@ import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.ui.widgets.WidgetState
+import my.hana.meena.ui.widgets.updatedAgoText
 
 /**
  * Authentic Meena UI Money & Finance Hub.
@@ -274,8 +275,14 @@ private fun PortfolioSection(
                         }
                     }
 
+                    val syncedAt = data.sheetSyncedAt
                     Text(
-                        text = if (data.sheetConnected) "updated just now · google sheets bridge" else "updated just now · local portfolio",
+                        text = when {
+                            !data.sheetConnected -> stringResource(R.string.finance_source_local)
+                            syncedAt == null -> stringResource(R.string.finance_sheet_not_loaded)
+                            state is WidgetState.Stale -> stringResource(R.string.finance_source_sheet_saved, updatedAgoText(syncedAt))
+                            else -> stringResource(R.string.finance_source_sheet, updatedAgoText(syncedAt))
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = MeenaTextMuted
                     )
@@ -483,9 +490,14 @@ private fun ExchangeRatesSection(
                 val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
                 val base = data.baseCurrency.lowercase()
                 val isStale = state is WidgetState.Stale
+                val updatedAt = if (state is WidgetState.Ready) state.updatedAt else (state as WidgetState.Stale).updatedAt
 
                 Text(
-                    text = if (isStale) "updated earlier · offline cache" else "updated today · european central bank",
+                    text = if (isStale) {
+                        stringResource(R.string.rates_source_saved, updatedAgoText(updatedAt))
+                    } else {
+                        stringResource(R.string.rates_source_live, updatedAgoText(updatedAt))
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )

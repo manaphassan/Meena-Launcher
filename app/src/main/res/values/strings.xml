@@ -129,6 +129,16 @@
     <string name="dialog_reset_portfolio_title">start over</string>
     <string name="dialog_reset_portfolio_question">delete your saved portfolio and sheet link, then start fresh?</string>
     <string name="finance_unlock_failed_hint">this phone can\'t open your saved portfolio. tap to start over.</string>
+    <string name="updated_just_now">updated just now</string>
+    <string name="updated_minutes_ago">updated %1$dm ago</string>
+    <string name="updated_hours_ago">updated %1$dh ago</string>
+    <string name="updated_days_ago">updated %1$dd ago</string>
+    <string name="finance_source_sheet">%1$s · google sheets</string>
+    <string name="finance_source_sheet_saved">%1$s · google sheets · saved copy</string>
+    <string name="finance_sheet_not_loaded">sheet not loaded yet · showing prices you entered</string>
+    <string name="finance_source_local">prices you entered</string>
+    <string name="rates_source_live">%1$s · european central bank</string>
+    <string name="rates_source_saved">%1$s · european central bank · saved copy</string>
     <string name="finance_delay_notice">quotes from google sheets may be delayed ~20 min</string>
     <string name="finance_hide_amounts">mask balances in public</string>
 

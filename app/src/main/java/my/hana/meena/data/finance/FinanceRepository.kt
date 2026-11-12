@@ -95,7 +95,9 @@ data class FinanceData(
     val portfolios: List<PortfolioAccount> = emptyList(),
     val watchlist: List<FinanceTicker> = emptyList(),
     val sheetConnected: Boolean = false,
-    val sheetUrl: String = ""
+    val sheetUrl: String = "",
+    /** When the sheet last loaded successfully; null if it hasn't loaded since the app started. */
+    val sheetSyncedAt: Long? = null
 )
 
 /**
@@ -132,6 +134,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     private val holdingsList = mutableListOf<FinanceHolding>()
     private val watchlistItems = mutableListOf<FinanceTicker>()
     private var sheetUrlConfigured: String = ""
+    private var sheetSyncedAt: Long? = null
 
     /**
      * True when saved holdings exist but can't be decrypted. Saving is blocked so the
@@ -156,6 +159,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         holdingsList.clear()
         watchlistItems.clear()
         sheetUrlConfigured = ""
+        sheetSyncedAt = null
         isStorageLocked = false
         evaluateState()
     }
@@ -204,6 +208,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     fun setSheetUrl(context: Context, url: String) {
         if (isStorageLocked) return
         sheetUrlConfigured = url.trim()
+        sheetSyncedAt = null
         saveData(context)
         if (sheetUrlConfigured.isNotBlank()) {
             refreshSheetData(context, sheetUrlConfigured)
@@ -240,6 +245,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
 
             val csvContent = response.body?.string() ?: ""
             parseCsvSheet(csvContent)
+            sheetSyncedAt = System.currentTimeMillis()
 
             context?.let { saveData(it) }
             evaluateState()
@@ -407,7 +413,8 @@ object FinanceRepository : WidgetSpec<FinanceData> {
                     portfolios = accounts,
                     watchlist = watchlistItems.toList(),
                     sheetConnected = sheetUrlConfigured.isNotBlank(),
-                    sheetUrl = sheetUrlConfigured
+                    sheetUrl = sheetUrlConfigured,
+                    sheetSyncedAt = sheetSyncedAt
                 ),
                 updatedAt = System.currentTimeMillis()
             )
