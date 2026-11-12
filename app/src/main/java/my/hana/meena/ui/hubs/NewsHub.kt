@@ -49,6 +49,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import my.hana.meena.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,14 +81,16 @@ fun NewsHub(
         ?: emptyList()
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("all") } // "all", "amanz", "suami sihat"
+    var selectedFilter by remember { mutableStateOf("all") } // "all" or a source name in lowercase
+
+    // Saved feeds must reach the fetcher at start, not only when edited in settings.
+    LaunchedEffect(settings.newsFeeds) { NewsRssRepository.updateFeeds(settings.newsFeeds) }
+
+    // Filters follow the feeds that actually returned articles, not a fixed list.
+    val sourceNames = remember(newsArticles) { newsArticles.map { it.source.lowercase() }.distinct() }
 
     val filteredList = remember(newsArticles, selectedFilter, searchQuery) {
-        val bySource = when (selectedFilter) {
-            "amanz" -> newsArticles.filter { it.source.equals("Amanz", ignoreCase = true) }
-            "suami sihat" -> newsArticles.filter { it.source.equals("Suami Sihat", ignoreCase = true) }
-            else -> newsArticles
-        }
+        val bySource = if (selectedFilter == "all") newsArticles else newsArticles.filter { it.source.equals(selectedFilter, ignoreCase = true) }
         if (searchQuery.isNotBlank()) {
             bySource.filter {
                 it.title.contains(searchQuery, ignoreCase = true) ||
@@ -139,17 +143,19 @@ fun NewsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = "local news · rss feeds",
+                                        text = stringResource(R.string.news_title),
                                         style = MaterialTheme.typography.displaySmall,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = MeenaTextWhite
                                     )
-                                    Text(
-                                        text = "latest articles from amanz & suami sihat",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextMuted
-                                    )
+                                    if (sourceNames.isNotEmpty()) {
+                                        Text(
+                                            text = stringResource(R.string.news_from, sourceNames.joinToString(", ")),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextMuted
+                                        )
+                                    }
                                 }
 
                                 // Refresh Button (pure Metro 0dp, min 48dp)
@@ -159,7 +165,7 @@ fun NewsHub(
                                         .metroClickable {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             kotlinx.coroutines.MainScope().launch {
-                                                NewsRssRepository.refresh()
+                                                NewsRssRepository.refresh(force = true)
                                             }
                                         },
                                     contentAlignment = Alignment.Center
@@ -208,24 +214,17 @@ fun NewsHub(
                                         selectedFilter = "all"
                                     }
                                 )
-                                NewsFilterPill(
-                                    label = "amanz",
-                                    isSelected = selectedFilter == "amanz",
-                                    accentColor = MaterialTheme.colorScheme.primary,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilter = "amanz"
-                                    }
-                                )
-                                NewsFilterPill(
-                                    label = "suami sihat",
-                                    isSelected = selectedFilter == "suami sihat",
-                                    accentColor = MaterialTheme.colorScheme.primary,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilter = "suami sihat"
-                                    }
-                                )
+                                sourceNames.take(3).forEach { name ->
+                                    NewsFilterPill(
+                                        label = name,
+                                        isSelected = selectedFilter == name,
+                                        accentColor = MaterialTheme.colorScheme.primary,
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            selectedFilter = name
+                                        }
+                                    )
+                                }
                             }
                         }
 
@@ -263,14 +262,6 @@ fun NewsHub(
                                         }
                                     )
                                 }
-                            }
-                        }
-
-                        // 3. RSS FEED SOURCE MONITOR
-                        CollapsibleWidget(title = "feed sources · live status") {
-                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                                FeedSourceStatusRow("Amanz.my", "https://amanz.my/feed/", MaterialTheme.colorScheme.primary)
-                                FeedSourceStatusRow("SuamiSihat.com.my", "https://suamisihat.com.my/feed/", MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -400,34 +391,6 @@ private fun NewsFilterPill(
             fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium,
             color = if (isSelected) MeenaTextWhite else MeenaTextMuted
         )
-    }
-}
-
-@Composable
-private fun FeedSourceStatusRow(name: String, url: String, badgeColor: Color) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(MeenaProfitGreen, RoundedCornerShape(0.dp))
-            )
-            Column {
-                Text(name.lowercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MeenaTextWhite)
-                Text(url.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted, fontSize = 12.sp)
-            }
-        }
-        Text("active", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MeenaProfitGreen)
     }
 }
 

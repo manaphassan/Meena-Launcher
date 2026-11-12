@@ -38,14 +38,24 @@ data class NewsArticle(
     val description: String = ""
 )
 
+/** What the last fetch of one feed found. Shown in settings, never invented. */
+data class FeedStatus(
+    val url: String,
+    val name: String,
+    val articleCount: Int,
+    val checkedAt: Long,
+    /** null when the fetch worked; otherwise a short reason such as "http 404". */
+    val problem: String? = null
+)
+
 /**
- * Repository to fetch, parse, and cache the 6 latest local news items
- * from Amanz (https://amanz.my/feed/) and Suami Sihat (https://suamisihat.com.my/feed/).
+ * Fetches, parses and caches the latest articles from the user's feeds
+ * (Amanz and Suami Sihat until the user picks their own).
  */
 object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
     override val id = "widget-news"
     override val title = "news"
-    override val source = "Amanz & Suami Sihat RSS"
+    override val source = "RSS feeds you pick"
     override val refreshPolicy = RefreshPolicy.PERIODIC_MINUTES
     override val defaultRefreshMinutes = 60
 
@@ -53,6 +63,12 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
 
     private const val AMANZ_FEED_URL = "https://amanz.my/feed/"
     private const val SUAMISIHAT_FEED_URL = "https://suamisihat.com.my/feed/"
+
+    /** Used while the user has not picked any feeds. */
+    val DEFAULT_FEEDS = listOf(AMANZ_FEED_URL, SUAMISIHAT_FEED_URL)
+
+    /** The feeds actually fetched for a saved list: the user's own, or the built-in ones when empty. */
+    fun effectiveFeeds(saved: List<String>): List<String> = saved.ifEmpty { DEFAULT_FEEDS }
 
     private val rfc822DateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US)
     private val rfc822DateFormatFallback = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
@@ -67,13 +83,18 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
     private val _lastUpdatedFlow = MutableStateFlow<Long>(System.currentTimeMillis())
     val lastUpdatedFlow: StateFlow<Long> = _lastUpdatedFlow.asStateFlow()
 
+    private val _feedStatuses = MutableStateFlow<List<FeedStatus>>(emptyList())
+    /** One entry per feed from the last fetch, in feed order. Empty until the first fetch finishes. */
+    val feedStatuses: StateFlow<List<FeedStatus>> = _feedStatuses.asStateFlow()
+
     private val scope = CoroutineScope(Dispatchers.IO)
     private var customFeeds: List<String> = emptyList()
 
+    /** Called with the saved list at start and on every edit; a changed list always refetches. */
     fun updateFeeds(feeds: List<String>) {
         if (customFeeds != feeds) {
             customFeeds = feeds
-            scope.launch { refresh() }
+            scope.launch { refresh(force = true) }
         }
     }
 
@@ -84,30 +105,24 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
 
     override fun fetchInitialState(): WidgetState<List<NewsArticle>> = _newsFlow.value
 
-    override suspend fun refresh(): WidgetState<List<NewsArticle>> {
+    override suspend fun refresh(): WidgetState<List<NewsArticle>> = refresh(force = false)
+
+    suspend fun refresh(force: Boolean): WidgetState<List<NewsArticle>> {
         val now = System.currentTimeMillis()
         val currentData = _newsFlow.value
         
-        if (currentData is WidgetState.Ready && now - _lastUpdatedFlow.value < 60_000) {
+        if (!force && currentData is WidgetState.Ready && now - _lastUpdatedFlow.value < 60_000) {
             return currentData
         }
 
         _newsFlow.value = WidgetState.Loading
         try {
-            val feedList = if (customFeeds.isNotEmpty()) customFeeds else listOf(AMANZ_FEED_URL, SUAMISIHAT_FEED_URL)
+            val feedList = effectiveFeeds(customFeeds)
             val allArticles = mutableListOf<NewsArticle>()
+            val statuses = mutableListOf<FeedStatus>()
 
             for (feedUrl in feedList) {
-                val name = when {
-                    feedUrl.contains("amanz", ignoreCase = true) -> "Amanz"
-                    feedUrl.contains("suamisihat", ignoreCase = true) -> "Suami Sihat"
-                    feedUrl.contains("thestar", ignoreCase = true) -> "The Star"
-                    feedUrl.contains("bernama", ignoreCase = true) -> "Bernama"
-                    feedUrl.contains("malaysiakini", ignoreCase = true) -> "Malaysiakini"
-                    feedUrl.contains("techcrunch", ignoreCase = true) -> "TechCrunch"
-                    feedUrl.contains("ycombinator", ignoreCase = true) -> "Hacker News"
-                    else -> Uri.parse(feedUrl).host?.removePrefix("www.")?.substringBefore(".") ?: "News"
-                }
+                val name = sourceNameFor(feedUrl)
                 val color = when {
                     feedUrl.contains("amanz", ignoreCase = true) -> "#00A4EF"
                     feedUrl.contains("suamisihat", ignoreCase = true) -> "#107C10"
@@ -118,8 +133,11 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                     feedUrl.contains("ycombinator", ignoreCase = true) -> "#FA6800"
                     else -> "#00A4EF"
                 }
-                allArticles.addAll(fetchFeed(feedUrl, name, color))
+                val result = fetchFeed(feedUrl, name, color)
+                allArticles.addAll(result.first)
+                statuses += FeedStatus(feedUrl, name, result.first.size, System.currentTimeMillis(), result.second)
             }
+            _feedStatuses.value = statuses
 
             val merged = allArticles
                 .distinctBy { it.link.ifBlank { it.title } }
@@ -147,12 +165,29 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
         }
     }
 
+    /** Display name for a feed URL: a known source name, or the site's host. */
+    fun sourceNameFor(feedUrl: String): String = when {
+        feedUrl.contains("amanz", ignoreCase = true) -> "Amanz"
+        feedUrl.contains("suamisihat", ignoreCase = true) -> "Suami Sihat"
+        feedUrl.contains("thestar", ignoreCase = true) -> "The Star"
+        feedUrl.contains("bernama", ignoreCase = true) -> "Bernama"
+        feedUrl.contains("malaysiakini", ignoreCase = true) -> "Malaysiakini"
+        feedUrl.contains("techcrunch", ignoreCase = true) -> "TechCrunch"
+        feedUrl.contains("ycombinator", ignoreCase = true) -> "Hacker News"
+        else -> hostOf(feedUrl)?.removePrefix("www.")?.substringBefore(".") ?: "News"
+    }
+
+    private fun hostOf(url: String): String? =
+        url.substringAfter("://", "").substringBefore("/").substringBefore("?").ifBlank { null }
+
+    /** Returns the articles found and, when the fetch failed, a short reason. */
     private suspend fun fetchFeed(
         urlStr: String,
         sourceName: String,
         sourceBadgeColor: String
-    ): List<NewsArticle> = withContext(Dispatchers.IO) {
+    ): Pair<List<NewsArticle>, String?> = withContext(Dispatchers.IO) {
         val items = mutableListOf<NewsArticle>()
+        var problem: String? = null
         try {
             val client = okhttp3.OkHttpClient()
             val request = okhttp3.Request.Builder()
@@ -168,11 +203,13 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                 }
             } else {
                 Log.w(TAG, "Failed to fetch $urlStr: HTTP ${response.code}")
+                problem = "http ${response.code}"
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching feed from $urlStr: ${e.message}")
+            problem = "couldn't connect"
         }
-        items
+        items to problem
     }
 
     private fun parseRssXml(

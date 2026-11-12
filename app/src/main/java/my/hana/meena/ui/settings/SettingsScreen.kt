@@ -226,6 +226,7 @@ fun SettingsScreen(
                     settingsState = settingsState,
                     onUpdate = { transform -> update(transform) },
                     onBack = { activeSubPage = null },
+                    onOpenSubPage = { activeSubPage = it },
                     onExportBackup = onExportBackup,
                     onImportBackup = onImportBackup,
                     onResetDefaults = onResetDefaults
@@ -555,6 +556,7 @@ private fun SubPageContainer(
     settingsState: MeenaUserSettings,
     onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit,
     onBack: () -> Unit,
+    onOpenSubPage: (String) -> Unit,
     onExportBackup: () -> Unit,
     onImportBackup: () -> Unit,
     onResetDefaults: () -> Unit
@@ -1148,15 +1150,10 @@ private fun SubPageContainer(
 
                 "widget-news-feed" -> {
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    item {
-                        NewsFeedManager(
-                            currentFeeds = settingsState.newsFeeds,
-                            onUpdateFeeds = { feeds ->
-                                onUpdate { it.copy(newsFeeds = feeds) }
-                                NewsRssRepository.updateFeeds(feeds)
-                            }
+                        SettingsPivotRow(
+                            title = stringResource(R.string.settings_news_title),
+                            status = stringResource(R.string.news_feeds_link_status),
+                            onClick = { onOpenSubPage("account:news") }
                         )
                     }
                     item {
@@ -1452,10 +1449,14 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Text(
-                    text = "rss feeds are fetched via okhttp3 with clean xml parsing. images are disabled by default for fast, light performance.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MeenaTextMuted
+                NewsFeedManager(
+                    currentFeeds = settingsState.newsFeeds,
+                    onUpdateFeeds = { feeds ->
+                        // Saving exactly the built-in list keeps "using built-in feeds" behaviour.
+                        val toSave = if (feeds == NewsRssRepository.DEFAULT_FEEDS) emptyList() else feeds
+                        onUpdate { it.copy(newsFeeds = toSave) }
+                        NewsRssRepository.updateFeeds(toSave)
+                    }
                 )
             }
         }
@@ -2572,170 +2573,174 @@ private fun NewsFeedManager(
     onUpdateFeeds: (List<String>) -> Unit
 ) {
     var newFeedUrl by remember { mutableStateOf("") }
-    val defaultPresetFeeds = listOf(
+    var addProblem by remember { mutableStateOf<String?>(null) }
+    var feedToRemove by remember { mutableStateOf<String?>(null) }
+    val statuses by NewsRssRepository.feedStatuses.collectAsState()
+    val shownFeeds = NewsRssRepository.effectiveFeeds(currentFeeds)
+    val usingDefaults = currentFeeds.isEmpty()
+    val presetFeeds = listOf(
         "bernama" to "https://news.google.com/rss/search?q=bernama&hl=en-MY&gl=MY&ceid=MY:en",
         "the star" to "https://www.thestar.com.my/rss/news/nation",
         "malaysiakini" to "https://www.malaysiakini.com/rss/en/news.rss",
         "techcrunch" to "https://techcrunch.com/feed/",
         "hacker news" to "https://news.ycombinator.com/rss"
     )
+    val httpsOnly = stringResource(R.string.news_feeds_https_only)
+    val alreadyThere = stringResource(R.string.news_feeds_already_added)
+
+    feedToRemove?.let { url ->
+        MetroDialog(
+            title = stringResource(R.string.news_feeds_remove_title),
+            message = stringResource(R.string.news_feeds_remove_question, NewsRssRepository.sourceNameFor(url).lowercase()),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
+            onConfirm = {
+                onUpdateFeeds(shownFeeds - url)
+                feedToRemove = null
+            },
+            onDismiss = { feedToRemove = null }
+        )
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
+        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
     ) {
         Text(
-            text = "manage feed sources",
-            style = MaterialTheme.typography.titleMedium,
+            text = stringResource(if (usingDefaults) R.string.news_feeds_using_defaults else R.string.news_feeds_yours),
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        Text(
-            text = "articles are fetched directly on-device with zero server intermediaries or cloud tracking.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MeenaTextMuted
-        )
 
-        // Custom feed text field
+        shownFeeds.forEach { url ->
+            val status = statuses.firstOrNull { it.url == url }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = NewsRssRepository.sourceNameFor(url).lowercase(),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MeenaTextWhite,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = when {
+                            status == null -> stringResource(R.string.news_feeds_not_checked)
+                            status.problem != null -> stringResource(R.string.news_feeds_problem, status.problem)
+                            else -> androidx.compose.ui.res.pluralStringResource(
+                                R.plurals.news_feeds_ok,
+                                status.articleCount,
+                                status.articleCount,
+                                my.hana.meena.ui.widgets.updatedAgoText(status.checkedAt)
+                            )
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (status?.problem != null) MaterialTheme.colorScheme.error else MeenaTextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = url.removePrefix("https://").lowercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.news_feeds_remove),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable { feedToRemove = url }
+                        .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.m)
+                )
+            }
+        }
+        if (usingDefaults) {
+            Text(
+                text = stringResource(R.string.news_feeds_defaults_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MeenaTextMuted
+            )
+        }
+
+        Text(
+            text = stringResource(R.string.news_feeds_add_title),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.l)
+        )
         OutlinedTextField(
             value = newFeedUrl,
-            onValueChange = { newFeedUrl = it },
-            placeholder = { Text("https://example.com/rss.xml", color = MeenaTextMuted, fontSize = 12.sp) },
+            onValueChange = {
+                newFeedUrl = it
+                addProblem = null
+            },
+            placeholder = { Text("https://example.com/feed", color = MeenaTextMuted, fontSize = 12.sp) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(0.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MeenaSurface,
-                unfocusedContainerColor = MeenaSurface,
+                focusedContainerColor = MeenaBlack,
+                unfocusedContainerColor = MeenaBlack,
                 focusedTextColor = MeenaTextWhite,
                 unfocusedTextColor = MeenaTextWhite,
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 unfocusedIndicatorColor = MeenaBorder
             )
         )
-
-        Button(
-            onClick = {
-                val trimmed = newFeedUrl.trim()
-                if (trimmed.isNotBlank() && !currentFeeds.contains(trimmed)) {
-                    val updated = currentFeeds + trimmed
-                    onUpdateFeeds(updated)
-                    newFeedUrl = ""
-                }
-            },
-            enabled = newFeedUrl.isNotBlank(),
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            shape = RoundedCornerShape(0.dp)
-        ) {
-            Text("add feed source", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+        addProblem?.let {
+            Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
-
-        // Quick presets
         Text(
-            text = "quick presets",
+            text = stringResource(R.string.news_feeds_add),
             style = MaterialTheme.typography.labelSmall,
-            color = MeenaTextWhite,
-            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-        ) {
-            defaultPresetFeeds.take(3).forEach { (label, url) ->
-                val alreadyAdded = currentFeeds.contains(url)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .background(if (alreadyAdded) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MeenaSurface)
-                        .metroClickable(enabled = !alreadyAdded) {
-                            onUpdateFeeds(currentFeeds + url)
-                        }
-                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (alreadyAdded) "added · $label" else "+ $label",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 12.sp,
-                        color = if (alreadyAdded) MeenaTextWhite else MeenaTextMuted
-                    )
-                }
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-        ) {
-            defaultPresetFeeds.drop(3).forEach { (label, url) ->
-                val alreadyAdded = currentFeeds.contains(url)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .background(if (alreadyAdded) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MeenaSurface)
-                        .metroClickable(enabled = !alreadyAdded) {
-                            onUpdateFeeds(currentFeeds + url)
-                        }
-                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (alreadyAdded) "added · $label" else "+ $label",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 12.sp,
-                        color = if (alreadyAdded) MeenaTextWhite else MeenaTextMuted
-                    )
-                }
-            }
-        }
-
-        // Configured feeds
-        if (currentFeeds.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "${currentFeeds.size} configured feeds",
-                style = MaterialTheme.typography.labelSmall,
-                color = MeenaTextWhite
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                currentFeeds.forEach { feedUrl ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MeenaSurface)
-                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = feedUrl.lowercase(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MeenaTextWhite,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "remove",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .heightIn(min = 48.dp)
-                                .metroClickable {
-                                    onUpdateFeeds(currentFeeds.filter { it != feedUrl })
-                                }
-                                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.m)
-                        )
+            color = if (newFeedUrl.isNotBlank()) MaterialTheme.colorScheme.primary else MeenaTextMuted,
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .metroClickable(enabled = newFeedUrl.isNotBlank()) {
+                    val trimmed = newFeedUrl.trim()
+                    addProblem = when {
+                        !trimmed.startsWith("https://", ignoreCase = true) -> httpsOnly
+                        trimmed in shownFeeds -> alreadyThere
+                        else -> null
+                    }
+                    if (addProblem == null) {
+                        onUpdateFeeds(shownFeeds + trimmed)
+                        newFeedUrl = ""
                     }
                 }
-            }
-        } else {
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+        )
+
+        val available = presetFeeds.filter { it.second !in shownFeeds }
+        if (available.isNotEmpty()) {
             Text(
-                text = "using default feeds (amanz & suami sihat). add custom feeds above to expand your headlines.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MeenaTextMuted
+                text = stringResource(R.string.news_feeds_suggested),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.l)
             )
+            available.forEach { (label, url) ->
+                Text(
+                    text = stringResource(R.string.news_feeds_add_named, label),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MeenaTextWhite,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onUpdateFeeds(shownFeeds + url) }
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                )
+            }
         }
     }
 }
