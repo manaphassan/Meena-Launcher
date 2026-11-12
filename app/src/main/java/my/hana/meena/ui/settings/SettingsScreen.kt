@@ -61,6 +61,7 @@ import androidx.core.graphics.toColorInt
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -443,7 +444,7 @@ fun SettingsScreen(
                         item {
                             SettingLinkRow(
                                 title = "privacy & data safety",
-                                status = "on-device only · zero cloud tracking",
+                                status = stringResource(R.string.privacy_status),
                                 onClick = { activeSubPage = "look:privacy" }
                             )
                         }
@@ -1790,17 +1791,17 @@ private fun SubPageContainer(
                 Spacer(modifier = Modifier.height(4.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                     Text(
-                        text = "on-device processing: notifications and bank alerts are read locally in memory and never sent to any server or third party.",
+                        text = stringResource(R.string.privacy_notifications_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "coarse location: approximate location is used solely to query local weather and prayer times. no background tracking.",
+                        text = stringResource(R.string.privacy_location_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "calendar read: reads device calendar via calendarcontract for your agenda widget without requiring cloud accounts.",
+                        text = stringResource(R.string.privacy_calendar_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -1810,7 +1811,7 @@ private fun SubPageContainer(
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "zero cloud backup: system cloud backup is disabled (allowbackup=false) to ensure your data stays on this device.",
+                        text = stringResource(R.string.privacy_backup_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -1851,7 +1852,7 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "meena is designed from the ground up to respect your privacy. your data stays on your phone.",
+                    text = stringResource(R.string.privacy_intro),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MeenaTextWhite
                 )
@@ -1864,7 +1865,7 @@ private fun SubPageContainer(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "all notifications, calendar events, bank spending alerts, and health stats are processed locally in memory. meena operates with zero tracking, zero analytical servers, and zero cloud profiling.",
+                    text = stringResource(R.string.privacy_on_device_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -1878,17 +1879,17 @@ private fun SubPageContainer(
                 Spacer(modifier = Modifier.height(4.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                     Text(
-                        text = "approximate location: used solely to query public weather and jakim prayer times. never tracked in background or saved.",
+                        text = stringResource(R.string.privacy_location_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "device calendar: read via calendarcontract solely to show your upcoming agenda on today. no cloud account required.",
+                        text = stringResource(R.string.privacy_calendar_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "notifications: read in memory to show alerts, chats, and opt-in spending tracking. no message text is ever logged or shared.",
+                        text = stringResource(R.string.privacy_notifications_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -1898,7 +1899,7 @@ private fun SubPageContainer(
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "brief: user-initiated only. your selected summary details are sent directly to google's generative language api using your own api key. keys are stored with android keystore encryption.",
+                        text = stringResource(R.string.privacy_brief_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -2949,7 +2950,7 @@ private fun GeminiApiKeyInput(
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "disclosure: the details you choose (calendar, weather, prayer, or spending) are sent directly to google's generative language api from your device when generating a brief. no data is sent anywhere else.",
+            text = stringResource(R.string.disclosure_gemini_body),
             style = MaterialTheme.typography.labelSmall,
             color = MeenaTextMuted
         )
