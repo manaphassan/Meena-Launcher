@@ -155,23 +155,24 @@ object JakimSolatRepository : WidgetSpec<JakimSchedule> {
     }
 
     val AVAILABLE_ZONES = listOf(
-        SolatZone("WLY01", "Kuala Lumpur, Putrajaya", "Wilayah Persekutuan", 0),
-        SolatZone("WLY02", "Labuan", "Wilayah Persekutuan", -35),
-        SolatZone("SGR01", "Gombak, Petaling, Sepang, Shah Alam", "Selangor", 0),
-        SolatZone("SGR02", "Kuala Selangor, Sabak Bernam", "Selangor", 1),
-        SolatZone("SGR03", "Klang, Kuala Langat", "Selangor", 0),
-        SolatZone("JHR01", "Pulau Aur dan Pulau Pemanggil", "Johor", -8),
-        SolatZone("JHR02", "Johor Bahru, Kulai, Kota Tinggi", "Johor", -4),
-        SolatZone("JHR03", "Kluang, Pontian", "Johor", -3),
-        SolatZone("PNG01", "Pulau Pinang, Seberang Perai", "Pulau Pinang", 3),
-        SolatZone("KDH01", "Kota Setar, Kubang Pasu", "Kedah", 4),
-        SolatZone("PRK02", "Ipoh, Batu Gajah, Kampar", "Perak", 2),
-        SolatZone("MLK01", "Seluruh Negeri Melaka", "Melaka", -2),
-        SolatZone("NSN01", "Seremban, Port Dickson, Rembau", "Negeri Sembilan", -1),
-        SolatZone("TRG01", "Kuala Terengganu, Marang", "Terengganu", -9),
-        SolatZone("KTN01", "Kota Bharu, Bachok, Tumpat", "Kelantan", -6),
-        SolatZone("SBH01", "Kota Kinabalu, Ranau, Penampang", "Sabah", -42),
-        SolatZone("SWK08", "Kuching, Bau, Lundu", "Sarawak", -32)
+        SolatZone("WLY01", "Kuala Lumpur, Putrajaya", "Wilayah Persekutuan"),
+        SolatZone("WLY02", "Labuan", "Wilayah Persekutuan"),
+        SolatZone("SGR01", "Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, Shah Alam", "Selangor"),
+        SolatZone("SGR02", "Kuala Selangor, Sabak Bernam", "Selangor"),
+        SolatZone("SGR03", "Klang, Kuala Langat", "Selangor"),
+        SolatZone("JHR01", "Pulau Aur dan Pulau Pemanggil", "Johor"),
+        SolatZone("JHR02", "Johor Bahru, Kota Tinggi, Mersing, Kulai", "Johor"),
+        SolatZone("JHR03", "Kluang, Pontian", "Johor"),
+        SolatZone("PNG01", "Seluruh Negeri Pulau Pinang", "Pulau Pinang"),
+        SolatZone("KDH01", "Kota Setar, Kubang Pasu, Pokok Sena", "Kedah"),
+        SolatZone("PRK01", "Tapah, Slim River, Tanjung Malim", "Perak"),
+        SolatZone("PRK02", "Kuala Kangsar, Sungai Siput, Ipoh, Batu Gajah, Kampar", "Perak"),
+        SolatZone("MLK01", "Seluruh Negeri Melaka", "Melaka"),
+        SolatZone("NGS03", "Port Dickson, Seremban", "Negeri Sembilan"),
+        SolatZone("TRG01", "Kuala Terengganu, Marang, Kuala Nerus", "Terengganu"),
+        SolatZone("KTN01", "Bachok, Kota Bharu, Machang, Pasir Mas, Pasir Puteh, Tanah Merah, Tumpat, Kuala Krai", "Kelantan"),
+        SolatZone("SBH07", "Kota Kinabalu, Ranau, Kota Belud, Tuaran, Penampang, Papar, Putatan", "Sabah"),
+        SolatZone("SWK08", "Kuching, Bau, Lundu, Sematan", "Sarawak")
     )
 
     suspend fun fetchMonthlySchedule(zone: String): List<DailyPrayerRow> {

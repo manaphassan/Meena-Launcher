@@ -2462,20 +2462,10 @@ private fun SolatZonePicker(
     currentZone: String,
     onSelectZone: (String) -> Unit
 ) {
-    val zones = listOf(
-        "" to stringResource(R.string.settings_solat_auto),
-        "WLY01" to "wly01 · kuala lumpur & putrajaya",
-        "SGR01" to "sgr01 · gombak, petaling, sepang, hulu langat",
-        "SGR02" to "sgr02 · kuala selangor, sabak bernam",
-        "SGR03" to "sgr03 · klang, kuala langat",
-        "JHR01" to "jhr01 · pulau aur & pemanggil",
-        "JHR02" to "jhr02 · johor bahru, kota tinggi, kulai",
-        "PNG01" to "png01 · pulau pinang",
-        "PRK01" to "prk01 · tapah, slim river, tanjung malim",
-        "PRK02" to "prk02 · ipoh, batu gajah, kampar",
-        "SBH01" to "sbh01 · kota kinabalu, ranau, penampang",
-        "SWK01" to "swk01 · kuching, bau, lundu, sematan"
-    )
+    val zones = listOf("" to stringResource(R.string.settings_solat_auto)) +
+        my.hana.meena.data.system.JakimSolatRepository.AVAILABLE_ZONES.map {
+            it.code to stringResource(R.string.settings_status_pair, it.code.lowercase(), it.name.lowercase())
+        }
 
     SettingSegmentedRow(
         title = stringResource(R.string.solat_zone_title),

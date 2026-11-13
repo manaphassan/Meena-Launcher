@@ -36,7 +36,7 @@
     <string name="state_needs_quick_okay">needs a quick okay</string>
     <string name="state_nothing_new">nothing new</string>
     <string name="state_allow_location">allow location</string>
-    <string name="state_checking">checking...</string>
+    <string name="state_checking">checking</string>
     <string name="state_updated_just_now">updated just now</string>
     <string name="state_updated_ago">updated %1$dm ago</string>
     <string name="state_new_count">%1$d new</string>
@@ -497,4 +497,69 @@
     </plurals>
     <string name="picker_search_hint">type to search</string>
     <string name="picker_clear_search">clear search</string>
+    <!-- today and prayer times -->
+    <string name="weather_last_known">%1$s · last known</string>
+    <string name="forecast_summary">%1$s, %2$s</string>
+    <string name="solat_loading">loading prayer times</string>
+    <string name="solat_load_failed">couldn\'t load prayer times. check your connection, then tap to retry.</string>
+    <string name="solat_no_times">no prayer times for this place yet.</string>
+    <string name="calendar_allow_prompt">want your schedule here? tap to allow calendar access.</string>
+    <string name="action_allow">allow</string>
+    <string name="agenda_empty">all quiet, nothing coming up</string>
+    <string name="agenda_add_event">+ event</string>
+    <string name="notes_empty_short">empty</string>
+    <string name="notes_empty">no notes yet.</string>
+    <string name="action_remove">remove</string>
+    <string name="health_connect_short">connect health</string>
+    <string name="health_no_data">no data yet</string>
+    <string name="health_connect_prompt">link health connect to see your steps, sleep and activity.</string>
+    <string name="health_connect_action">connect</string>
+    <string name="health_steps_label">steps</string>
+    <string name="health_sleep_label">sleep</string>
+    <string name="health_distance_km">%1$s km</string>
+    <plurals name="health_calories_kcal">
+        <item quantity="one">%1$d kcal</item>
+        <item quantity="other">%1$d kcal</item>
+    </plurals>
+    <string name="phone_summary">battery %1$d%% · %2$s gb free</string>
+    <string name="phone_battery_label">battery</string>
+    <string name="phone_battery_charging">%1$d%% · charging</string>
+    <string name="phone_battery_unplugged">%1$d%% · on battery</string>
+    <string name="phone_memory_label">memory</string>
+    <string name="phone_free_gb">%1$s gb free</string>
+    <string name="phone_storage_label">storage</string>
+    <string name="phone_screen_label">screen brightness</string>
+    <string name="percent_value">%1$d%%</string>
+    <string name="quick_actions_title">quick actions</string>
+    <string name="quick_action_phone">phone</string>
+    <string name="quick_action_messages">messages</string>
+    <string name="quick_action_email">email</string>
+    <string name="quick_action_camera">camera</string>
+    <string name="quick_action_calculator">calc</string>
+    <string name="pinned_title">pinned</string>
+    <string name="solat_this_month">this month</string>
+    <string name="solat_name_subuh">subuh</string>
+    <string name="solat_name_syuruk">syuruk</string>
+    <string name="solat_name_zohor">zohor</string>
+    <string name="solat_name_asar">asar</string>
+    <string name="solat_name_maghrib">maghrib</string>
+    <string name="solat_name_isyak">isyak</string>
+    <string name="solat_table_day">day</string>
+    <string name="solat_month_title">prayer times · %1$s</string>
+    <plurals name="events_upcoming">
+        <item quantity="one">%1$d upcoming</item>
+        <item quantity="other">%1$d upcoming</item>
+    </plurals>
+    <plurals name="events_today">
+        <item quantity="one">%1$d today</item>
+        <item quantity="other">%1$d today</item>
+    </plurals>
+    <plurals name="notes_count">
+        <item quantity="one">%1$d note</item>
+        <item quantity="other">%1$d notes</item>
+    </plurals>
+    <plurals name="health_steps_count">
+        <item quantity="one">%1$d step</item>
+        <item quantity="other">%1$d steps</item>
+    </plurals>
 </resources>

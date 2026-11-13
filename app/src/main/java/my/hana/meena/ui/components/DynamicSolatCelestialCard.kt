@@ -1,6 +1,7 @@
 ﻿package my.hana.meena.ui.components
 
 import my.hana.meena.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -66,6 +67,7 @@ import androidx.compose.ui.window.Dialog
 import my.hana.meena.data.system.JakimSchedule
 import my.hana.meena.data.system.JakimSolatRepository
 import my.hana.meena.theme.MeenaBorder
+import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaSurface
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
@@ -156,7 +158,7 @@ fun DynamicSolatCelestialCard(
                     .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
             )
             Text(
-                text = "this month",
+                text = stringResource(R.string.solat_this_month),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
@@ -250,6 +252,11 @@ private fun CelestialSkyCanvas(
     val tMaghrib = items[4].totalMinutes
     val tIsyak = items[5].totalMinutes
 
+    val subuhLabel = stringResource(R.string.solat_name_subuh)
+    val syurukLabel = stringResource(R.string.solat_name_syuruk)
+    val asarLabel = stringResource(R.string.solat_name_asar)
+    val maghribLabel = stringResource(R.string.solat_name_maghrib)
+    val isyakLabel = stringResource(R.string.solat_name_isyak)
     val primaryColor = MaterialTheme.colorScheme.primary
     Canvas(modifier = modifier) {
         val w = size.width
@@ -461,11 +468,11 @@ private fun CelestialSkyCanvas(
         }
 
         // Syuruk label directly above-left of dot
-        nativeCanvas.drawText("syuruk", xSyuruk - 14.dp.toPx(), ySyuruk - 9.dp.toPx(), labelPaint)
+        nativeCanvas.drawText(syurukLabel, xSyuruk - 14.dp.toPx(), ySyuruk - 9.dp.toPx(), labelPaint)
 
         // Subuh label to the right of dot
         labelPaint.textAlign = Paint.Align.LEFT
-        nativeCanvas.drawText("subuh", xSubuh + 8.dp.toPx(), ySubuh + 4.dp.toPx(), labelPaint)
+        nativeCanvas.drawText(subuhLabel, xSubuh + 8.dp.toPx(), ySubuh + 4.dp.toPx(), labelPaint)
 
         // Active prayer name centered directly above sun & target marker
         val sunLabelPaint = Paint().apply {
@@ -480,14 +487,14 @@ private fun CelestialSkyCanvas(
 
         // Asar label to the upper-right
         labelPaint.textAlign = Paint.Align.LEFT
-        nativeCanvas.drawText("asar", xAsar + my.hana.meena.theme.MeenaSpacing.s.toPx(), yAsar - 7.dp.toPx(), labelPaint)
+        nativeCanvas.drawText(asarLabel, xAsar + my.hana.meena.theme.MeenaSpacing.s.toPx(), yAsar - 7.dp.toPx(), labelPaint)
 
         // Maghrib label to the upper-right
-        nativeCanvas.drawText("maghrib", xMaghrib + my.hana.meena.theme.MeenaSpacing.s.toPx(), yMaghrib - 9.dp.toPx(), labelPaint)
+        nativeCanvas.drawText(maghribLabel, xMaghrib + my.hana.meena.theme.MeenaSpacing.s.toPx(), yMaghrib - 9.dp.toPx(), labelPaint)
 
         // Isyak label to the left
         labelPaint.textAlign = Paint.Align.RIGHT
-        nativeCanvas.drawText("isyak", xIsyak - 8.dp.toPx(), yIsyak + 4.dp.toPx(), labelPaint)
+        nativeCanvas.drawText(isyakLabel, xIsyak - 8.dp.toPx(), yIsyak + 4.dp.toPx(), labelPaint)
     }
 }
 
@@ -497,89 +504,20 @@ private fun ZonePickerDialog(
     onZoneSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val haptic = LocalHapticFeedback.current
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(my.hana.meena.theme.MeenaSpacing.m),
-            shape = RoundedCornerShape(0.dp),
-            color = MaterialTheme.colorScheme.primary,
-            border = androidx.compose.foundation.BorderStroke(1.dp, MeenaBorder)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(my.hana.meena.theme.MeenaSpacing.m)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Pilih Zon Waktu Solat",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MeenaTextWhite
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .metroClickable(onClick = onDismiss),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(painterResource(R.drawable.ic_thin_close), contentDescription = "close", tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 380.dp),
-                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    items(JakimSolatRepository.AVAILABLE_ZONES) { zone ->
-                        val isSelected = zone.code.equals(currentZone, ignoreCase = true)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface,
-                                    RoundedCornerShape(0.dp)
-                                )
-                                .clickable {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    onZoneSelected(zone.code)
-                                }
-                                .padding(my.hana.meena.theme.MeenaSpacing.m),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "${zone.code} · ${zone.state}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MeenaTextMuted
-                                )
-                                Text(
-                                    text = zone.name,
-                                    fontSize = 13.sp,
-                                    color = MeenaTextWhite
-                                )
-                            }
-                            if (isSelected) {
-                                Text("✓", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    val zones = JakimSolatRepository.AVAILABLE_ZONES
+    MetroListPicker(
+        title = stringResource(R.string.solat_zone_title),
+        items = zones.map {
+            MetroPickerItem(
+                key = it.code,
+                title = stringResource(R.string.settings_status_pair, it.code.lowercase(), it.name.lowercase()),
+                subtitle = it.state.lowercase()
+            )
+        },
+        selectedKey = zones.firstOrNull { it.code.equals(currentZone, ignoreCase = true) }?.code ?: currentZone,
+        onSelect = onZoneSelected,
+        onDismiss = onDismiss
+    )
 }
 
 @Composable
@@ -589,9 +527,7 @@ private fun MonthlyScheduleDialog(
     onDismiss: () -> Unit
 ) {
     val now = Calendar.getInstance()
-    val month = now.get(Calendar.MONTH)
-    val year = now.get(Calendar.YEAR)
-    val monthNames = arrayOf("january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december")
+    val monthLabel = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.UK).format(now.time).lowercase()
     var scheduleRows by remember(zone) { mutableStateOf<List<my.hana.meena.data.system.DailyPrayerRow>>(emptyList()) }
     
     LaunchedEffect(zone) {
@@ -604,8 +540,7 @@ private fun MonthlyScheduleDialog(
                 .fillMaxWidth()
                 .padding(my.hana.meena.theme.MeenaSpacing.s),
             shape = RoundedCornerShape(0.dp),
-            color = MaterialTheme.colorScheme.primary,
-            border = androidx.compose.foundation.BorderStroke(1.dp, MeenaBorder)
+            color = MeenaBlack
         ) {
             Column(
                 modifier = Modifier
@@ -619,13 +554,13 @@ private fun MonthlyScheduleDialog(
                 ) {
                     Column {
                         Text(
-                            text = "prayer timetable · ${monthNames[month]} $year",
+                            text = stringResource(R.string.solat_month_title, monthLabel),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium,
                             color = MeenaTextWhite
                         )
                         Text(
-                            text = "$zone · $zoneName",
+                            text = stringResource(R.string.settings_status_pair, zone.lowercase(), zoneName.lowercase()),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -636,7 +571,7 @@ private fun MonthlyScheduleDialog(
                             .metroClickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(painterResource(R.drawable.ic_thin_close), contentDescription = "close", tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
+                        Icon(painterResource(R.drawable.ic_thin_close), contentDescription = stringResource(R.string.action_close), tint = MeenaTextWhite, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -646,17 +581,16 @@ private fun MonthlyScheduleDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s, horizontal = my.hana.meena.theme.MeenaSpacing.s),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("day", modifier = Modifier.weight(1.1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text("subuh", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text("syuruk", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text("zohor", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text("asar", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text("maghrib", modifier = Modifier.weight(1.25f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary, maxLines = 1, softWrap = false)
-                    Text("isyak", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_table_day), modifier = Modifier.weight(1.1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_subuh), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_syuruk), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_zohor), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_asar), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_maghrib), modifier = Modifier.weight(1.25f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary, maxLines = 1, softWrap = false)
+                    Text(stringResource(R.string.solat_name_isyak), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                 }
 
                 LazyColumn(
@@ -669,26 +603,22 @@ private fun MonthlyScheduleDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    if (row.isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                    RoundedCornerShape(0.dp)
-                                )
                                 .padding(vertical = my.hana.meena.theme.MeenaSpacing.s, horizontal = my.hana.meena.theme.MeenaSpacing.s),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                "${row.dayName.take(3)} ${row.day}",
+                                "${row.dayName.take(3).lowercase()} ${row.day}",
                                 modifier = Modifier.weight(1.1f),
                                 fontSize = 12.sp,
                                 fontWeight = if (row.isToday) FontWeight.Medium else FontWeight.Normal,
                                 color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite
                             )
-                            Text(row.subuh, modifier = Modifier.weight(1f), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
-                            Text(row.syuruk, modifier = Modifier.weight(1f), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
-                            Text(row.dhuhr, modifier = Modifier.weight(1f), fontSize = 12.sp, color = MeenaTextWhite)
-                            Text(row.asar, modifier = Modifier.weight(1f), fontSize = 12.sp, color = MeenaTextWhite)
-                            Text(row.maghrib, modifier = Modifier.weight(1.25f), fontSize = 12.sp, color = MeenaTextWhite)
-                            Text(row.isyak, modifier = Modifier.weight(1f), fontSize = 12.sp, color = MeenaTextWhite)
+                            Text(row.subuh, modifier = Modifier.weight(1f), fontSize = 12.sp, color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite)
+                            Text(row.syuruk, modifier = Modifier.weight(1f), fontSize = 12.sp, color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite)
+                            Text(row.dhuhr, modifier = Modifier.weight(1f), fontSize = 12.sp, color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite)
+                            Text(row.asar, modifier = Modifier.weight(1f), fontSize = 12.sp, color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite)
+                            Text(row.maghrib, modifier = Modifier.weight(1.25f), fontSize = 12.sp, color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite)
+                            Text(row.isyak, modifier = Modifier.weight(1f), fontSize = 12.sp, color = if (row.isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite)
                         }
                     }
                 }

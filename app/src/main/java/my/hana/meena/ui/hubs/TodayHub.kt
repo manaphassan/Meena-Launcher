@@ -275,14 +275,14 @@ fun TodayHub(
                                     style = MaterialTheme.typography.headlineMedium
                                 )
                                 val conditionText = when (weatherState) {
-                                    is WidgetState.NeedsSetup -> "allow location"
-                                    is WidgetState.Loading -> "checking..."
+                                    is WidgetState.NeedsSetup -> stringResource(R.string.state_allow_location)
+                                    is WidgetState.Loading -> stringResource(R.string.state_checking)
                                     is WidgetState.Ready, is WidgetState.Stale -> {
-                                        val cond = weatherData?.current?.condition ?: "clear"
-                                        if (isWeatherStale) "$cond (stale)" else cond
+                                        val cond = weatherData?.current?.condition.orEmpty()
+                                        if (isWeatherStale) stringResource(R.string.weather_last_known, cond) else cond
                                     }
-                                    is WidgetState.Error -> "offline"
-                                    else -> "needs setup"
+                                    is WidgetState.Error -> stringResource(R.string.state_offline)
+                                    else -> stringResource(R.string.state_needs_setup)
                                 }
                                 Text(
                                     text = conditionText,
@@ -387,7 +387,7 @@ fun TodayHub(
                         collapsedSummary = {
                             if (tomorrow != null) {
                                 Text(
-                                    text = "${tomorrow.dayLabel}, ${tomorrow.condition}",
+                                    text = stringResource(R.string.forecast_summary, tomorrow.dayLabel, tomorrow.condition),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MeenaTextMuted
                                 )
@@ -794,9 +794,9 @@ fun TodayHub(
                             // Honest state instead of an empty card.
                             Text(
                                 text = when (solatState) {
-                                    is my.hana.meena.ui.widgets.WidgetState.Loading -> "loading prayer times..."
-                                    is my.hana.meena.ui.widgets.WidgetState.Error -> "couldn't load prayer times. check your connection."
-                                    else -> "no prayer times for this place yet."
+                                    is my.hana.meena.ui.widgets.WidgetState.Loading -> stringResource(R.string.solat_loading)
+                                    is my.hana.meena.ui.widgets.WidgetState.Error -> stringResource(R.string.solat_load_failed)
+                                    else -> stringResource(R.string.solat_no_times)
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MeenaTextMuted
@@ -823,9 +823,9 @@ fun TodayHub(
                         collapsedSummary = {
                             Text(
                                 text = when {
-                                    isNeedsPermission -> "needs setup"
-                                    calEvents.isEmpty() -> "all quiet"
-                                    else -> "${calEvents.size} upcoming"
+                                    isNeedsPermission -> stringResource(R.string.state_needs_setup)
+                                    calEvents.isEmpty() -> stringResource(R.string.state_all_quiet)
+                                    else -> pluralStringResource(R.plurals.events_upcoming, calEvents.size, calEvents.size)
                                 },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (isNeedsPermission) MeenaTextMuted else MaterialTheme.colorScheme.primary
@@ -844,13 +844,13 @@ fun TodayHub(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "want your schedule here? tap to allow calendar access.",
+                                        text = stringResource(R.string.calendar_allow_prompt),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
-                                        text = "allow",
+                                        text = stringResource(R.string.action_allow),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Medium
@@ -891,11 +891,11 @@ fun TodayHub(
                         collapsedSummary = {
                             Text(
                                 text = when {
-                                    isNeedsPermission -> "needs setup"
-                                    agendaItems.isEmpty() -> "all quiet"
+                                    isNeedsPermission -> stringResource(R.string.state_needs_setup)
+                                    agendaItems.isEmpty() -> stringResource(R.string.state_all_quiet)
                                     else -> {
                                         val todayCount = agendaItems.count { it.formattedDate == "today" }
-                                        if (todayCount > 0) "$todayCount scheduled today" else "${agendaItems.size} upcoming"
+                                        if (todayCount > 0) pluralStringResource(R.plurals.events_today, todayCount, todayCount) else pluralStringResource(R.plurals.events_upcoming, agendaItems.size, agendaItems.size)
                                     }
                                 },
                                 style = MaterialTheme.typography.labelSmall,
@@ -923,13 +923,13 @@ fun TodayHub(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "want your schedule here? tap to allow calendar access.",
+                                        text = stringResource(R.string.calendar_allow_prompt),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
-                                        text = "allow",
+                                        text = stringResource(R.string.action_allow),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Medium
@@ -943,12 +943,12 @@ fun TodayHub(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "all quiet · no upcoming events",
+                                        text = stringResource(R.string.agenda_empty),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
                                     Text(
-                                        text = "+ event",
+                                        text = stringResource(R.string.agenda_add_event),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
@@ -997,7 +997,7 @@ fun TodayHub(
                                         horizontalArrangement = Arrangement.End
                                     ) {
                                         Text(
-                                            text = "+ new event",
+                                            text = stringResource(R.string.action_new_event),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier
@@ -1015,12 +1015,12 @@ fun TodayHub(
                 "widget-notes" -> {
                     // Quick notes
                     CollapsibleWidget(
-                        title = "quick notes",
+                        title = stringResource(R.string.widget_name_notes),
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
-                                text = if (quickNotes.isEmpty()) "empty" else "${quickNotes.size} notes",
+                                text = if (quickNotes.isEmpty()) stringResource(R.string.notes_empty_short) else pluralStringResource(R.plurals.notes_count, quickNotes.size, quickNotes.size),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -1028,7 +1028,7 @@ fun TodayHub(
                     ) {
                         if (quickNotes.isEmpty()) {
                             Text(
-                                text = "no notes pinned. write a note in settings.",
+                                text = stringResource(R.string.notes_empty),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -1049,7 +1049,7 @@ fun TodayHub(
                                             modifier = Modifier.weight(1f)
                                         )
                                         Text(
-                                            text = "remove",
+                                            text = stringResource(R.string.action_remove),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MeenaTextMuted,
                                             modifier = Modifier
@@ -1067,15 +1067,15 @@ fun TodayHub(
                 "widget-health-telemetry" -> {
                     // Merged health & activity widget
                     CollapsibleWidget(
-                        title = "health",
+                        title = stringResource(R.string.settings_health_title),
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
                                 text = when (healthState) {
-                                    is WidgetState.NeedsSetup -> "connect health"
-                                    is WidgetState.Ready, is WidgetState.Stale -> "${fitTelemetry.stepsToday} steps"
-                                    else -> "no data"
+                                    is WidgetState.NeedsSetup -> stringResource(R.string.health_connect_short)
+                                    is WidgetState.Ready, is WidgetState.Stale -> pluralStringResource(R.plurals.health_steps_count, fitTelemetry.stepsToday, fitTelemetry.stepsToday)
+                                    else -> stringResource(R.string.health_no_data)
                                 },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (healthState is WidgetState.Ready) MeenaTextWhite else MeenaTextMuted
@@ -1096,13 +1096,13 @@ fun TodayHub(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "connect health connect to track steps, sleep and activity.",
+                                        text = stringResource(R.string.health_connect_prompt),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
-                                        text = "connect",
+                                        text = stringResource(R.string.health_connect_action),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Medium
@@ -1116,7 +1116,7 @@ fun TodayHub(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("steps", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                        Text(stringResource(R.string.health_steps_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                         Text(
                                             text = "${fitTelemetry.stepsToday} / ${fitTelemetry.stepGoal}",
                                             style = MaterialTheme.typography.labelSmall,
@@ -1139,14 +1139,14 @@ fun TodayHub(
                                         ) {
                                             if (fitTelemetry.distanceKm > 0.0) {
                                                 Text(
-                                                    text = "${String.format(java.util.Locale.US, "%.1f", fitTelemetry.distanceKm)} km",
+                                                    text = stringResource(R.string.health_distance_km, String.format(java.util.Locale.US, "%.1f", fitTelemetry.distanceKm)),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MeenaTextMuted
                                                 )
                                             }
                                             if (fitTelemetry.activeCaloriesKcal > 0) {
                                                 Text(
-                                                    text = "${fitTelemetry.activeCaloriesKcal} kcal",
+                                                    text = pluralStringResource(R.plurals.health_calories_kcal, fitTelemetry.activeCaloriesKcal, fitTelemetry.activeCaloriesKcal),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MeenaTextMuted
                                                 )
@@ -1160,7 +1160,7 @@ fun TodayHub(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("sleep", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                            Text(stringResource(R.string.health_sleep_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                             Text(
                                                 text = fitTelemetry.sleepHoursFormatted,
                                                 style = MaterialTheme.typography.labelSmall,
@@ -1183,12 +1183,12 @@ fun TodayHub(
                 "widget-device-telemetry" -> {
                     // Phone status
                     CollapsibleWidget(
-                        title = "phone",
+                        title = stringResource(R.string.widget_name_phone),
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
                             Text(
-                                text = "battery ${telemetry.batteryPercent}% · ${String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)}",
+                                text = stringResource(R.string.phone_summary, telemetry.batteryPercent, String.format(Locale.US, "%.1f", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -1202,9 +1202,9 @@ fun TodayHub(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("battery", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text(stringResource(R.string.phone_battery_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                     Text(
-                                        text = "${telemetry.batteryPercent}% · ${if (telemetry.isCharging) "charging" else "on battery"}",
+                                        text = stringResource(if (telemetry.isCharging) R.string.phone_battery_charging else R.string.phone_battery_unplugged, telemetry.batteryPercent),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = if (telemetry.batteryPercent <= 20) MaterialTheme.colorScheme.error else MeenaTextWhite
                                     )
@@ -1217,9 +1217,9 @@ fun TodayHub(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("memory", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text(stringResource(R.string.phone_memory_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                     Text(
-                                        text = String.format(Locale.US, "%.1f gb free", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0),
+                                        text = stringResource(R.string.phone_free_gb, String.format(Locale.US, "%.1f", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextWhite
                                     )
@@ -1239,9 +1239,9 @@ fun TodayHub(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("storage", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text(stringResource(R.string.phone_storage_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                     Text(
-                                        text = String.format(Locale.US, "%.1f gb free", telemetry.totalStorageGb - telemetry.usedStorageGb),
+                                        text = stringResource(R.string.phone_free_gb, String.format(Locale.US, "%.1f", telemetry.totalStorageGb - telemetry.usedStorageGb)),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextWhite
                                     )
@@ -1260,8 +1260,8 @@ fun TodayHub(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("screen", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                Text("${telemetry.screenBrightnessPercent}%", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                                Text(stringResource(R.string.phone_screen_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                Text(stringResource(R.string.percent_value, telemetry.screenBrightnessPercent), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                             }
                         }
                     }
@@ -1279,7 +1279,7 @@ fun TodayHub(
                 verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
             ) {
                 Text(
-                    text = "quick actions",
+                    text = stringResource(R.string.quick_actions_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MeenaTextWhite
                 )
@@ -1288,11 +1288,11 @@ fun TodayHub(
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     val quickActions = listOf(
-                        Triple("phone", MaterialTheme.colorScheme.primary, onOpenDialer),
-                        Triple("messages", MaterialTheme.colorScheme.primary, onOpenMessages),
-                        Triple("email", MaterialTheme.colorScheme.primary, onOpenEmail),
-                        Triple("camera", MaterialTheme.colorScheme.primary, onOpenCamera),
-                        Triple("calc", MaterialTheme.colorScheme.primary, onOpenCalculator)
+                        Triple(stringResource(R.string.quick_action_phone), MaterialTheme.colorScheme.primary, onOpenDialer),
+                        Triple(stringResource(R.string.quick_action_messages), MaterialTheme.colorScheme.primary, onOpenMessages),
+                        Triple(stringResource(R.string.quick_action_email), MaterialTheme.colorScheme.primary, onOpenEmail),
+                        Triple(stringResource(R.string.quick_action_camera), MaterialTheme.colorScheme.primary, onOpenCamera),
+                        Triple(stringResource(R.string.quick_action_calculator), MaterialTheme.colorScheme.primary, onOpenCalculator)
                     )
                     quickActions.forEach { (label, bg, action) ->
                         Box(
@@ -1321,7 +1321,7 @@ fun TodayHub(
             val currentAppsVersion = appsVersion
             item {
                 Text(
-                    text = "pinned",
+                    text = stringResource(R.string.pinned_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MeenaTextWhite,
                     modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.s)
