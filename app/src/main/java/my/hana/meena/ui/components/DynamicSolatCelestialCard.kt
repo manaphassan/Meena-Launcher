@@ -78,39 +78,127 @@ import java.util.Locale
 fun DynamicSolatCelestialCard(
     schedule: JakimSchedule,
     onZoneChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showSunPath: Boolean = false,
+    showSyuruk: Boolean = true
 ) {
     val haptic = LocalHapticFeedback.current
-    
-    val initialNow = remember { Calendar.getInstance() }
-    var currentTimeStr by remember {
-        mutableStateOf(SimpleDateFormat("HH:mm", Locale.getDefault()).format(initialNow.time))
-    }
-    var currentMinutesOfDay by remember {
-        mutableStateOf(initialNow.get(Calendar.HOUR_OF_DAY) * 60 + initialNow.get(Calendar.MINUTE))
-    }
 
+    var currentMinutesOfDay by remember {
+        val now = Calendar.getInstance()
+        mutableStateOf(now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE))
+    }
     var isZonePickerOpen by remember { mutableStateOf(false) }
     var isMonthlyScheduleOpen by remember { mutableStateOf(false) }
 
-    // Live continuous time ticker updating time only when minute rolls over
     LaunchedEffect(Unit) {
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        var lastMinute = -1
         while (true) {
             val now = Calendar.getInstance()
-            val minuteNow = now.get(Calendar.MINUTE)
-            val minutesOfDay = now.get(Calendar.HOUR_OF_DAY) * 60 + minuteNow
-            if (minuteNow != lastMinute) {
-                lastMinute = minuteNow
-                currentTimeStr = timeFormat.format(now.time)
-                currentMinutesOfDay = minutesOfDay
-            }
-            delay(1000)
+            currentMinutesOfDay = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+            delay(30_000)
         }
     }
 
-    // Dynamic sun glow & pulse animation
+    // Imsak marks the start of the fast, not a prayer, so the row shows the six JAKIM times.
+    val shown = schedule.timelineItems.filter { it.name != "imsak" && (showSyuruk || it.name != "syuruk") }
+    val nextId = shown.firstOrNull { it.totalMinutes > currentMinutesOfDay }?.id ?: shown.firstOrNull()?.id
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (showSunPath) {
+            AnimatedSunPath(schedule = schedule, currentMinutesOfDay = currentMinutesOfDay, nextName = nextId ?: "")
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            shown.forEach { item ->
+                val isNext = item.id == nextId
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                ) {
+                    Text(
+                        text = item.name.lowercase(),
+                        fontSize = 12.sp,
+                        color = if (isNext) MaterialTheme.colorScheme.primary else MeenaTextMuted,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                    Text(
+                        text = item.time24,
+                        fontSize = 16.sp,
+                        fontWeight = if (isNext) FontWeight.Normal else FontWeight.Light,
+                        color = if (isNext) MaterialTheme.colorScheme.primary else MeenaTextWhite,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = schedule.zoneName.lowercase(),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .heightIn(min = 48.dp)
+                    .metroClickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        isZonePickerOpen = true
+                    }
+                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+            )
+            Text(
+                text = "this month",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .metroClickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        isMonthlyScheduleOpen = true
+                    }
+                    .padding(
+                        start = my.hana.meena.theme.MeenaSpacing.m,
+                        top = my.hana.meena.theme.MeenaSpacing.m,
+                        bottom = my.hana.meena.theme.MeenaSpacing.m
+                    )
+            )
+        }
+    }
+
+    if (isZonePickerOpen) {
+        ZonePickerDialog(
+            currentZone = schedule.zone,
+            onZoneSelected = { newZone ->
+                onZoneChanged(newZone)
+                isZonePickerOpen = false
+            },
+            onDismiss = { isZonePickerOpen = false }
+        )
+    }
+
+    if (isMonthlyScheduleOpen) {
+        MonthlyScheduleDialog(
+            zone = schedule.zone,
+            zoneName = schedule.zoneName,
+            onDismiss = { isMonthlyScheduleOpen = false }
+        )
+    }
+}
+
+/** Optional sun path (off by default). The pulse only runs while it is on screen. */
+@Composable
+private fun AnimatedSunPath(schedule: JakimSchedule, currentMinutesOfDay: Int, nextName: String) {
     val infiniteTransition = rememberInfiniteTransition(label = "celestialAnim")
     val sunPulseRadius by infiniteTransition.animateFloat(
         initialValue = 18f,
@@ -130,252 +218,17 @@ fun DynamicSolatCelestialCard(
         ),
         label = "sunAlpha"
     )
-
-    Box(
-        modifier = modifier
+    CelestialSkyCanvas(
+        modifier = Modifier
             .fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-
-            // UPPER SECTION: SKY GRADIENT & CELESTIAL SUN ARC
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-            ) {
-                // Background celestial canvas with sky gradient, horizon line & lower dark zone
-                CelestialSkyCanvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clipToBounds(),
-                    schedule = schedule,
-                    currentMinutesOfDay = currentMinutesOfDay,
-                    sunPulseRadius = sunPulseRadius,
-                    sunGlowAlpha = sunGlowAlpha
-                )
-
-                // Top Info Bar (Zone & Clock)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Zone Pill
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                isZonePickerOpen = true
-                            }
-                            .padding(vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = schedule.zone,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MeenaTextWhite
-                        )
-                        Spacer(modifier = Modifier.width(my.hana.meena.theme.MeenaSpacing.s))
-                        Text(
-                            text = schedule.zoneName,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    // Live Digital Clock & Timezone
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = currentTimeStr,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MeenaTextWhite
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "myt",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                // Next Prayer Hero Summary (Top-Left overlay)
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.l)
-                ) {
-                    Text(
-                        text = "next",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 12.sp
-                    )
-                    Text(
-                        text = schedule.nextPrayerName,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MeenaTextWhite,
-                        lineHeight = 34.sp
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 0.dp)
-                    ) {
-                        Text(
-                            text = schedule.nextPrayerTime,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MeenaTextWhite
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = schedule.nextPrayerRemaining,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            // LOWER SECTION: 6-PRAYER TIMELINE BAR (Equal 1/6th width per prayer, guarantees 'isyak' is never squished)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                schedule.timelineItems.forEach { item ->
-                    val isHighlighted = item.isNext
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = item.name.lowercase(),
-                                fontSize = 12.sp,
-                                fontWeight = if (isHighlighted) FontWeight.Medium else FontWeight.Normal,
-                                color = if (isHighlighted) MaterialTheme.colorScheme.primary else MeenaTextMuted,
-                                maxLines = 1,
-                                softWrap = false
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = item.time24,
-                                fontSize = 13.sp,
-                                fontWeight = if (isHighlighted) FontWeight.Medium else FontWeight.Normal,
-                                color = if (isHighlighted) MaterialTheme.colorScheme.primary else MeenaTextWhite,
-                                maxLines = 1,
-                                softWrap = false
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Subtle divider line
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = 0.dp),
-                color = MaterialTheme.colorScheme.primary,
-                thickness = 1.dp
-            )
-
-            // FOOTER: DATE & INTERACTIVE ACTIONS
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Left: Gregorian & Hijri Date
-                Text(
-                    text = "${schedule.formattedGregorianDate}  ·  ${schedule.hijriDate}".lowercase(),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-
-                // Right: Interactive Action Buttons (Protected from line wrap, lowercase English, no symbols)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .heightIn(min = 48.dp)
-                            .metroClickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                isMonthlyScheduleOpen = true
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "monthly schedule",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .heightIn(min = 48.dp)
-                            .metroClickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                isZonePickerOpen = true
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "change zone",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    // Zone Picker Modal Dialog
-    if (isZonePickerOpen) {
-        ZonePickerDialog(
-            currentZone = schedule.zone,
-            onZoneSelected = { newZone ->
-                onZoneChanged(newZone)
-                isZonePickerOpen = false
-            },
-            onDismiss = { isZonePickerOpen = false }
-        )
-    }
-
-    // Monthly Timetable Modal Dialog
-    if (isMonthlyScheduleOpen) {
-        MonthlyScheduleDialog(
-            zone = schedule.zone,
-            zoneName = schedule.zoneName,
-            onDismiss = { isMonthlyScheduleOpen = false }
-        )
-    }
+            .height(160.dp)
+            .clipToBounds(),
+        schedule = schedule,
+        currentMinutesOfDay = currentMinutesOfDay,
+        sunPulseRadius = sunPulseRadius,
+        sunGlowAlpha = sunGlowAlpha,
+        nextName = nextName
+    )
 }
 
 @Composable
@@ -384,9 +237,10 @@ private fun CelestialSkyCanvas(
     schedule: JakimSchedule,
     currentMinutesOfDay: Int,
     sunPulseRadius: Float,
-    sunGlowAlpha: Float
+    sunGlowAlpha: Float,
+    nextName: String
 ) {
-    val items = schedule.timelineItems
+    val items = schedule.timelineItems.filter { it.name != "imsak" }
     if (items.size < 6) return
 
     val tSubuh = items[0].totalMinutes
@@ -607,11 +461,11 @@ private fun CelestialSkyCanvas(
         }
 
         // Syuruk label directly above-left of dot
-        nativeCanvas.drawText("Syuruk", xSyuruk - 14.dp.toPx(), ySyuruk - 9.dp.toPx(), labelPaint)
+        nativeCanvas.drawText("syuruk", xSyuruk - 14.dp.toPx(), ySyuruk - 9.dp.toPx(), labelPaint)
 
         // Subuh label to the right of dot
         labelPaint.textAlign = Paint.Align.LEFT
-        nativeCanvas.drawText("Subuh", xSubuh + 8.dp.toPx(), ySubuh + 4.dp.toPx(), labelPaint)
+        nativeCanvas.drawText("subuh", xSubuh + 8.dp.toPx(), ySubuh + 4.dp.toPx(), labelPaint)
 
         // Active prayer name centered directly above sun & target marker
         val sunLabelPaint = Paint().apply {
@@ -622,18 +476,18 @@ private fun CelestialSkyCanvas(
             textAlign = Paint.Align.CENTER
         }
         val labelCenterX = (sunX + targetX) / 2f
-        nativeCanvas.drawText(schedule.nextPrayerName, labelCenterX, sunY - 14.dp.toPx(), sunLabelPaint)
+        nativeCanvas.drawText(nextName, labelCenterX, sunY - 14.dp.toPx(), sunLabelPaint)
 
         // Asar label to the upper-right
         labelPaint.textAlign = Paint.Align.LEFT
-        nativeCanvas.drawText("Asar", xAsar + my.hana.meena.theme.MeenaSpacing.s.toPx(), yAsar - 7.dp.toPx(), labelPaint)
+        nativeCanvas.drawText("asar", xAsar + my.hana.meena.theme.MeenaSpacing.s.toPx(), yAsar - 7.dp.toPx(), labelPaint)
 
         // Maghrib label to the upper-right
-        nativeCanvas.drawText("Maghrib", xMaghrib + my.hana.meena.theme.MeenaSpacing.s.toPx(), yMaghrib - 9.dp.toPx(), labelPaint)
+        nativeCanvas.drawText("maghrib", xMaghrib + my.hana.meena.theme.MeenaSpacing.s.toPx(), yMaghrib - 9.dp.toPx(), labelPaint)
 
         // Isyak label to the left
         labelPaint.textAlign = Paint.Align.RIGHT
-        nativeCanvas.drawText("Isyak", xIsyak - 8.dp.toPx(), yIsyak + 4.dp.toPx(), labelPaint)
+        nativeCanvas.drawText("isyak", xIsyak - 8.dp.toPx(), yIsyak + 4.dp.toPx(), labelPaint)
     }
 }
 

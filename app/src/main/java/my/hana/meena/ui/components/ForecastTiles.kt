@@ -1,15 +1,13 @@
 package my.hana.meena.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,8 +18,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import my.hana.meena.R
 import my.hana.meena.data.system.WeatherData
 import my.hana.meena.theme.MeenaTextMuted
@@ -79,65 +77,62 @@ fun ForecastTiles(
         }
         is WidgetState.Ready, is WidgetState.Stale -> {
             if (weatherData != null && weatherData.daily.isNotEmpty()) {
+                // One row per day, whole words ("today", "tomorrow", "sunday"): no boxes, nothing cropped.
                 val forecastItems = weatherData.daily.take(5)
-                if (forecastItems.size != 5) return // Needs to be exactly 5 tiles per requirements, wait, what if Open-Meteo returns fewer? We should show what we have up to 5, but let's take exactly 5 if possible. The prompt says "Row of exactly 5 tiles". If < 5, just render them, it's safer than hiding.
-
-                Row(
+                Column(
                     modifier = modifier
                         .fillMaxWidth()
-                        .metroClickable(onClick = onNavigateToDetail),
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                        .metroClickable(onClick = onNavigateToDetail)
                 ) {
                     forecastItems.forEachIndexed { index, day ->
                         val isToday = index == 0
                         val high = if (isFahrenheit) (day.maxTemp * 9f / 5f + 32f).roundToInt() else day.maxTemp.roundToInt()
                         val low = if (isFahrenheit) (day.minTemp * 9f / 5f + 32f).roundToInt() else day.minTemp.roundToInt()
-                        val dayLabel = day.dayLabel.take(3)
-                        val iconRes = weatherCodeToDrawableRes(day.weatherCode)
-
-                        val semanticDesc = "${day.dayLabel}, $high degrees, ${day.condition}"
-
-                        Column(
+                        val semanticDesc = "${day.dayLabel}, ${day.condition}, $high to $low degrees"
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f) // Ensure roughly square to fit exactly
-                                .background(if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                                .semantics { contentDescription = semanticDesc },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .fillMaxWidth()
+                                .heightIn(min = 40.dp)
+                                .semantics(mergeDescendants = true) { contentDescription = semanticDesc },
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = dayLabel,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextWhite,
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center
+                                text = day.dayLabel,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (isToday) MaterialTheme.colorScheme.primary else MeenaTextWhite,
+                                maxLines = 1,
+                                modifier = Modifier.width(104.dp)
                             )
                             Icon(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = null, // Handled by parent semantic node
+                                painter = painterResource(id = weatherCodeToDrawableRes(day.weatherCode)),
+                                contentDescription = null,
                                 tint = MeenaTextWhite,
-                                modifier = Modifier
-                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-                                    .size(my.hana.meena.theme.MeenaSpacing.l)
+                                modifier = Modifier.size(20.dp)
                             )
-                            Row(
-                                verticalAlignment = Alignment.Bottom,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = "$high°",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MeenaTextWhite,
-                                    fontSize = 14.sp
-                                )
-                                Text(
-                                    text = "/$low°",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextWhite.copy(alpha = 0.7f),
-                                    fontSize = 12.sp
-                                )
-                            }
+                            Text(
+                                text = day.condition,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                            Text(
+                                text = "$high°",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MeenaTextWhite,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.width(40.dp)
+                            )
+                            Text(
+                                text = "$low°",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MeenaTextMuted,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.width(40.dp)
+                            )
                         }
                     }
                 }

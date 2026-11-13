@@ -155,6 +155,9 @@
     <string name="settings_tab_personalize">personalize</string>
     <string name="settings_tab_system">system</string>
     <string name="settings_pages_intro">what shows on each page. tap a widget to turn it on, move it or change it.</string>
+    <string name="settings_story_title">sort as a story</string>
+    <string name="settings_story_status">now, weather, your week, prayer times, then apps</string>
+    <string name="settings_story_question">put today\'s widgets back in story order? what\'s on or off stays the same.</string>
     <string name="settings_page_today">today</string>
     <string name="settings_page_inbox">inbox</string>
     <string name="settings_page_news">news</string>
@@ -224,13 +227,18 @@
     <string name="news_feeds_already_added">that feed is already on your list</string>
     <string name="news_feeds_link_status">pick where your news comes from</string>
     <string name="calendar_week_short">wk</string>
-    <string name="week_strip_title">week</string>
-    <string name="week_strip_allow">tap to see your events on these days</string>
-    <string name="week_strip_summary_none">nothing this week</string>
-    <plurals name="week_strip_summary">
-        <item quantity="one">%d event this week</item>
-        <item quantity="other">%d events this week</item>
-    </plurals>
+    <string name="agenda_title">your week</string>
+    <string name="forecast_title">forecast</string>
+    <string name="forecast_air">air quality</string>
+    <string name="solat_title">prayer times</string>
+    <string name="inbox_dismiss">clear this alert</string>
+    <string name="solat_sun_path">sun path</string>
+    <string name="solat_sun_path_hint">draw the sun moving across the day above the times</string>
+    <string name="solat_show_syuruk">show syuruk</string>
+    <string name="solat_show_syuruk_hint">sunrise sits between subuh and zohor</string>
+    <string name="agenda_show_strip">week strip</string>
+    <string name="agenda_show_strip_hint">the next seven days above your events</string>
+    <string name="agenda_calendar_link">how far ahead and all-day events</string>
     <plurals name="week_strip_day_events">
         <item quantity="one">%1$s, %2$d event</item>
         <item quantity="other">%1$s, %2$d events</item>

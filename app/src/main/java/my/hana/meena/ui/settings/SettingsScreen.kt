@@ -177,6 +177,21 @@ fun SettingsScreen(
         onSaveSettings(updated)
     }
 
+    var confirmStoryOrder by remember { mutableStateOf(false) }
+    if (confirmStoryOrder) {
+        MetroDialog(
+            title = stringResource(R.string.settings_story_title),
+            message = stringResource(R.string.settings_story_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
+            onConfirm = {
+                update { it.withStoryOrder() }
+                confirmStoryOrder = false
+            },
+            onDismiss = { confirmStoryOrder = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -272,7 +287,7 @@ fun SettingsScreen(
                             verticalArrangement = Arrangement.spacedBy(0.dp)
                         ) {
                             when (tabs[page]) {
-                                SETTINGS_TAB_PAGES -> pagesTab(settingsState) { activeSubPage = it }
+                                SETTINGS_TAB_PAGES -> pagesTab(settingsState, onSortStory = { confirmStoryOrder = true }) { activeSubPage = it }
                                 SETTINGS_TAB_CONNECTIONS -> connectionsTab(settingsState, context) { activeSubPage = it }
                                 SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState) { activeSubPage = it }
                                 SETTINGS_TAB_SYSTEM -> systemTab(context) { activeSubPage = it }
@@ -304,19 +319,17 @@ fun normalizeSettingsTab(tab: String): String = when (tab) {
 /** Widget id to the name used on its row and sub-page. */
 internal val SETTINGS_WIDGET_TITLES = linkedMapOf(
     "widget-clock-weather" to "clock",
-    "widget-weather-forecast" to "weather forecast",
+    "widget-weather-forecast" to "forecast and air",
+    "widget-tasks" to "your week",
+    "widget-solat" to "prayer times",
     "widget-favourites" to "favourites",
     "widget-frequent-apps" to "frequent apps",
-    "widget-solat" to "prayer times",
-    "widget-tasks" to "agenda",
-    "widget-week-strip" to "week",
-    "widget-calendar-month" to "month",
     "widget-notes" to "notes",
+    "widget-calendar-month" to "month",
     "widget-health-telemetry" to "health",
-    "widget-health-aqi" to "air",
-    "widget-map-radar" to "nearby",
     "widget-bluetooth-devices" to "connected devices",
     "widget-device-telemetry" to "phone",
+    "widget-map-radar" to "nearby",
     "widget-wikipedia" to "wikipedia",
     "widget-conversations" to "chats",
     "widget-notifications" to "alerts",
@@ -354,13 +367,20 @@ private fun LazyListScope.settingsGroupLabel(labelRes: Int) {
     }
 }
 
-private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, open: (String) -> Unit) {
+private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onSortStory: () -> Unit, open: (String) -> Unit) {
     item {
         Text(
             text = stringResource(R.string.settings_pages_intro),
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted,
             modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m)
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_story_title),
+            status = stringResource(R.string.settings_story_status),
+            onClick = onSortStory
         )
     }
     groupWidgetsByPage(settingsState.widgetConfigs).forEach { (hub, ids) ->
@@ -802,10 +822,6 @@ private fun SubPageContainer(
 
                 "widget-solat" -> {
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("prayer options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
                         SolatZonePicker(
                             currentZone = settingsState.solatZone,
                             onSelectZone = { zone -> onUpdate { it.copy(solatZone = zone) } }
@@ -813,26 +829,18 @@ private fun SubPageContainer(
                     }
                     item {
                         SettingToggleRow(
-                            title = "celestial trajectory arc",
-                            subtitle = "render dynamic solar and lunar arc visual card",
-                            checked = custom("show_celestial_arc", "true") == "true",
+                            title = stringResource(R.string.solat_sun_path),
+                            subtitle = stringResource(R.string.solat_sun_path_hint),
+                            checked = custom("show_celestial_arc", "false") == "true",
                             onCheckedChange = { setCustom("show_celestial_arc", it.toString()) }
                         )
                     }
                     item {
                         SettingToggleRow(
-                            title = "display syuruk & imsak",
-                            subtitle = "include sunrise and imsak timings in timetable",
+                            title = stringResource(R.string.solat_show_syuruk),
+                            subtitle = stringResource(R.string.solat_show_syuruk_hint),
                             checked = custom("show_syuruk_imsak", "true") == "true",
                             onCheckedChange = { setCustom("show_syuruk_imsak", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "prayer time notification alerts",
-                            subtitle = "vibrate device upon entering next prayer window",
-                            checked = custom("prayer_alerts", "false") == "true",
-                            onCheckedChange = { setCustom("prayer_alerts", it.toString()) }
                         )
                     }
                 }
@@ -870,40 +878,18 @@ private fun SubPageContainer(
 
                 "widget-tasks" -> {
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("schedule & agenda options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "agenda lookahead window",
-                            subtitle = "how far into the future to search for appointments",
-                            options = listOf("1" to "today", "3" to "3 days", "7" to "7 days", "14" to "14 days"),
-                            selectedKey = custom("agenda_range", "3"),
-                            onSelectKey = { setCustom("agenda_range", it) }
-                        )
-                    }
-                    item {
                         SettingToggleRow(
-                            title = "include all-day events",
-                            subtitle = "show holidays, birthdays and whole-day blocks",
-                            checked = custom("show_all_day", "true") == "true",
-                            onCheckedChange = { setCustom("show_all_day", it.toString()) }
+                            title = stringResource(R.string.agenda_show_strip),
+                            subtitle = stringResource(R.string.agenda_show_strip_hint),
+                            checked = custom("show_week_strip", "true") == "true",
+                            onCheckedChange = { setCustom("show_week_strip", it.toString()) }
                         )
                     }
                     item {
-                        SettingToggleRow(
-                            title = "show location and room",
-                            subtitle = "display meeting venue or address",
-                            checked = custom("show_event_location", "true") == "true",
-                            onCheckedChange = { setCustom("show_event_location", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "maximum appointments displayed",
-                            options = listOf("3" to "3 items", "5" to "5 items", "8" to "8 items", "12" to "12 items"),
-                            selectedKey = custom("max_events", "5"),
-                            onSelectKey = { setCustom("max_events", it) }
+                        SettingsPivotRow(
+                            title = stringResource(R.string.settings_calendar_title),
+                            status = stringResource(R.string.agenda_calendar_link),
+                            onClick = { onOpenSubPage("account:calendar") }
                         )
                     }
                 }
@@ -1349,37 +1335,6 @@ private fun SubPageContainer(
                         ) {
                             Text("open health connect settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
-                    }
-                }
-
-                "widget-health-aqi" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("air quality index options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "air quality calculation standard",
-                            options = listOf("us" to "us aqi (0-500)", "my" to "malaysia api (0-300)"),
-                            selectedKey = custom("aqi_standard", "us"),
-                            onSelectKey = { setCustom("aqi_standard", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "solar uv index",
-                            subtitle = "include ultraviolet radiation index alongside air quality",
-                            checked = custom("show_uv", "true") == "true",
-                            onCheckedChange = { setCustom("show_uv", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "particulate matter breakdown",
-                            subtitle = "show pm2.5 and pm10 microgram per cubic meter readings",
-                            checked = custom("show_pollutants", "false") == "true",
-                            onCheckedChange = { setCustom("show_pollutants", it.toString()) }
-                        )
                     }
                 }
             }
@@ -2927,7 +2882,7 @@ private fun DateTimeSettings(
             Text("live preview using today's date", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(8.dp))
             val patterns = listOf(
-                "EEEE, MMMM d",
+                MeenaUserSettings.DEFAULT_DATE_PATTERN,
                 "EEE, d MMM yyyy",
                 "d MMMM yyyy",
                 "yyyy-MM-dd",

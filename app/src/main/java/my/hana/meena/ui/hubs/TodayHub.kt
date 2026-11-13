@@ -154,8 +154,11 @@ fun TodayHub(
             try {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     val hijrahDate = java.time.chrono.HijrahDate.now().plus(settings.hijriDayOffset.toLong(), java.time.temporal.ChronoUnit.DAYS)
-                    val formatter = java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
-                    "${formatter.format(hijrahDate).lowercase()} ah"
+                    my.hana.meena.data.system.MalaysianEnglish.hijriDate(
+                        hijrahDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH),
+                        hijrahDate.get(java.time.temporal.ChronoField.MONTH_OF_YEAR),
+                        hijrahDate.get(java.time.temporal.ChronoField.YEAR)
+                    )
                 } else null
             } catch (_: Exception) {
                 null
@@ -370,17 +373,64 @@ fun TodayHub(
                 }
 
                 "widget-weather-forecast" -> {
-                    // 5-day Weather Forecast
                     val tempUnit = settings.widgetConfigs["widget-clock-weather"]?.customSettings?.get("temp_unit") ?: "c"
                     val isFahrenheit = tempUnit.equals("f", ignoreCase = true)
+                    val tomorrow = ((weatherState as? WidgetState.Ready)?.data ?: (weatherState as? WidgetState.Stale)?.data)
+                        ?.daily?.getOrNull(1)
 
-                    ForecastTiles(
-                        state = weatherState,
-                        isFahrenheit = isFahrenheit,
-                        onNavigateToDetail = onOpenWeatherDetail,
-                        onRequestLocation = onRequestLocationPermission,
-                        onRetry = { WeatherRepository.refresh(context, force = true) }
-                    )
+                    CollapsibleWidget(
+                        title = stringResource(R.string.forecast_title),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
+                        collapsedSummary = {
+                            if (tomorrow != null) {
+                                Text(
+                                    text = "${tomorrow.dayLabel}, ${tomorrow.condition}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted
+                                )
+                            }
+                        }
+                    ) {
+                        ForecastTiles(
+                            state = weatherState,
+                            isFahrenheit = isFahrenheit,
+                            onNavigateToDetail = onOpenWeatherDetail,
+                            onRequestLocation = onRequestLocationPermission,
+                            onRetry = { WeatherRepository.refresh(context, force = true) }
+                        )
+                        // Air quality belongs with the weather (it used to repeat under health and on its own).
+                        if (airIndex.aqiValue > 0) {
+                            val aqiColor = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { HealthRepository.openAirQualityDetails(context) },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.forecast_air),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MeenaTextWhite,
+                                    modifier = Modifier.width(124.dp)
+                                )
+                                Text(
+                                    text = "${airIndex.aqiValue}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = aqiColor
+                                )
+                                Text(
+                                    text = airIndex.aqiStatus.lowercase(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MeenaTextMuted,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                        }
+                    }
                 }
                 
                 "widget-favourites" -> {
@@ -557,14 +607,19 @@ fun TodayHub(
                 }
 
                 "widget-solat" -> {
-                    // Waktu Solat JAKIM with dynamic celestial arc
+                    val solatConfig = settings.widgetConfigs[widgetId]
                     CollapsibleWidget(
-                        title = "waktu solat · jakim",
-                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        title = stringResource(R.string.solat_title),
+                        isCollapsed = solatConfig?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
+                            val nextPrayer = remember(currentTime, jakimSchedule) {
+                                my.hana.meena.data.system.NextUpCalculator.compute(System.currentTimeMillis(), emptyList(), jakimSchedule.slots)
+                            }
                             Text(
-                                text = jakimSchedule.nextPrayerLabel.lowercase(),
+                                text = nextPrayer?.let {
+                                    "${it.title.lowercase()} ${my.hana.meena.data.system.NextUpCalculator.formatRemaining(it.minutesUntil(System.currentTimeMillis()))}"
+                                } ?: stringResource(R.string.settings_needs_okay),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -584,58 +639,10 @@ fun TodayHub(
                         } else {
                             DynamicSolatCelestialCard(
                                 schedule = jakimSchedule,
-                                onZoneChanged = onUpdateSolatZone
+                                onZoneChanged = onUpdateSolatZone,
+                                showSunPath = solatConfig?.customSettings?.get("show_celestial_arc") == "true",
+                                showSyuruk = solatConfig?.customSettings?.get("show_syuruk_imsak") != "false"
                             )
-                        }
-                    }
-                }
-
-                "widget-week-strip" -> {
-                    // Today and the next six days with event marks (AIO content, D14).
-                    val isNeedsPermission = calendarState is CalendarState.NeedsPermission
-                    val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
-                    val stripDays = remember(currentDate, calEvents, settings.calendarDaysAhead) {
-                        my.hana.meena.data.system.WeekStripBuilder.build(
-                            nowMillis = System.currentTimeMillis(),
-                            events = calEvents.map { my.hana.meena.data.system.StripEvent(it.startTime, it.isAllDay) },
-                            knownDays = settings.calendarDaysAhead
-                        )
-                    }
-                    val weekCount = stripDays.sumOf { it.eventCount }
-                    CollapsibleWidget(
-                        title = stringResource(R.string.week_strip_title),
-                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
-                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
-                        collapsedSummary = {
-                            Text(
-                                text = when {
-                                    isNeedsPermission -> stringResource(R.string.settings_needs_okay)
-                                    weekCount == 0 -> stringResource(R.string.week_strip_summary_none)
-                                    else -> pluralStringResource(R.plurals.week_strip_summary, weekCount, weekCount)
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (isNeedsPermission || weekCount == 0) MeenaTextMuted else MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    ) {
-                        Column {
-                            my.hana.meena.ui.components.WeekStrip(
-                                days = stripDays,
-                                showEvents = calendarState is CalendarState.Ready,
-                                onDayClick = { DeviceCalendarRepository.openDay(context, it.startMillis) }
-                            )
-                            if (isNeedsPermission) {
-                                Text(
-                                    text = stringResource(R.string.week_strip_allow),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextMuted,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(min = 48.dp)
-                                        .metroClickable { onRequestCalendarPermission() }
-                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
-                                )
-                            }
                         }
                     }
                 }
@@ -697,16 +704,23 @@ fun TodayHub(
                 }
 
                 "widget-tasks" -> {
-                    // Agenda: events first, then tasks
+                    // Your week: the 7-day strip, then events in time order.
                     val isNeedsPermission = calendarState is CalendarState.NeedsPermission
                     val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
-                    val (timedEvents, tasks) = calEvents.partition { !it.isAllDay }
-                    val agendaItems = timedEvents + tasks
+                    val agendaItems = calEvents.sortedBy { it.startTime }
                     val agendaConfig = settings.widgetConfigs[widgetId]
                     val maxItems = agendaConfig?.maxLinesOrItems ?: 5
+                    val showStrip = agendaConfig?.customSettings?.get("show_week_strip") != "false"
+                    val stripDays = remember(currentDate, calEvents, settings.calendarDaysAhead) {
+                        my.hana.meena.data.system.WeekStripBuilder.build(
+                            nowMillis = System.currentTimeMillis(),
+                            events = calEvents.map { my.hana.meena.data.system.StripEvent(it.startTime, it.isAllDay) },
+                            knownDays = settings.calendarDaysAhead
+                        )
+                    }
 
                     CollapsibleWidget(
-                        title = "agenda",
+                        title = stringResource(R.string.agenda_title),
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
@@ -724,6 +738,14 @@ fun TodayHub(
                             )
                         }
                     ) {
+                        if (showStrip) {
+                            my.hana.meena.ui.components.WeekStrip(
+                                days = stripDays,
+                                showEvents = calendarState is CalendarState.Ready,
+                                onDayClick = { DeviceCalendarRepository.openDay(context, it.startMillis) },
+                                modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                        }
                         when {
                             isNeedsPermission -> {
                                 Row(
@@ -887,13 +909,7 @@ fun TodayHub(
                             Text(
                                 text = when (healthState) {
                                     is WidgetState.NeedsSetup -> "connect health"
-                                    is WidgetState.Ready, is WidgetState.Stale -> {
-                                        if (airIndex.aqiValue > 0) {
-                                            "${fitTelemetry.stepsToday} steps · aqi ${airIndex.aqiValue}"
-                                        } else {
-                                            "${fitTelemetry.stepsToday} steps"
-                                        }
-                                    }
+                                    is WidgetState.Ready, is WidgetState.Stale -> "${fitTelemetry.stepsToday} steps"
                                     else -> "no data"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
@@ -987,84 +1003,9 @@ fun TodayHub(
                                             )
                                         }
                                     }
-
-                                    // Merged Air quality
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = my.hana.meena.theme.MeenaSpacing.s)
-                                            .metroClickable { HealthRepository.openAirQualityDetails(context) }
-                                    ) {
-                                        Text("air quality · ${airIndex.stationName.ifBlank { "local" }.lowercase()}", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                                        ) {
-                                            Text(
-                                                text = "${airIndex.aqiValue}",
-                                                fontSize = 24.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
-                                            )
-                                            Text(
-                                                text = airIndex.aqiStatus.lowercase(),
-                                                fontSize = 12.sp,
-                                                color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextMuted }
-                                            )
-                                        }
-                                    }
                                 }
                             }
                             else -> {}
-                        }
-                    }
-                }
-
-                "widget-health-aqi" -> {
-                    // Air quality
-                    CollapsibleWidget(
-                        title = "air quality",
-                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
-                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
-                        collapsedSummary = {
-                            Text(
-                                text = "${airIndex.stationName.ifBlank { "local" }.lowercase()} · aqi ${airIndex.aqiValue}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextMuted
-                            )
-                        }
-                    ) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .metroClickable { HealthRepository.openAirQualityDetails(context) }
-                        ) {
-                            Text(airIndex.stationName.ifBlank { "local station" }.lowercase(), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                            ) {
-                                Text(
-                                    text = "${airIndex.aqiValue}",
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
-                                )
-                                Text(
-                                    text = airIndex.aqiStatus.lowercase(),
-                                    fontSize = 13.sp,
-                                    color = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextMuted }
-                                )
-                            }
-                            if (airIndex.advisory.isNotBlank()) {
-                                Text(
-                                    text = airIndex.advisory.lowercase(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MeenaTextSecondary
-                                )
-                            }
                         }
                     }
                 }

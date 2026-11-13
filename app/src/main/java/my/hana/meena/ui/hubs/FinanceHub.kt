@@ -200,7 +200,7 @@ private fun PortfolioSection(
         Text(
             text = "portfolio",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         when (state) {
@@ -454,7 +454,7 @@ private fun ExchangeRatesSection(
         Text(
             text = "exchange rates",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         when (state) {
@@ -593,7 +593,7 @@ private fun SpendingSection(
             Text(
                 text = "spending",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onBackground
             )
             if (totalSpentToday > 0 && state is WidgetState.Ready) {
                 Text(

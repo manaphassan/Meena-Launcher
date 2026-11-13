@@ -197,6 +197,8 @@ object NotificationRepository {
 
         // Ignore Meena's own notifications and ongoing system persistent services
         if (packageName == context.packageName) return null
+        // A group summary ("28 messages from 4 chats") only repeats the messages posted with it.
+        if ((notif.flags and Notification.FLAG_GROUP_SUMMARY) != 0) return null
         if ((notif.flags and Notification.FLAG_ONGOING_EVENT) != 0 && notif.category != Notification.CATEGORY_CALL) {
             // Filter ongoing system background persistent notifications unless it's an incoming call
             return null
@@ -263,7 +265,7 @@ object NotificationRepository {
             appName = parsedNotif.appName,
             senderOrContact = senderOrContact,
             conversationTitle = convTitle,
-            messageSnippet = parsedNotif.text.ifBlank { "Sent a message" },
+            messageSnippet = parsedNotif.text.ifBlank { "sent a message" },
             timestamp = parsedNotif.timestamp,
             formattedTime = parsedNotif.formattedTime,
             unreadCount = 1,

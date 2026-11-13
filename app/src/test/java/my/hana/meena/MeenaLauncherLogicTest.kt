@@ -35,7 +35,7 @@ class MeenaLauncherLogicTest {
     }
 
     @Test
-    fun defaultWidgetMap_orderAndEnabledFlags_matchesPhase3Specification() {
+    fun defaultWidgetMap_orderAndEnabledFlags_tellTodayAsAStory() {
         val defaultMap = MeenaUserSettings.defaultWidgetMap()
 
         // 1. Verify default-off widgets (isEnabled = false)
@@ -44,10 +44,8 @@ class MeenaLauncherLogicTest {
             "widget-notes",
             "widget-health-device",
             "widget-health-telemetry",
-            "widget-health-aqi",
             "widget-map-radar",
-            "widget-device-telemetry",
-            "widget-week-strip"
+            "widget-device-telemetry"
         )
         for (widgetId in expectedDisabled) {
             val config = defaultMap[widgetId]
@@ -65,15 +63,14 @@ class MeenaLauncherLogicTest {
             listOf(
                 "widget-clock-weather",
                 "widget-weather-forecast",
-                "widget-favourites",
+                "widget-tasks",
                 "widget-solat",
-                "widget-tasks"
+                "widget-favourites"
             ),
             enabledTodayWidgets
         )
 
-        // 3. Acceptance verification: On fresh install (clear app data),
-        // Today stream shows in order: clock + date, forecast, solat, agenda
+        // 3. Acceptance verification: on a fresh install Today reads now, sky, your week, prayer, apps.
         val freshSettings = MeenaUserSettings()
         val visibleTodayWidgetsOnFreshInstall = freshSettings.widgetConfigs.entries
             .filter {
@@ -87,14 +84,42 @@ class MeenaLauncherLogicTest {
 
         assertEquals(
             listOf(
-                "widget-clock-weather",    // clock + date
-                "widget-weather-forecast",// forecast
-                "widget-favourites",      // favourites
-                "widget-solat",           // solat
-                "widget-tasks"            // agenda
+                "widget-clock-weather",
+                "widget-weather-forecast",
+                "widget-tasks",
+                "widget-solat",
+                "widget-favourites"
             ),
             visibleTodayWidgetsOnFreshInstall
         )
+    }
+
+    @Test
+    fun storyOrder_resetsPositionsOnly() {
+        val custom = MeenaUserSettings().let { s ->
+            s.copy(widgetConfigs = s.widgetConfigs.mapValues { (id, c) ->
+                when (id) {
+                    "widget-solat" -> c.copy(position = 0, hubId = "money", isCollapsed = true)
+                    "widget-clock-weather" -> c.copy(position = 9)
+                    "widget-map-radar" -> c.copy(isEnabled = true)
+                    else -> c
+                }
+            })
+        }
+        val sorted = custom.withStoryOrder().widgetConfigs
+        assertEquals(0, sorted["widget-clock-weather"]?.position)
+        assertEquals(3, sorted["widget-solat"]?.position)
+        assertEquals("money", sorted["widget-solat"]?.hubId)
+        assertTrue(sorted["widget-solat"]?.isCollapsed == true)
+        assertTrue(sorted["widget-map-radar"]?.isEnabled == true)
+    }
+
+    @Test
+    fun migrate_movesOldUsDateDefaultToMalaysianEnglish() {
+        val old = MeenaUserSettings(dateFormatPattern = MeenaUserSettings.OLD_DEFAULT_DATE_PATTERN).migrate()
+        assertEquals(MeenaUserSettings.DEFAULT_DATE_PATTERN, old.dateFormatPattern)
+        val picked = MeenaUserSettings(dateFormatPattern = "yyyy-MM-dd").migrate()
+        assertEquals("yyyy-MM-dd", picked.dateFormatPattern)
     }
 
     @Test
@@ -431,7 +456,7 @@ class MeenaLauncherLogicTest {
     fun userSettings_dateTimeDefaults_areValid() {
         val settings = MeenaUserSettings()
         assertTrue(settings.is24HourFormat)
-        assertEquals("EEEE, MMMM d", settings.dateFormatPattern)
+        assertEquals("EEEE, d MMMM", settings.dateFormatPattern)
         assertFalse(settings.showClockSeconds)
         assertTrue(settings.showHijriDate)
         assertEquals(0, settings.hijriDayOffset)

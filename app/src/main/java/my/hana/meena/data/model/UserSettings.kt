@@ -40,7 +40,7 @@ data class MeenaUserSettings(
     val calendarShowAllDay: Boolean = true,
     // Date & Time settings
     val is24HourFormat: Boolean = true,
-    val dateFormatPattern: String = "EEEE, MMMM d",
+    val dateFormatPattern: String = DEFAULT_DATE_PATTERN,
     val showClockSeconds: Boolean = false,
     val showHijriDate: Boolean = true,
     val hijriDayOffset: Int = 0,
@@ -94,35 +94,59 @@ data class MeenaUserSettings(
             changed = true
         }
 
+        // Malaysian English: the old default "friday, november 13" becomes "friday, 13 november".
+        val datePattern = if (dateFormatPattern == OLD_DEFAULT_DATE_PATTERN) DEFAULT_DATE_PATTERN else dateFormatPattern
+        if (datePattern != dateFormatPattern) {
+            changed = true
+        }
+
         return if (changed) {
             copy(
                 widgetConfigs = updatedConfigs,
-                defaultHubIndex = clampedDefaultHubIndex
+                defaultHubIndex = clampedDefaultHubIndex,
+                dateFormatPattern = datePattern
             )
         } else {
             this
         }
     }
 
+    /**
+     * Puts every widget back in the story order of [defaultWidgetMap], keeping which ones are on,
+     * which page each is on and its own settings. Only runs when the user asks for it.
+     */
+    fun withStoryOrder(): MeenaUserSettings {
+        val defaults = defaultWidgetMap()
+        return copy(widgetConfigs = widgetConfigs.mapValues { (id, config) ->
+            defaults[id]?.let { config.copy(position = it.position) } ?: config
+        })
+    }
+
     companion object {
+        /** The US-style date the app used to default to; moved to Malaysian English (day before month). */
+        const val OLD_DEFAULT_DATE_PATTERN = "EEEE, MMMM d"
+        const val DEFAULT_DATE_PATTERN = "EEEE, d MMMM"
+
+        /**
+         * Today reads as a story, top to bottom: now (time, weather, what's next), the sky for
+         * the next few days, your week, prayer times, your apps, then the optional extras:
+         * notes, month, your body, your gadgets, around you, something to read.
+         */
         fun defaultWidgetMap(): Map<String, WidgetConfig> = mapOf(
-            // Today Hub (clock, forecast, solat, agenda, followed by default-off widgets)
             "widget-clock-weather" to WidgetConfig("today", 0, isEnabled = true),
             "widget-weather-forecast" to WidgetConfig("today", 1, isEnabled = true),
-            "widget-favourites" to WidgetConfig("today", 2, maxLinesOrItems = 8, isEnabled = true),
+            "widget-tasks" to WidgetConfig("today", 2, isEnabled = true),
             "widget-solat" to WidgetConfig("today", 3, isEnabled = true),
-            "widget-tasks" to WidgetConfig("today", 4, isEnabled = true),
-            "widget-week-strip" to WidgetConfig("today", 5, isEnabled = false),
-            "widget-calendar-month" to WidgetConfig("today", 6, isEnabled = false),
-            "widget-notes" to WidgetConfig("today", 7, isEnabled = false),
-            "widget-health-device" to WidgetConfig("today", 8, isEnabled = false),
-            "widget-health-telemetry" to WidgetConfig("today", 9, isEnabled = false),
-            "widget-health-aqi" to WidgetConfig("today", 10, isEnabled = false),
-            "widget-map-radar" to WidgetConfig("today", 11, isEnabled = false),
-            "widget-device-telemetry" to WidgetConfig("today", 12, isEnabled = false),
-            "widget-frequent-apps" to WidgetConfig("today", 13, maxLinesOrItems = 8, isEnabled = false),
-            "widget-bluetooth-devices" to WidgetConfig("today", 14, isEnabled = false),
-            "widget-wikipedia" to WidgetConfig("today", 15, isEnabled = false),
+            "widget-favourites" to WidgetConfig("today", 4, maxLinesOrItems = 8, isEnabled = true),
+            "widget-frequent-apps" to WidgetConfig("today", 5, maxLinesOrItems = 8, isEnabled = false),
+            "widget-notes" to WidgetConfig("today", 6, isEnabled = false),
+            "widget-calendar-month" to WidgetConfig("today", 7, isEnabled = false),
+            "widget-health-telemetry" to WidgetConfig("today", 8, isEnabled = false),
+            "widget-health-device" to WidgetConfig("today", 9, isEnabled = false),
+            "widget-bluetooth-devices" to WidgetConfig("today", 10, isEnabled = false),
+            "widget-device-telemetry" to WidgetConfig("today", 11, isEnabled = false),
+            "widget-map-radar" to WidgetConfig("today", 12, isEnabled = false),
+            "widget-wikipedia" to WidgetConfig("today", 13, isEnabled = false),
 
             // Inbox Hub (conversations, alerts / notification stream)
             "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),

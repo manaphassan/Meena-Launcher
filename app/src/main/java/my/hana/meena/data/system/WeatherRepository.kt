@@ -202,11 +202,6 @@ object WeatherRepository {
 
                 val count = times?.length() ?: 0
                 val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                val dayOfWeekFormat = SimpleDateFormat("EEE", Locale.US)
-
-                val todayCal = Calendar.getInstance()
-                val todayYear = todayCal.get(Calendar.YEAR)
-                val todayDay = todayCal.get(Calendar.DAY_OF_YEAR)
 
                 for (i in 0 until count) {
                     val dateStr = times?.optString(i) ?: ""
@@ -217,18 +212,7 @@ object WeatherRepository {
 
                     val label = try {
                         val parsed = dateParser.parse(dateStr)
-                        if (parsed != null) {
-                            val c = Calendar.getInstance().apply { time = parsed }
-                            val isToday = c.get(Calendar.YEAR) == todayYear && c.get(Calendar.DAY_OF_YEAR) == todayDay
-                            val isTomorrow = c.get(Calendar.YEAR) == todayYear && c.get(Calendar.DAY_OF_YEAR) == todayDay + 1
-                            when {
-                                isToday -> "today"
-                                isTomorrow -> "tomorrow"
-                                else -> dayOfWeekFormat.format(parsed).lowercase()
-                            }
-                        } else {
-                            dateStr
-                        }
+                        if (parsed != null) MalaysianEnglish.dayName(parsed.time, System.currentTimeMillis()) else dateStr
                     } catch (_: Exception) {
                         dateStr
                     }

@@ -29,6 +29,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,6 +60,11 @@ fun InboxHub(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val notifications by NotificationRepository.notificationsFlow.collectAsState()
+    // When chats are on, messages live there; alerts keep everything else so nothing shows twice.
+    val chatsOn = settings.widgetConfigs["widget-conversations"]?.isEnabled != false
+    val alerts = remember(notifications, chatsOn) {
+        if (chatsOn) notifications.filterNot { it.isConversation } else notifications
+    }
     val isListenerConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
     var isNotificationAccessGranted by remember {
         mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
@@ -110,7 +118,7 @@ fun InboxHub(
                             Text(
                                 text = when {
                                     !isNotificationAccessGranted -> "needs a quick okay"
-                                    notifications.isNotEmpty() -> "${notifications.size} new"
+                                    alerts.isNotEmpty() -> "${alerts.size} new"
                                     else -> "all quiet"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
@@ -136,8 +144,8 @@ fun InboxHub(
                                         }
                                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                 )
-                            } else if (notifications.isNotEmpty()) {
-                                notifications.take(8).forEachIndexed { idx, notif ->
+                            } else if (alerts.isNotEmpty()) {
+                                alerts.take(8).forEachIndexed { idx, notif ->
                                     val notifColor = MeenaTextWhite
                                     InboxNotificationRow(
                                         modifier = Modifier.metroFeatherIn(
@@ -260,10 +268,11 @@ private fun InboxNotificationRow(
                 .metroClickable(onClick = onDismiss),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "x",
-                fontSize = 13.sp,
-                color = MeenaTextMuted
+            Icon(
+                painter = painterResource(id = my.hana.meena.R.drawable.ic_thin_close),
+                contentDescription = stringResource(my.hana.meena.R.string.inbox_dismiss),
+                tint = MeenaTextMuted,
+                modifier = Modifier.size(16.dp)
             )
         }
     }

@@ -126,7 +126,7 @@ object JakimSolatRepository : WidgetSpec<JakimSchedule> {
                 PrayerSlotInfo("imsak", today.getString("imsak").take(5), "", today.getString("imsak").substring(0,2).toInt(), today.getString("imsak").substring(3,5).toInt(), isSolar = true),
                 PrayerSlotInfo("subuh", today.getString("fajr").take(5), "", today.getString("fajr").substring(0,2).toInt(), today.getString("fajr").substring(3,5).toInt()),
                 PrayerSlotInfo("syuruk", today.getString("syuruk").take(5), "", today.getString("syuruk").substring(0,2).toInt(), today.getString("syuruk").substring(3,5).toInt(), isSolar = true),
-                PrayerSlotInfo("dhuhr", today.getString("dhuhr").take(5), "", today.getString("dhuhr").substring(0,2).toInt(), today.getString("dhuhr").substring(3,5).toInt()),
+                PrayerSlotInfo("zohor", today.getString("dhuhr").take(5), "", today.getString("dhuhr").substring(0,2).toInt(), today.getString("dhuhr").substring(3,5).toInt()),
                 PrayerSlotInfo("asar", today.getString("asr").take(5), "", today.getString("asr").substring(0,2).toInt(), today.getString("asr").substring(3,5).toInt()),
                 PrayerSlotInfo("maghrib", today.getString("maghrib").take(5), "", today.getString("maghrib").substring(0,2).toInt(), today.getString("maghrib").substring(3,5).toInt()),
                 PrayerSlotInfo("isyak", today.getString("isha").take(5), "", today.getString("isha").substring(0,2).toInt(), today.getString("isha").substring(3,5).toInt())
