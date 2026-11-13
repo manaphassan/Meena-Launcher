@@ -524,7 +524,8 @@
         <item quantity="one">%1$d kcal</item>
         <item quantity="other">%1$d kcal</item>
     </plurals>
-    <string name="phone_summary">battery %1$d%% · %2$s gb free</string>
+    <string name="phone_summary_battery">battery %1$d%%</string>
+    <string name="phone_unknown">unknown</string>
     <string name="phone_battery_label">battery</string>
     <string name="phone_battery_charging">%1$d%% · charging</string>
     <string name="phone_battery_unplugged">%1$d%% · on battery</string>

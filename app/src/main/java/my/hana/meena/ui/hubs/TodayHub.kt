@@ -1198,72 +1198,60 @@ fun TodayHub(
                         isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
                         collapsedSummary = {
+                            val unknown = stringResource(R.string.phone_unknown)
+                            val batteryPart = telemetry.batteryPercent?.let { stringResource(R.string.phone_summary_battery, it) }
+                            val memoryPart = telemetry.freeMemoryGb?.let { stringResource(R.string.phone_free_gb, String.format(Locale.US, "%.1f", it)) }
                             Text(
-                                text = stringResource(R.string.phone_summary, telemetry.batteryPercent, String.format(Locale.US, "%.1f", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)),
+                                text = when {
+                                    batteryPart != null && memoryPart != null -> stringResource(R.string.settings_status_pair, batteryPart, memoryPart)
+                                    else -> batteryPart ?: memoryPart ?: unknown
+                                },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
                         }
                     ) {
+                        val unknown = stringResource(R.string.phone_unknown)
                         Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             // Battery
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(stringResource(R.string.phone_battery_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                    Text(
-                                        text = stringResource(if (telemetry.isCharging) R.string.phone_battery_charging else R.string.phone_battery_unplugged, telemetry.batteryPercent),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = if (telemetry.batteryPercent <= 20) MaterialTheme.colorScheme.error else MeenaTextWhite
-                                    )
-                                }
-                            }
-
-                            // Memory
-                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(stringResource(R.string.phone_memory_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                    Text(
-                                        text = stringResource(R.string.phone_free_gb, String.format(Locale.US, "%.1f", (telemetry.totalRamMb - telemetry.usedRamMb) / 1024.0)),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextWhite
-                                    )
-                                }
-                                MetroLineProgress(
-                                    progress = (telemetry.ramPercent / 100f).coerceIn(0f, 1f),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    height = 2.dp
+                            Column {
+                                Text(stringResource(R.string.phone_battery_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                val battery = telemetry.batteryPercent
+                                Text(
+                                    text = if (battery == null) unknown
+                                    else stringResource(if (telemetry.isCharging) R.string.phone_battery_charging else R.string.phone_battery_unplugged, battery),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (battery != null && battery <= 20) MaterialTheme.colorScheme.error else MeenaTextWhite
                                 )
                             }
 
-                            // Storage
-                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(stringResource(R.string.phone_storage_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                    Text(
-                                        text = stringResource(R.string.phone_free_gb, String.format(Locale.US, "%.1f", telemetry.totalStorageGb - telemetry.usedStorageGb)),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextWhite
-                                    )
+                            // Memory, then storage: free space, with a bar only when the phone reports it
+                            listOf(
+                                Triple(R.string.phone_memory_label, telemetry.freeMemoryGb, telemetry.memoryUsedPercent),
+                                Triple(R.string.phone_storage_label, telemetry.freeStorageGb, telemetry.storageUsedPercent)
+                            ).forEach { (label, freeGb, usedPercent) ->
+                                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(stringResource(label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                        Text(
+                                            text = freeGb?.let { stringResource(R.string.phone_free_gb, String.format(Locale.US, "%.1f", it)) } ?: unknown,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MeenaTextWhite
+                                        )
+                                    }
+                                    if (usedPercent != null) {
+                                        MetroLineProgress(
+                                            progress = (usedPercent / 100f).coerceIn(0f, 1f),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            height = 2.dp
+                                        )
+                                    }
                                 }
-                                MetroLineProgress(
-                                    progress = (telemetry.storagePercent / 100f).coerceIn(0f, 1f),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    color = MeenaTextWhite,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    height = 2.dp
-                                )
                             }
 
                             // Screen
@@ -1272,7 +1260,11 @@ fun TodayHub(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(stringResource(R.string.phone_screen_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
-                                Text(stringResource(R.string.percent_value, telemetry.screenBrightnessPercent), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                                Text(
+                                    text = telemetry.screenBrightnessPercent?.let { stringResource(R.string.percent_value, it) } ?: unknown,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextWhite
+                                )
                             }
                         }
                     }

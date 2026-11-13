@@ -4,128 +4,90 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.TrafficStats
 import android.os.BatteryManager
 import android.os.Environment
 import android.os.StatFs
 import android.provider.Settings
 import kotlin.math.roundToInt
 
+/**
+ * What the phone status widget shows. Every reading is null until the phone actually reports it,
+ * so a failed read shows as "unknown" instead of a made-up number.
+ */
 data class RealDeviceTelemetry(
-    val batteryPercent: Int = 88,
+    val batteryPercent: Int? = null,
     val isCharging: Boolean = false,
-    val usedRamMb: Long = 4200,
-    val totalRamMb: Long = 8192,
-    val ramPercent: Int = 51,
-    val usedStorageGb: Double = 64.2,
-    val freeStorageGb: Double = 191.8,
-    val totalStorageGb: Double = 256.0,
-    val storagePercent: Int = 25,
-    val trafficRxMb: Double = 4.82,
-    val trafficTxMb: Double = 1.14,
-    val screenBrightnessPercent: Int = 65
+    val freeMemoryGb: Double? = null,
+    val memoryUsedPercent: Int? = null,
+    val freeStorageGb: Double? = null,
+    val storageUsedPercent: Int? = null,
+    val screenBrightnessPercent: Int? = null
 )
 
 object DeviceTelemetryHelper {
 
+    private const val BYTES_PER_GB = 1024.0 * 1024.0 * 1024.0
+
+    /** Battery level as a percentage, or null when the broadcast has no usable level. */
+    internal fun batteryPercent(level: Int, scale: Int): Int? =
+        if (level >= 0 && scale > 0) ((level * 100f) / scale).roundToInt().coerceIn(0, 100) else null
+
+    /** Share of [total] in use, or null when the numbers don't make sense. */
+    internal fun usedPercent(total: Long, free: Long): Int? =
+        if (total > 0 && free in 0..total) (((total - free).toDouble() / total) * 100).roundToInt() else null
+
+    /** Bytes to gigabytes, one decimal place. */
+    internal fun toGb(bytes: Long): Double = ((bytes / BYTES_PER_GB) * 10.0).roundToInt() / 10.0
+
+    /** Android stores screen brightness as 0 to 255. */
+    internal fun brightnessPercent(raw: Int): Int? =
+        if (raw in 0..255) ((raw / 255f) * 100).roundToInt() else null
+
     fun getTelemetry(context: Context): RealDeviceTelemetry {
-        // 1. RAM INFO
-        var usedRamMb = 0L
-        var totalRamMb = 8192L
-        var ramPct = 50
-        try {
-            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-            if (am != null) {
-                val mi = ActivityManager.MemoryInfo()
-                am.getMemoryInfo(mi)
-                totalRamMb = mi.totalMem / (1024 * 1024)
-                val freeRamMb = mi.availMem / (1024 * 1024)
-                usedRamMb = (totalRamMb - freeRamMb).coerceAtLeast(0)
-                ramPct = if (totalRamMb > 0) ((usedRamMb.toDouble() / totalRamMb) * 100).roundToInt() else 50
-            }
-        } catch (e: Exception) {
-            usedRamMb = 4200L
-            totalRamMb = 8192L
-            ramPct = 51
+        var freeMemoryGb: Double? = null
+        var memoryUsed: Int? = null
+        runCatching {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return@runCatching
+            val mi = ActivityManager.MemoryInfo()
+            am.getMemoryInfo(mi)
+            memoryUsed = usedPercent(mi.totalMem, mi.availMem)
+            if (memoryUsed != null) freeMemoryGb = toGb(mi.availMem)
         }
 
-        // 2. STORAGE INFO
-        var usedStorageGb = 64.2
-        var freeStorageGb = 191.8
-        var totalStorageGb = 256.0
-        var storagePct = 25
-        try {
+        var freeStorageGb: Double? = null
+        var storageUsed: Int? = null
+        runCatching {
             val stat = StatFs(Environment.getDataDirectory().path)
-            val totalBytes = stat.totalBytes
-            val freeBytes = stat.availableBytes
-            val usedBytes = (totalBytes - freeBytes).coerceAtLeast(0)
-
-            val bytesPerGb = 1024.0 * 1024.0 * 1024.0
-            totalStorageGb = ((totalBytes / bytesPerGb) * 10.0).roundToInt() / 10.0
-            freeStorageGb = ((freeBytes / bytesPerGb) * 10.0).roundToInt() / 10.0
-            usedStorageGb = ((usedBytes / bytesPerGb) * 10.0).roundToInt() / 10.0
-            storagePct = if (totalStorageGb > 0) ((usedStorageGb / totalStorageGb) * 100).roundToInt() else 25
-        } catch (e: Exception) {
-            // Keep defaults
+            storageUsed = usedPercent(stat.totalBytes, stat.availableBytes)
+            if (storageUsed != null) freeStorageGb = toGb(stat.availableBytes)
         }
 
-        // 3. BATTERY INFO
-        var batteryPct = 88
+        var battery: Int? = null
         var isCharging = false
-        try {
-            val ifilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-            val bStatus = context.registerReceiver(null, ifilter)
-            if (bStatus != null) {
-                val level = bStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                val scale = bStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-                batteryPct = if (level >= 0 && scale > 0) ((level.toFloat() / scale.toFloat()) * 100).roundToInt() else 88
-                val status = bStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-                isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
-            }
-        } catch (e: Exception) {
-            // Keep defaults
+        runCatching {
+            val status =
+                context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return@runCatching
+            battery = batteryPercent(
+                status.getIntExtra(BatteryManager.EXTRA_LEVEL, -1),
+                status.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            )
+            val state = status.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+            isCharging = state == BatteryManager.BATTERY_STATUS_CHARGING || state == BatteryManager.BATTERY_STATUS_FULL
         }
 
-        // 4. TRAFFIC STATS
-        var rxMb = 4.82
-        var txMb = 1.14
-        try {
-            val totalRx = TrafficStats.getTotalRxBytes()
-            val totalTx = TrafficStats.getTotalTxBytes()
-            val bytesPerMb = 1024.0 * 1024.0
-            if (totalRx > 0) {
-                rxMb = ((totalRx / bytesPerMb) * 100.0).roundToInt() / 100.0
-            }
-            if (totalTx > 0) {
-                txMb = ((totalTx / bytesPerMb) * 100.0).roundToInt() / 100.0
-            }
-        } catch (e: Exception) {
-            // Keep defaults
-        }
-
-        // 5. BRIGHTNESS
-        var brightnessPct = 65
-        try {
-            val bVal = Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS, 170)
-            brightnessPct = ((bVal.toFloat() / 255f) * 100).roundToInt()
-        } catch (e: Exception) {
-            // Keep default
-        }
+        // Throws when the phone has no value, which leaves brightness unknown.
+        val brightness = runCatching {
+            brightnessPercent(Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS))
+        }.getOrNull()
 
         return RealDeviceTelemetry(
-            batteryPercent = batteryPct,
+            batteryPercent = battery,
             isCharging = isCharging,
-            usedRamMb = usedRamMb,
-            totalRamMb = totalRamMb,
-            ramPercent = ramPct,
-            usedStorageGb = usedStorageGb,
+            freeMemoryGb = freeMemoryGb,
+            memoryUsedPercent = memoryUsed,
             freeStorageGb = freeStorageGb,
-            totalStorageGb = totalStorageGb,
-            storagePercent = storagePct,
-            trafficRxMb = rxMb,
-            trafficTxMb = txMb,
-            screenBrightnessPercent = brightnessPct
+            storageUsedPercent = storageUsed,
+            screenBrightnessPercent = brightness
         )
     }
 }
-
