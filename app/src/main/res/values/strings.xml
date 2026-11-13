@@ -67,7 +67,6 @@
     <string name="privacy_notifications_line">notifications and bank alerts: read on your phone and never sent anywhere.</string>
     <string name="privacy_location_line">rough location: used for weather, air quality and the map. open-meteo and openfreemap get your rough area. no background tracking.</string>
     <string name="privacy_calendar_line">calendar: read on your phone to show your agenda. never sent anywhere.</string>
-    <string name="privacy_backup_line">no cloud backup: android backup is off, so your settings never sync anywhere.</string>
     <string name="privacy_policy_title">privacy policy</string>
     <string name="privacy_policy_status">the full policy, opens in your browser</string>
     <string name="privacy_policy_open_failed">couldn\'t open the privacy policy. check you have a browser, then try again.</string>
@@ -407,7 +406,6 @@
     <string name="backup_reset_question">reset every setting, including favourites and widget order? your holdings stay.</string>
     <string name="about_intro">meena is a free home screen for android. clean type, lots of space and quick to use.</string>
     <string name="about_inspired">inspired by windows phone and aio launcher. no boxes or cards, just type and space.</string>
-    <string name="about_privacy_heading">your privacy</string>
     <string name="privacy_portfolio_line">portfolio: your holdings and sheet link are stored encrypted on your phone.</string>
     <string name="about_open_source_title">open source</string>
     <string name="about_open_source_body">built with kotlin, jetpack compose, androidx, kotlinx serialization and okhttp, all under the apache 2.0 licence.</string>

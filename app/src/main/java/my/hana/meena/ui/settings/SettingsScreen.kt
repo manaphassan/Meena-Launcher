@@ -1371,40 +1371,11 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.about_privacy_heading),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MeenaTextWhite
+                SettingLinkRow(
+                    title = stringResource(R.string.settings_privacy_title),
+                    status = stringResource(R.string.privacy_status),
+                    onClick = { onOpenSubPage("look:privacy") }
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                    Text(
-                        text = stringResource(R.string.privacy_notifications_line),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MeenaTextMuted
-                    )
-                    Text(
-                        text = stringResource(R.string.privacy_location_line),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MeenaTextMuted
-                    )
-                    Text(
-                        text = stringResource(R.string.privacy_calendar_line),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MeenaTextMuted
-                    )
-                    Text(
-                        text = stringResource(R.string.privacy_portfolio_line),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MeenaTextMuted
-                    )
-                    Text(
-                        text = stringResource(R.string.privacy_backup_line),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MeenaTextMuted
-                    )
-                }
             }
             item {
                 val policyContext = LocalContext.current
@@ -1497,6 +1468,11 @@ private fun SubPageContainer(
                     )
                     Text(
                         text = stringResource(R.string.privacy_health_line),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                    Text(
+                        text = stringResource(R.string.privacy_portfolio_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
