@@ -1,6 +1,8 @@
 package my.hana.meena.ui.components
 
 import my.hana.meena.R
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
@@ -143,11 +145,16 @@ fun MetroListPicker(
                 // Search Bar (if enabled)
                 if (enableSearch) {
                     Spacer(modifier = Modifier.height(16.dp))
+                    // No fill: grey hint text on an accent fill was hard to read and hid the cursor.
+                    val underline = MaterialTheme.colorScheme.primary
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .drawBehind {
+                                val y = size.height - 1.dp.toPx()
+                                drawLine(underline, Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx())
+                            }
                             .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m),
                         contentAlignment = Alignment.CenterStart
                     ) {
