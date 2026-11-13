@@ -45,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -59,6 +60,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import my.hana.meena.ui.navigation.ParallaxHelper
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +90,11 @@ import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.settings.SettingsScreen
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
+
+/** Stands in for the phone's haptics when vibration is turned off in settings. */
+private object SilentHaptics : androidx.compose.ui.hapticfeedback.HapticFeedback {
+    override fun performHapticFeedback(hapticFeedbackType: androidx.compose.ui.hapticfeedback.HapticFeedbackType) = Unit
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -120,27 +127,40 @@ class MainActivity : ComponentActivity() {
                 ?: intent?.getIntExtra("target_hub", -1)?.takeIf { it in 0..4 }
             val initialHub = (targetHubExtra ?: userSettings.defaultHubIndex).coerceIn(0, 4)
 
-            MeenaLauncherTheme(
-                baseTheme = userSettings.baseTheme,
-                accentColor = parsedAccent,
-                fontScalePercent = userSettings.fontScalePercent
+            val hideStatusBar = userSettings.isStatusBarHidden
+            LaunchedEffect(hideStatusBar) {
+                val bars = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+                bars.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                val statusBars = androidx.core.view.WindowInsetsCompat.Type.statusBars()
+                if (hideStatusBar) bars.hide(statusBars) else bars.show(statusBars)
+            }
+
+            val systemHaptics = LocalHapticFeedback.current
+            CompositionLocalProvider(
+                LocalHapticFeedback provides if (userSettings.isHapticEnabled) systemHaptics else SilentHaptics
             ) {
-                my.hana.meena.ui.components.MetroMessageContainer()
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                MeenaLauncherTheme(
+                    baseTheme = userSettings.baseTheme,
+                    accentColor = parsedAccent,
+                    fontScalePercent = userSettings.fontScalePercent
                 ) {
-                    MeenaHomeScreen(
-                        settingsRepository = settingsRepository,
-                        initialHubIndex = initialHub,
-                        targetHubIndex = currentHubIntentIndex.value,
-                        onLaunchApp = { packageName -> launchPackage(packageName) },
-                        onOpenDialer = { openDialerIntent() },
-                        onOpenMessages = { openMessagesIntent() },
-                        onOpenEmail = { openEmailIntent() },
-                        onOpenCamera = { openCameraIntent() },
-                        onOpenCalculator = { openCalculatorIntent() }
-                    )
+                    my.hana.meena.ui.components.MetroMessageContainer()
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        MeenaHomeScreen(
+                            settingsRepository = settingsRepository,
+                            initialHubIndex = initialHub,
+                            targetHubIndex = currentHubIntentIndex.value,
+                            onLaunchApp = { packageName -> launchPackage(packageName) },
+                            onOpenDialer = { openDialerIntent() },
+                            onOpenMessages = { openMessagesIntent() },
+                            onOpenEmail = { openEmailIntent() },
+                            onOpenCamera = { openCameraIntent() },
+                            onOpenCalculator = { openCalculatorIntent() }
+                        )
+                    }
                 }
             }
         }

@@ -200,6 +200,13 @@
     <string name="settings_haptics_on">vibration on</string>
     <string name="settings_haptics_off">vibration off</string>
     <string name="settings_motion_reduced">less motion</string>
+    <string name="settings_clock_link_status">12 or 24 hour, seconds and hijri date</string>
+    <string name="settings_health_link_status">step goal and companion app</string>
+    <string name="news_stories_title">stories to show</string>
+    <plurals name="news_stories_count">
+        <item quantity="one">%1$d story</item>
+        <item quantity="other">%1$d stories</item>
+    </plurals>
     <string name="settings_icon_pack_title">icon pack</string>
     <string name="live_tiles_title">live tiles</string>
     <string name="live_tiles_status_on">favourites flip to show what\'s new</string>

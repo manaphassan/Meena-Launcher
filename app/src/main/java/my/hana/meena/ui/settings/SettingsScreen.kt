@@ -59,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -655,7 +656,7 @@ private fun SubPageContainer(
                 Column {
                     Text("destination page", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                     Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
-                    val hubs = listOf("today", "inbox", "news", "money", "apps")
+                    val hubs = listOf("today", "inbox", "news", "money")
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
@@ -699,41 +700,6 @@ private fun SubPageContainer(
                 )
             }
 
-            item {
-                Column {
-                    Text("refresh cadence", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
-                    val intervals = listOf(15 to "15m", 30 to "30m", 60 to "1h", 0 to "manual")
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                    ) {
-                        intervals.forEach { (mins, label) ->
-                            val isSelected = config.refreshMinutes == mins
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .heightIn(min = 48.dp)
-                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                    .metroClickable {
-                                        val newMap = settingsState.widgetConfigs.toMutableMap()
-                                        newMap[widgetId] = config.copy(refreshMinutes = mins)
-                                        onUpdate { it.copy(widgetConfigs = newMap) }
-                                    }
-                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
             // Helper lambdas for reading and saving widget-specific custom settings
             fun custom(key: String, default: String): String =
                 config.customSettings[key] ?: default
@@ -745,7 +711,7 @@ private fun SubPageContainer(
                 onUpdate { it.copy(widgetConfigs = newMap) }
             }
 
-            // Widget-Specific Extended Settings for all 18 modules
+            // Only rows a widget really reads; SettingsKeysTest keeps it that way.
             when (widgetId) {
                 "widget-clock-weather" -> {
                     item {
@@ -753,74 +719,16 @@ private fun SubPageContainer(
                         Text("clock & weather options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        SettingSegmentedRow(
-                            title = "clock time format",
-                            subtitle = "choose standard 12-hour or military 24-hour display",
-                            options = listOf("12h" to "12-hour", "24h" to "24-hour"),
-                            selectedKey = custom("clock_format", "24h"),
-                            onSelectKey = { setCustom("clock_format", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show seconds",
-                            subtitle = "render live ticking seconds in time display",
-                            checked = custom("show_seconds", "false") == "true",
-                            onCheckedChange = { setCustom("show_seconds", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show hijri lunar date",
-                            subtitle = "display islamic date alongside gregorian date",
-                            checked = custom("show_hijri", "true") == "true",
-                            onCheckedChange = { setCustom("show_hijri", it.toString()) }
+                        SettingsPivotRow(
+                            title = stringResource(R.string.settings_datetime_title),
+                            status = stringResource(R.string.settings_clock_link_status),
+                            onClick = { onOpenSubPage("look:datetime") }
                         )
                     }
                     item {
                         SettingSegmentedRow(
                             title = "temperature scale",
-                            subtitle = "display unit for local temperature",
-                            options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
-                            selectedKey = custom("temp_unit", "c"),
-                            onSelectKey = { setCustom("temp_unit", it) }
-                        )
-                    }
-                }
-
-                "widget-weather-forecast" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("forecast options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "forecast lookahead range",
-                            subtitle = "number of upcoming days to forecast",
-                            options = listOf("3" to "3 days", "5" to "5 days", "7" to "7 days"),
-                            selectedKey = custom("forecast_days", "5"),
-                            onSelectKey = { setCustom("forecast_days", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "precipitation probability",
-                            subtitle = "show percentage chance of rain",
-                            checked = custom("show_rain_prob", "true") == "true",
-                            onCheckedChange = { setCustom("show_rain_prob", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "atmospheric details",
-                            subtitle = "display humidity and wind velocity",
-                            checked = custom("show_details", "false") == "true",
-                            onCheckedChange = { setCustom("show_details", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "temperature unit",
+                            subtitle = "used for the weather and the forecast",
                             options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
                             selectedKey = custom("temp_unit", "c"),
                             onSelectKey = { setCustom("temp_unit", it) }
@@ -849,37 +757,6 @@ private fun SubPageContainer(
                             subtitle = stringResource(R.string.solat_show_syuruk_hint),
                             checked = custom("show_syuruk_imsak", "true") == "true",
                             onCheckedChange = { setCustom("show_syuruk_imsak", it.toString()) }
-                        )
-                    }
-                }
-
-                "widget-calendar-month" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("calendar grid options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "first day of the week",
-                            options = listOf("sun" to "sunday", "mon" to "monday"),
-                            selectedKey = custom("first_day_of_week", "mon"),
-                            onSelectKey = { setCustom("first_day_of_week", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show week numbers",
-                            subtitle = "display calendar week 1-52 index column",
-                            checked = custom("show_week_numbers", "false") == "true",
-                            onCheckedChange = { setCustom("show_week_numbers", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "highlight active day",
-                            subtitle = "draw accent box around current date",
-                            checked = custom("highlight_today", "true") == "true",
-                            onCheckedChange = { setCustom("highlight_today", it.toString()) }
                         )
                     }
                 }
@@ -927,129 +804,10 @@ private fun SubPageContainer(
                     }
                 }
 
-                "widget-notes" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("quick notes options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "note font size",
-                            options = listOf("compact" to "compact (12sp)", "standard" to "standard (14sp)", "large" to "large (16sp)"),
-                            selectedKey = custom("note_font_size", "standard"),
-                            onSelectKey = { setCustom("note_font_size", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show timestamps",
-                            subtitle = "display time elapsed since note was written",
-                            checked = custom("show_timestamps", "true") == "true",
-                            onCheckedChange = { setCustom("show_timestamps", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "maximum notes displayed",
-                            options = listOf("3" to "3 notes", "5" to "5 notes", "10" to "10 notes"),
-                            selectedKey = custom("max_notes", "5"),
-                            onSelectKey = { setCustom("max_notes", it) }
-                        )
-                    }
-                }
-
-                "widget-exchange-rates" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("exchange rates options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "base currency",
-                            subtitle = "primary base denomination for foreign exchange",
-                            options = listOf("myr" to "myr", "usd" to "usd", "sgd" to "sgd", "eur" to "eur", "gbp" to "gbp"),
-                            selectedKey = custom("base_currency", "myr"),
-                            onSelectKey = { setCustom("base_currency", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "decimal precision",
-                            options = listOf("2" to "2 decimals (0.00)", "4" to "4 decimals (0.0000)"),
-                            selectedKey = custom("decimals", "4"),
-                            onSelectKey = { setCustom("decimals", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show 24h currency change",
-                            subtitle = "display daily net change percentage",
-                            checked = custom("show_delta", "true") == "true",
-                            onCheckedChange = { setCustom("show_delta", it.toString()) }
-                        )
-                    }
-                }
-
-                "widget-finance-charts" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("financial charts options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "default chart timeframe",
-                            options = listOf("1d" to "1 day", "1w" to "1 week", "1m" to "1 month", "1y" to "1 year"),
-                            selectedKey = custom("chart_timeframe", "1d"),
-                            onSelectKey = { setCustom("chart_timeframe", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "chart visual style",
-                            options = listOf("sparkline" to "line sparkline", "candlestick" to "candlestick"),
-                            selectedKey = custom("chart_style", "sparkline"),
-                            onSelectKey = { setCustom("chart_style", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "percentage delta mode",
-                            subtitle = "display relative percentage over absolute point value",
-                            checked = custom("show_pct", "true") == "true",
-                            onCheckedChange = { setCustom("show_pct", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "google sheets quote bridge",
-                            subtitle = "read live quotes from user personal google sheet",
-                            checked = custom("use_sheets_bridge", "true") == "true",
-                            onCheckedChange = { setCustom("use_sheets_bridge", it.toString()) }
-                        )
-                    }
-                }
-
                 "widget-spending-summary" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("spending tracker options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "intercept bank notifications",
-                            subtitle = "detect payment alerts from maybank, cimb, tng and grabpay on-device",
-                            checked = custom("track_banks", "true") == "true",
-                            onCheckedChange = { setCustom("track_banks", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "daily expenditure target",
-                            subtitle = "alert when exceeding daily limit",
-                            options = listOf("none" to "no limit", "50" to "rm 50", "100" to "rm 100", "200" to "rm 200"),
-                            selectedKey = custom("daily_budget", "none"),
-                            onSelectKey = { setCustom("daily_budget", it) }
-                        )
                     }
                     item {
                         Button(
@@ -1069,30 +827,6 @@ private fun SubPageContainer(
                         Text("alerts & action center options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        SettingSegmentedRow(
-                            title = "maximum alerts displayed",
-                            options = listOf("3" to "3 alerts", "5" to "5 alerts", "8" to "8 alerts", "12" to "12 alerts"),
-                            selectedKey = custom("max_alerts", "5"),
-                            onSelectKey = { setCustom("max_alerts", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "filter silent alerts",
-                            subtitle = "hide low-priority background progress and persistent notifications",
-                            checked = custom("filter_silent", "true") == "true",
-                            onCheckedChange = { setCustom("filter_silent", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show dismiss action",
-                            subtitle = "allow clearing individual alerts directly from launcher",
-                            checked = custom("show_dismiss", "true") == "true",
-                            onCheckedChange = { setCustom("show_dismiss", it.toString()) }
-                        )
-                    }
-                    item {
                         Button(
                             onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
@@ -1108,39 +842,6 @@ private fun SubPageContainer(
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("conversations options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "layout architecture",
-                            subtitle = "vertical stack prevents text clipping on longer messages",
-                            options = listOf("vertical" to "vertical stack", "compact" to "compact row"),
-                            selectedKey = custom("layout_style", "vertical"),
-                            onSelectKey = { setCustom("layout_style", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "maximum active conversations",
-                            options = listOf("3" to "3 chats", "5" to "5 chats", "8" to "8 chats"),
-                            selectedKey = custom("max_chats", "5"),
-                            onSelectKey = { setCustom("max_chats", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "message snippet preview lines",
-                            options = listOf("2" to "2 lines", "3" to "3 lines", "4" to "4 lines"),
-                            selectedKey = custom("snippet_lines", "4"),
-                            onSelectKey = { setCustom("snippet_lines", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show messaging channel badge",
-                            subtitle = "display source app name (whatsapp, telegram, sms)",
-                            checked = custom("show_channel", "true") == "true",
-                            onCheckedChange = { setCustom("show_channel", it.toString()) }
-                        )
                     }
                     item {
                         Button(
@@ -1163,100 +864,13 @@ private fun SubPageContainer(
                         )
                     }
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("display options", style = MaterialTheme.typography.titleSmall, color = MeenaTextWhite)
-                    }
-                    item {
+                        val storyCounts = listOf(6, 12, 20, 40)
                         SettingSegmentedRow(
-                            title = "stories count",
-                            options = listOf("4" to "4 stories", "6" to "6 stories", "8" to "8 stories", "12" to "12 stories"),
-                            selectedKey = custom("max_stories", "6"),
+                            title = stringResource(R.string.news_stories_title),
+                            options = storyCounts.map { it.toString() to androidx.compose.ui.res.pluralStringResource(R.plurals.news_stories_count, it, it) },
+                            selectedKey = custom("max_stories", my.hana.meena.ui.hubs.DEFAULT_VISIBLE_STORIES.toString()),
                             onSelectKey = { setCustom("max_stories", it) }
                         )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show story synopsis preview",
-                            subtitle = "render initial lines of article description",
-                            checked = custom("show_description", "true") == "true",
-                            onCheckedChange = { setCustom("show_description", it.toString()) }
-                        )
-                    }
-                }
-
-                "widget-device-telemetry" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("phone status options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "battery temperature",
-                            subtitle = "show current internal battery celsius thermal reading",
-                            checked = custom("show_battery_temp", "true") == "true",
-                            onCheckedChange = { setCustom("show_battery_temp", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "internal storage capacity",
-                            subtitle = "display available gigabytes on device flash memory",
-                            checked = custom("show_storage", "true") == "true",
-                            onCheckedChange = { setCustom("show_storage", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "memory usage",
-                            subtitle = "display active and free memory",
-                            checked = custom("show_ram", "true") == "true",
-                            onCheckedChange = { setCustom("show_ram", it.toString()) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "network status",
-                            subtitle = "display active wi-fi ssid and cellular network type",
-                            checked = custom("show_network", "true") == "true",
-                            onCheckedChange = { setCustom("show_network", it.toString()) }
-                        )
-                    }
-                }
-
-                "widget-health-device" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("connected health device", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "paired device profile",
-                            options = listOf("watch" to "smartwatch", "band" to "fitness band", "ring" to "smart ring"),
-                            selectedKey = custom("device_type", "watch"),
-                            onSelectKey = { setCustom("device_type", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "show last sync timestamp",
-                            subtitle = "render time elapsed since last bluetooth sync",
-                            checked = custom("show_sync_time", "true") == "true",
-                            onCheckedChange = { setCustom("show_sync_time", it.toString()) }
-                        )
-                    }
-                    item {
-                        Button(
-                            onClick = {
-                                try {
-                                    context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-                                } catch (e: Exception) { }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            shape = RoundedCornerShape(0.dp)
-                        ) {
-                            Text("open bluetooth settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-                        }
                     }
                 }
 
@@ -1266,27 +880,10 @@ private fun SubPageContainer(
                         Text("health options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        SettingSegmentedRow(
-                            title = "daily step target",
-                            options = listOf("6000" to "6k steps", "8000" to "8k steps", "10000" to "10k steps", "12000" to "12k steps"),
-                            selectedKey = custom("step_goal", "8000"),
-                            onSelectKey = { setCustom("step_goal", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "daily active calories goal",
-                            options = listOf("300" to "300 kcal", "500" to "500 kcal", "750" to "750 kcal", "1000" to "1000 kcal"),
-                            selectedKey = custom("calorie_goal", "500"),
-                            onSelectKey = { setCustom("calorie_goal", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "distance measurement unit",
-                            options = listOf("km" to "kilometers (km)", "mi" to "miles (mi)"),
-                            selectedKey = custom("distance_unit", "km"),
-                            onSelectKey = { setCustom("distance_unit", it) }
+                        SettingsPivotRow(
+                            title = stringResource(R.string.settings_health_title),
+                            status = stringResource(R.string.settings_health_link_status),
+                            onClick = { onOpenSubPage("account:health") }
                         )
                     }
                     item {
@@ -1541,9 +1138,9 @@ private fun SubPageContainer(
                 }
                 Slider(
                     value = settingsState.fontScalePercent.toFloat(),
-                    onValueChange = { onUpdate { it.copy(fontScalePercent = it.fontScalePercent) } },
-                    onValueChangeFinished = {},
+                    onValueChange = { value -> onUpdate { it.copy(fontScalePercent = value.roundToInt()) } },
                     valueRange = 85f..120f,
+                    steps = 6,
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary
@@ -2408,22 +2005,6 @@ private fun HealthAccountSettings(
                 val goal = key.toIntOrNull() ?: 10000
                 onUpdate { it.copy(stepGoal = goal) }
                 HealthRepository.refreshTelemetry(context, settingsState.copy(stepGoal = goal))
-            }
-        )
-
-        SettingSegmentedRow(
-            title = "daily sleep target",
-            options = listOf(
-                "7.0" to "7 hrs",
-                "7.5" to "7.5 hrs",
-                "8.0" to "8 hrs",
-                "8.5" to "8.5 hrs",
-                "9.0" to "9 hrs"
-            ),
-            selectedKey = String.format(java.util.Locale.US, "%.1f", settingsState.sleepHoursGoal),
-            onSelectKey = { key ->
-                val sleep = key.toFloatOrNull() ?: 8.0f
-                onUpdate { it.copy(sleepHoursGoal = sleep) }
             }
         )
 

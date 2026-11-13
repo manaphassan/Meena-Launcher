@@ -68,7 +68,7 @@ import my.hana.meena.ui.widgets.updatedAgoText
 /** Filter key for "every source"; empty so it can't clash with a feed called "all". */
 private const val FILTER_ALL = ""
 /** Stories shown when the user hasn't picked a count in settings. */
-private const val DEFAULT_VISIBLE_STORIES = 20
+internal const val DEFAULT_VISIBLE_STORIES = 20
 /** In the "all" view each source keeps at least this many places, so a busy feed can't hide a quiet one. */
 private const val MIN_VISIBLE_PER_SOURCE = 3
 /** Only the first screenful feathers in; later rows appear without a delay while scrolling. */
