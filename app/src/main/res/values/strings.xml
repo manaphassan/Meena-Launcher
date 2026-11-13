@@ -404,6 +404,7 @@
     <string name="backup_share">share a backup</string>
     <string name="backup_import">import from clipboard</string>
     <string name="backup_reset">reset all settings</string>
+    <string name="backup_reset_question">reset every setting, including favourites and widget order? your holdings stay.</string>
     <string name="about_intro">meena is a free home screen for android. clean type, lots of space and quick to use.</string>
     <string name="about_inspired">inspired by windows phone and aio launcher. no boxes or cards, just type and space.</string>
     <string name="about_privacy_heading">your privacy</string>

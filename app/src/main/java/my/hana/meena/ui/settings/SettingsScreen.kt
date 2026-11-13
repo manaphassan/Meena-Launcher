@@ -620,6 +620,21 @@ private fun SubPageContainer(
 ) {
     val context = LocalContext.current
     var showNotificationDisclosure by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }
+
+    if (confirmReset) {
+        MetroDialog(
+            title = stringResource(R.string.backup_reset),
+            message = stringResource(R.string.backup_reset_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
+            onConfirm = {
+                confirmReset = false
+                onResetDefaults()
+            },
+            onDismiss = { confirmReset = false }
+        )
+    }
 
     if (showNotificationDisclosure) {
         MetroDialog(
@@ -1315,7 +1330,7 @@ private fun SubPageContainer(
             }
             item {
                 Button(
-                    onClick = onResetDefaults,
+                    onClick = { confirmReset = true },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
