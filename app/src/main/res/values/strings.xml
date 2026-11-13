@@ -495,4 +495,6 @@
         <item quantity="one">%1$d day later</item>
         <item quantity="other">%1$d days later</item>
     </plurals>
+    <string name="picker_search_hint">type to search</string>
+    <string name="picker_clear_search">clear search</string>
 </resources>

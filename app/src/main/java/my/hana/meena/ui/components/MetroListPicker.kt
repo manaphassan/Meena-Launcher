@@ -1,6 +1,7 @@
 package my.hana.meena.ui.components
 
 import my.hana.meena.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -106,13 +107,13 @@ fun MetroListPicker(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_thin_back),
-                            contentDescription = "back",
+                            contentDescription = stringResource(R.string.settings_back),
                             tint = MeenaTextMuted,
                             modifier = Modifier.size(my.hana.meena.theme.MeenaSpacing.l)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "back",
+                            text = stringResource(R.string.settings_back),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MeenaTextMuted
                         )
@@ -124,7 +125,7 @@ fun MetroListPicker(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_thin_close),
-                            contentDescription = "close",
+                            contentDescription = stringResource(R.string.action_close),
                             tint = MeenaTextMuted
                         )
                     }
@@ -156,7 +157,7 @@ fun MetroListPicker(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_thin_search),
-                                contentDescription = "search",
+                                contentDescription = stringResource(R.string.action_search),
                                 tint = MeenaTextMuted,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -171,7 +172,7 @@ fun MetroListPicker(
                                 decorationBox = { innerTextField ->
                                     if (searchQuery.isEmpty()) {
                                         Text(
-                                            text = "type to search...",
+                                            text = stringResource(R.string.picker_search_hint),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MeenaTextMuted
                                         )
@@ -188,7 +189,7 @@ fun MetroListPicker(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_thin_close),
-                                        contentDescription = "clear search",
+                                        contentDescription = stringResource(R.string.picker_clear_search),
                                         tint = MeenaTextMuted,
                                         modifier = Modifier.size(20.dp)
                                     )
