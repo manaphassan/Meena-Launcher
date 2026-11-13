@@ -30,6 +30,7 @@ data class MeenaUserSettings(
     val wallpaperDimPercent: Int = 40,
     
     val isMonochromeFavourites: Boolean = true,
+    val iconPack: String = "", // icon pack app id; empty = system icons
     val pinnedAppIds: List<String> = emptyList(),
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),

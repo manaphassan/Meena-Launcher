@@ -463,6 +463,17 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
             onClick = { open("look:typography") }
         )
     }
+    item {
+        val context = LocalContext.current
+        val packLabel by androidx.compose.runtime.produceState<String?>(null, settingsState.iconPack) {
+            value = my.hana.meena.data.system.IconPackRepository.labelFor(context, settingsState.iconPack)
+        }
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_icon_pack_title),
+            status = packLabel ?: stringResource(R.string.settings_icon_pack_system),
+            onClick = { open("look:iconpack") }
+        )
+    }
     settingsGroupLabel(R.string.settings_group_feel)
     item {
         val timeMode = if (settingsState.is24HourFormat) "24-hour" else "12-hour"
@@ -1678,6 +1689,22 @@ private fun SubPageContainer(
             }
         }
 
+        subPageId == "look:iconpack" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.settings_icon_pack_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                IconPackSettings(
+                    settingsState = settingsState,
+                    onUpdate = onUpdate
+                )
+            }
+        }
+
         subPageId == "look:backup" -> {
             item {
                 MetroSubPageHeader(
@@ -1988,6 +2015,50 @@ fun SettingSegmentedRow(
             onSelect = onSelectKey,
             onDismiss = { showPicker = false }
         )
+    }
+}
+
+/** Icon pack choice: "system icons" first, then installed packs by name, in a full-screen list picker. */
+@Composable
+private fun IconPackSettings(
+    settingsState: MeenaUserSettings,
+    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
+) {
+    val context = LocalContext.current
+    val packs by androidx.compose.runtime.produceState<List<my.hana.meena.data.system.IconPackInfo>?>(null) {
+        value = my.hana.meena.data.system.IconPackRepository.installedPacks(context)
+    }
+    val installed = packs
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
+        when {
+            installed == null -> Text(
+                text = stringResource(R.string.settings_icon_pack_loading),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MeenaTextMuted
+            )
+            installed.isEmpty() -> Text(
+                text = stringResource(R.string.settings_icon_pack_none),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MeenaTextMuted
+            )
+            else -> {
+                Text(
+                    text = stringResource(R.string.settings_icon_pack_intro),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MeenaTextMuted
+                )
+                val options = listOf("" to stringResource(R.string.settings_icon_pack_system)) +
+                    installed.map { it.packageName to it.label }
+                // A chosen pack that has since been removed shows as system icons, which is what is drawn.
+                val selectedKey = settingsState.iconPack.takeIf { chosen -> installed.any { it.packageName == chosen } } ?: ""
+                SettingSegmentedRow(
+                    title = stringResource(R.string.settings_icon_pack_title),
+                    options = options,
+                    selectedKey = selectedKey,
+                    onSelectKey = { key -> onUpdate { it.copy(iconPack = key) } }
+                )
+            }
+        }
     }
 }
 

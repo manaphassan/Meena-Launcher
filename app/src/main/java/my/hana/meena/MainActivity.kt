@@ -309,6 +309,10 @@ fun MeenaHomeScreen(
         my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
     }
 
+    LaunchedEffect(userSettings.iconPack) {
+        runCatching { my.hana.meena.data.system.InstalledAppsRepository.setIconPack(context.applicationContext, userSettings.iconPack) }
+    }
+
     val defaultHubClamped = (userSettings.defaultHubIndex).coerceIn(0, 4)
 
     val pagerState = rememberPagerState(

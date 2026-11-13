@@ -56,12 +56,14 @@ fun FrequentAppTiles(
                     .background(tileColor)
                     .metroClickable { onLaunchApp(app.packageName) }
             ) {
-                if (app.iconBitmap != null) {
+                val glyph = if (isMonochrome) app.glyphBitmap else null
+                val bitmap = glyph ?: app.iconBitmap
+                if (bitmap != null) {
                     Image(
-                        bitmap = app.iconBitmap,
+                        bitmap = bitmap,
                         contentDescription = app.label,
-                        modifier = Modifier.align(Alignment.Center).size(32.dp),
-                        colorFilter = if (isMonochrome) ColorFilter.tint(MeenaTextWhite) else null
+                        modifier = Modifier.align(Alignment.Center).size(if (glyph != null) 40.dp else 32.dp),
+                        colorFilter = if (glyph != null) ColorFilter.tint(MeenaTextWhite) else null
                     )
                 }
                 Text(

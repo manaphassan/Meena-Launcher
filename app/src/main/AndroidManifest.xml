@@ -25,6 +25,26 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <package android:name="com.google.android.apps.healthdata" />
+        <!-- Icon packs: launcher-specific filters, not an Android API (see IconPackRepository). -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES" />
+        </intent>
+        <intent>
+            <action android:name="org.adw.launcher.icons.ACTION_PICK_ICON" />
+        </intent>
+        <intent>
+            <action android:name="com.novalauncher.THEME" />
+        </intent>
+        <intent>
+            <action android:name="com.gau.go.launcherex.theme" />
+        </intent>
+        <intent>
+            <action android:name="com.dlto.atom.launcher.THEME" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="com.anddoes.launcher.THEME" />
+        </intent>
     </queries>
 
     <application

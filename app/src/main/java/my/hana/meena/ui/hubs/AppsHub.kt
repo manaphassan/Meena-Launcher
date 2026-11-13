@@ -108,7 +108,8 @@ fun AppsHub(
     // Live notifications stream to flag active notifications
     val liveNotifications by NotificationRepository.notificationsFlow.collectAsState()
 
-    LaunchedEffect(Unit) {
+    // Keyed on the revision so a new icon pack (or a re-scan) redraws the list.
+    LaunchedEffect(InstalledAppsRepository.revision) {
         val loaded = InstalledAppsRepository.loadInstalledApps(context)
         realInstalledApps = loaded
         isLoadingApps = false

@@ -104,15 +104,17 @@ fun FavouriteTiles(
                         }
                     )
             ) {
-                // App Icon
-                if (app.iconBitmap != null) {
+                // App Icon: in monochrome, the app's glyph in white; without one, its normal icon (never a white blob).
+                val glyph = if (isMonochrome) app.glyphBitmap else null
+                val bitmap = glyph ?: app.iconBitmap
+                if (bitmap != null) {
                     Image(
-                        bitmap = app.iconBitmap,
+                        bitmap = bitmap,
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .size(32.dp),
-                        colorFilter = if (isMonochrome) ColorFilter.tint(MeenaTextWhite) else null
+                            .size(if (glyph != null) 40.dp else 32.dp),
+                        colorFilter = if (glyph != null) ColorFilter.tint(MeenaTextWhite) else null
                     )
                 }
 
