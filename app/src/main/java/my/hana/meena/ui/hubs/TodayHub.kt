@@ -401,6 +401,69 @@ fun TodayHub(
                             onRequestLocation = onRequestLocationPermission,
                             onRetry = { WeatherRepository.refresh(context, force = true) }
                         )
+                        // Rain in the next few hours (a forecast, not radar), and the real radar one tap away.
+                        val rainData =
+                            (weatherState as? WidgetState.Ready)?.data ?: (weatherState as? WidgetState.Stale)?.data
+                        val rainOutlook = remember(rainData, currentTime) {
+                            rainData?.let {
+                                my.hana.meena.data.system.RainOutlookCalculator.compute(
+                                    it.rainHours,
+                                    System.currentTimeMillis()
+                                )
+                            }
+                        }
+                        if (rainOutlook != null) {
+                            val hourFormat =
+                                SimpleDateFormat(if (settings.is24HourFormat) "HH:mm" else "h a", Locale.UK)
+                            val rainText = when (rainOutlook) {
+                                is my.hana.meena.data.system.RainOutlook.Dry -> stringResource(
+                                    R.string.rain_dry,
+                                    my.hana.meena.data.system.RainOutlookCalculator.HOURS
+                                )
+
+                                is my.hana.meena.data.system.RainOutlook.AllWet -> stringResource(
+                                    R.string.rain_all,
+                                    my.hana.meena.data.system.RainOutlookCalculator.HOURS
+                                )
+
+                                is my.hana.meena.data.system.RainOutlook.WetUntil -> stringResource(
+                                    R.string.rain_until,
+                                    hourFormat.format(Date(rainOutlook.untilMillis)).lowercase(Locale.UK)
+                                )
+
+                                is my.hana.meena.data.system.RainOutlook.WetFrom -> stringResource(
+                                    R.string.rain_from,
+                                    hourFormat.format(Date(rainOutlook.fromMillis)).lowercase(Locale.UK)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { my.hana.meena.data.system.RainRadar.open(context) },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.rain_title),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MeenaTextWhite,
+                                    modifier = Modifier.width(124.dp)
+                                )
+                                Text(
+                                    text = rainText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MeenaTextMuted,
+                                    maxLines = 2,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.rain_radar),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                        }
                         // Air quality belongs with the weather (it used to repeat under health and on its own).
                         if (airIndex.aqiValue > 0) {
                             val aqiColor = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }

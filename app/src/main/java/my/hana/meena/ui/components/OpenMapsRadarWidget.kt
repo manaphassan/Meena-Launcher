@@ -270,6 +270,11 @@ fun OpenMapsRadarWidget(
                     )
                 }
             }
+
+            // The official radar opens in the browser; nothing on this map is weather data.
+            MapTextAction(stringResource(R.string.map_rain_radar)) {
+                my.hana.meena.data.system.RainRadar.open(context)
+            }
         }
     }
 }

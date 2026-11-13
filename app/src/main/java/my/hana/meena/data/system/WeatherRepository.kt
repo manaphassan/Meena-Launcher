@@ -47,7 +47,9 @@ data class WeatherData(
     val latitude: Double,
     val longitude: Double,
     val locationName: String,
-    val fetchedAt: Long
+    val fetchedAt: Long,
+    /** The next few forecast hours, for the rain line. Empty when the forecast had none. */
+    val rainHours: List<RainHour> = emptyList()
 )
 
 /**
@@ -155,7 +157,7 @@ object WeatherRepository {
         return withContext(Dispatchers.IO) {
             val url = String.format(
                 Locale.US,
-                "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto",
+                "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=precipitation_probability,precipitation&forecast_hours=5&timezone=auto",
                 lat,
                 lng
             )
@@ -231,13 +233,37 @@ object WeatherRepository {
                 }
             }
 
+            // Hourly times are local ISO times; utc_offset_seconds turns them back into instants.
+            val rainHours = mutableListOf<RainHour>()
+            val hourlyObj = root.optJSONObject("hourly")
+            if (hourlyObj != null) {
+                val offsetMs = root.optInt("utc_offset_seconds", 0) * 1000L
+                val hourParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }
+                val hourTimes = hourlyObj.optJSONArray("time")
+                val probs = hourlyObj.optJSONArray("precipitation_probability")
+                val amounts = hourlyObj.optJSONArray("precipitation")
+                for (i in 0 until (hourTimes?.length() ?: 0)) {
+                    val localMs =
+                        runCatching { hourParser.parse(hourTimes!!.optString(i))?.time }.getOrNull() ?: continue
+                    if (probs == null || probs.isNull(i)) continue
+                    rainHours += RainHour(
+                        endMillis = localMs - offsetMs,
+                        probability = probs.optInt(i, 0),
+                        millimetres = amounts?.optDouble(i, 0.0)?.toFloat() ?: 0f
+                    )
+                }
+            }
+
             WeatherData(
                 current = currentWeather,
                 daily = dailyList,
                 latitude = lat,
                 longitude = lng,
                 locationName = locationName,
-                fetchedAt = System.currentTimeMillis()
+                fetchedAt = System.currentTimeMillis(),
+                rainHours = rainHours
             )
         }
     }

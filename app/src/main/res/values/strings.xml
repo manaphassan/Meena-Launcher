@@ -246,6 +246,13 @@
     <string name="agenda_title">your week</string>
     <string name="forecast_title">forecast</string>
     <string name="forecast_air">air quality</string>
+    <string name="rain_title">rain</string>
+    <string name="rain_dry">none expected for the next %1$d hours</string>
+    <string name="rain_all">likely for the next %1$d hours</string>
+    <string name="rain_until">likely till %1$s, then easing</string>
+    <string name="rain_from">likely from %1$s</string>
+    <string name="rain_radar">radar</string>
+    <string name="map_rain_radar">rain radar from met malaysia</string>
     <string name="solat_title">prayer times</string>
     <string name="inbox_dismiss">clear this alert</string>
     <string name="solat_sun_path">sun path</string>
