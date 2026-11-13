@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -559,21 +561,66 @@ fun TodayHub(
                                 val devices = (state as? WidgetState.Ready)?.data ?: (state as WidgetState.Stale).data
                                 Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                     devices.forEach { device ->
-                                        Column {
-                                            Text(
-                                                text = device.name,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MeenaTextWhite
+                                        val companion = settings.healthCompanionPackage.takeIf {
+                                            device.battery == null && device.kind == my.hana.meena.data.system.BluetoothDevicesRepository.KIND_WEARABLE && it.isNotBlank()
+                                        }
+                                        val kindText = when (device.kind) {
+                                            my.hana.meena.data.system.BluetoothDevicesRepository.KIND_AUDIO -> stringResource(
+                                                R.string.devices_kind_audio
                                             )
-                                            Text(
-                                                text = when (device.kind) {
-                                                    my.hana.meena.data.system.BluetoothDevicesRepository.KIND_AUDIO -> stringResource(R.string.devices_kind_audio)
-                                                    my.hana.meena.data.system.BluetoothDevicesRepository.KIND_WEARABLE -> stringResource(R.string.devices_kind_wearable)
-                                                    else -> stringResource(R.string.devices_kind_other)
-                                                },
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MeenaTextMuted
+
+                                            my.hana.meena.data.system.BluetoothDevicesRepository.KIND_WEARABLE -> stringResource(
+                                                R.string.devices_kind_wearable
                                             )
+
+                                            else -> stringResource(R.string.devices_kind_other)
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 48.dp)
+                                                .then(if (companion != null) Modifier.metroClickable {
+                                                    onLaunchPackage(
+                                                        companion
+                                                    )
+                                                } else Modifier),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = device.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MeenaTextWhite
+                                                )
+                                                Text(
+                                                    text = if (companion != null) {
+                                                        stringResource(
+                                                            R.string.devices_battery_in_app,
+                                                            kindText,
+                                                            settings.healthCompanionName.ifBlank { stringResource(R.string.devices_its_app) }
+                                                                .lowercase()
+                                                        )
+                                                    } else kindText,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = if (companion != null) MaterialTheme.colorScheme.primary else MeenaTextMuted
+                                                )
+                                            }
+                                            device.battery?.let { level ->
+                                                val batteryDescription = stringResource(
+                                                    R.string.devices_battery_description,
+                                                    device.name,
+                                                    level
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.devices_battery_percent, level),
+                                                    style = MaterialTheme.typography.headlineSmall,
+                                                    fontWeight = FontWeight.Light,
+                                                    color = if (level <= 15) MaterialTheme.colorScheme.error else MeenaTextWhite,
+                                                    modifier = Modifier.semantics {
+                                                        contentDescription = batteryDescription
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                 }

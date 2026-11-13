@@ -28,7 +28,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import my.hana.meena.ui.widgets.WidgetState
 import kotlin.coroutines.resume
 
-data class ConnectedDevice(val name: String, val kind: String)
+/** A connected device; [battery] is a percentage only when the device has told Android one. */
+data class ConnectedDevice(val name: String, val kind: String, val battery: Int? = null)
 
 /**
  * Bluetooth devices connected right now: low-energy devices (GATT), headphones and speakers
@@ -52,7 +53,25 @@ object BluetoothDevicesRepository {
 
     /** Devices with a live link reported by ACL broadcasts since Meena started: address to (name, kind). */
     private val aclDevices = ConcurrentHashMap<String, Pair<String, String>>()
-    @Volatile private var isListening = false
+
+    /** Last battery level Android reported per device name (0 to 100). Never estimated. */
+    private val batteryByName = ConcurrentHashMap<String, Int>()
+
+    @Volatile
+    private var isListening = false
+
+    /**
+     * Android announces a device's battery when it first reads it and whenever it changes, for
+     * devices that report one to the phone (headphones over the headset link, LE battery service).
+     * The action and extra are @SystemApi constants but the broadcast is delivered to apps holding
+     * BLUETOOTH_CONNECT, so only their string values are used here. Source:
+     * https://android.googlesource.com/platform/packages/modules/Bluetooth/+/refs/heads/main/framework/java/android/bluetooth/BluetoothDevice.java
+     */
+    private const val ACTION_BATTERY_LEVEL_CHANGED = "android.bluetooth.device.action.BATTERY_LEVEL_CHANGED"
+    private const val EXTRA_BATTERY_LEVEL = "android.bluetooth.device.extra.BATTERY_LEVEL"
+
+    /** BluetoothProfile.HID_HOST, a @SystemApi constant; its proxy answers getConnectedDevices with BLUETOOTH_CONNECT. */
+    private const val PROFILE_HID_HOST = 4
 
     private val aclReceiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
@@ -60,7 +79,15 @@ object BluetoothDevicesRepository {
             val device = IntentCompat.getParcelableExtra(intent, BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
             when (intent.action) {
                 BluetoothDevice.ACTION_ACL_CONNECTED -> aclDevices[device.address] = nameOf(device) to kindOf(device)
-                BluetoothDevice.ACTION_ACL_DISCONNECTED -> aclDevices.remove(device.address)
+                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+                    aclDevices.remove(device.address)
+                    batteryByName.remove(nameOf(device))
+                }
+
+                ACTION_BATTERY_LEVEL_CHANGED -> {
+                    val level = intent.getIntExtra(EXTRA_BATTERY_LEVEL, -1)
+                    if (level in 0..100) batteryByName[nameOf(device)] = level else batteryByName.remove(nameOf(device))
+                }
             }
             refresh(context)
         }
@@ -76,6 +103,7 @@ object BluetoothDevicesRepository {
         val filter = IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
             addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+            addAction(ACTION_BATTERY_LEVEL_CHANGED)
         }
         ContextCompat.registerReceiver(context.applicationContext, aclReceiver, filter, ContextCompat.RECEIVER_EXPORTED)
         isListening = true
@@ -107,14 +135,20 @@ object BluetoothDevicesRepository {
 
         activeJob = scope.launch {
             try {
-                val wearables = runCatching { manager.getConnectedDevices(BluetoothProfile.GATT) }.getOrDefault(emptyList())
+                val wearables =
+                    runCatching { manager.getConnectedDevices(BluetoothProfile.GATT) }.getOrDefault(emptyList())
+                // Bands like the Xiaomi Smart Band link as an input device (HID host).
+                val inputDevices = connectedOn(context, adapter, PROFILE_HID_HOST)
                 val audio = connectedOn(context, adapter, BluetoothProfile.A2DP) +
                     connectedOn(context, adapter, BluetoothProfile.HEADSET)
                 val devices = merge(
-                    wearables.map { nameOf(it) to KIND_WEARABLE } + aclDevices.values,
+                    wearables.map { nameOf(it) to KIND_WEARABLE } +
+                            inputDevices.map { nameOf(it) to kindOf(it).let { k -> if (k == KIND_OTHER) KIND_WEARABLE else k } } +
+                            aclDevices.values,
                     audio.map { nameOf(it) to KIND_AUDIO }
-                )
-                _state.value = if (devices.isEmpty()) WidgetState.Empty else WidgetState.Ready(devices, System.currentTimeMillis())
+                ).map { it.copy(battery = batteryByName[it.name]) }
+                _state.value =
+                    if (devices.isEmpty()) WidgetState.Empty else WidgetState.Ready(devices, System.currentTimeMillis())
             } catch (_: SecurityException) {
                 _state.value = WidgetState.NeedsSetup
             }
@@ -147,8 +181,10 @@ object BluetoothDevicesRepository {
                 val listener = object : BluetoothProfile.ServiceListener {
                     override fun onServiceConnected(p: Int, proxy: BluetoothProfile) {
                         val list = runCatching { proxy.connectedDevices }.getOrDefault(emptyList())
-                        adapter.closeProfileProxy(p, proxy)
+                        // Resume before closing: closeProfileProxy() calls onServiceDisconnected() right away,
+                        // which used to resume first with an empty list and drop every result.
                         if (cont.isActive) cont.resume(list)
+                        adapter.closeProfileProxy(p, proxy)
                     }
                     override fun onServiceDisconnected(p: Int) {
                         if (cont.isActive) cont.resume(emptyList())

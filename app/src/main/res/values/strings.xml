@@ -146,6 +146,10 @@
     <string name="devices_kind_wearable">band or watch</string>
     <string name="devices_kind_audio">audio</string>
     <string name="devices_kind_other">device</string>
+    <string name="devices_battery_percent">%1$d%%</string>
+    <string name="devices_battery_in_app">%1$s · battery in %2$s</string>
+    <string name="devices_its_app">its app</string>
+    <string name="devices_battery_description">%1$s, battery %2$d percent</string>
     <string name="map_title">nearby</string>
     <string name="calendar_month_title">month</string>
     <string name="settings_caption">meena · settings</string>
