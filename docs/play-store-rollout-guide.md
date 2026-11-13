@@ -3,7 +3,7 @@
 **Application:** Meena (`my.hana.meena`)  
 **Release Version:** v1.0 (versionCode: 1)  
 **Track Schedule:** Internal Test → Closed Test (14 days) → Production Staged Rollout  
-**Document Date:** October 2026  
+**Document Date:** October 2026 (checklist rerun 13 November 2026)  
 
 ---
 
@@ -13,14 +13,15 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 
 - [x] Package Name: `my.hana.meena` (Permanent unique identifier)
 - [x] Compilation: Target SDK 36, Min SDK 24, Compose 2026 BOM
-- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, 12 Nov 2026, rerun after removing the Gemini brief)
-- [x] Bundle Size: **5.03 MiB** (5,269,775 bytes; within the 15 MB charter limit)
+- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, rerun 13 Nov 2026 at commit `b6e0bea`)
+- [x] Bundle Size: **5.22 MiB** (5,474,342 bytes; within the 15 MB charter limit)
 - [x] Baseline profile: `baseline.prof` packaged in the bundle
 - [ ] Release signing: bundle is **unsigned**; create `keystore.properties` from `keystore.properties.example` (or use Play App Signing with an upload key)
+- [ ] Privacy policy URL live: https://github.com/manaphassan/Meena-Launcher/blob/main/docs/privacy-policy.md (returns 404 until `docs/privacy-policy.md` is on `main`)
 - [x] R8 & ProGuard: Minification enabled, resource shrinking enabled
-- [x] 16 KB Page Alignment: `zipalign -c -P 16` passes and every `LOAD` segment is 16 KB aligned for `libandroidx.graphics.path.so` and `libdatastore_shared_counter.so` (checked on the live debug APK, same libs as release)
-- [x] Automated Tests: `testDemoDebugUnitTest` and `testLiveDebugUnitTest` passing (12 Nov 2026)
-- [x] Android Lint (`lintLiveRelease`): 0 errors, 138 warnings (mostly `UnusedResources` and `UseKtx`)
+- [x] 16 KB Page Alignment: `zipalign -c -P 16` passes and every `LOAD` segment is 16 KB aligned for `libandroidx.graphics.path.so` and `libdatastore_shared_counter.so` (checked 12 Nov on the live debug APK; the 13 Nov bundle still ships only these two libraries)
+- [x] Automated Tests: `testDemoDebugUnitTest` and `testLiveDebugUnitTest` passing, 142 tests each (13 Nov 2026)
+- [x] Android Lint (`lintLiveRelease`): 0 errors, 149 warnings (mostly `UnusedResources` and `UseKtx`)
 
 ---
 
