@@ -68,6 +68,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.edit
+import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,6 +94,20 @@ import my.hana.meena.ui.settings.SettingsScreen
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 
+/** The last base theme, kept outside DataStore so it can be read before the first frame. */
+private object LaunchTheme {
+    private const val PREFS = "meena_launch_theme"
+    private const val KEY = "base_theme"
+
+    fun read(context: android.content.Context): String =
+        context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).getString(KEY, null) ?: "dark"
+
+    fun write(context: android.content.Context, baseTheme: String) {
+        val prefs = context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE)
+        if (prefs.getString(KEY, null) != baseTheme) prefs.edit { putString(KEY, baseTheme) }
+    }
+}
+
 /** Stands in for the phone's haptics when vibration is turned off in settings. */
 private object SilentHaptics : androidx.compose.ui.hapticfeedback.HapticFeedback {
     override fun performHapticFeedback(hapticFeedbackType: androidx.compose.ui.hapticfeedback.HapticFeedbackType) = Unit
@@ -106,6 +123,11 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) showPrivacyPolicyIfAsked(intent)
 
         enableEdgeToEdge()
+        // Settings load a moment after launch; start in the last theme so there is no flash of the wrong colour.
+        val startTheme = LaunchTheme.read(this)
+        window.setBackgroundDrawable(
+            my.hana.meena.theme.meenaPaletteFor(startTheme).background.toArgb().toDrawable()
+        )
         setContent {
             val userSettingsFlowState = settingsRepository.userSettingsFlow.collectAsState(
                 initial = null
@@ -113,9 +135,10 @@ class MainActivity : ComponentActivity() {
             val userSettings = userSettingsFlowState.value
 
             if (userSettings == null) {
-                Box(modifier = Modifier.fillMaxSize().background(MeenaBlack))
+                Box(modifier = Modifier.fillMaxSize().background(my.hana.meena.theme.meenaPaletteFor(startTheme).background))
                 return@setContent
             }
+            LaunchedEffect(userSettings.baseTheme) { LaunchTheme.write(this@MainActivity, userSettings.baseTheme) }
 
             val parsedAccent = try {
                 Color(android.graphics.Color.parseColor(userSettings.accentHex))
@@ -451,7 +474,8 @@ fun MeenaHomeScreen(
                     fontSize = 44.sp,
                     fontWeight = FontWeight.Light,
                     letterSpacing = (-1).sp,
-                    color = MeenaTextWhite.copy(alpha = 0.22f),
+                    // A faint ghost on black; on light pages and e-ink a faint grey disappears, so use solid grey.
+                    color = if (my.hana.meena.theme.LocalMeenaPalette.current.isLight) MeenaTextMuted else MeenaTextWhite.copy(alpha = 0.22f),
                     maxLines = 1,
                     softWrap = false,
                     modifier = Modifier

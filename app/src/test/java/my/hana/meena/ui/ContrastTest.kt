@@ -29,6 +29,7 @@ class ContrastTest {
             )
             val texts = mapOf(
                 "text" to p.text, "textSecondary" to p.textSecondary, "textMuted" to p.textMuted,
+                "positive" to p.positive, "negative" to p.negative, "warning" to p.warning,
                 "onBackground" to scheme.onBackground, "onSurface" to scheme.onSurface
             )
             for ((pageName, page) in pages) for ((textName, text) in texts) {

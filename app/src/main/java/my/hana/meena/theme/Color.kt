@@ -29,8 +29,16 @@ data class MeenaPalette(
     val textDisabled: Color,
     /** Text and glyphs drawn on an accent fill (tiles, buttons). */
     val onAccent: Color,
+    /** Gains, healthy states. */
+    val positive: Color,
+    /** Losses, errors. */
+    val negative: Color,
+    /** Needs attention (updates, moderate air). */
+    val warning: Color,
     /** Replaces the user's accent; paper is monochrome. */
     val accentOverride: Color? = null,
+    /** Colour-coded readings such as air quality are drawn in the text colour instead. */
+    val monochrome: Boolean = false,
     val isLight: Boolean
 )
 
@@ -48,6 +56,9 @@ val MeenaDarkPalette = MeenaPalette(
     textMuted = Color(0xFF888888),     // 6.3:1
     textDisabled = Color(0xFF555555),
     onAccent = Color(0xFFFFFFFF),
+    positive = Color(0xFF16A516),      // 6.7:1
+    negative = Color(0xFFFF4D5E),      // 6.5:1, 5.7:1 on grey
+    warning = Color(0xFFF0A30A),       // 9.7:1
     isLight = false
 )
 
@@ -65,6 +76,9 @@ val MeenaLightPalette = MeenaPalette(
     textMuted = Color(0xFF666666),     // 5.7:1
     textDisabled = Color(0xFF8A8A8A),
     onAccent = Color(0xFFFFFFFF),
+    positive = Color(0xFF0E6B0E),      // 6.5:1, 5.4:1 on grey
+    negative = Color(0xFFC50F1F),      // 6.0:1
+    warning = Color(0xFF8A5300),       // 6.1:1
     isLight = true
 )
 
@@ -82,7 +96,11 @@ val MeenaPaperPalette = MeenaPalette(
     textMuted = Color(0xFF555555),     // 7.5:1
     textDisabled = Color(0xFFBBBBBB),
     onAccent = Color(0xFFFFFFFF),
+    positive = Color(0xFF000000),
+    negative = Color(0xFF000000),
+    warning = Color(0xFF000000),
     accentOverride = Color(0xFF000000),
+    monochrome = true,
     isLight = true
 )
 
@@ -106,10 +124,10 @@ val MeenaTextMuted: Color @Composable @ReadOnlyComposable get() = LocalMeenaPale
 val MeenaTextDisabled: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.textDisabled
 val MeenaOnAccent: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.onAccent
 
-// Telemetry & Financial Status
-val MeenaProfitGreen = Color(0xFF107C10)
-val MeenaLossRed = Color(0xFFE81123)
-val MeenaSolarAmber = Color(0xFFF0A30A)
+// Status colours follow the theme (see MeenaPalette): bright on black, darker on white, black on paper.
+val MeenaProfitGreen: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.positive
+val MeenaLossRed: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.negative
+val MeenaSolarAmber: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.warning
 
 // Authentic Windows Phone 10-Accent Swatches (WP Design Guidelines §2.2 #70)
 val MeenaBlue = Color(0xFF00A4EF)
@@ -127,7 +145,7 @@ val MeenaPink = Color(0xFFE671B8)
 // Backward-compatible alias
 val MeenaCyan = MeenaBlue
 val MeenaOrange = MeenaMango
-val MeenaAmber = MeenaSolarAmber
+val MeenaAmber: Color @Composable @ReadOnlyComposable get() = MeenaSolarAmber
 
 /**
  * Metadata pair for theme accent selection.

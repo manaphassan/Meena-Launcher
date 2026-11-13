@@ -477,7 +477,9 @@ fun TodayHub(
                         }
                         // Air quality belongs with the weather (it used to repeat under health and on its own).
                         if (airIndex.aqiValue > 0) {
-                            val aqiColor = try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
+                            // Air quality colours are made for black; on white and e-ink the word next to it carries the level.
+                            val aqiColor = if (my.hana.meena.theme.LocalMeenaPalette.current.isLight) MeenaTextWhite
+                                else try { Color(airIndex.aqiColorHex.toColorInt()) } catch (_: Exception) { MeenaTextWhite }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
