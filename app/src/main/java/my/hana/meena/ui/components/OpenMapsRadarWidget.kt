@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -89,10 +90,13 @@ fun OpenMapsRadarWidget(
         DeviceLocationHelper.refreshLocation(context)
     }
 
-    LaunchedEffect(currentLocation.latitude, currentLocation.longitude, isMapLoaded) {
+    val accentHex = String.format("#%06X", 0xFFFFFF and MaterialTheme.colorScheme.primary.toArgb())
+    val radiusMeters = currentLocation.accuracyMeters.coerceIn(100f, 5000f)
+
+    LaunchedEffect(currentLocation.latitude, currentLocation.longitude, radiusMeters, isMapLoaded) {
         if (isMapLoaded) {
             webViewRef?.evaluateJavascript(
-                "if (window.recenter) { window.recenter(${currentLocation.latitude}, ${currentLocation.longitude}); }",
+                "if (window.recenter) { window.recenter(${currentLocation.latitude}, ${currentLocation.longitude}, $radiusMeters); }",
                 null
             )
         }
@@ -101,11 +105,13 @@ fun OpenMapsRadarWidget(
     val hasRealFix = currentLocation.isGpsActive
     val placeName = ClockInfo.placeName(currentLocation.locationName, hasRealFix)
 
-    val mapHtml = remember(currentLocation.latitude, currentLocation.longitude) {
+    // Built once per accent: later fixes move the dot through recenter() instead of reloading the page.
+    val mapHtml = remember(accentHex) {
         generateDarkOpenMapsHtml(
             lat = currentLocation.latitude,
             lng = currentLocation.longitude,
-            locationName = currentLocation.locationName
+            accuracyMeters = currentLocation.accuracyMeters,
+            accent = accentHex
         )
     }
 
@@ -151,8 +157,7 @@ fun OpenMapsRadarWidget(
                 Text(
                     text = stringResource(
                         R.string.map_accuracy,
-                        currentLocation.formattedCoordinates,
-                        ((currentLocation.accuracyMeters / 1000f).coerceAtLeast(0.1f)).let { "%.1f".format(it) }
+                        ((currentLocation.accuracyMeters / 1000f).coerceAtLeast(0.1f)).let { "%.1f".format(java.util.Locale.UK, it) }
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
@@ -251,7 +256,7 @@ fun OpenMapsRadarWidget(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     DeviceLocationHelper.refreshLocation(context)
                     webViewRef?.evaluateJavascript(
-                        "window.recenter && window.recenter(${currentLocation.latitude}, ${currentLocation.longitude});",
+                        "window.recenter && window.recenter(${currentLocation.latitude}, ${currentLocation.longitude}, $radiusMeters);",
                         null
                     )
                 }
@@ -283,15 +288,17 @@ private fun MapTextAction(text: String, onClick: () -> Unit) {
 }
 
 /**
- * Builds the HTML & Leaflet payload for rendering Dark OpenStreetMap
- * with 3km radius radar wave, animated radar pulse, concentric ranges,
- * and POI marker with True North bearing arrow.
+ * HTML for the map: OpenFreeMap's dark vector style through MapLibre inside Leaflet, a plain dot
+ * where the phone thinks it is and a thin ring as wide as that guess. Nothing animates, and
+ * nothing on it pretends to be weather data.
  */
 private fun generateDarkOpenMapsHtml(
     lat: Double,
     lng: Double,
-    locationName: String
+    accuracyMeters: Float,
+    accent: String
 ): String {
+    val radius = accuracyMeters.coerceIn(100f, 5000f)
     return """
 <!DOCTYPE html>
 <html>
@@ -306,131 +313,10 @@ private fun generateDarkOpenMapsHtml(
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    width: 100%;
-    height: 100%;
-    background: #080808;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
+  html, body { width: 100%; height: 100%; background: #080808; overflow: hidden; }
   /* Height is set from window.innerHeight in script: CSS vh and % resolve to 0 in this WebView. */
   #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: #080808; }
   .leaflet-container { background: #080808; }
-
-  /* Animated Expanding Radar Pulse Waves (3km Geodesic) */
-  @keyframes radarWavePulse {
-    0% {
-      transform: scale(0.05);
-      opacity: 0.9;
-    }
-    60% {
-      opacity: 0.4;
-    }
-    100% {
-      transform: scale(1.0);
-      opacity: 0.0;
-    }
-  }
-
-  .radar-pulse-container {
-    position: relative;
-    width: 280px;
-    height: 280px;
-    pointer-events: none;
-  }
-
-  .radar-pulse-ring-1 {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 50%;
-    border: 2px solid #00A4EF;
-    background: radial-gradient(circle, rgba(0, 164, 239, 0.25) 0%, rgba(0, 164, 239, 0.05) 60%, transparent 100%);
-    animation: radarWavePulse 3.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-    pointer-events: none;
-  }
-
-  .radar-pulse-ring-2 {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 50%;
-    border: 1.5px solid rgba(0, 164, 239, 0.7);
-    animation: radarWavePulse 3.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-    animation-delay: 1.75s;
-    pointer-events: none;
-  }
-
-  /* Rotating Radar Sweep Line */
-  @keyframes radarSweepRotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .radar-sweep-beam {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 50%;
-    background: conic-gradient(from 0deg, rgba(0, 164, 239, 0.4) 0deg, rgba(0, 164, 239, 0.08) 45deg, transparent 75deg);
-    animation: radarSweepRotate 4s linear infinite;
-    pointer-events: none;
-  }
-
-  /* Current Location POI Marker with True North Bearing Arrow */
-  .poi-anchor {
-    position: relative;
-    width: 36px;
-    height: 36px;
-  }
-
-  .poi-core-dot {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
-    background: #00A4EF;
-    border: 2px solid #FFFFFF;
-    box-shadow: 0 0 12px #00A4EF, 0 0 24px rgba(0, 164, 239, 0.6);
-    border-radius: 50%;
-  }
-
-  /* Arrow pointing North bearing directly above the POI dot */
-  .north-bearing-arrow {
-    position: absolute;
-    top: -18px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    pointer-events: none;
-  }
-
-  .north-arrow-triangle {
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-bottom: 11px solid #00A4EF;
-    filter: drop-shadow(0 0 4px #00A4EF);
-  }
-
-  .north-arrow-letter {
-    font-size: 10px;
-    font-weight: 900;
-    color: #FFFFFF;
-    text-shadow: 0 0 4px #000;
-    margin-top: 1px;
-    letter-spacing: 0.5px;
-  }
-
-  .range-text-label {
-    color: #00A4EF;
-    font-size: 12px;
-    white-space: nowrap;
-    text-align: center;
-    text-shadow: 0 0 3px #000, 0 0 3px #000;
-  }
 </style>
 </head>
 <body>
@@ -438,13 +324,13 @@ private fun generateDarkOpenMapsHtml(
 <script>
   var lat = $lat;
   var lng = $lng;
+  var accent = '$accent';
 
-  // Initialize Leaflet OpenMap
   var map = L.map('map', {
     zoomControl: false,
     attributionControl: false,
-    minZoom: 10,
-    maxZoom: 18,
+    minZoom: 9,
+    maxZoom: 17,
     preferCanvas: true
   }).setView([lat, lng], 13);
   // The WebView is laid out at 0 height inside Today's list and CSS heights stay 0, so size the
@@ -465,76 +351,37 @@ private fun generateDarkOpenMapsHtml(
   }, 250);
 
   // OpenFreeMap dark vector style (free, no key; https://openfreemap.org). Credit is shown below the map.
-  L.maplibreGL({
-    style: 'https://tiles.openfreemap.org/styles/dark'
-  }).addTo(map);
+  L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/dark' }).addTo(map);
 
-  // 1.0 km & 2.0 km concentric radar guide rings
-  L.circle([lat, lng], {
-    radius: 1000,
-    color: 'rgba(0, 164, 239, 0.3)',
+  // How rough the location is: a thin ring, barely filled.
+  var area = L.circle([lat, lng], {
+    radius: $radius,
+    color: accent,
     weight: 1,
-    dashArray: '2, 4',
-    fill: false
+    opacity: 0.8,
+    fillColor: accent,
+    fillOpacity: 0.06,
+    interactive: false
   }).addTo(map);
 
-  L.circle([lat, lng], {
-    radius: 2000,
-    color: 'rgba(0, 164, 239, 0.4)',
-    weight: 1,
-    dashArray: '3, 5',
-    fill: false
-  }).addTo(map);
-
-  // 3.0 km outer radar boundary circle
-  var radar3kmCircle = L.circle([lat, lng], {
-    radius: 3000,
-    color: '#00A4EF',
+  // Where the phone thinks it is.
+  var here = L.circleMarker([lat, lng], {
+    radius: 5,
+    color: '#FFFFFF',
     weight: 1.5,
-    dashArray: '5, 5',
-    fillColor: '#00A4EF',
-    fillOpacity: 0.07
+    fillColor: accent,
+    fillOpacity: 1,
+    interactive: false
   }).addTo(map);
 
-  // 3.0 KM Range Tag on North Perimeter
-  var northPerimeterLat = lat + (3000 / 111320.0);
-  var rangeTagIcon = L.divIcon({
-    className: 'range-text-label',
-    html: '3 km around you',
-    iconSize: [160, 18],
-    iconAnchor: [60, 8]
-  });
-  var rangeTagMarker = L.marker([northPerimeterLat, lng], { icon: rangeTagIcon }).addTo(map);
-
-  // Animated Radar Pulse & Rotating Sweep Wave Overlay
-  var radarOverlayIcon = L.divIcon({
-    className: '',
-    html: '<div class="radar-pulse-container"><div class="radar-pulse-ring-1"></div><div class="radar-pulse-ring-2"></div><div class="radar-sweep-beam"></div></div>',
-    iconSize: [280, 280],
-    iconAnchor: [140, 140]
-  });
-  var radarWaveMarker = L.marker([lat, lng], { icon: radarOverlayIcon, interactive: false }).addTo(map);
-
-  // Current Location POI Marker with North Bearing Arrow
-  var poiIcon = L.divIcon({
-    className: 'poi-anchor',
-    html: '<div class="north-bearing-arrow"><div class="north-arrow-triangle"></div><div class="north-arrow-letter">N</div></div><div class="poi-core-dot"></div>',
-    iconSize: [36, 36],
-    iconAnchor: [18, 18]
-  });
-  var poiMarker = L.marker([lat, lng], { icon: poiIcon }).addTo(map);
-
-  // Exposed JS hooks for Android interaction
-  window.recenter = function(newLat, newLng) {
+  window.recenter = function (newLat, newLng, newRadius) {
     if (newLat && newLng) {
       lat = newLat;
       lng = newLng;
-      var newNorthLat = lat + (3000 / 111320.0);
-      poiMarker.setLatLng([lat, lng]);
-      radar3kmCircle.setLatLng([lat, lng]);
-      radarWaveMarker.setLatLng([lat, lng]);
-      rangeTagMarker.setLatLng([newNorthLat, lng]);
+      here.setLatLng([lat, lng]);
+      area.setLatLng([lat, lng]);
     }
+    if (newRadius) area.setRadius(newRadius);
     map.setView([lat, lng], 13, { animate: true });
   };
 

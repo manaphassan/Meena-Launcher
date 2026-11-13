@@ -1223,46 +1223,6 @@ private fun SubPageContainer(
                     }
                 }
 
-                "widget-map-radar" -> {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("radar map options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "radar sweep perimeter",
-                            subtitle = "geodesic radar coverage distance",
-                            options = listOf("1" to "1.0 km", "2" to "2.0 km", "3" to "3.0 km", "5" to "5.0 km"),
-                            selectedKey = custom("radar_radius", "3"),
-                            onSelectKey = { setCustom("radar_radius", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "default zoom factor",
-                            options = listOf("13" to "13x (district)", "15" to "15x (area)", "17" to "17x (street)"),
-                            selectedKey = custom("zoom_level", "15"),
-                            onSelectKey = { setCustom("zoom_level", it) }
-                        )
-                    }
-                    item {
-                        SettingSegmentedRow(
-                            title = "map tile theme",
-                            options = listOf("dark" to "dark matter", "light" to "carto light"),
-                            selectedKey = custom("map_style", "dark"),
-                            onSelectKey = { setCustom("map_style", it) }
-                        )
-                    }
-                    item {
-                        SettingToggleRow(
-                            title = "automatic gps recentering",
-                            subtitle = "smoothly pan map to new coordinates when moving",
-                            checked = custom("auto_recenter", "true") == "true",
-                            onCheckedChange = { setCustom("auto_recenter", it.toString()) }
-                        )
-                    }
-                }
-
                 "widget-health-device" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
