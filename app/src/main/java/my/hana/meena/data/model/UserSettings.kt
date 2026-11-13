@@ -31,6 +31,10 @@ data class MeenaUserSettings(
     
     val isMonochromeFavourites: Boolean = true,
     val iconPack: String = "", // icon pack app id; empty = system icons
+    /** Favourite tiles flip to show counts, the next event or alarm. */
+    val liveTiles: Boolean = true,
+    /** Live tiles may show who a chat is from (never the message itself). */
+    val liveTileNames: Boolean = true,
     val pinnedAppIds: List<String> = emptyList(),
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),

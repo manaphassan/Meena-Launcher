@@ -494,6 +494,14 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
             onClick = { open("look:iconpack") }
         )
     }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.live_tiles_title),
+            status = stringResource(if (settingsState.liveTiles) R.string.live_tiles_status_on else R.string.live_tiles_status_off),
+            isDimmed = !settingsState.liveTiles,
+            onClick = { open("look:livetiles") }
+        )
+    }
     settingsGroupLabel(R.string.settings_group_feel)
     item {
         val timeMode = if (settingsState.is24HourFormat) "24-hour" else "12-hour"
@@ -1657,6 +1665,50 @@ private fun SubPageContainer(
                     settingsState = settingsState,
                     onUpdate = onUpdate
                 )
+            }
+        }
+
+        subPageId == "look:livetiles" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.live_tiles_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.live_tiles_intro),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
+                )
+            }
+            item {
+                SettingToggleRow(
+                    title = stringResource(R.string.live_tiles_title),
+                    subtitle = stringResource(R.string.live_tiles_toggle_hint),
+                    checked = settingsState.liveTiles,
+                    onCheckedChange = { on -> onUpdate { it.copy(liveTiles = on) } }
+                )
+            }
+            item {
+                SettingToggleRow(
+                    title = stringResource(R.string.live_tiles_names),
+                    subtitle = stringResource(R.string.live_tiles_names_hint),
+                    checked = settingsState.liveTileNames,
+                    onCheckedChange = { on -> onUpdate { it.copy(liveTileNames = on) } }
+                )
+            }
+            if (settingsState.isReducedMotion) {
+                item {
+                    Text(
+                        text = stringResource(R.string.live_tiles_reduced_motion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted,
+                        modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m)
+                    )
+                }
             }
         }
 

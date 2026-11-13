@@ -434,6 +434,59 @@ fun TodayHub(
                 }
                 
                 "widget-favourites" -> {
+                    val liveOn = settings.liveTiles
+                    val andMorePattern = stringResource(R.string.live_tile_and_more)
+                    val alarmPattern = stringResource(R.string.live_tile_alarm)
+                    val words = my.hana.meena.data.system.LiveTileWords(
+                        new = stringResource(R.string.live_tile_new),
+                        andMore = { name, more -> String.format(Locale.UK, andMorePattern, name, more) },
+                        alarm = { day -> String.format(Locale.UK, alarmPattern, day) },
+                        onNow = stringResource(R.string.live_tile_on_now)
+                    )
+                    // Apps that open as the calendar; visible to Meena through its launcher query.
+                    val calendarPackages = remember {
+                        runCatching {
+                            val selector = android.content.Intent.makeMainSelectorActivity(
+                                android.content.Intent.ACTION_MAIN, android.content.Intent.CATEGORY_APP_CALENDAR
+                            )
+                            context.packageManager.queryIntentActivities(selector, 0)
+                                .map { it.activityInfo.packageName }.toSet()
+                        }.getOrDefault(emptySet())
+                    }
+                    val nextAlarm = remember(currentTime) {
+                        (context.getSystemService(android.content.Context.ALARM_SERVICE) as? android.app.AlarmManager)
+                            ?.nextAlarmClock?.let {
+                                my.hana.meena.data.system.NextAlarm(
+                                    it.triggerTime,
+                                    it.showIntent?.creatorPackage
+                                )
+                            }
+                    }
+                    val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
+                    val liveFaces = remember(
+                        liveOn,
+                        settings.pinnedAppIds,
+                        notifications,
+                        calEvents,
+                        nextAlarm,
+                        currentTime,
+                        settings.liveTileNames,
+                        settings.is24HourFormat
+                    ) {
+                        if (!liveOn) emptyMap() else settings.pinnedAppIds.associateWith { pkg ->
+                            my.hana.meena.data.system.LiveTiles.facesFor(
+                                packageName = pkg,
+                                notifications = notifications,
+                                calendarPackages = calendarPackages,
+                                events = calEvents,
+                                alarm = nextAlarm,
+                                nowMillis = System.currentTimeMillis(),
+                                showNames = settings.liveTileNames,
+                                is24Hour = settings.is24HourFormat,
+                                words = words
+                            )
+                        }
+                    }
                     my.hana.meena.ui.components.FavouriteTiles(
                         pinnedAppIds = settings.pinnedAppIds,
                         notificationCounts = notificationCounts,
@@ -441,7 +494,9 @@ fun TodayHub(
                         onLaunchApp = onLaunchPackage,
                         onOpenApps = onOpenApps,
                         onTogglePin = onTogglePin,
-                        onMoveApp = onReorderPin
+                        onMoveApp = onReorderPin,
+                        liveFaces = liveFaces,
+                        animateLive = liveOn && !settings.reducedMotion
                     )
                 }
 

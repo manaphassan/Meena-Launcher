@@ -31,6 +31,8 @@ import androidx.compose.ui.window.Dialog
 import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaTextWhite
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -41,7 +43,9 @@ fun FavouriteTiles(
     onLaunchApp: (String) -> Unit,
     onOpenApps: () -> Unit,
     onTogglePin: (String) -> Unit,
-    onMoveApp: (Int, Int) -> Unit
+    onMoveApp: (Int, Int) -> Unit,
+    liveFaces: Map<String, List<my.hana.meena.data.system.LiveFace>> = emptyMap(),
+    animateLive: Boolean = false
 ) {
     val haptic = LocalHapticFeedback.current
     var selectedForMenu by remember { mutableStateOf<String?>(null) }
@@ -90,13 +94,26 @@ fun FavouriteTiles(
     ) {
         pinnedApps.forEachIndexed { index, app ->
             val unreadCount = notificationCounts[app.packageName] ?: 0
-            
-            Box(
+            val faces = liveFaces[app.packageName].orEmpty()
+            val tileDescription = buildString {
+                append(app.label.lowercase())
+                faces.forEach { append(", ").append(it.primary).append(' ').append(it.secondary) }
+            }
+
+            val pressSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            LiveTileFlip(
+                faces = faces,
+                animate = animateLive,
+                index = index,
+                color = tileColor,
+                interactionSource = pressSource,
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f)
-                    .background(tileColor)
+                    .semantics { contentDescription = tileDescription }
                     .combinedClickable(
+                        interactionSource = pressSource,
+                        indication = null, // no ripple (Meena UI)
                         onClick = { onLaunchApp(app.packageName) },
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -129,22 +146,16 @@ fun FavouriteTiles(
                         .padding(my.hana.meena.theme.MeenaSpacing.s)
                 )
 
-                // Unread Badge
+                // Unread count, Metro style: a plain number in the corner, no badge box.
                 if (unreadCount > 0) {
-                    Box(
+                    Text(
+                        text = unreadCount.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MeenaTextWhite,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .offset(x = (-4).dp, y = 4.dp)
-                            .size(my.hana.meena.theme.MeenaSpacing.l)
-                            .background(MaterialTheme.colorScheme.error),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = unreadCount.toString(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextWhite
-                        )
-                    }
+                            .padding(my.hana.meena.theme.MeenaSpacing.s)
+                    )
                 }
             }
         }
