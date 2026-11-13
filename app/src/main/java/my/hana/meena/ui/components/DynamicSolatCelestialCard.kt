@@ -534,7 +534,10 @@ private fun MonthlyScheduleDialog(
         scheduleRows = JakimSolatRepository.fetchMonthlySchedule(zone)
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -584,13 +587,13 @@ private fun MonthlyScheduleDialog(
                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s, horizontal = my.hana.meena.theme.MeenaSpacing.s),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.solat_table_day), modifier = Modifier.weight(1.1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(R.string.solat_name_subuh), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(R.string.solat_name_syuruk), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(R.string.solat_name_zohor), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(R.string.solat_name_asar), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_table_day), maxLines = 1, softWrap = false, modifier = Modifier.weight(1.1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_subuh), maxLines = 1, softWrap = false, modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_syuruk), maxLines = 1, softWrap = false, modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_zohor), maxLines = 1, softWrap = false, modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_asar), maxLines = 1, softWrap = false, modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                     Text(stringResource(R.string.solat_name_maghrib), modifier = Modifier.weight(1.25f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary, maxLines = 1, softWrap = false)
-                    Text(stringResource(R.string.solat_name_isyak), modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.solat_name_isyak), maxLines = 1, softWrap = false, modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                 }
 
                 LazyColumn(
@@ -608,6 +611,8 @@ private fun MonthlyScheduleDialog(
                         ) {
                             Text(
                                 "${row.dayName.take(3).lowercase()} ${row.day}",
+                                maxLines = 1,
+                                softWrap = false,
                                 modifier = Modifier.weight(1.1f),
                                 fontSize = 12.sp,
                                 fontWeight = if (row.isToday) FontWeight.Medium else FontWeight.Normal,

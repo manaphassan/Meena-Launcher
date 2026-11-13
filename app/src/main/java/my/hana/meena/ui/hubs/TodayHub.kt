@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.widthIn
 import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.MetroLineProgress
 import my.hana.meena.ui.components.metroClickable
@@ -255,9 +256,17 @@ fun TodayHub(
                             Text(
                                 text = currentTime,
                                 style = MaterialTheme.typography.displayMedium,
-                                color = MeenaTextWhite
+                                color = MeenaTextWhite,
+                                maxLines = 1,
+                                softWrap = false,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
-                            Column(horizontalAlignment = Alignment.End) {
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                                modifier = Modifier
+                                    .padding(start = my.hana.meena.theme.MeenaSpacing.m)
+                                    .widthIn(max = 128.dp)
+                            ) {
                                 val tempText = if (weatherData != null) {
                                     val tempVal = if (isFahrenheit) {
                                         (weatherData.current.temperature * 9f / 5f + 32f).roundToInt()
@@ -287,7 +296,9 @@ fun TodayHub(
                                 Text(
                                     text = conditionText,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextMuted
+                                    color = MeenaTextMuted,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
