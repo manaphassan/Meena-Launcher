@@ -406,10 +406,10 @@
     <string name="backup_share">share a backup</string>
     <string name="backup_import">import from clipboard</string>
     <string name="backup_reset">reset all settings</string>
-    <string name="backup_reset_question">reset every setting, including favourites and widget order? your holdings stay.</string>
+    <string name="backup_reset_question">reset every setting, including favourites and widget order? your holdings and notes stay.</string>
     <string name="about_intro">meena is a free home screen for android. clean type, lots of space and quick to use.</string>
     <string name="about_inspired">inspired by windows phone and aio launcher. no boxes or cards, just type and space.</string>
-    <string name="privacy_portfolio_line">portfolio: your holdings and sheet link are stored encrypted on your phone.</string>
+    <string name="privacy_portfolio_line">portfolio and notes: your holdings, sheet link and notes are stored encrypted on your phone.</string>
     <string name="about_open_source_title">open source</string>
     <string name="about_open_source_body">built with kotlin, jetpack compose, androidx, kotlinx serialization and okhttp, all under the apache 2.0 licence.</string>
     <string name="privacy_on_device_heading">stays on your phone</string>
@@ -511,7 +511,7 @@
     <string name="agenda_empty">all quiet, nothing coming up</string>
     <string name="agenda_add_event">+ event</string>
     <string name="notes_empty_short">empty</string>
-    <string name="notes_empty">no notes yet.</string>
+    <string name="notes_empty">no notes yet. write one below.</string>
     <string name="action_remove">remove</string>
     <string name="health_connect_short">connect health</string>
     <string name="health_no_data">no data yet</string>
@@ -566,4 +566,9 @@
         <item quantity="one">%1$d step</item>
         <item quantity="other">%1$d steps</item>
     </plurals>
+    <string name="notes_write_hint">write a note</string>
+    <string name="notes_add">add</string>
+    <string name="notes_remove_title">remove note</string>
+    <string name="notes_remove_question">remove this note? it can\'t be brought back.</string>
+    <string name="notes_unreadable">this phone can\'t open your saved notes, so they\'re left as they are.</string>
 </resources>

@@ -34,7 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -131,7 +132,9 @@ fun TodayHub(
     val wikipediaState by my.hana.meena.data.system.WikipediaRepository.state.collectAsState()
     val isBluetoothWidgetOn = settings.widgetConfigs["widget-bluetooth-devices"]?.isEnabled == true
     val isWikipediaWidgetOn = settings.widgetConfigs["widget-wikipedia"]?.isEnabled == true
-    val quickNotes = remember { mutableStateListOf<String>() }
+    val quickNotes by my.hana.meena.data.system.NotesRepository.notes.collectAsState()
+    val notesUnreadable by my.hana.meena.data.system.NotesRepository.unreadable.collectAsState()
+    LaunchedEffect(Unit) { my.hana.meena.data.system.NotesRepository.load(context) }
     var appsVersion by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
@@ -1039,38 +1042,111 @@ fun TodayHub(
                             )
                         }
                     ) {
-                        if (quickNotes.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.notes_empty),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MeenaTextMuted
+                        var openNote by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+                        var noteToRemove by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+                        var draft by remember { mutableStateOf("") }
+                        if (noteToRemove in quickNotes.indices) {
+                            my.hana.meena.ui.components.MetroDialog(
+                                title = stringResource(R.string.notes_remove_title),
+                                message = stringResource(R.string.notes_remove_question),
+                                confirmText = stringResource(R.string.action_yes),
+                                dismissText = stringResource(R.string.action_no),
+                                onConfirm = {
+                                    my.hana.meena.data.system.NotesRepository.remove(context, noteToRemove)
+                                    openNote = -1
+                                    noteToRemove = -1
+                                },
+                                onDismiss = { noteToRemove = -1 }
                             )
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                                quickNotes.forEachIndexed { index, note ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = note,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MeenaTextWhite,
-                                            modifier = Modifier.weight(1f)
-                                        )
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+                            when {
+                                notesUnreadable -> Text(
+                                    text = stringResource(R.string.notes_unreadable),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MeenaTextMuted
+                                )
+                                quickNotes.isEmpty() -> Text(
+                                    text = stringResource(R.string.notes_empty),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted
+                                )
+                            }
+                            // One line each until tapped, so a glance at the home screen doesn't show it all.
+                            quickNotes.forEachIndexed { index, note ->
+                                val isOpen = openNote == index
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { openNote = if (isOpen) -1 else index }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = note,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MeenaTextWhite,
+                                        maxLines = if (isOpen) Int.MAX_VALUE else 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (isOpen) {
                                         Text(
                                             text = stringResource(R.string.action_remove),
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted,
+                                            color = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier
                                                 .heightIn(min = 48.dp)
-                                                .metroClickable { quickNotes.removeAt(index) }
-                                                .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = my.hana.meena.theme.MeenaSpacing.m)
+                                                .metroClickable { noteToRemove = index }
+                                                .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.m)
                                         )
                                     }
+                                }
+                            }
+                            if (!notesUnreadable) {
+                                val underline = MaterialTheme.colorScheme.primary
+                                val inkColor = MeenaTextWhite
+                                val hintColor = MeenaTextMuted
+                                fun addDraft() {
+                                    if (my.hana.meena.data.system.NotesRepository.add(context, draft)) draft = ""
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    androidx.compose.foundation.text.BasicTextField(
+                                        value = draft,
+                                        onValueChange = { draft = it.take(my.hana.meena.data.system.NoteRules.MAX_LENGTH) },
+                                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = inkColor),
+                                        cursorBrush = androidx.compose.ui.graphics.SolidColor(underline),
+                                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { addDraft() }),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .heightIn(min = 48.dp)
+                                            .drawBehind {
+                                                val y = size.height - 1.dp.toPx()
+                                                drawLine(underline, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                                            }
+                                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
+                                        decorationBox = { field ->
+                                            if (draft.isEmpty()) {
+                                                Text(stringResource(R.string.notes_write_hint), style = MaterialTheme.typography.bodyMedium, color = hintColor)
+                                            }
+                                            field()
+                                        }
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.notes_add),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (draft.isBlank()) MeenaTextMuted else MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable { addDraft() }
+                                            .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.m)
+                                    )
                                 }
                             }
                         }
