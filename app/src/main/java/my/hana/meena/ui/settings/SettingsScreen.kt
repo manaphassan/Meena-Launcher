@@ -1777,6 +1777,19 @@ private fun SubPageContainer(
                 }
             }
             item {
+                val policyContext = LocalContext.current
+                val policyFailed = stringResource(R.string.privacy_policy_open_failed)
+                SettingLinkRow(
+                    title = stringResource(R.string.privacy_policy_title),
+                    status = stringResource(R.string.privacy_policy_status),
+                    onClick = {
+                        if (!my.hana.meena.data.system.PrivacyPolicy.open(policyContext)) {
+                            my.hana.meena.ui.components.MetroMessage.show(policyFailed)
+                        }
+                    }
+                )
+            }
+            item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "open source licenses",

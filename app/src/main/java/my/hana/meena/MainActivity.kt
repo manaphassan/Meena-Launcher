@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         settingsRepository = SettingsRepository(applicationContext)
+        if (savedInstanceState == null) showPrivacyPolicyIfAsked(intent)
 
         enableEdgeToEdge()
         setContent {
@@ -150,9 +151,19 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        showPrivacyPolicyIfAsked(intent)
         val hubExtra = intent.getIntExtra("target_hub", -1)
         if (hubExtra in 0..4) {
             currentHubIntentIndex.value = hubExtra
+        }
+    }
+
+    /** Health Connect's "privacy policy" link lands here; show the same policy as Play Console. */
+    private fun showPrivacyPolicyIfAsked(intent: Intent?) {
+        if (intent?.action in my.hana.meena.data.system.PrivacyPolicy.RATIONALE_ACTIONS) {
+            if (!my.hana.meena.data.system.PrivacyPolicy.open(this)) {
+                my.hana.meena.ui.components.MetroMessage.show(getString(R.string.privacy_policy_open_failed))
+            }
         }
     }
 

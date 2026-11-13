@@ -68,6 +68,9 @@
     <string name="privacy_location_line">rough location: used for weather, air quality and the map. open-meteo and openfreemap get your rough area. no background tracking.</string>
     <string name="privacy_calendar_line">calendar: read on your phone to show your agenda. never sent anywhere.</string>
     <string name="privacy_backup_line">no cloud backup: android backup is off, so your settings never sync anywhere.</string>
+    <string name="privacy_policy_title">privacy policy</string>
+    <string name="privacy_policy_status">the full policy, opens in your browser</string>
+    <string name="privacy_policy_open_failed">couldn\'t open the privacy policy. check you have a browser, then try again.</string>
 
     <!-- First Run Setup -->
     <string name="welcome_title">welcome to meena</string>
