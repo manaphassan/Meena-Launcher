@@ -32,10 +32,16 @@ data class NewsArticle(
     val link: String,
     val source: String,             // "Amanz" or "Suami Sihat"
     val sourceBadgeColorHex: String,// "#00A4EF" (Amanz Cyan) or "#107C10" (Suami Sihat Emerald)
+    /** 0 when the feed gave no readable date. */
     val pubDateMs: Long,
-    val formattedDate: String,      // e.g. "15m ago", "2h ago", "Today 09:43 AM", "23 Aug"
-    val category: String = "News",
-    val description: String = ""
+    val formattedDate: String,      // e.g. "15m ago", "2h ago", "23 aug, 09:43 am"; empty when the date is unknown
+    val category: String = "",
+    /** Plain text, tags removed. */
+    val description: String = "",
+    /** https thumbnail picked by [RssImage.pick], or null. */
+    val imageUrl: String? = null,
+    /** Raw content:encoded HTML for the reader; empty when the feed has none. */
+    val contentHtml: String = ""
 )
 
 /** What the last fetch of one feed found. Shown in settings, never invented. */
@@ -70,9 +76,13 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
     /** The feeds actually fetched for a saved list: the user's own, or the built-in ones when empty. */
     fun effectiveFeeds(saved: List<String>): List<String> = saved.ifEmpty { DEFAULT_FEEDS }
 
-    private val rfc822DateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US)
-    private val rfc822DateFormatFallback = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
-    private val displayDateFormat get() = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+    /** How many merged articles are kept; the UI decides how many to show. */
+    const val MAX_ARTICLES = 40
+    /** Each feed keeps at least this many of its newest articles in the merged list. */
+    const val MIN_PER_SOURCE = 5
+    private const val MAX_CONTENT_CHARS = 200_000
+
+    private val displayDateFormat get() = SimpleDateFormat("dd MMM, hh:mm a", Locale.ENGLISH)
 
     // No hardcoded demo data as per rules; empty until fetched
     private val initialFallbackArticles = emptyList<NewsArticle>()
@@ -82,6 +92,10 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
 
     private val _lastUpdatedFlow = MutableStateFlow<Long>(System.currentTimeMillis())
     val lastUpdatedFlow: StateFlow<Long> = _lastUpdatedFlow.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    /** True while a fetch runs. Articles already on screen stay in [newsFlow] meanwhile. */
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _feedStatuses = MutableStateFlow<List<FeedStatus>>(emptyList())
     /** One entry per feed from the last fetch, in feed order. Empty until the first fetch finishes. */
@@ -115,7 +129,10 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
             return currentData
         }
 
-        _newsFlow.value = WidgetState.Loading
+        val previous = (currentData as? WidgetState.Ready)?.data ?: (currentData as? WidgetState.Stale)?.data
+        // Keep what is on screen while refreshing; only show loading when there is nothing yet.
+        if (previous.isNullOrEmpty()) _newsFlow.value = WidgetState.Loading
+        _isRefreshing.value = true
         try {
             val feedList = effectiveFeeds(customFeeds)
             val allArticles = mutableListOf<NewsArticle>()
@@ -139,29 +156,33 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
             }
             _feedStatuses.value = statuses
 
-            val merged = allArticles
-                .distinctBy { it.link.ifBlank { it.title } }
-                .sortedByDescending { it.pubDateMs }
+            val merged = NewsMerge.merge(allArticles, MAX_ARTICLES, MIN_PER_SOURCE)
 
             if (merged.isNotEmpty()) {
-                val top6 = merged.take(6)
-                _newsFlow.value = WidgetState.Ready(top6, now)
+                _newsFlow.value = WidgetState.Ready(merged, now)
                 _lastUpdatedFlow.value = now
-                Log.d(TAG, "Successfully refreshed RSS feeds: ${merged.size} total items, showing top 6.")
-                return _newsFlow.value
+                Log.d(TAG, "Refreshed RSS feeds: ${allArticles.size} items, keeping ${merged.size}.")
+            } else if (statuses.isNotEmpty() && statuses.all { it.problem != null }) {
+                // Every feed failed: that's an error, not "no stories".
+                _newsFlow.value = if (!previous.isNullOrEmpty()) {
+                    WidgetState.Stale(previous, _lastUpdatedFlow.value)
+                } else {
+                    WidgetState.Error("couldn't load any feed")
+                }
             } else {
                 _newsFlow.value = WidgetState.Empty
-                return WidgetState.Empty
             }
+            return _newsFlow.value
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching RSS feeds, retaining cached articles", e)
-            val prevState = if (currentData is WidgetState.Ready) currentData.data else emptyList()
-            if (prevState.isNotEmpty()) {
-                _newsFlow.value = WidgetState.Stale(prevState, _lastUpdatedFlow.value)
+            if (!previous.isNullOrEmpty()) {
+                _newsFlow.value = WidgetState.Stale(previous, _lastUpdatedFlow.value)
             } else {
                 _newsFlow.value = WidgetState.Error("Failed to fetch news", e)
             }
             return _newsFlow.value
+        } finally {
+            _isRefreshing.value = false
         }
     }
 
@@ -233,6 +254,10 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
             var curPubDate = ""
             var curDescription = ""
             var curCategory = ""
+            var curContent = ""
+            var curThumbnail: String? = null
+            var curMediaContent: String? = null
+            var curEnclosure: String? = null
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 val tagName = parser.name?.lowercase(Locale.ROOT)
@@ -246,12 +271,32 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                             curPubDate = ""
                             curDescription = ""
                             curCategory = ""
+                            curContent = ""
+                            curThumbnail = null
+                            curMediaContent = null
+                            curEnclosure = null
                         } else if (inItem) {
                             when (tagName) {
                                 "title" -> curTitle = readText(parser)
                                 "link" -> curLink = readText(parser)
                                 "pubdate" -> curPubDate = readText(parser)
                                 "description" -> curDescription = readText(parser)
+                                "content:encoded" -> curContent = readText(parser)
+                                "media:thumbnail" -> if (curThumbnail == null) {
+                                    curThumbnail = ArticleHtml.safeImageUrl(parser.getAttributeValue(null, "url"))
+                                }
+                                "media:content" -> if (curMediaContent == null && RssImage.isImage(
+                                        parser.getAttributeValue(null, "medium"),
+                                        parser.getAttributeValue(null, "type")
+                                    )
+                                ) {
+                                    curMediaContent = ArticleHtml.safeImageUrl(parser.getAttributeValue(null, "url"))
+                                }
+                                "enclosure" -> if (curEnclosure == null &&
+                                    RssImage.isImage(null, parser.getAttributeValue(null, "type"))
+                                ) {
+                                    curEnclosure = ArticleHtml.safeImageUrl(parser.getAttributeValue(null, "url"))
+                                }
                                 "category" -> {
                                     if (curCategory.isBlank()) {
                                         curCategory = readText(parser)
@@ -267,19 +312,22 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                             if (cleanTitle.isNotBlank()) {
                                 val pubDateMs = parseDateToMillis(curPubDate)
                                 val formattedDate = formatRelativeTime(pubDateMs)
-                                val cleanDesc = cleanHtml(curDescription).take(140)
+                                val cleanDesc = cleanHtml(curDescription).take(4_000)
+                                val content = if (curContent.length > MAX_CONTENT_CHARS) "" else curContent
 
                                 list.add(
                                     NewsArticle(
-                                        id = "${sourceName.lowercase()}-${curLink.hashCode()}",
+                                        id = "${sourceName.lowercase()}-${curLink.trim().ifBlank { cleanTitle }.hashCode()}",
                                         title = cleanTitle,
                                         link = curLink.trim(),
                                         source = sourceName,
                                         sourceBadgeColorHex = sourceBadgeColor,
                                         pubDateMs = pubDateMs,
                                         formattedDate = formattedDate,
-                                        category = if (curCategory.isNotBlank()) cleanHtml(curCategory) else if (sourceName == "Amanz") "Teknologi" else "Kesihatan",
-                                        description = cleanDesc
+                                        category = cleanHtml(curCategory),
+                                        description = cleanDesc,
+                                        imageUrl = RssImage.pick(curThumbnail, curMediaContent, curEnclosure, content, curDescription),
+                                        contentHtml = content
                                     )
                                 )
                             }
@@ -303,22 +351,23 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
         return result
     }
 
+    /** 0 when the date is missing or unreadable, so no made-up "just now" is shown. */
     private fun parseDateToMillis(dateStr: String): Long {
-        if (dateStr.isBlank()) return System.currentTimeMillis()
-        return try {
-            rfc822DateFormat.parse(dateStr.trim())?.time ?: System.currentTimeMillis()
-        } catch (e: Exception) {
+        if (dateStr.isBlank()) return 0L
+        // New formatters per call: SimpleDateFormat isn't thread-safe and refreshes can overlap.
+        for (pattern in listOf("EEE, dd MMM yyyy HH:mm:ss Z", "EEE, dd MMM yyyy HH:mm:ss zzz")) {
             try {
-                rfc822DateFormatFallback.parse(dateStr.trim())?.time ?: System.currentTimeMillis()
-            } catch (e2: Exception) {
-                System.currentTimeMillis()
+                SimpleDateFormat(pattern, Locale.US).parse(dateStr.trim())?.let { return it.time }
+            } catch (_: Exception) {
             }
         }
+        return 0L
     }
 
     private fun formatRelativeTime(timestampMs: Long): String {
+        if (timestampMs <= 0L) return ""
         val diffMs = System.currentTimeMillis() - timestampMs
-        if (diffMs < 0) return "Just now"
+        if (diffMs < 0) return "just now"
 
         val seconds = diffMs / 1000
         val minutes = seconds / 60
@@ -326,34 +375,16 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
         val days = hours / 24
 
         return when {
-            minutes < 1 -> "Just now"
+            minutes < 1 -> "just now"
             minutes < 60 -> "${minutes}m ago"
             hours < 24 -> "${hours}h ago"
-            days == 1L -> "Yesterday"
+            days == 1L -> "yesterday"
             days < 7 -> "${days}d ago"
-            else -> displayDateFormat.format(Date(timestampMs))
+            else -> displayDateFormat.format(Date(timestampMs)).lowercase(Locale.ENGLISH)
         }
     }
 
-    private fun cleanHtml(raw: String): String {
-        return raw
-            .replace(Regex("<[^>]*>"), "") // strip HTML tags
-            .replace("&#038;", "&")
-            .replace("&amp;", "&")
-            .replace("&#8217;", "'")
-            .replace("&#8216;", "'")
-            .replace("&#8220;", "\"")
-            .replace("&#8221;", "\"")
-            .replace("&#8211;", "–")
-            .replace("&#8212;", "—")
-            .replace("&quot;", "\"")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&nbsp;", " ")
-            .replace(Regex("\\[&#8230;\\]"), "...")
-            .replace(Regex("\\[\\.\\.\\.\\]"), "...")
-            .trim()
-    }
+    private fun cleanHtml(raw: String): String = ArticleHtml.plainText(raw)
 
     /**
      * Helper to open an article link in the browser.

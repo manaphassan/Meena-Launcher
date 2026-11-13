@@ -285,6 +285,17 @@
     <string name="news_empty_query">nothing about \"%1$s\"</string>
     <string name="news_empty_stories">no stories right now</string>
     <string name="news_refresh">refresh</string>
+    <string name="news_filter_all">all</string>
+    <string name="news_loading">getting the latest stories</string>
+    <string name="news_error">couldn\'t load news. check your connection, then tap refresh.</string>
+    <string name="news_meta_separator">" · "</string>
+    <string name="news_age_just_now">just now</string>
+    <string name="news_age_minutes">%1$dm ago</string>
+    <string name="news_age_hours">%1$dh ago</string>
+    <string name="news_age_yesterday">yesterday</string>
+    <string name="news_age_days">%1$dd ago</string>
+    <string name="news_open_on">open on %1$s</string>
+    <string name="news_open_failed">couldn\'t open the link. try again?</string>
 
     <!-- About -->
     <string name="about_motto">meena · built on meena ui: clean, light, open, fast</string>

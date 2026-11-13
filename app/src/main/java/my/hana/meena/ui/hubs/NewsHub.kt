@@ -1,19 +1,11 @@
 ﻿package my.hana.meena.ui.hubs
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import kotlinx.coroutines.launch
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,18 +14,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import my.hana.meena.ui.components.metroClickable
-import my.hana.meena.ui.components.metroFeatherIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-
-
-
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,184 +29,185 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import my.hana.meena.R
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import my.hana.meena.R
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.news.NewsArticle
+import my.hana.meena.data.news.NewsMerge
 import my.hana.meena.data.news.NewsRssRepository
-import my.hana.meena.theme.MeenaBorder
-import my.hana.meena.theme.MeenaProfitGreen
-import my.hana.meena.theme.MeenaSurface
+import my.hana.meena.theme.MeenaSpacing
 import my.hana.meena.theme.MeenaTextMuted
-import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaTextWhite
-import my.hana.meena.ui.components.CollapsibleWidget
+import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.components.metroFeatherIn
+import my.hana.meena.ui.news.NewsImageState
+import my.hana.meena.ui.news.NewsReader
+import my.hana.meena.ui.news.newsAgeText
+import my.hana.meena.ui.news.rememberNewsImage
+import my.hana.meena.ui.news.rowMetaParts
+import my.hana.meena.ui.widgets.WidgetState
+import my.hana.meena.ui.widgets.rememberNow
+import my.hana.meena.ui.widgets.updatedAgoText
 
+/** Filter key for "every source"; empty so it can't clash with a feed called "all". */
+private const val FILTER_ALL = ""
+/** Stories shown when the user hasn't picked a count in settings. */
+private const val DEFAULT_VISIBLE_STORIES = 20
+/** In the "all" view each source keeps at least this many places, so a busy feed can't hide a quiet one. */
+private const val MIN_VISIBLE_PER_SOURCE = 3
+/** Only the first screenful feathers in; later rows appear without a delay while scrolling. */
+private const val FEATHER_ROWS = 8
+private val ThumbSize = 72.dp
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NewsHub(
     settings: MeenaUserSettings,
     listState: LazyListState
 ) {
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
 
     val newsState by NewsRssRepository.newsFlow.collectAsState()
-    val isLoading = newsState is my.hana.meena.ui.widgets.WidgetState.Loading
-    val newsArticles = (newsState as? my.hana.meena.ui.widgets.WidgetState.Ready)?.data 
-        ?: (newsState as? my.hana.meena.ui.widgets.WidgetState.Stale)?.data 
+    val isRefreshing by NewsRssRepository.isRefreshing.collectAsState()
+    val newsArticles = (newsState as? WidgetState.Ready)?.data
+        ?: (newsState as? WidgetState.Stale)?.data
         ?: emptyList()
+    val staleSince = (newsState as? WidgetState.Stale)?.updatedAt
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("all") } // "all" or a source name in lowercase
+    var selectedFilter by remember { mutableStateOf(FILTER_ALL) }
+    var reading by remember { mutableStateOf<NewsArticle?>(null) }
 
     // Saved feeds must reach the fetcher at start, not only when edited in settings.
     LaunchedEffect(settings.newsFeeds) { NewsRssRepository.updateFeeds(settings.newsFeeds) }
 
+    val feedNames = remember(settings.newsFeeds) {
+        NewsRssRepository.effectiveFeeds(settings.newsFeeds)
+            .map { NewsRssRepository.sourceNameFor(it).lowercase() }
+            .distinct()
+    }
     // Filters follow the feeds that actually returned articles, not a fixed list.
     val sourceNames = remember(newsArticles) { newsArticles.map { it.source.lowercase() }.distinct() }
+    val activeFilter = if (selectedFilter in sourceNames) selectedFilter else FILTER_ALL
 
-    val filteredList = remember(newsArticles, selectedFilter, searchQuery) {
-        val bySource = if (selectedFilter == "all") newsArticles else newsArticles.filter { it.source.equals(selectedFilter, ignoreCase = true) }
-        if (searchQuery.isNotBlank()) {
-            bySource.filter {
-                it.title.contains(searchQuery, ignoreCase = true) ||
+    val storyLimit = settings.widgetConfigs["widget-news-feed"]?.customSettings?.get("max_stories")
+        ?.toIntOrNull()?.coerceIn(1, NewsRssRepository.MAX_ARTICLES)
+        ?: DEFAULT_VISIBLE_STORIES
+
+    val shownArticles = remember(newsArticles, activeFilter, searchQuery, storyLimit) {
+        val bySource = if (activeFilter == FILTER_ALL) newsArticles
+        else newsArticles.filter { it.source.equals(activeFilter, ignoreCase = true) }
+        val matched = if (searchQuery.isBlank()) bySource else bySource.filter {
+            it.title.contains(searchQuery, ignoreCase = true) ||
                 it.description.contains(searchQuery, ignoreCase = true) ||
                 it.category.contains(searchQuery, ignoreCase = true)
-            }
-        } else {
-            bySource
-        }.take(6)
+        }
+        NewsMerge.limitFair(matched, storyLimit, MIN_VISIBLE_PER_SOURCE)
     }
 
-    // Refresh spinner animation - only runs when actively fetching
-    val refreshRotation = remember { Animatable(0f) }
-    LaunchedEffect(isLoading) {
-        if (isLoading) {
-            refreshRotation.animateTo(
-                targetValue = refreshRotation.value + 360f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                )
-            )
-        } else {
-            refreshRotation.snapTo(0f)
-        }
-    }
+    val nowMs = rememberNow()
+    val separator = stringResource(R.string.news_meta_separator)
+
+    reading?.let { article -> NewsReader(article = article, onClose = { reading = null }) }
 
     LazyColumn(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.l),
-        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
+            .padding(horizontal = MeenaSpacing.l),
+        verticalArrangement = Arrangement.spacedBy(MeenaSpacing.m)
     ) {
         val newsWidgets = settings.widgetConfigs.entries
             .filter { it.value.hubId == "news" && it.value.isEnabled }
             .sortedBy { it.value.position }
 
-        items(newsWidgets.size, key = { newsWidgets[it].key }) { index ->
-            val widgetId = newsWidgets[index].key
-            when (widgetId) {
+        newsWidgets.forEach { widget ->
+            when (widget.key) {
                 "widget-news-feed" -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                        // 1. TOP HEADER & SEARCH
-                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
+                    // 1. header: sources and refresh (the pager already shows the big "news" title)
+                    item(key = "news-header") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(MeenaSpacing.m),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.news_from, feedNames.joinToString(", ")),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted
+                                )
+                                if (staleSince != null) {
                                     Text(
-                                        text = stringResource(R.string.news_title),
-                                        style = MaterialTheme.typography.displaySmall,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MeenaTextWhite
-                                    )
-                                    if (sourceNames.isNotEmpty()) {
-                                        Text(
-                                            text = stringResource(R.string.news_from, sourceNames.joinToString(", ")),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted
-                                        )
-                                    }
-                                }
-
-                                // Refresh Button (pure Metro 0dp, min 48dp)
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .metroClickable {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            kotlinx.coroutines.MainScope().launch {
-                                                NewsRssRepository.refresh(force = true)
-                                            }
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "sync",
-                                        fontSize = 12.sp,
-                                        color = if (isLoading) MaterialTheme.colorScheme.primary else MeenaTextWhite,
-                                        modifier = Modifier
-                                            .graphicsLayer {
-                                                if (isLoading) {
-                                                    rotationZ = refreshRotation.value
-                                                }
-                                            }
+                                        text = updatedAgoText(staleSince),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
                                     )
                                 }
                             }
-
-                            // Search field
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("search articles", color = MeenaTextMuted, fontSize = 12.sp) },
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = MeenaSurface,
-                                    unfocusedContainerColor = MeenaSurface,
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MeenaBorder,
-                                    focusedTextColor = MeenaTextWhite,
-                                    unfocusedTextColor = MeenaTextWhite
-                                )
-                            )
-
-                            // Source Filter Chips
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                            Box(
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .widthIn(min = 48.dp)
+                                    .metroClickable(enabled = !isRefreshing) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        scope.launch { NewsRssRepository.refresh(force = true) }
+                                    },
+                                contentAlignment = Alignment.CenterEnd
                             ) {
-                                NewsFilterPill(
-                                    label = "all",
-                                    isSelected = selectedFilter == "all",
+                                Text(
+                                    text = stringResource(R.string.news_refresh),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (isRefreshing) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    // 2. search: plain text with a thin muted underline, no box
+                    item(key = "news-search") {
+                        NewsSearchField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it }
+                        )
+                    }
+
+                    // 3. source pivots (Zune style), only when there is something to choose between
+                    if (sourceNames.size > 1) {
+                        item(key = "news-filter") {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(MeenaSpacing.l)
+                            ) {
+                                NewsPivot(
+                                    label = stringResource(R.string.news_filter_all),
+                                    selected = activeFilter == FILTER_ALL,
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilter = "all"
+                                        selectedFilter = FILTER_ALL
                                     }
                                 )
-                                sourceNames.take(3).forEach { name ->
-                                    NewsFilterPill(
+                                sourceNames.forEach { name ->
+                                    NewsPivot(
                                         label = name,
-                                        isSelected = selectedFilter == name,
-                                        accentColor = MaterialTheme.colorScheme.primary,
+                                        selected = activeFilter == name,
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             selectedFilter = name
@@ -227,170 +216,160 @@ fun NewsHub(
                                 }
                             }
                         }
+                    }
 
-                        // 2. RSS FEED ARTICLE LIST (LATEST 6)
-                        if (filteredList.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(my.hana.meena.theme.MeenaSpacing.l),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (searchQuery.isNotBlank()) "no articles matching \"$searchQuery\"" else "fetching live feeds",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MeenaTextMuted
-                                )
+                    // 4. articles
+                    if (shownArticles.isEmpty()) {
+                        item(key = "news-empty") {
+                            val message = when {
+                                newsArticles.isNotEmpty() && searchQuery.isNotBlank() ->
+                                    stringResource(R.string.news_empty_query, searchQuery)
+                                newsArticles.isNotEmpty() || newsState is WidgetState.Empty ->
+                                    stringResource(R.string.news_empty_stories)
+                                newsState is WidgetState.Error -> stringResource(R.string.news_error)
+                                else -> stringResource(R.string.news_loading)
                             }
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                                filteredList.forEachIndexed { index, article ->
-                                    NewsArticleCard(
-                                        modifier = Modifier.metroFeatherIn(
-                                            index = index,
-                                            reducedMotion = settings.reducedMotion
-                                        ),
-                                        article = article,
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            try {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(article.link)).apply {
-                                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                                }
-                                                context.startActivity(intent)
-                                            } catch (_: Exception) {}
-                                        }
-                                    )
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MeenaTextMuted,
+                                modifier = Modifier.padding(vertical = MeenaSpacing.l)
+                            )
+                        }
+                    } else {
+                        itemsIndexed(shownArticles, key = { _, article -> "article-${article.id}" }) { index, article ->
+                            NewsRow(
+                                article = article,
+                                nowMs = nowMs,
+                                separator = separator,
+                                modifier = if (index < FEATHER_ROWS) {
+                                    Modifier.metroFeatherIn(index = index, reducedMotion = settings.reducedMotion)
+                                } else {
+                                    Modifier
+                                },
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    reading = article
                                 }
-                            }
+                            )
                         }
                     }
                 }
             }
         }
 
-        item { Spacer(modifier = Modifier.height(64.dp)) }
+        item(key = "news-bottom-space") { Spacer(modifier = Modifier.height(64.dp)) }
     }
 }
 
 @Composable
-private fun NewsArticleCard(
-    modifier: Modifier = Modifier,
-    article: NewsArticle,
-    onClick: () -> Unit
-) {
-    val badgeColor = try {
-        Color(android.graphics.Color.parseColor(article.sourceBadgeColorHex))
-    } catch (_: Exception) {
-        MaterialTheme.colorScheme.primary
-    }
-
-    Box(
-        modifier = modifier
+private fun NewsSearchField(value: String, onValueChange: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
+    val lineColor = MeenaTextMuted
+    val textStyle = MaterialTheme.typography.bodyLarge.copy(color = MeenaTextWhite)
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = textStyle,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+        modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .metroClickable(onClick = onClick)
-            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-            // Source badge + time row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            .drawBehind {
+                val stroke = 1.dp.toPx()
+                val y = size.height - stroke / 2
+                drawLine(lineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = stroke)
+            },
+        decorationBox = { innerTextField ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(badgeColor, RoundedCornerShape(0.dp))
-                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = article.source.lowercase(),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MeenaTextWhite
-                        )
-                    }
-
-                    if (article.category.isNotBlank()) {
-                        Text(
-                            text = "· ${article.category.lowercase()}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MeenaTextMuted
-                        )
-                    }
+                if (value.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.news_search_hint),
+                        style = textStyle.copy(color = MeenaTextMuted)
+                    )
                 }
-
-                Text(
-                    text = article.formattedDate.lowercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted
-                )
+                innerTextField()
             }
-
-            // Headline
-            Text(
-                text = article.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = MeenaTextWhite,
-                lineHeight = 20.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            // Snippet Description
-            if (article.description.isNotBlank()) {
-                Text(
-                    text = article.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MeenaTextSecondary,
-                    lineHeight = 16.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // Read article prompt
-            Text(
-                text = "read article",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = badgeColor,
-                modifier = Modifier.padding(top = 0.dp)
-            )
         }
-    }
+    )
 }
 
 @Composable
-private fun NewsFilterPill(
-    label: String,
-    isSelected: Boolean,
-    accentColor: Color = MaterialTheme.colorScheme.primary,
-    onClick: () -> Unit
-) {
+private fun NewsPivot(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .heightIn(min = 48.dp)
-            .background(
-                if (isSelected) accentColor else MaterialTheme.colorScheme.primary,
-                RoundedCornerShape(0.dp)
-            )
-            .metroClickable(onClick = onClick)
-            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
-        contentAlignment = Alignment.Center
+            .metroClickable(onClick = onClick),
+        contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = label.lowercase(),
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium,
-            color = if (isSelected) MeenaTextWhite else MeenaTextMuted
+            style = MaterialTheme.typography.headlineSmall,
+            color = if (selected) MeenaTextWhite else MeenaTextMuted
         )
     }
 }
 
+@Composable
+private fun NewsRow(
+    article: NewsArticle,
+    nowMs: Long,
+    separator: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val thumbPx = with(LocalDensity.current) { ThumbSize.roundToPx() }
+    val thumb = rememberNewsImage(article.imageUrl, thumbPx, fillSquare = true)
+    val meta = rowMetaParts(article, newsAgeText(article.pubDateMs, nowMs)).joinToString(separator)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .metroClickable(onClick = onClick)
+            .padding(vertical = MeenaSpacing.s),
+        horizontalArrangement = Arrangement.spacedBy(MeenaSpacing.m),
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(MeenaSpacing.s)
+        ) {
+            if (meta.isNotBlank()) {
+                Text(
+                    text = meta,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Text(
+                text = article.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MeenaTextWhite,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        // Space is kept only while the picture loads; no address or a failed load gives the title the full width.
+        when (thumb) {
+            NewsImageState.Loading -> if (article.imageUrl != null) Spacer(modifier = Modifier.size(ThumbSize))
+            is NewsImageState.Ready -> Image(
+                bitmap = thumb.image,
+                contentDescription = null,
+                modifier = Modifier.size(ThumbSize),
+                contentScale = ContentScale.Crop
+            )
+            NewsImageState.Failed -> Unit
+        }
+    }
+}
