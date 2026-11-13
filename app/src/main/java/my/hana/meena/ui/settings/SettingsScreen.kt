@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -43,8 +44,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -59,7 +58,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -132,6 +130,19 @@ fun SettingsScreen(
     val context = LocalContext.current
     var settingsState by remember { mutableStateOf(currentSettings) }
     var activeSubPage by remember(initialSubPage) { mutableStateOf(initialSubPage) }
+    // A page opened from another page (clock -> date and time) goes back to that page.
+    var parentSubPage by remember(initialSubPage) { mutableStateOf<String?>(null) }
+    var subPageForward by remember { mutableStateOf(true) }
+    fun openSubPage(id: String) {
+        parentSubPage = activeSubPage
+        subPageForward = true
+        activeSubPage = id
+    }
+    fun closeSubPage() {
+        subPageForward = false
+        activeSubPage = parentSubPage
+        parentSubPage = null
+    }
 
     val tabs = SETTINGS_TABS
     val tabLabels = listOf(
@@ -145,7 +156,7 @@ fun SettingsScreen(
 
     // Back: leave a sub-page first, otherwise close settings
     BackHandler {
-        if (activeSubPage != null) activeSubPage = null else onClose()
+        if (activeSubPage != null) closeSubPage() else onClose()
     }
 
     // Windows Phone turnstile entrance (respects reduced motion)
@@ -197,6 +208,7 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MeenaBlack)
+            .statusBarsPadding()
             .graphicsLayer {
                 rotationY = turnstileRotation
                 alpha = turnstileAlpha
@@ -213,7 +225,7 @@ fun SettingsScreen(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .metroClickable { if (activeSubPage != null) activeSubPage = null else onClose() },
+                    .metroClickable { if (activeSubPage != null) closeSubPage() else onClose() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -233,7 +245,7 @@ fun SettingsScreen(
         MetroTurnstileContainer(
             targetState = activeSubPage,
             modifier = Modifier.fillMaxSize(),
-            isForward = activeSubPage != null,
+            isForward = subPageForward,
             reducedMotion = settingsState.reducedMotion
         ) { currentSubPage ->
             if (currentSubPage != null) {
@@ -241,8 +253,8 @@ fun SettingsScreen(
                     subPageId = currentSubPage,
                     settingsState = settingsState,
                     onUpdate = { transform -> update(transform) },
-                    onBack = { activeSubPage = null },
-                    onOpenSubPage = { activeSubPage = it },
+                    onBack = { closeSubPage() },
+                    onOpenSubPage = { openSubPage(it) },
                     onExportBackup = onExportBackup,
                     onImportBackup = onImportBackup,
                     onResetDefaults = onResetDefaults
@@ -288,10 +300,10 @@ fun SettingsScreen(
                             verticalArrangement = Arrangement.spacedBy(0.dp)
                         ) {
                             when (tabs[page]) {
-                                SETTINGS_TAB_PAGES -> pagesTab(settingsState, onSortStory = { confirmStoryOrder = true }) { activeSubPage = it }
-                                SETTINGS_TAB_CONNECTIONS -> connectionsTab(settingsState, context) { activeSubPage = it }
-                                SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState) { activeSubPage = it }
-                                SETTINGS_TAB_SYSTEM -> systemTab(context) { activeSubPage = it }
+                                SETTINGS_TAB_PAGES -> pagesTab(settingsState, onSortStory = { confirmStoryOrder = true }) { openSubPage(it) }
+                                SETTINGS_TAB_CONNECTIONS -> connectionsTab(settingsState, context) { openSubPage(it) }
+                                SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState) { openSubPage(it) }
+                                SETTINGS_TAB_SYSTEM -> systemTab(context) { openSubPage(it) }
                             }
                             item { Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.l)) }
                         }
@@ -1128,23 +1140,15 @@ private fun SubPageContainer(
 
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("font scale", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-                    Text("${settingsState.fontScalePercent}%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-                }
-                Slider(
-                    value = settingsState.fontScalePercent.toFloat(),
-                    onValueChange = { value -> onUpdate { it.copy(fontScalePercent = value.roundToInt()) } },
-                    valueRange = 85f..120f,
-                    steps = 6,
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary
-                    )
+                val textSizes = (85..120 step 5).toList()
+                SettingSegmentedRow(
+                    title = stringResource(R.string.settings_text_title),
+                    options = textSizes.map { it.toString() to stringResource(R.string.settings_text_status, it) },
+                    selectedKey = settingsState.fontScalePercent.toString(),
+                    onSelectKey = { key ->
+                        val percent = key.toIntOrNull() ?: 100
+                        onUpdate { it.copy(fontScalePercent = percent) }
+                    }
                 )
             }
         }
@@ -2511,23 +2515,11 @@ private fun DateTimeSettings(
                             .metroClickable { onUpdate { it.copy(dateFormatPattern = pattern) } }
                             .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = preview,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MeenaTextWhite
-                            )
-                            Text(
-                                text = pattern,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isSelected) MeenaTextWhite.copy(alpha = 0.8f) else MeenaTextMuted,
-                                fontSize = 12.sp
-                            )
-                        }
+                        Text(
+                            text = preview,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MeenaTextWhite
+                        )
                     }
                 }
             }
