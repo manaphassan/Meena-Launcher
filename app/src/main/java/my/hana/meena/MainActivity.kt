@@ -509,6 +509,13 @@ fun MeenaHomeScreen(
                 }
             }
 
+            // Leaving a page drops its focus, so the apps search box doesn't keep the keyboard up
+            // or keep the apps page alive behind Today.
+            val pageFocusManager = androidx.compose.ui.platform.LocalFocusManager.current
+            LaunchedEffect(pagerState) {
+                snapshotFlow { pagerState.settledPage }.collect { pageFocusManager.clearFocus() }
+            }
+
             // 5 Lateral Panoramic Canvas Hubs with Windows Phone 3D Turnstile Continuity
             val isReduced = userSettings.isReducedMotion
             HorizontalPager(
@@ -522,7 +529,12 @@ fun MeenaHomeScreen(
                         .fillMaxSize()
                         .graphicsLayer {
                             val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                            if (!isReduced) {
+                            // A page more than a step away must never show. The pager keeps a focused page (like
+                            // the apps search box) laid out next to the current one, and the shift below would
+                            // otherwise pull it onto the screen at the minimum alpha.
+                            if (kotlin.math.abs(pageOffset) >= 1.5f) {
+                                alpha = 0f
+                            } else if (!isReduced) {
                                 // Signature Metro UI Turnstile Parallax & 3D Depth
                                 translationX = pageOffset * 36.dp.toPx()
                                 alpha = (1f - kotlin.math.abs(pageOffset) * 0.55f).coerceIn(0.20f, 1f)

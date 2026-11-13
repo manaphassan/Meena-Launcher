@@ -229,7 +229,11 @@ fun AppsHub(
                         }
                     }
 
-                    items(appsInLetter.size, key = { "app-${appsInLetter[it].packageName}" }) { idx ->
+                    // One app can have several launcher entries (a dialer's phone and contacts), so key by activity and user.
+                    items(appsInLetter.size, key = { i ->
+                        val a = appsInLetter[i]
+                        "app-${a.componentName?.flattenToShortString() ?: a.packageName}-${a.userHandle?.hashCode() ?: 0}"
+                    }) { idx ->
                         val app = appsInLetter[idx]
                         val appNotif = liveNotifications.firstOrNull { it.packageName == app.packageName }
                         val notifCount = liveNotifications.count { it.packageName == app.packageName }
