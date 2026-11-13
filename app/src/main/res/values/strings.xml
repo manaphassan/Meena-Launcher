@@ -385,6 +385,9 @@
     <string name="theme_background_title">background</string>
     <string name="theme_dark">dark</string>
     <string name="theme_light">light</string>
+    <string name="theme_paper">paper</string>
+    <string name="theme_paper_mono">black and white</string>
+    <string name="theme_paper_note">black on white with calm motion, for e-ink screens. it has no accent colour.</string>
     <string name="theme_accent_title">accent colour</string>
     <string name="theme_accent_readable">%1$s · easy to read on %2$s</string>
     <string name="theme_accent_hard">%1$s · hard to read on %2$s. try another colour</string>

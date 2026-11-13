@@ -54,6 +54,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -258,6 +259,9 @@ private fun CelestialSkyCanvas(
     val maghribLabel = stringResource(R.string.solat_name_maghrib)
     val isyakLabel = stringResource(R.string.solat_name_isyak)
     val primaryColor = MaterialTheme.colorScheme.primary
+    val inkColor = MeenaTextWhite
+    val labelArgb = MeenaTextMuted.toArgb()
+    val sunLabelArgb = MeenaTextWhite.toArgb()
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
@@ -385,14 +389,14 @@ private fun CelestialSkyCanvas(
 
         // Syuruk (at horizon, bright white dot)
         drawCircle(
-            color = MeenaTextWhite,
+            color = inkColor,
             radius = 4.2.dp.toPx(),
             center = Offset(xSyuruk, ySyuruk)
         )
 
         // Asar (on downward slope, white ring)
         drawCircle(
-            color = MeenaTextWhite,
+            color = inkColor,
             radius = 3.5.dp.toPx(),
             center = Offset(xAsar, yAsar),
             style = Stroke(width = 1.4.dp.toPx())
@@ -400,7 +404,7 @@ private fun CelestialSkyCanvas(
 
         // Maghrib (at horizon, white ring)
         drawCircle(
-            color = MeenaTextWhite,
+            color = inkColor,
             radius = 4.dp.toPx(),
             center = Offset(xMaghrib, yMaghrib),
             style = Stroke(width = 1.5.dp.toPx())
@@ -439,20 +443,20 @@ private fun CelestialSkyCanvas(
 
         // Sun bright white center shine
         drawCircle(
-            color = MeenaTextWhite,
+            color = inkColor,
             radius = 2.2.dp.toPx(),
             center = Offset(sunX, sunY)
         )
 
         // Target Focus Ring marker right next to sun (matches reference ⊙)
         drawCircle(
-            color = MeenaTextWhite,
+            color = inkColor,
             radius = 4.5.dp.toPx(),
             center = Offset(targetX, targetY),
             style = Stroke(width = 1.3.dp.toPx())
         )
         drawCircle(
-            color = MeenaTextWhite,
+            color = inkColor,
             radius = 1.5.dp.toPx(),
             center = Offset(targetX, targetY)
         )
@@ -462,7 +466,7 @@ private fun CelestialSkyCanvas(
         val labelPaint = Paint().apply {
             isAntiAlias = true
             textSize = 12.sp.toPx()
-            color = android.graphics.Color.parseColor("#9DB2C0")
+            color = labelArgb
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             textAlign = Paint.Align.CENTER
         }
@@ -478,7 +482,7 @@ private fun CelestialSkyCanvas(
         val sunLabelPaint = Paint().apply {
             isAntiAlias = true
             textSize = 12.sp.toPx()
-            color = android.graphics.Color.WHITE
+            color = sunLabelArgb
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }

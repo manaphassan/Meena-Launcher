@@ -95,7 +95,7 @@ fun MetroDialog(
                         Text(
                             text = confirmText.lowercase(),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MeenaTextWhite
+                            color = my.hana.meena.theme.MeenaOnAccent
                         )
                     }
                     Box(

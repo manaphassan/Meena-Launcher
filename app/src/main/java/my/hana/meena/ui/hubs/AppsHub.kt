@@ -590,7 +590,7 @@ private fun AppRow(
                     Text(
                         text = badge.toString(),
                         fontSize = 12.sp,
-                        color = MeenaTextWhite
+                        color = my.hana.meena.theme.MeenaOnAccent
                     )
                 }
             }

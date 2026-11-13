@@ -128,10 +128,13 @@ class MainActivity : ComponentActivity() {
             val initialHub = (targetHubExtra ?: userSettings.defaultHubIndex).coerceIn(0, 4)
 
             val hideStatusBar = userSettings.isStatusBarHidden
-            LaunchedEffect(hideStatusBar) {
+            LaunchedEffect(hideStatusBar, userSettings.baseTheme) {
                 val bars = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
                 bars.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 val statusBars = androidx.core.view.WindowInsetsCompat.Type.statusBars()
+                val lightPage = my.hana.meena.theme.meenaPaletteFor(userSettings.baseTheme).isLight
+                bars.isAppearanceLightStatusBars = lightPage
+                bars.isAppearanceLightNavigationBars = lightPage
                 if (hideStatusBar) bars.hide(statusBars) else bars.show(statusBars)
             }
 
@@ -548,7 +551,7 @@ fun MeenaHomeScreen(
             }
 
             // 5 Lateral Panoramic Canvas Hubs with Windows Phone 3D Turnstile Continuity
-            val isReduced = userSettings.isReducedMotion
+            val isReduced = userSettings.reducedMotion
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -866,6 +869,7 @@ fun ActionCenterSheet(
     val bluetoothState by QuickPanelHardwareHelper.bluetoothState.collectAsState()
     val isTorchActive by QuickPanelHardwareHelper.isTorchActive.collectAsState()
 
+    val dividerColor = MeenaBorderSubtle
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -882,7 +886,7 @@ fun ActionCenterSheet(
                 .background(MeenaBlack)
                 .drawBehind {
                     drawLine(
-                        color = MeenaBorderSubtle,
+                        color = dividerColor,
                         start = Offset(0f, size.height),
                         end = Offset(size.width, size.height),
                         strokeWidth = 1.dp.toPx()
@@ -978,16 +982,16 @@ fun ActionCenterSheet(
                     Text(
                         text = stringResource(R.string.action_all_settings),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = my.hana.meena.theme.MeenaOnAccent,
                         modifier = Modifier.metroClickable(onClick = onOpenSettings)
                     )
-                    Text(stringResource(R.string.quick_panel_notifications), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                    Text(stringResource(R.string.quick_panel_notifications), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                 } else {
-                    Text(stringResource(R.string.quick_panel_notifications), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                    Text(stringResource(R.string.quick_panel_notifications), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                     Text(
                         text = stringResource(R.string.action_all_settings),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = my.hana.meena.theme.MeenaOnAccent,
                         modifier = Modifier.metroClickable(onClick = onOpenSettings)
                     )
                 }
@@ -1056,11 +1060,11 @@ private fun ActionNotificationItem(app: String, text: String, time: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(app, style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-            Text(text, style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
+            Text(app, style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
+            Text(text, style = MaterialTheme.typography.bodySmall, color = my.hana.meena.theme.MeenaOnAccent)
         }
         if (time.isNotBlank()) {
-            Text(time, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+            Text(time, style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
         }
     }
 }

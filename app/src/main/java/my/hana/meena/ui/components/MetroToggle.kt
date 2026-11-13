@@ -115,13 +115,13 @@ fun MetroToggle(
                     .offset(x = thumbOffset)
                     .width(thumbWidth)
                     .height(thumbHeight)
-                    .background(MeenaTextWhite)
+                    .background(if (checked) my.hana.meena.theme.MeenaOnAccent else MeenaTextWhite)
             )
         }
 
         if (showLabel) {
             Text(
-                text = if (checked) "on" else "off",
+                text = androidx.compose.ui.res.stringResource(if (checked) my.hana.meena.R.string.settings_widget_on else my.hana.meena.R.string.settings_widget_off),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (checked) MeenaTextWhite else MeenaTextMuted
             )

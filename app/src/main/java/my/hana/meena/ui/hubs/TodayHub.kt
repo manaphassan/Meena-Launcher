@@ -1316,7 +1316,7 @@ fun TodayHub(
                         ) {
                             Text(
                                 text = label,
-                                color = MeenaTextWhite,
+                                color = my.hana.meena.theme.MeenaOnAccent,
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -1370,7 +1370,7 @@ fun TodayHub(
                             }
                             Text(
                                 text = label,
-                                color = MeenaTextWhite,
+                                color = my.hana.meena.theme.MeenaOnAccent,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.align(Alignment.BottomStart),
                                 maxLines = 1,

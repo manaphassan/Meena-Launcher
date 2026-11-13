@@ -205,7 +205,7 @@ fun AgendaHub(
                                     shape = RoundedCornerShape(0.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text("+", fontSize = 16.sp, color = MeenaTextWhite)
+                                    Text("+", fontSize = 16.sp, color = my.hana.meena.theme.MeenaOnAccent)
                                 }
                             }
                         }

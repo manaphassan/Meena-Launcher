@@ -63,13 +63,13 @@ fun FrequentAppTiles(
                         bitmap = bitmap,
                         contentDescription = app.label,
                         modifier = Modifier.align(Alignment.Center).size(if (glyph != null) 40.dp else 32.dp),
-                        colorFilter = if (glyph != null) ColorFilter.tint(MeenaTextWhite) else null
+                        colorFilter = if (glyph != null) ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent) else null
                     )
                 }
                 Text(
                     text = app.label.lowercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextWhite,
+                    color = my.hana.meena.theme.MeenaOnAccent,
                     maxLines = 1,
                     modifier = Modifier.align(Alignment.BottomStart).padding(my.hana.meena.theme.MeenaSpacing.s)
                 )

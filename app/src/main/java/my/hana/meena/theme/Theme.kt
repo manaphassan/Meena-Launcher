@@ -21,50 +21,64 @@ val MeenaMetroShapes = Shapes(
 fun getMeenaColorScheme(
     baseTheme: String = "dark",
     accent: Color = MeenaCyan
-) = when (baseTheme) {
-    "light" -> lightColorScheme(
-        primary = accent,
-        onPrimary = Color.White,
-        background = Color(0xFFF7F7F9),
-        onBackground = Color(0xFF111111),
-        surface = Color.White,
-        onSurface = Color(0xFF111111),
-        surfaceVariant = Color(0xFFEFEFEF),
-        outline = Color(0xFFCCCCCC)
-    )
-    else -> darkColorScheme( // "amoled" default
-        primary = accent,
-        onPrimary = Color.White,
-        background = MeenaBlack,
-        onBackground = MeenaTextWhite,
-        surface = MeenaSurface,
-        onSurface = MeenaTextWhite,
-        surfaceVariant = MeenaDarkSlate,
-        outline = MeenaBorder
-    )
+): androidx.compose.material3.ColorScheme {
+    val p = meenaPaletteFor(baseTheme)
+    val primary = p.accentOverride ?: accent
+    return if (p.isLight) {
+        lightColorScheme(
+            primary = primary,
+            onPrimary = p.onAccent,
+            background = p.background,
+            onBackground = p.text,
+            surface = p.background,
+            onSurface = p.text,
+            surfaceVariant = p.darkSlate,
+            onSurfaceVariant = p.textMuted,
+            outline = p.border
+        )
+    } else {
+        darkColorScheme(
+            primary = primary,
+            onPrimary = p.onAccent,
+            background = p.background,
+            onBackground = p.text,
+            surface = p.surface,
+            onSurface = p.text,
+            surfaceVariant = p.darkSlate,
+            onSurfaceVariant = p.textMuted,
+            outline = p.border
+        )
+    }
 }
 
 @Composable
 fun MeenaLauncherTheme(
     baseTheme: String = "dark",
     accentColor: Color = MeenaCyan,
-        fontScalePercent: Int = 100,
+    fontScalePercent: Int = 100,
     content: @Composable () -> Unit,
 ) {
+    val palette = meenaPaletteFor(baseTheme)
+    val accent = palette.accentOverride ?: accentColor
     val colorScheme = getMeenaColorScheme(baseTheme, accentColor)
-    val typography = androidx.compose.runtime.remember(fontScalePercent, accentColor) {
+    val typography = androidx.compose.runtime.remember(fontScalePercent, accent, palette) {
         getMeenaTypography(
-                        fontScalePercent = fontScalePercent,
-            titleAccentColor = accentColor
+            fontScalePercent = fontScalePercent,
+            titleAccentColor = accent,
+            textColor = palette.text,
+            secondaryColor = palette.textSecondary,
+            mutedColor = palette.textMuted
         )
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typography,
-        shapes = MeenaMetroShapes,
-        content = content
-    )
+    androidx.compose.runtime.CompositionLocalProvider(LocalMeenaPalette provides palette) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = typography,
+            shapes = MeenaMetroShapes,
+            content = content
+        )
+    }
 }
 
 

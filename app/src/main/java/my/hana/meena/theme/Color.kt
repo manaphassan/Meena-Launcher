@@ -1,23 +1,110 @@
 package my.hana.meena.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-// Pure AMOLED Foundations
-val MeenaBlack = Color(0xFF000000)
-val MeenaDarkSlate = Color(0xFF141414)
-val MeenaSurface = Color(0xFF0C0C0C)
-val MeenaSurfaceElevated = Color(0xFF161616)
-val MeenaBorder = Color(0xFF222222)
-val MeenaBorderSubtle = Color(0xFF181818)
+/**
+ * The neutral colours of one base theme. Screens read them through the Meena* properties below,
+ * so dark, light and paper all work without each screen choosing colours itself.
+ * Names keep their dark-theme meaning: "black" is the page background, "white" the main text.
+ */
+@Immutable
+data class MeenaPalette(
+    val id: String,
+    val background: Color,
+    val darkSlate: Color,
+    val surface: Color,
+    val surfaceElevated: Color,
+    val border: Color,
+    val borderSubtle: Color,
+    val text: Color,
+    val textSecondary: Color,
+    val textMuted: Color,
+    val textDisabled: Color,
+    /** Text and glyphs drawn on an accent fill (tiles, buttons). */
+    val onAccent: Color,
+    /** Replaces the user's accent; paper is monochrome. */
+    val accentOverride: Color? = null,
+    val isLight: Boolean
+)
 
-// Text Colors (Contrast validated against MeenaBlack >= 4.5:1)
-val MeenaTextWhite = Color(0xFFFFFFFF)       // 21.0:1
-val MeenaTextSecondary = Color(0xFFAAAAAA)   // 10.3:1
-val MeenaTextMuted = Color(0xFF888888)       // 6.3:1 (exceeds 4.5:1 threshold; previous 0xFF666666 was 3.5:1)
-val MeenaTextDisabled = Color(0xFF555555)    // Intentionally subdued for inactive hints
+// Contrast checked in ThemePaletteTest: text, secondary and muted are all >= 4.5:1 on their background.
+val MeenaDarkPalette = MeenaPalette(
+    id = "dark",
+    background = Color(0xFF000000),
+    darkSlate = Color(0xFF141414),
+    surface = Color(0xFF0C0C0C),
+    surfaceElevated = Color(0xFF161616),
+    border = Color(0xFF222222),
+    borderSubtle = Color(0xFF181818),
+    text = Color(0xFFFFFFFF),          // 21.0:1
+    textSecondary = Color(0xFFAAAAAA), // 10.3:1
+    textMuted = Color(0xFF888888),     // 6.3:1
+    textDisabled = Color(0xFF555555),
+    onAccent = Color(0xFFFFFFFF),
+    isLight = false
+)
+
+/** Windows Phone light: white page, black type. */
+val MeenaLightPalette = MeenaPalette(
+    id = "light",
+    background = Color(0xFFFFFFFF),
+    darkSlate = Color(0xFFE6E6E6),
+    surface = Color(0xFFF2F2F2),
+    surfaceElevated = Color(0xFFE6E6E6),
+    border = Color(0xFFCCCCCC),
+    borderSubtle = Color(0xFFE6E6E6),
+    text = Color(0xFF000000),          // 21.0:1
+    textSecondary = Color(0xFF444444), // 9.7:1
+    textMuted = Color(0xFF666666),     // 5.7:1
+    textDisabled = Color(0xFF8A8A8A),
+    onAccent = Color(0xFFFFFFFF),
+    isLight = true
+)
+
+/** For e-ink: black on white only, few greys, no accent colour. */
+val MeenaPaperPalette = MeenaPalette(
+    id = "paper",
+    background = Color(0xFFFFFFFF),
+    darkSlate = Color(0xFFDDDDDD),
+    surface = Color(0xFFEEEEEE),
+    surfaceElevated = Color(0xFFDDDDDD),
+    border = Color(0xFF888888),
+    borderSubtle = Color(0xFFDDDDDD),
+    text = Color(0xFF000000),          // 21.0:1
+    textSecondary = Color(0xFF333333), // 12.6:1
+    textMuted = Color(0xFF555555),     // 7.5:1
+    textDisabled = Color(0xFFBBBBBB),
+    onAccent = Color(0xFFFFFFFF),
+    accentOverride = Color(0xFF000000),
+    isLight = true
+)
+
+fun meenaPaletteFor(baseTheme: String): MeenaPalette = when (baseTheme) {
+    "light" -> MeenaLightPalette
+    "paper" -> MeenaPaperPalette
+    else -> MeenaDarkPalette
+}
+
+val LocalMeenaPalette = staticCompositionLocalOf { MeenaDarkPalette }
+
+val MeenaBlack: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.background
+val MeenaDarkSlate: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.darkSlate
+val MeenaSurface: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.surface
+val MeenaSurfaceElevated: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.surfaceElevated
+val MeenaBorder: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.border
+val MeenaBorderSubtle: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.borderSubtle
+val MeenaTextWhite: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.text
+val MeenaTextSecondary: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.textSecondary
+val MeenaTextMuted: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.textMuted
+val MeenaTextDisabled: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.textDisabled
+val MeenaOnAccent: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.onAccent
 
 // Telemetry & Financial Status
 val MeenaProfitGreen = Color(0xFF107C10)

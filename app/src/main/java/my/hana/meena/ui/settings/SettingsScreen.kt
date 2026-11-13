@@ -159,11 +159,11 @@ fun SettingsScreen(
     }
 
     // Windows Phone turnstile entrance (respects reduced motion)
-    var turnstileRotation by remember { mutableFloatStateOf(if (currentSettings.isReducedMotion) 0f else 20f) }
-    var turnstileAlpha by remember { mutableFloatStateOf(if (currentSettings.isReducedMotion) 1f else 0f) }
+    var turnstileRotation by remember { mutableFloatStateOf(if (currentSettings.reducedMotion) 0f else 20f) }
+    var turnstileAlpha by remember { mutableFloatStateOf(if (currentSettings.reducedMotion) 1f else 0f) }
 
-    LaunchedEffect(currentSettings.isReducedMotion) {
-        if (!currentSettings.isReducedMotion) {
+    LaunchedEffect(currentSettings.reducedMotion) {
+        if (!currentSettings.reducedMotion) {
             animate(
                 initialValue = 20f,
                 targetValue = 0f,
@@ -172,8 +172,8 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(currentSettings.isReducedMotion) {
-        if (!currentSettings.isReducedMotion) {
+    LaunchedEffect(currentSettings.reducedMotion) {
+        if (!currentSettings.reducedMotion) {
             animate(
                 initialValue = 0f,
                 targetValue = 1f,
@@ -326,6 +326,13 @@ fun normalizeSettingsTab(tab: String): String = when (tab) {
     "look & feel" -> SETTINGS_TAB_PERSONALIZE
     in SETTINGS_TABS -> tab
     else -> SETTINGS_TAB_PAGES
+}
+
+/** Name shown for a base theme id. */
+internal fun themeLabelRes(baseTheme: String): Int = when (baseTheme) {
+    "light" -> R.string.theme_light
+    "paper" -> R.string.theme_paper
+    else -> R.string.theme_dark
 }
 
 /** Widget id to the name used on its row and sub-page. */
@@ -486,8 +493,9 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
             title = stringResource(R.string.settings_theme_title),
             status = stringResource(
                 R.string.settings_status_pair,
-                stringResource(if (settingsState.baseTheme == "light") R.string.theme_light else R.string.theme_dark),
-                Meena10AccentSwatches.find { it.hex.equals(settingsState.accentHex, ignoreCase = true) }?.name
+                stringResource(themeLabelRes(settingsState.baseTheme)),
+                if (settingsState.baseTheme == "paper") stringResource(R.string.theme_paper_mono)
+                else Meena10AccentSwatches.find { it.hex.equals(settingsState.accentHex, ignoreCase = true) }?.name
                     ?: settingsState.accentHex.lowercase()
             ),
             onClick = { open("look:theme") }
@@ -838,7 +846,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
                     }
                 }
@@ -855,7 +863,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
                     }
                 }
@@ -872,7 +880,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
                     }
                 }
@@ -920,7 +928,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text(stringResource(R.string.health_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.health_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
                     }
                 }
@@ -973,7 +981,7 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                    Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                 }
             }
         }
@@ -1113,12 +1121,22 @@ private fun SubPageContainer(
                     title = stringResource(R.string.theme_background_title),
                     options = listOf(
                         "dark" to stringResource(R.string.theme_dark),
-                        "light" to stringResource(R.string.theme_light)
+                        "light" to stringResource(R.string.theme_light),
+                        "paper" to stringResource(R.string.theme_paper)
                     ),
                     selectedKey = settingsState.baseTheme,
                     onSelectKey = { theme -> onUpdate { it.copy(baseTheme = theme) } }
                 )
             }
+            if (settingsState.baseTheme == "paper") {
+                item {
+                    Text(
+                        text = stringResource(R.string.theme_paper_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            } else
 
             item {
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
@@ -1129,10 +1147,7 @@ private fun SubPageContainer(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
 
-                val currentBg = when (settingsState.baseTheme) {
-                    "light" -> MeenaTextWhite
-                    else -> MeenaBlack
-                }
+                val currentBg = my.hana.meena.theme.meenaPaletteFor(settingsState.baseTheme).background
                 val currentAccentColor = runCatching {
                     Color(settingsState.accentHex.toColorInt())
                 }.getOrDefault(MeenaBlue)
@@ -1144,7 +1159,7 @@ private fun SubPageContainer(
                     text = stringResource(
                         if (isAccessible) R.string.theme_accent_readable else R.string.theme_accent_hard,
                         swatchName,
-                        stringResource(if (settingsState.baseTheme == "light") R.string.theme_light else R.string.theme_dark)
+                        stringResource(themeLabelRes(settingsState.baseTheme))
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
@@ -1376,7 +1391,7 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text(stringResource(R.string.backup_share), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                    Text(stringResource(R.string.backup_share), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                 }
             }
             item {
@@ -1787,7 +1802,7 @@ private fun FinanceAccountSettings(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(0.dp)
             ) {
-                Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
             }
 
             if (sheetUrlInput.isNotBlank()) {
@@ -1998,7 +2013,7 @@ private fun FinanceAccountSettings(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text(stringResource(R.string.finance_add_button), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+            Text(stringResource(R.string.finance_add_button), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
         }
     }
 }
@@ -2047,7 +2062,7 @@ private fun HealthAccountSettings(
             Text(
                 text = stringResource(if (availability == HealthConnectAvailability.AVAILABLE) R.string.health_manage_permissions else R.string.health_install_app),
                 style = MaterialTheme.typography.labelSmall,
-                color = MeenaTextWhite
+                color = my.hana.meena.theme.MeenaOnAccent
             )
         }
 
@@ -2158,7 +2173,7 @@ private fun CalendarAccountSettings(
                 shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text(stringResource(R.string.calendar_turn_on), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                Text(stringResource(R.string.calendar_turn_on), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
             }
         } else {
             val dayChoices = listOf(1, 3, 7, 14)

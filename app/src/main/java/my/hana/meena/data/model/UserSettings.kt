@@ -60,7 +60,8 @@ data class MeenaUserSettings(
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false
 ) {
-    val reducedMotion: Boolean get() = isReducedMotion
+    /** Paper is for e-ink screens, where animation smears, so it always moves calmly. */
+    val reducedMotion: Boolean get() = isReducedMotion || baseTheme == "paper"
 
     fun migrate(): MeenaUserSettings {
         val updatedConfigs = widgetConfigs.toMutableMap()

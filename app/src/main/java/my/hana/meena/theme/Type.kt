@@ -20,7 +20,10 @@ val SelawikFontFamily = FontFamily(
  */
 fun getMeenaTypography(
     fontScalePercent: Int = 100,
-    titleAccentColor: Color = MeenaCyan
+    titleAccentColor: Color = MeenaCyan,
+    textColor: Color = MeenaDarkPalette.text,
+    secondaryColor: Color = MeenaDarkPalette.textSecondary,
+    mutedColor: Color = MeenaDarkPalette.textMuted
 ): Typography {
     val scale = (fontScalePercent / 100f).coerceIn(0.8f, 1.4f)
     val activeFont = SelawikFontFamily
@@ -33,7 +36,7 @@ fun getMeenaTypography(
             fontSize = (42 * scale).sp,
             lineHeight = (46 * scale).sp,
             letterSpacing = ((-1.5) * scale).sp,
-            color = MeenaTextWhite
+            color = textColor
         ),
         // displayMedium: 64sp Light (Replace ExtraLight with Light)
         displayMedium = TextStyle(
@@ -42,7 +45,7 @@ fun getMeenaTypography(
             fontSize = (64 * scale).sp,
             lineHeight = (68 * scale).sp,
             letterSpacing = ((-2.0) * scale).sp,
-            color = MeenaTextWhite
+            color = textColor
         ),
         // section 24sp light
         headlineMedium = TextStyle(
@@ -51,7 +54,7 @@ fun getMeenaTypography(
             fontSize = (24 * scale).sp,
             lineHeight = (28 * scale).sp,
             letterSpacing = ((-0.5) * scale).sp,
-            color = MeenaTextWhite
+            color = textColor
         ),
         // titleMedium (was normal, I'll keep it Normal)
         titleMedium = TextStyle(
@@ -60,7 +63,7 @@ fun getMeenaTypography(
             fontSize = (16 * scale).sp,
             lineHeight = (20 * scale).sp,
             letterSpacing = (0.5 * scale).sp,
-            color = MeenaTextWhite
+            color = textColor
         ),
         // body 15-17sp (16sp)
         bodyLarge = TextStyle(
@@ -69,7 +72,7 @@ fun getMeenaTypography(
             fontSize = (16 * scale).sp,
             lineHeight = (22 * scale).sp,
             letterSpacing = (0.2 * scale).sp,
-            color = MeenaTextWhite
+            color = textColor
         ),
         bodyMedium = TextStyle(
             fontFamily = activeFont,
@@ -77,7 +80,7 @@ fun getMeenaTypography(
             fontSize = (14 * scale).sp,
             lineHeight = (19 * scale).sp,
             letterSpacing = (0.1 * scale).sp,
-            color = MeenaTextSecondary
+            color = secondaryColor
         ),
         displaySmall = TextStyle(
             fontFamily = activeFont,
@@ -150,7 +153,7 @@ fun getMeenaTypography(
             fontSize = (12 * scale).sp,
             lineHeight = (16 * scale).sp,
             letterSpacing = (0.5 * scale).sp,
-            color = MeenaTextMuted
+            color = mutedColor
         )
     )
 }

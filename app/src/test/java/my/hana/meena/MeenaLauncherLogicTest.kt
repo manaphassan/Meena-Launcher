@@ -5,9 +5,7 @@ import my.hana.meena.data.system.JakimSolatRepository
 import my.hana.meena.data.system.SpendingRepository
 import androidx.compose.ui.graphics.Color
 import my.hana.meena.theme.Meena10AccentSwatches
-import my.hana.meena.theme.MeenaBlack
-import my.hana.meena.theme.MeenaTextMuted
-import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.theme.MeenaDarkPalette
 import my.hana.meena.theme.calculateContrastRatio
 import my.hana.meena.theme.isAccessibleContrast
 import my.hana.meena.ui.navigation.ParallaxHelper
@@ -654,23 +652,23 @@ class MeenaLauncherLogicTest {
     @Test
     fun metroTheme_wcagContrast_calculatesAccurately() {
         // Pure white on pure black must yield maximum 21:1 contrast ratio
-        val whiteOnBlackRatio = calculateContrastRatio(MeenaTextWhite, MeenaBlack)
+        val whiteOnBlackRatio = calculateContrastRatio(MeenaDarkPalette.text, MeenaDarkPalette.background)
         assertTrue("White on black ratio ($whiteOnBlackRatio) must be >= 20.0", whiteOnBlackRatio >= 20.0f)
 
         // MeenaTextMuted on MeenaBlack must strictly exceed the 4.5:1 WCAG AA threshold (per GEMINI.md rule 7)
-        val mutedOnBlackRatio = calculateContrastRatio(MeenaTextMuted, MeenaBlack)
+        val mutedOnBlackRatio = calculateContrastRatio(MeenaDarkPalette.textMuted, MeenaDarkPalette.background)
         assertTrue("Muted text ratio ($mutedOnBlackRatio) must be >= 4.5:1", mutedOnBlackRatio >= 4.5f)
-        assertTrue("Muted text on black must pass accessible contrast check", isAccessibleContrast(MeenaTextMuted, MeenaBlack))
+        assertTrue("Muted text on black must pass accessible contrast check", isAccessibleContrast(MeenaDarkPalette.textMuted, MeenaDarkPalette.background))
 
         // Threshold #767676 (per GEMINI.md rule 7: muted text no darker than #767676 on black)
         val thresholdMuted = Color(0xFF767676)
-        val thresholdRatio = calculateContrastRatio(thresholdMuted, MeenaBlack)
+        val thresholdRatio = calculateContrastRatio(thresholdMuted, MeenaDarkPalette.background)
         assertTrue("Threshold #767676 ratio ($thresholdRatio) must be >= 4.5:1", thresholdRatio >= 4.5f)
-        assertTrue("Threshold #767676 on black must pass accessible contrast check", isAccessibleContrast(thresholdMuted, MeenaBlack))
+        assertTrue("Threshold #767676 on black must pass accessible contrast check", isAccessibleContrast(thresholdMuted, MeenaDarkPalette.background))
 
         // Dark grey on black must fail WCAG regular text check
         val subtleBorder = Color(0xFF222222)
-        assertFalse("Subtle border against black should not pass text contrast", isAccessibleContrast(subtleBorder, MeenaBlack))
+        assertFalse("Subtle border against black should not pass text contrast", isAccessibleContrast(subtleBorder, MeenaDarkPalette.background))
     }
 
     @Test
