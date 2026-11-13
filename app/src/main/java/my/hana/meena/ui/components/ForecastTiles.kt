@@ -1,5 +1,6 @@
 package my.hana.meena.ui.components
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,7 +43,7 @@ fun ForecastTiles(
     when (state) {
         is WidgetState.NeedsSetup -> {
             Text(
-                text = "allow location",
+                text = stringResource(R.string.state_allow_location),
                 style = MaterialTheme.typography.bodySmall,
                 color = MeenaTextMuted,
                 modifier = modifier
@@ -63,7 +64,7 @@ fun ForecastTiles(
         }
         is WidgetState.Error -> {
             Text(
-                text = "couldn't reach the weather. tap to retry.",
+                text = stringResource(R.string.weather_load_failed),
                 style = MaterialTheme.typography.bodySmall,
                 color = MeenaTextMuted,
                 modifier = modifier

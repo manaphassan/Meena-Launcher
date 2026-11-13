@@ -1,5 +1,7 @@
 ﻿package my.hana.meena.ui.hubs
 
+import androidx.compose.ui.res.stringResource
+import my.hana.meena.R
 import android.content.Intent
 import android.net.Uri
 
@@ -164,7 +166,7 @@ fun AppsHub(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
-                    placeholder = { Text("search apps", color = MeenaTextMuted, fontSize = 14.sp) },
+                    placeholder = { Text(stringResource(R.string.apps_search_hint), color = MeenaTextMuted, fontSize = 14.sp) },
                     
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MeenaTextWhite,
@@ -193,7 +195,7 @@ fun AppsHub(
             } else if (groupedApps.isEmpty()) {
                 item {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "no apps matching \"$searchQuery\"" else "no apps available",
+                        text = if (searchQuery.isNotBlank()) stringResource(R.string.apps_no_match, searchQuery) else stringResource(R.string.apps_none),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MeenaTextMuted,
                         modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.l)
@@ -381,10 +383,10 @@ fun AppsHub(
             val isPinned = pinnedAppIds.contains(target.packageName)
             if (showUninstallConfirm) {
                 MetroDialog(
-                    title = "uninstall app?",
-                    message = "do you want to remove " + target.label.lowercase() + " from your phone?",
-                    confirmText = "yes",
-                    dismissText = "no",
+                    title = stringResource(R.string.dialog_uninstall_title),
+                    message = stringResource(R.string.dialog_uninstall_question, target.label.lowercase()),
+                    confirmText = stringResource(R.string.action_yes),
+                    dismissText = stringResource(R.string.action_no),
                     onConfirm = {
                         try {
                             InstalledAppsRepository.invalidateCache()
@@ -424,7 +426,7 @@ fun AppsHub(
                                 Spacer(modifier = Modifier.width(14.dp))
                                 Column {
                                     Text(target.label.lowercase(), style = MaterialTheme.typography.titleLarge, color = MeenaTextWhite)
-                                    Text("quick actions", style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                                    Text(stringResource(R.string.quick_actions_title), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                 }
                             }
 
@@ -443,12 +445,12 @@ fun AppsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = if (isPinned) "remove from favourites" else "add to favourites",
+                                        text = if (isPinned) stringResource(R.string.apps_favourite_remove) else stringResource(R.string.apps_favourite_add),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = if (isPinned) MaterialTheme.colorScheme.error else primaryColor
                                     )
                                     Text(
-                                        text = if (isPinned) "remove tile from favourites" else "show tile on favourites",
+                                        text = if (isPinned) stringResource(R.string.apps_favourite_remove_hint) else stringResource(R.string.apps_favourite_add_hint),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -473,12 +475,12 @@ fun AppsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = "app info",
+                                        text = stringResource(R.string.menu_app_info),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MeenaTextWhite
                                     )
                                     Text(
-                                        text = "open system settings",
+                                        text = stringResource(R.string.apps_app_info_hint),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -499,12 +501,12 @@ fun AppsHub(
                             ) {
                                 Column {
                                     Text(
-                                        text = "uninstall",
+                                        text = stringResource(R.string.menu_uninstall),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.error
                                     )
                                     Text(
-                                        text = "delete app from phone",
+                                        text = stringResource(R.string.apps_uninstall_hint),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
@@ -516,7 +518,7 @@ fun AppsHub(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 Text(
-                                    text = "close",
+                                    text = stringResource(R.string.action_close),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MeenaTextMuted,
                                     modifier = Modifier
@@ -670,13 +672,13 @@ private fun AlphabetJumpListOverlay(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "jump to",
+                    text = stringResource(R.string.apps_jump_to),
                     style = MaterialTheme.typography.displayLarge,
                     fontSize = 28.sp,
                     color = MeenaTextWhite
                 )
                 Text(
-                    text = "close",
+                    text = stringResource(R.string.action_close),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     modifier = Modifier

@@ -109,10 +109,10 @@ fun FinanceHub(
     if (holdingToDelete != null) {
         val holding = holdingToDelete!!
         MetroDialog(
-            title = "delete holding",
-            message = "delete this holding (${holding.symbol.lowercase()})?",
-            confirmText = "yes",
-            dismissText = "no",
+            title = stringResource(R.string.finance_delete_title),
+            message = stringResource(R.string.finance_delete_question, holding.symbol.lowercase()),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
             onConfirm = {
                 FinanceRepository.removeHolding(context, holding.id)
                 holdingToDelete = null
@@ -198,7 +198,7 @@ private fun PortfolioSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Text(
-            text = "portfolio",
+            text = stringResource(R.string.widget_name_portfolio),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -214,12 +214,12 @@ private fun PortfolioSection(
                     verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
-                        text = "needs setup",
+                        text = stringResource(R.string.state_needs_setup),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MeenaTextWhite
                     )
                     Text(
-                        text = "add your holdings or connect a google sheet in settings. tap to configure.",
+                        text = stringResource(R.string.finance_portfolio_setup),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -228,7 +228,7 @@ private fun PortfolioSection(
 
             is WidgetState.Loading -> {
                 Text(
-                    text = "updating portfolio...",
+                    text = stringResource(R.string.finance_portfolio_loading),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -256,16 +256,16 @@ private fun PortfolioSection(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = if (showAmounts) "rm %.2f".format(totalValue) else "rm ·····",
+                            text = if (showAmounts) stringResource(R.string.finance_amount, "%.2f".format(totalValue)) else stringResource(R.string.finance_amount_hidden),
                             fontSize = 32.sp,
                             style = MaterialTheme.typography.displaySmall,
                             color = MeenaTextWhite
                         )
                         if (data.holdings.isNotEmpty()) {
                             val changeText = if (showAmounts) {
-                                "${if (isProfit) "+" else ""}rm %.2f (${if (isProfit) "+" else ""}%.1f%%)".format(totalChange, changePct)
+                                stringResource(R.string.finance_change, signedRm(totalChange), signedPercent(changePct))
                             } else {
-                                "${if (isProfit) "+" else ""}··.·· (${if (isProfit) "+" else ""}%.1f%%)".format(changePct)
+                                stringResource(R.string.finance_change, stringResource(R.string.finance_hidden_short), signedPercent(changePct))
                             }
                             Text(
                                 text = changeText,
@@ -322,9 +322,9 @@ private fun PortfolioSection(
                                         color = MeenaTextWhite
                                     )
                                     val sharesText = if (showAmounts) {
-                                        "${holding.shares.toInt()} shares · avg rm %.2f".format(holding.averageCost)
+                                        stringResource(R.string.finance_units_avg, java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString(), "%.2f".format(holding.averageCost))
                                     } else {
-                                        "··· shares · avg rm ··.··"
+                                        stringResource(R.string.finance_units_hidden)
                                     }
                                     Text(
                                         text = sharesText,
@@ -333,16 +333,16 @@ private fun PortfolioSection(
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
-                                    val valText = if (showAmounts) "rm %.2f".format(holding.currentValue) else "rm ··.··"
+                                    val valText = if (showAmounts) stringResource(R.string.finance_amount, "%.2f".format(holding.currentValue)) else stringResource(R.string.finance_amount_hidden)
                                     Text(
                                         text = valText,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MeenaTextWhite
                                     )
                                     val profitText = if (showAmounts) {
-                                        "${if (hProfit) "+" else ""}rm %.2f (%.1f%%)".format(holding.profitLoss, holding.profitLossPercent)
+                                        stringResource(R.string.finance_change, signedRm(holding.profitLoss), signedPercent(holding.profitLossPercent))
                                     } else {
-                                        "${if (hProfit) "+" else ""}··.·· (%.1f%%)".format(holding.profitLossPercent)
+                                        stringResource(R.string.finance_change, stringResource(R.string.finance_hidden_short), signedPercent(holding.profitLossPercent))
                                     }
                                     Text(
                                         text = profitText,
@@ -359,7 +359,7 @@ private fun PortfolioSection(
                 if (data.watchlist.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "watchlist",
+                        text = stringResource(R.string.finance_watchlist_title),
                         style = MaterialTheme.typography.titleSmall,
                         color = MeenaTextMuted
                     )
@@ -431,7 +431,7 @@ private fun PortfolioSection(
 
             is WidgetState.Empty -> {
                 Text(
-                    text = "no portfolio items",
+                    text = stringResource(R.string.finance_portfolio_empty),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -452,7 +452,7 @@ private fun ExchangeRatesSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Text(
-            text = "exchange rates",
+            text = stringResource(R.string.rates_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -466,12 +466,12 @@ private fun ExchangeRatesSection(
                         .metroClickable { onOpenSettings() }
                 ) {
                     Text(
-                        text = "needs setup",
+                        text = stringResource(R.string.state_needs_setup),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MeenaTextWhite
                     )
                     Text(
-                        text = "pick currencies in settings. tap to configure.",
+                        text = stringResource(R.string.rates_setup),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -480,7 +480,7 @@ private fun ExchangeRatesSection(
 
             is WidgetState.Loading -> {
                 Text(
-                    text = "fetching exchange rates...",
+                    text = stringResource(R.string.rates_loading),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -555,7 +555,7 @@ private fun ExchangeRatesSection(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "tap to retry",
+                        text = stringResource(R.string.tap_to_retry),
                         style = MaterialTheme.typography.labelSmall,
                         color = MeenaTextMuted
                     )
@@ -564,7 +564,7 @@ private fun ExchangeRatesSection(
 
             is WidgetState.Empty -> {
                 Text(
-                    text = "no exchange rates",
+                    text = stringResource(R.string.rates_empty),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -591,13 +591,13 @@ private fun SpendingSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "spending",
+                text = stringResource(R.string.widget_name_spending),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
             if (totalSpentToday > 0 && state is WidgetState.Ready) {
                 Text(
-                    text = "rm %.2f today".format(totalSpentToday),
+                    text = stringResource(R.string.spending_today, "%.2f".format(totalSpentToday)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MeenaTextWhite
                 )
@@ -614,12 +614,12 @@ private fun SpendingSection(
                     verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
-                        text = "turn on spending",
+                        text = stringResource(R.string.spending_turn_on),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MeenaTextWhite
                     )
                     Text(
-                        text = "tap to opt in and track payments from allowlisted banking apps.",
+                        text = stringResource(R.string.spending_opt_in),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -634,12 +634,12 @@ private fun SpendingSection(
                     verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     Text(
-                        text = "all quiet today",
+                        text = stringResource(R.string.spending_quiet),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MeenaTextWhite
                     )
                     Text(
-                        text = "banking notifications from allowlisted payment apps will appear here.",
+                        text = stringResource(R.string.spending_quiet_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -662,13 +662,13 @@ private fun SpendingSection(
                                 color = MeenaTextWhite
                             )
                             Text(
-                                text = "${tx.bank.lowercase()} · ${tx.formattedTime}",
+                                text = stringResource(R.string.settings_status_pair, tx.bank.lowercase(), tx.formattedTime),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
                         }
                         Text(
-                            text = "-rm %.2f".format(tx.amount),
+                            text = stringResource(R.string.spending_amount, "%.2f".format(tx.amount)),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -682,3 +682,14 @@ private fun SpendingSection(
 
 
 
+
+
+/** "+rm 1.20" or "-rm 1.20". */
+@androidx.compose.runtime.Composable
+private fun signedRm(value: Double): String =
+    stringResource(R.string.finance_signed_amount, if (value < 0) "-" else "+", "%.2f".format(kotlin.math.abs(value)))
+
+/** "+1.5%" or "-1.5%". */
+@androidx.compose.runtime.Composable
+private fun signedPercent(value: Double): String =
+    stringResource(R.string.finance_signed_percent, "%+.1f".format(value))

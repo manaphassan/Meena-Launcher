@@ -1,5 +1,7 @@
 package my.hana.meena.ui.hubs
 
+import androidx.compose.ui.res.stringResource
+import my.hana.meena.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,7 +44,7 @@ fun WeatherDetailSubPage(
             .background(MeenaSurface)
     ) {
         MetroAppBar(
-            title = "weather",
+            title = stringResource(R.string.weather_title),
             onNavigateBack = onNavigateBack
         )
 
@@ -85,25 +87,25 @@ fun WeatherDetailSubPage(
 
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
 
-                DetailRow("rain chance", "$rainProb%")
-                DetailRow("humidity", "${current.humidity}%")
-                DetailRow("wind", "${current.windSpeed.toInt()} km/h")
+                DetailRow(stringResource(R.string.weather_rain_chance), stringResource(R.string.percent_value, rainProb))
+                DetailRow(stringResource(R.string.weather_humidity), stringResource(R.string.percent_value, current.humidity))
+                DetailRow(stringResource(R.string.weather_wind), stringResource(R.string.weather_wind_kmh, current.windSpeed.toInt()))
                 if (aqiData != null) {
-                    DetailRow("air quality", "${aqiData.aqiValue} aqi")
+                    DetailRow(stringResource(R.string.air_quality_title), stringResource(R.string.weather_aqi, aqiData.aqiValue))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 val minutesAgo = ((System.currentTimeMillis() - weatherData.fetchedAt) / 60000L).coerceAtLeast(0)
-                val freshnessText = if (minutesAgo == 0L) "updated just now" else "updated ${minutesAgo}m ago"
+                val freshnessText = if (minutesAgo == 0L) stringResource(R.string.state_updated_just_now) else stringResource(R.string.state_updated_ago, minutesAgo.toInt())
                 Text(
-                    text = "$freshnessText - open-meteo",
+                    text = stringResource(R.string.weather_source, freshnessText),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
             } else {
                 Text(
-                    text = "no weather data available.",
+                    text = stringResource(R.string.weather_none),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MeenaTextMuted
                 )

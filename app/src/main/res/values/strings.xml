@@ -314,7 +314,7 @@
     <string name="health_options_title">health options</string>
 
     <!-- Apps Hub -->
-    <string name="apps_search_hint">search</string>
+    <string name="apps_search_hint">search apps</string>
     <string name="apps_empty">nothing called \"%1$s\"</string>
     <string name="apps_jump_title">jump to</string>
     <string name="apps_quick_actions">quick actions</string>
@@ -571,4 +571,50 @@
     <string name="notes_remove_title">remove note</string>
     <string name="notes_remove_question">remove this note? it can\'t be brought back.</string>
     <string name="notes_unreadable">this phone can\'t open your saved notes, so they\'re left as they are.</string>
+    <!-- money, apps, inbox, weather -->
+    <string name="finance_portfolio_setup">add your holdings or link a google sheet. tap to set up.</string>
+    <string name="finance_portfolio_loading">updating your portfolio</string>
+    <string name="finance_amount">rm %1$s</string>
+    <string name="finance_amount_hidden">rm ·····</string>
+    <string name="finance_hidden_short">··.··</string>
+    <string name="finance_change">%1$s (%2$s)</string>
+    <string name="finance_signed_amount">%1$srm %2$s</string>
+    <string name="finance_signed_percent">%1$s%%</string>
+    <string name="finance_units_avg">%1$s units · avg rm %2$s</string>
+    <string name="finance_units_hidden">··· units · avg rm ··.··</string>
+    <string name="finance_watchlist_title">watchlist</string>
+    <string name="finance_portfolio_empty">nothing in your portfolio yet</string>
+    <string name="rates_title">exchange rates</string>
+    <string name="rates_setup">pick your currencies. tap to set up.</string>
+    <string name="rates_loading">loading exchange rates</string>
+    <string name="rates_empty">no exchange rates right now</string>
+    <string name="spending_today">rm %1$s today</string>
+    <string name="spending_turn_on">turn on spending</string>
+    <string name="spending_opt_in">tap to track payments from the banking apps meena knows.</string>
+    <string name="spending_quiet">all quiet today</string>
+    <string name="spending_quiet_hint">payments from your banking apps show up here.</string>
+    <string name="spending_amount">-rm %1$s</string>
+    <string name="apps_no_match">no apps match \"%1$s\"</string>
+    <string name="apps_none">no apps yet</string>
+    <string name="apps_favourite_remove">remove from favourites</string>
+    <string name="apps_favourite_add">add to favourites</string>
+    <string name="apps_favourite_remove_hint">take its tile off today</string>
+    <string name="apps_favourite_add_hint">show its tile on today</string>
+    <string name="apps_app_info_hint">open its page in android settings</string>
+    <string name="apps_uninstall_hint">remove it from your phone</string>
+    <string name="apps_jump_to">jump to</string>
+    <string name="weather_title">weather</string>
+    <string name="weather_rain_chance">rain chance</string>
+    <string name="weather_humidity">humidity</string>
+    <string name="weather_wind">wind</string>
+    <string name="weather_wind_kmh">%1$d km/h</string>
+    <string name="weather_aqi">%1$d aqi</string>
+    <string name="weather_source">%1$s · open-meteo</string>
+    <string name="weather_none">no weather yet. check your connection, then come back.</string>
+    <string name="weather_load_failed">couldn\'t reach the weather. tap to retry.</string>
+    <string name="favourites_add">add a favourite</string>
+    <string name="favourites_move_left">move left</string>
+    <string name="favourites_move_right">move right</string>
+    <string name="inbox_alerts_prompt">want your alerts here? turn on notification access. meena reads them on your phone only.</string>
+    <string name="inbox_chats_prompt">want your chats here? turn on notification access. meena reads them on your phone only.</string>
 </resources>

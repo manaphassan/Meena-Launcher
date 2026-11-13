@@ -1,5 +1,7 @@
 package my.hana.meena.ui.components
 
+import androidx.compose.ui.res.stringResource
+import my.hana.meena.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -78,7 +80,7 @@ fun FavouriteTiles(
                 )
             }
             Text(
-                text = "add a favourite",
+                text = stringResource(R.string.favourites_add),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -216,7 +218,7 @@ fun FavouriteTiles(
                         Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
                             if (index > 0) {
                                 Text(
-                                    text = "move left",
+                                    text = stringResource(R.string.favourites_move_left),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MeenaTextWhite,
                                     modifier = Modifier
@@ -230,7 +232,7 @@ fun FavouriteTiles(
                             }
                             if (index < pinnedApps.size - 1) {
                                 Text(
-                                    text = "move right",
+                                    text = stringResource(R.string.favourites_move_right),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MeenaTextWhite,
                                     modifier = Modifier
@@ -243,7 +245,7 @@ fun FavouriteTiles(
                                 )
                             }
                             Text(
-                                text = "remove",
+                                text = stringResource(R.string.action_remove),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier

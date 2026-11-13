@@ -1,5 +1,7 @@
 ﻿package my.hana.meena.ui.components
 
+import androidx.compose.ui.res.stringResource
+import my.hana.meena.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -64,10 +66,10 @@ fun ConversationsWidget(
 
     if (showNotificationDisclosure) {
         MetroDialog(
-            title = "notification access",
-            message = "meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.\n\ndo you want to open notification access settings?",
-            confirmText = "yes",
-            dismissText = "no",
+            title = stringResource(R.string.notif_access_title),
+            message = stringResource(R.string.notif_access_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
             onConfirm = {
                 showNotificationDisclosure = false
                 NotificationRepository.openNotificationSettings(context)
@@ -92,13 +94,13 @@ fun ConversationsWidget(
     }
 
     CollapsibleWidget(
-        title = "chats",
+        title = stringResource(R.string.widget_name_chats),
         collapsedSummary = {
             Text(
                 text = when {
-                    !isPermissionGranted -> "needs a quick okay"
-                    conversations.isNotEmpty() -> "${conversations.size} new"
-                    else -> "all quiet"
+                    !isPermissionGranted -> stringResource(R.string.state_needs_quick_okay)
+                    conversations.isNotEmpty() -> stringResource(R.string.state_new_count, conversations.size)
+                    else -> stringResource(R.string.state_all_quiet)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = if (!isPermissionGranted) MeenaTextMuted else MaterialTheme.colorScheme.primary
@@ -112,7 +114,7 @@ fun ConversationsWidget(
         ) {
             if (!isPermissionGranted) {
                 Text(
-                    text = "want your chats here? turn on notification access. meena reads them on your phone only.",
+                    text = stringResource(R.string.inbox_chats_prompt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted,
                     modifier = Modifier

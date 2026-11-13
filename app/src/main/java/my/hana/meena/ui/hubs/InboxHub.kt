@@ -1,5 +1,6 @@
 ﻿package my.hana.meena.ui.hubs
 
+import my.hana.meena.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -73,10 +74,10 @@ fun InboxHub(
 
     if (showNotificationDisclosure) {
         MetroDialog(
-            title = "notification access",
-            message = "meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.\n\ndo you want to open notification access settings?",
-            confirmText = "yes",
-            dismissText = "no",
+            title = stringResource(R.string.notif_access_title),
+            message = stringResource(R.string.notif_access_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
             onConfirm = {
                 showNotificationDisclosure = false
                 NotificationRepository.openNotificationSettings(context)
@@ -113,13 +114,13 @@ fun InboxHub(
                 "widget-notifications" -> {
                     // Alerts stream
                     CollapsibleWidget(
-                        title = "alerts",
+                        title = stringResource(R.string.widget_name_alerts),
                         collapsedSummary = {
                             Text(
                                 text = when {
-                                    !isNotificationAccessGranted -> "needs a quick okay"
-                                    alerts.isNotEmpty() -> "${alerts.size} new"
-                                    else -> "all quiet"
+                                    !isNotificationAccessGranted -> stringResource(R.string.state_needs_quick_okay)
+                                    alerts.isNotEmpty() -> stringResource(R.string.state_new_count, alerts.size)
+                                    else -> stringResource(R.string.state_all_quiet)
                                 },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (!isNotificationAccessGranted) MeenaTextMuted else MaterialTheme.colorScheme.primary
@@ -132,7 +133,7 @@ fun InboxHub(
                         ) {
                             if (!isNotificationAccessGranted) {
                                 Text(
-                                    text = "want your alerts here? turn on notification access. meena reads them on your phone only.",
+                                    text = stringResource(R.string.inbox_alerts_prompt),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MeenaTextMuted,
                                     modifier = Modifier
@@ -176,7 +177,7 @@ fun InboxHub(
                                     horizontalArrangement = Arrangement.End
                                 ) {
                                     Text(
-                                        text = "clear all",
+                                        text = stringResource(R.string.action_clear_all),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted,
                                         modifier = Modifier
