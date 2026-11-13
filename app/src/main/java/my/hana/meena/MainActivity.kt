@@ -443,7 +443,7 @@ fun MeenaHomeScreen(
             ) {
                 // Layer 1: Ultra-wide Brand Header ("meena") - slow background parallax canvas layer
                 Text(
-                    text = "meena",
+                    text = my.hana.meena.data.model.HomeTitle.display(userSettings.homeTitle),
                     style = MaterialTheme.typography.displayLarge,
                     fontSize = 44.sp,
                     fontWeight = FontWeight.Light,

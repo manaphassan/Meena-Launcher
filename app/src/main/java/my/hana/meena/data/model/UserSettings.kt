@@ -35,6 +35,8 @@ data class MeenaUserSettings(
     val liveTiles: Boolean = true,
     /** Live tiles may show who a chat is from (never the message itself). */
     val liveTileNames: Boolean = true,
+    /** Title at the top of the home pages; empty hides it. See [HomeTitle]. */
+    val homeTitle: String = HomeTitle.DEFAULT,
     val pinnedAppIds: List<String> = emptyList(),
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),

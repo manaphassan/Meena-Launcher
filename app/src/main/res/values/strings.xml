@@ -228,7 +228,7 @@
     <string name="settings_privacy_title">privacy</string>
     <string name="settings_backup_title">backup and restore</string>
     <string name="settings_backup_status">save or bring back your settings</string>
-    <string name="settings_about_title">about meena ui</string>
+    <string name="settings_about_title">about meena</string>
     <string name="settings_about_status">version %1$s</string>
     <string name="news_title">news</string>
     <string name="news_from">from %1$s</string>
@@ -422,7 +422,6 @@
     <string name="finance_sheet_save">save and load</string>
     <string name="finance_sheet_unlink">unlink</string>
     <string name="finance_guide_title">how to set up the sheet</string>
-    <string name="finance_guide_body">1. make a sheet with these columns:\na: symbol, like klse:bursa, btc or aapl\nb: price, =googlefinance(a2, \"price\")\nc: change, =googlefinance(a2, \"change\")\nd: change in percent, =googlefinance(a2, \"changepct\")\ne: name\n2. share it so anyone with the link can view\n3. paste the link above.</string>
     <string name="finance_holdings_title">your holdings</string>
     <string name="finance_holdings_intro">add the stocks and crypto you own. they\'re stored encrypted on your phone.</string>
     <string name="finance_hide_amounts_hint">hide totals and units on your home pages</string>
@@ -471,5 +470,29 @@
     <plurals name="calendar_days_count">
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="solat_zone_title">prayer zone</string>
+    <string name="finance_guide_status">5 columns and a share link</string>
+    <string name="finance_guide_page">sheet setup</string>
+    <string name="finance_guide_step_1">1. make a sheet with these five columns</string>
+    <string name="finance_guide_col_a">a · symbol, like klse:bursa, btc or aapl</string>
+    <string name="finance_guide_col_b">b · price: =googlefinance(a2, \"price\")</string>
+    <string name="finance_guide_col_c">c · change: =googlefinance(a2, \"change\")</string>
+    <string name="finance_guide_col_d">d · change in percent: =googlefinance(a2, \"changepct\")</string>
+    <string name="finance_guide_col_e">e · name</string>
+    <string name="finance_guide_step_2">2. share it so anyone with the link can view</string>
+    <string name="finance_guide_step_3">3. copy the link and paste it on the money page</string>
+    <string name="home_title_title">home title</string>
+    <string name="home_title_intro">shown at the top of your home pages. leave it empty to hide it.</string>
+    <string name="home_title_hidden">hidden</string>
+    <string name="home_title_reset">back to meena</string>
+    <string name="home_title_reset_hint">the name it came with</string>
+    <plurals name="datetime_hijri_earlier">
+        <item quantity="one">%1$d day earlier</item>
+        <item quantity="other">%1$d days earlier</item>
+    </plurals>
+    <plurals name="datetime_hijri_later">
+        <item quantity="one">%1$d day later</item>
+        <item quantity="other">%1$d days later</item>
     </plurals>
 </resources>

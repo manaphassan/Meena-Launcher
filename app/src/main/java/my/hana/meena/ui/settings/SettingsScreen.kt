@@ -519,6 +519,14 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
             onClick = { open("look:livetiles") }
         )
     }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.home_title_title),
+            status = my.hana.meena.data.model.HomeTitle.display(settingsState.homeTitle)
+                .ifEmpty { stringResource(R.string.home_title_hidden) },
+            onClick = { open("look:hometitle") }
+        )
+    }
     settingsGroupLabel(R.string.settings_group_feel)
     item {
         val timeMode = stringResource(if (settingsState.is24HourFormat) R.string.datetime_status_24h else R.string.datetime_status_12h)
@@ -684,44 +692,21 @@ private fun SubPageContainer(
             }
 
             item {
-                Column {
-                    Text(stringResource(R.string.widget_page_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
-                    val hubs = listOf("today", "inbox", "news", "money")
-                    val hubLabels = mapOf(
+                SettingSegmentedRow(
+                    title = stringResource(R.string.widget_page_title),
+                    options = listOf(
                         "today" to stringResource(R.string.settings_page_today),
                         "inbox" to stringResource(R.string.settings_page_inbox),
                         "news" to stringResource(R.string.settings_page_news),
                         "money" to stringResource(R.string.settings_page_money)
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                    ) {
-                        hubs.forEach { hub ->
-                            val isSelected = config.hubId == hub
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .heightIn(min = 48.dp)
-                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                    .metroClickable {
-                                        val newMap = settingsState.widgetConfigs.toMutableMap()
-                                        newMap[widgetId] = config.copy(hubId = hub)
-                                        onUpdate { it.copy(widgetConfigs = newMap) }
-                                    }
-                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = hubLabels.getValue(hub),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                                )
-                            }
-                        }
+                    ),
+                    selectedKey = config.hubId,
+                    onSelectKey = { hub ->
+                        val newMap = settingsState.widgetConfigs.toMutableMap()
+                        newMap[widgetId] = config.copy(hubId = hub)
+                        onUpdate { it.copy(widgetConfigs = newMap) }
                     }
-                }
+                )
             }
 
             item {
@@ -1004,8 +989,44 @@ private fun SubPageContainer(
             item {
                 FinanceAccountSettings(
                     settingsState = settingsState,
-                    onUpdate = onUpdate
+                    onUpdate = onUpdate,
+                    onOpenGuide = { onOpenSubPage("account:sheetguide") }
                 )
+            }
+        }
+
+        subPageId == "account:sheetguide" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_money_title),
+                    pageTitle = stringResource(R.string.finance_guide_page),
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(stringResource(R.string.finance_guide_step_1), style = MaterialTheme.typography.bodyLarge, color = MeenaTextWhite)
+            }
+            item {
+                Column(
+                    modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m),
+                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                ) {
+                    listOf(
+                        R.string.finance_guide_col_a, R.string.finance_guide_col_b, R.string.finance_guide_col_c,
+                        R.string.finance_guide_col_d, R.string.finance_guide_col_e
+                    ).forEach { line ->
+                        Text(stringResource(line), style = MaterialTheme.typography.bodyMedium, color = MeenaTextMuted)
+                    }
+                }
+            }
+            item {
+                Text(stringResource(R.string.finance_guide_step_2), style = MaterialTheme.typography.bodyLarge, color = MeenaTextWhite)
+            }
+            item {
+                Text(stringResource(R.string.finance_guide_step_3), style = MaterialTheme.typography.bodyLarge, color = MeenaTextWhite)
+            }
+            item {
+                Text(stringResource(R.string.finance_delay_notice), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
             }
         }
 
@@ -1253,6 +1274,46 @@ private fun SubPageContainer(
                     settingsState = settingsState,
                     onUpdate = onUpdate
                 )
+            }
+        }
+
+        subPageId == "look:hometitle" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.home_title_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(stringResource(R.string.home_title_intro), style = MaterialTheme.typography.bodyMedium, color = MeenaTextMuted)
+            }
+            item {
+                OutlinedTextField(
+                    value = settingsState.homeTitle,
+                    onValueChange = { typed -> onUpdate { it.copy(homeTitle = my.hana.meena.data.model.HomeTitle.clean(typed)) } },
+                    placeholder = { Text(stringResource(R.string.home_title_hidden), color = MeenaTextMuted) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(0.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MeenaBlack,
+                        unfocusedContainerColor = MeenaBlack,
+                        focusedTextColor = MeenaTextWhite,
+                        unfocusedTextColor = MeenaTextWhite,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MeenaBorder
+                    )
+                )
+            }
+            if (settingsState.homeTitle != my.hana.meena.data.model.HomeTitle.DEFAULT) {
+                item {
+                    SettingLinkRow(
+                        title = stringResource(R.string.home_title_reset),
+                        status = stringResource(R.string.home_title_reset_hint),
+                        onClick = { onUpdate { it.copy(homeTitle = my.hana.meena.data.model.HomeTitle.DEFAULT) } }
+                    )
+                }
             }
         }
 
@@ -1651,7 +1712,8 @@ private fun IconPackSettings(
 @Composable
 private fun FinanceAccountSettings(
     settingsState: MeenaUserSettings,
-    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit
+    onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit,
+    onOpenGuide: () -> Unit
 ) {
     val context = LocalContext.current
     val financeState by FinanceRepository.state.collectAsState()
@@ -1742,29 +1804,16 @@ private fun FinanceAccountSettings(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MeenaSurface)
-                .padding(my.hana.meena.theme.MeenaSpacing.m),
-            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-        ) {
-            Text(
-                text = stringResource(R.string.finance_guide_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = stringResource(R.string.finance_guide_body),
-                style = MaterialTheme.typography.bodySmall,
-                color = MeenaTextMuted
-            )
-            Text(
-                text = stringResource(R.string.finance_delay_notice),
-                style = MaterialTheme.typography.labelSmall,
-                color = MeenaAmber
-            )
-        }
+        Text(
+            text = stringResource(R.string.finance_delay_notice),
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+        SettingLinkRow(
+            title = stringResource(R.string.finance_guide_title),
+            status = stringResource(R.string.finance_guide_status),
+            onClick = onOpenGuide
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -2112,33 +2161,13 @@ private fun CalendarAccountSettings(
                 Text(stringResource(R.string.calendar_turn_on), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
         } else {
-            Column {
-                Text(stringResource(R.string.calendar_ahead_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-                Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    listOf(1, 3, 7, 14).map { it to androidx.compose.ui.res.pluralStringResource(R.plurals.calendar_days_count, it, it) }.forEach { (days, label) ->
-                        val isSelected = settingsState.calendarDaysAhead == days
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 48.dp)
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .metroClickable { onUpdate { it.copy(calendarDaysAhead = days) } }
-                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                            )
-                        }
-                    }
-                }
-            }
+            val dayChoices = listOf(1, 3, 7, 14)
+            SettingSegmentedRow(
+                title = stringResource(R.string.calendar_ahead_title),
+                options = dayChoices.map { it.toString() to androidx.compose.ui.res.pluralStringResource(R.plurals.calendar_days_count, it, it) },
+                selectedKey = settingsState.calendarDaysAhead.toString(),
+                onSelectKey = { key -> key.toIntOrNull()?.let { days -> onUpdate { it.copy(calendarDaysAhead = days) } } }
+            )
 
             SettingToggleRow(
                 title = stringResource(R.string.calendar_all_day_title),
@@ -2448,26 +2477,12 @@ private fun SolatZonePicker(
         "SWK01" to "swk01 · kuching, bau, lundu, sematan"
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-        zones.forEach { (code, label) ->
-            val isSelected = currentZone.equals(code, ignoreCase = true)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                    .metroClickable { onSelectZone(code) }
-                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = label.lowercase(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                )
-            }
-        }
-    }
+    SettingSegmentedRow(
+        title = stringResource(R.string.solat_zone_title),
+        options = zones,
+        selectedKey = zones.firstOrNull { it.first.equals(currentZone, ignoreCase = true) }?.first ?: currentZone,
+        onSelectKey = onSelectZone
+    )
 }
 
 @Composable
@@ -2496,44 +2511,25 @@ private fun DateTimeSettings(
             onCheckedChange = { onUpdate { it.copy(showClockSeconds = it.showClockSeconds.not()) } }
         )
 
-        Column {
-            Text(stringResource(R.string.datetime_pattern_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(stringResource(R.string.datetime_pattern_hint), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            val patterns = listOf(
-                MeenaUserSettings.DEFAULT_DATE_PATTERN,
-                "EEE, d MMM yyyy",
-                "d MMMM yyyy",
-                "yyyy-MM-dd",
-                "d MMM"
-            )
-            val today = java.util.Date()
-            Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                patterns.forEach { pattern ->
-                    val isSelected = settingsState.dateFormatPattern == pattern
-                    val preview = try {
-                        java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(today).lowercase()
-                    } catch (_: Exception) {
-                        pattern
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                            .metroClickable { onUpdate { it.copy(dateFormatPattern = pattern) } }
-                            .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m)
-                    ) {
-                        Text(
-                            text = preview,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MeenaTextWhite
-                        )
-                    }
-                }
-            }
-        }
+        val patterns = listOf(
+            MeenaUserSettings.DEFAULT_DATE_PATTERN,
+            "EEE, d MMM yyyy",
+            "d MMMM yyyy",
+            "yyyy-MM-dd",
+            "d MMM"
+        )
+        val today = remember { java.util.Date() }
+        SettingSegmentedRow(
+            title = stringResource(R.string.datetime_pattern_title),
+            subtitle = stringResource(R.string.datetime_pattern_hint),
+            options = patterns.map { pattern ->
+                pattern to (runCatching {
+                    java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(today).lowercase()
+                }.getOrNull() ?: pattern)
+            },
+            selectedKey = settingsState.dateFormatPattern,
+            onSelectKey = { pattern -> onUpdate { it.copy(dateFormatPattern = pattern) } }
+        )
 
         SettingToggleRow(
             title = stringResource(R.string.datetime_hijri_title),
@@ -2543,35 +2539,19 @@ private fun DateTimeSettings(
         )
 
         if (settingsState.showHijriDate) {
-            Column {
-                Text(stringResource(R.string.datetime_hijri_offset_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(stringResource(R.string.datetime_hijri_offset_hint), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    listOf(-2 to "-2", -1 to "-1", 0 to stringResource(R.string.datetime_hijri_offset_none), 1 to "+1", 2 to "+2").forEach { (offset, label) ->
-                        val isSelected = settingsState.hijriDayOffset == offset
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 48.dp)
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary else MeenaSurface)
-                                .metroClickable { onUpdate { it.copy(hijriDayOffset = offset) } }
-                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) MeenaTextWhite else MeenaTextMuted
-                            )
-                        }
+            SettingSegmentedRow(
+                title = stringResource(R.string.datetime_hijri_offset_title),
+                subtitle = stringResource(R.string.datetime_hijri_offset_hint),
+                options = (-2..2).map { offset ->
+                    offset.toString() to when {
+                        offset < 0 -> androidx.compose.ui.res.pluralStringResource(R.plurals.datetime_hijri_earlier, -offset, -offset)
+                        offset > 0 -> androidx.compose.ui.res.pluralStringResource(R.plurals.datetime_hijri_later, offset, offset)
+                        else -> stringResource(R.string.datetime_hijri_offset_none)
                     }
-                }
-            }
+                },
+                selectedKey = settingsState.hijriDayOffset.toString(),
+                onSelectKey = { key -> key.toIntOrNull()?.let { offset -> onUpdate { it.copy(hijriDayOffset = offset) } } }
+            )
         }
     }
 }
