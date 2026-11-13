@@ -88,7 +88,6 @@ import my.hana.meena.ui.components.MetroToggle
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.theme.Meena10AccentSwatches
 import my.hana.meena.theme.isAccessibleContrast
-import my.hana.meena.theme.calculateContrastRatio
 import my.hana.meena.theme.MeenaLossRed
 import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaAmber
@@ -330,26 +329,26 @@ fun normalizeSettingsTab(tab: String): String = when (tab) {
 }
 
 /** Widget id to the name used on its row and sub-page. */
-internal val SETTINGS_WIDGET_TITLES = linkedMapOf(
-    "widget-clock-weather" to "clock",
-    "widget-weather-forecast" to "forecast and air",
-    "widget-tasks" to "your week",
-    "widget-solat" to "prayer times",
-    "widget-favourites" to "favourites",
-    "widget-frequent-apps" to "frequent apps",
-    "widget-notes" to "notes",
-    "widget-calendar-month" to "month",
-    "widget-health-telemetry" to "health",
-    "widget-bluetooth-devices" to "connected devices",
-    "widget-device-telemetry" to "phone",
-    "widget-map-radar" to "nearby",
-    "widget-wikipedia" to "wikipedia",
-    "widget-conversations" to "chats",
-    "widget-notifications" to "alerts",
-    "widget-news-feed" to "news feed",
-    "widget-finance-charts" to "portfolio",
-    "widget-exchange-rates" to "rates",
-    "widget-spending-summary" to "spending"
+internal val SETTINGS_WIDGET_TITLES = linkedMapOf<String, Int>(
+    "widget-clock-weather" to R.string.widget_name_clock,
+    "widget-weather-forecast" to R.string.widget_name_forecast,
+    "widget-tasks" to R.string.widget_name_week,
+    "widget-solat" to R.string.widget_name_solat,
+    "widget-favourites" to R.string.widget_name_favourites,
+    "widget-frequent-apps" to R.string.widget_name_frequent,
+    "widget-notes" to R.string.widget_name_notes,
+    "widget-calendar-month" to R.string.widget_name_month,
+    "widget-health-telemetry" to R.string.widget_name_health,
+    "widget-bluetooth-devices" to R.string.widget_name_devices,
+    "widget-device-telemetry" to R.string.widget_name_phone,
+    "widget-map-radar" to R.string.widget_name_nearby,
+    "widget-wikipedia" to R.string.widget_name_wikipedia,
+    "widget-conversations" to R.string.widget_name_chats,
+    "widget-notifications" to R.string.widget_name_alerts,
+    "widget-news-feed" to R.string.widget_name_news,
+    "widget-finance-charts" to R.string.widget_name_portfolio,
+    "widget-exchange-rates" to R.string.widget_name_rates,
+    "widget-spending-summary" to R.string.widget_name_spending
 )
 
 /**
@@ -419,7 +418,7 @@ private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onSortStory
             item(key = id) {
                 val isOn = settingsState.widgetConfigs[id]?.isEnabled != false
                 SettingsPivotRow(
-                    title = SETTINGS_WIDGET_TITLES.getValue(id),
+                    title = stringResource(SETTINGS_WIDGET_TITLES.getValue(id)),
                     status = stringResource(if (isOn) R.string.settings_widget_on else R.string.settings_widget_off),
                     isDimmed = !isOn,
                     onClick = { open("widget:$id") }
@@ -485,7 +484,12 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
     item {
         SettingsPivotRow(
             title = stringResource(R.string.settings_theme_title),
-            status = "${settingsState.baseTheme} · ${settingsState.accentHex.lowercase()}",
+            status = stringResource(
+                R.string.settings_status_pair,
+                stringResource(if (settingsState.baseTheme == "light") R.string.theme_light else R.string.theme_dark),
+                Meena10AccentSwatches.find { it.hex.equals(settingsState.accentHex, ignoreCase = true) }?.name
+                    ?: settingsState.accentHex.lowercase()
+            ),
             onClick = { open("look:theme") }
         )
     }
@@ -517,11 +521,11 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
     }
     settingsGroupLabel(R.string.settings_group_feel)
     item {
-        val timeMode = if (settingsState.is24HourFormat) "24-hour" else "12-hour"
-        val hijriMode = if (settingsState.showHijriDate) "hijri on" else "hijri off"
+        val timeMode = stringResource(if (settingsState.is24HourFormat) R.string.datetime_status_24h else R.string.datetime_status_12h)
+        val hijriMode = stringResource(if (settingsState.showHijriDate) R.string.datetime_status_hijri_on else R.string.datetime_status_hijri_off)
         SettingsPivotRow(
             title = stringResource(R.string.settings_datetime_title),
-            status = "$timeMode · $hijriMode",
+            status = stringResource(R.string.settings_status_pair, timeMode, hijriMode),
             onClick = { open("look:datetime") }
         )
     }
@@ -619,10 +623,10 @@ private fun SubPageContainer(
 
     if (showNotificationDisclosure) {
         MetroDialog(
-            title = "notification access",
-            message = "meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.\n\ndo you want to open notification access settings?",
-            confirmText = "yes",
-            dismissText = "no",
+            title = stringResource(R.string.notif_access_title),
+            message = stringResource(R.string.notif_access_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
             onConfirm = {
                 showNotificationDisclosure = false
                 NotificationRepository.openNotificationSettings(context)
@@ -644,8 +648,8 @@ private fun SubPageContainer(
 
             item {
                 MetroSubPageHeader(
-                    parentTitle = "pages",
-                    pageTitle = SETTINGS_WIDGET_TITLES[widgetId] ?: widgetId.replace("widget-", "").replace("-", " "),
+                    parentTitle = stringResource(R.string.settings_tab_pages),
+                    pageTitle = SETTINGS_WIDGET_TITLES[widgetId]?.let { stringResource(it) } ?: widgetId.replace("widget-", "").replace("-", " "),
                     onBack = onBack
                 )
             }
@@ -653,8 +657,8 @@ private fun SubPageContainer(
             // Universal Widget Controls
             item {
                 SettingToggleRow(
-                    title = "enable widget",
-                    subtitle = "show this widget on your home pages",
+                    title = stringResource(R.string.widget_show_title),
+                    subtitle = stringResource(R.string.widget_show_hint),
                     checked = config.isEnabled,
                     onCheckedChange = { checked ->
                         val newMap = settingsState.widgetConfigs.toMutableMap()
@@ -666,9 +670,15 @@ private fun SubPageContainer(
 
             item {
                 Column {
-                    Text("destination page", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                    Text(stringResource(R.string.widget_page_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                     Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                     val hubs = listOf("today", "inbox", "news", "money")
+                    val hubLabels = mapOf(
+                        "today" to stringResource(R.string.settings_page_today),
+                        "inbox" to stringResource(R.string.settings_page_inbox),
+                        "news" to stringResource(R.string.settings_page_news),
+                        "money" to stringResource(R.string.settings_page_money)
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
@@ -689,7 +699,7 @@ private fun SubPageContainer(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = hub,
+                                    text = hubLabels.getValue(hub),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isSelected) MeenaTextWhite else MeenaTextMuted
                                 )
@@ -701,8 +711,8 @@ private fun SubPageContainer(
 
             item {
                 SettingToggleRow(
-                    title = "collapse by default",
-                    subtitle = "show compact single line summary until tapped",
+                    title = stringResource(R.string.widget_folded_title),
+                    subtitle = stringResource(R.string.widget_folded_hint),
                     checked = config.isCollapsed,
                     onCheckedChange = { collapsed ->
                         val newMap = settingsState.widgetConfigs.toMutableMap()
@@ -728,7 +738,7 @@ private fun SubPageContainer(
                 "widget-clock-weather" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("clock & weather options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
                         SettingsPivotRow(
@@ -739,9 +749,9 @@ private fun SubPageContainer(
                     }
                     item {
                         SettingSegmentedRow(
-                            title = "temperature scale",
-                            subtitle = "used for the weather and the forecast",
-                            options = listOf("c" to "celsius (°c)", "f" to "fahrenheit (°f)"),
+                            title = stringResource(R.string.widget_temp_title),
+                            subtitle = stringResource(R.string.widget_temp_hint),
+                            options = listOf("c" to stringResource(R.string.temp_celsius), "f" to stringResource(R.string.temp_fahrenheit)),
                             selectedKey = custom("temp_unit", "c"),
                             onSelectKey = { setCustom("temp_unit", it) }
                         )
@@ -819,7 +829,7 @@ private fun SubPageContainer(
                 "widget-spending-summary" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("spending tracker options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
                         Button(
@@ -828,7 +838,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -836,7 +846,7 @@ private fun SubPageContainer(
                 "widget-notifications" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("alerts & action center options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
                         Button(
@@ -845,7 +855,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -853,7 +863,7 @@ private fun SubPageContainer(
                 "widget-conversations" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("conversations options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
                         Button(
@@ -862,7 +872,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open notification listener settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -889,7 +899,7 @@ private fun SubPageContainer(
                 "widget-health-telemetry" -> {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("health options", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
                         SettingsPivotRow(
@@ -910,7 +920,7 @@ private fun SubPageContainer(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(0.dp)
                         ) {
-                            Text("open health connect settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                            Text(stringResource(R.string.health_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                         }
                     }
                 }
@@ -921,14 +931,14 @@ private fun SubPageContainer(
         subPageId == "account:solat" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "connections",
-                    pageTitle = "prayer times",
+                    parentTitle = stringResource(R.string.settings_tab_connections),
+                    pageTitle = stringResource(R.string.settings_solat_title),
                     onBack = onBack
                 )
             }
             item {
                 Text(
-                    text = "select your official jakim prayer zone in malaysia, or leave empty to auto-detect by coarse gps.",
+                    text = stringResource(R.string.solat_page_intro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MeenaTextMuted
                 )
@@ -944,14 +954,14 @@ private fun SubPageContainer(
         subPageId == "account:notifications" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "connections",
-                    pageTitle = "notifications",
+                    parentTitle = stringResource(R.string.settings_tab_connections),
+                    pageTitle = stringResource(R.string.settings_notifications_title),
                     onBack = onBack
                 )
             }
             item {
                 Text(
-                    text = "meena needs notification listener access to show alerts, conversations, and bank spending tracking. no notification text leaves your device.",
+                    text = stringResource(R.string.notif_page_intro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MeenaTextMuted
                 )
@@ -963,7 +973,7 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("open notification access settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                    Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
         }
@@ -971,8 +981,8 @@ private fun SubPageContainer(
         subPageId == "account:finance" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "connections",
-                    pageTitle = "money",
+                    parentTitle = stringResource(R.string.settings_tab_connections),
+                    pageTitle = stringResource(R.string.settings_money_title),
                     onBack = onBack
                 )
             }
@@ -987,8 +997,8 @@ private fun SubPageContainer(
         subPageId == "account:news" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "connections",
-                    pageTitle = "news feeds",
+                    parentTitle = stringResource(R.string.settings_tab_connections),
+                    pageTitle = stringResource(R.string.settings_news_title),
                     onBack = onBack
                 )
             }
@@ -1008,8 +1018,8 @@ private fun SubPageContainer(
         subPageId == "account:health" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "connections",
-                    pageTitle = "health",
+                    parentTitle = stringResource(R.string.settings_tab_connections),
+                    pageTitle = stringResource(R.string.settings_health_title),
                     onBack = onBack
                 )
             }
@@ -1024,8 +1034,8 @@ private fun SubPageContainer(
         subPageId == "account:calendar" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "connections",
-                    pageTitle = "calendar",
+                    parentTitle = stringResource(R.string.settings_tab_connections),
+                    pageTitle = stringResource(R.string.settings_calendar_title),
                     onBack = onBack
                 )
             }
@@ -1041,8 +1051,8 @@ private fun SubPageContainer(
         subPageId == "look:datetime" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "personalize",
-                    pageTitle = "date and time",
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.settings_datetime_title),
                     onBack = onBack
                 )
             }
@@ -1057,18 +1067,17 @@ private fun SubPageContainer(
         subPageId == "look:theme" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "personalize",
-                    pageTitle = "theme and accent",
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.settings_theme_title),
                     onBack = onBack
                 )
             }
             item {
                 SettingSegmentedRow(
-                    title = "base theme",
-                    subtitle = "choose surface background contrast",
+                    title = stringResource(R.string.theme_background_title),
                     options = listOf(
-                        "dark" to "dark (pure black)",
-                        "light" to "light (high key)"
+                        "dark" to stringResource(R.string.theme_dark),
+                        "light" to stringResource(R.string.theme_light)
                     ),
                     selectedKey = settingsState.baseTheme,
                     onSelectKey = { theme -> onUpdate { it.copy(baseTheme = theme) } }
@@ -1078,7 +1087,7 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
                 Text(
-                    text = "lumia accent color",
+                    text = stringResource(R.string.theme_accent_title),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MeenaTextWhite
                 )
@@ -1091,13 +1100,16 @@ private fun SubPageContainer(
                 val currentAccentColor = runCatching {
                     Color(settingsState.accentHex.toColorInt())
                 }.getOrDefault(MeenaBlue)
-                val currentRatio = calculateContrastRatio(currentAccentColor, currentBg)
                 val isAccessible = isAccessibleContrast(currentAccentColor, currentBg)
                 val activeSwatch = Meena10AccentSwatches.find { it.hex.equals(settingsState.accentHex, ignoreCase = true) }
                 val swatchName = activeSwatch?.name ?: settingsState.accentHex.lowercase()
 
                 Text(
-                    text = "$swatchName · ${String.format(java.util.Locale.US, "%.1f", currentRatio)}:1 contrast against ${settingsState.baseTheme} · ${if (isAccessible) "wcag aa compliant" else "low contrast"}",
+                    text = stringResource(
+                        if (isAccessible) R.string.theme_accent_readable else R.string.theme_accent_hard,
+                        swatchName,
+                        stringResource(if (settingsState.baseTheme == "light") R.string.theme_light else R.string.theme_dark)
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
                 )
@@ -1132,8 +1144,8 @@ private fun SubPageContainer(
         subPageId == "look:typography" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "personalize",
-                    pageTitle = "text size",
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.settings_text_title),
                     onBack = onBack
                 )
             }
@@ -1142,7 +1154,7 @@ private fun SubPageContainer(
             item {
                 val textSizes = (85..120 step 5).toList()
                 SettingSegmentedRow(
-                    title = stringResource(R.string.settings_text_title),
+                    title = stringResource(R.string.text_size_row),
                     options = textSizes.map { it.toString() to stringResource(R.string.settings_text_status, it) },
                     selectedKey = settingsState.fontScalePercent.toString(),
                     onSelectKey = { key ->
@@ -1156,53 +1168,53 @@ private fun SubPageContainer(
         subPageId == "look:ergonomics" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "personalize",
-                    pageTitle = "hand and touch",
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.settings_hand_title),
                     onBack = onBack
                 )
             }
             item {
                 SettingToggleRow(
-                    title = "left-handed mode",
-                    subtitle = "mirror navigation hub and swipe gestures",
+                    title = stringResource(R.string.hand_left_title),
+                    subtitle = stringResource(R.string.hand_left_hint),
                     checked = settingsState.isLeftHanded,
                     onCheckedChange = { onUpdate { it.copy(isLeftHanded = it.isLeftHanded.not()) } }
                 )
             }
             item {
                 SettingToggleRow(
-                    title = "reduced motion",
-                    subtitle = "subdued animations for transitions and turnstile",
+                    title = stringResource(R.string.motion_title),
+                    subtitle = stringResource(R.string.motion_hint),
                     checked = settingsState.isReducedMotion,
                     onCheckedChange = { onUpdate { it.copy(isReducedMotion = it.isReducedMotion.not()) } }
                 )
             }
             item {
                 SettingToggleRow(
-                    title = "haptic feedback",
-                    subtitle = "tactile motor vibration on tap",
+                    title = stringResource(R.string.haptics_title),
+                    subtitle = stringResource(R.string.haptics_hint),
                     checked = settingsState.isHapticEnabled,
                     onCheckedChange = { onUpdate { it.copy(isHapticEnabled = it.isHapticEnabled.not()) } }
                 )
             }
             item {
                 SettingToggleRow(
-                    title = "hide status bar",
-                    subtitle = "hide top battery and clock for a clean screen",
+                    title = stringResource(R.string.status_bar_title),
+                    subtitle = stringResource(R.string.status_bar_hint),
                     checked = settingsState.isStatusBarHidden,
                     onCheckedChange = { onUpdate { it.copy(isStatusBarHidden = it.isStatusBarHidden.not()) } }
                 )
             }
             item {
                 SettingSegmentedRow(
-                    title = "default startup page",
-                    subtitle = "initial page shown on launch and back gesture",
+                    title = stringResource(R.string.start_page_title),
+                    subtitle = stringResource(R.string.start_page_hint),
                     options = listOf(
-                        "0" to "today",
-                        "1" to "inbox",
-                        "2" to "news",
-                        "3" to "money",
-                        "4" to "apps"
+                        "0" to stringResource(R.string.settings_page_today),
+                        "1" to stringResource(R.string.settings_page_inbox),
+                        "2" to stringResource(R.string.settings_page_news),
+                        "3" to stringResource(R.string.settings_page_money),
+                        "4" to stringResource(R.string.settings_page_apps)
                     ),
                     selectedKey = settingsState.defaultHubIndex.coerceIn(0, 4).toString(),
                     onSelectKey = { key ->
@@ -1276,8 +1288,8 @@ private fun SubPageContainer(
         subPageId == "look:backup" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "system",
-                    pageTitle = "backup and restore",
+                    parentTitle = stringResource(R.string.settings_tab_system),
+                    pageTitle = stringResource(R.string.settings_backup_title),
                     onBack = onBack
                 )
             }
@@ -1288,7 +1300,7 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("export settings json", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                    Text(stringResource(R.string.backup_share), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
             item {
@@ -1298,45 +1310,47 @@ private fun SubPageContainer(
                     colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("import settings json", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                    Text(stringResource(R.string.backup_import), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
             item {
                 Button(
                     onClick = onResetDefaults,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("reset to defaults", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.backup_reset), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
 
         subPageId == "look:about" -> {
+            val aboutVersion = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+                .getOrNull() ?: "1.0"
             item {
                 MetroSubPageHeader(
-                    parentTitle = "system",
-                    pageTitle = "about meena ui",
+                    parentTitle = stringResource(R.string.settings_tab_system),
+                    pageTitle = stringResource(R.string.settings_about_title),
                     onBack = onBack
                 )
             }
             item {
                 Text(
-                    text = "meena is a personal android launcher built with jetpack compose, designed around clean typography, generous whitespace, and pure speed.",
+                    text = stringResource(R.string.about_intro),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MeenaTextWhite
                 )
             }
             item {
                 Text(
-                    text = "charter: clean · light · open · fast",
+                    text = stringResource(R.string.about_charter),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "inspired by windows phone metro ui and aio launcher. no boxes, no cards, no elevation. hierarchy comes from type and space alone.",
+                    text = stringResource(R.string.about_inspired),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -1344,7 +1358,7 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "privacy & data safety",
+                    text = stringResource(R.string.about_privacy_heading),
                     style = MaterialTheme.typography.titleMedium,
                     color = MeenaTextWhite
                 )
@@ -1366,7 +1380,7 @@ private fun SubPageContainer(
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "secure storage: api keys and sensitive settings are kept locally with android keystore encryption.",
+                        text = stringResource(R.string.privacy_portfolio_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -1393,13 +1407,13 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "open source licenses",
+                    text = stringResource(R.string.about_open_source_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "built using kotlin, jetpack compose, kotlinx serialization, datastore preferences, and okhttp. license information is available under apache 2.0.",
+                    text = stringResource(R.string.about_open_source_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -1407,7 +1421,7 @@ private fun SubPageContainer(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "version 1.0 · my.hana.meena",
+                    text = stringResource(R.string.about_version, aboutVersion),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted,
                     fontSize = 12.sp
@@ -1418,8 +1432,8 @@ private fun SubPageContainer(
         subPageId == "look:privacy" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = "system",
-                    pageTitle = "privacy",
+                    parentTitle = stringResource(R.string.settings_tab_system),
+                    pageTitle = stringResource(R.string.settings_privacy_title),
                     onBack = onBack
                 )
             }
@@ -1432,7 +1446,7 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "on-device architecture",
+                    text = stringResource(R.string.privacy_on_device_heading),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -1445,7 +1459,7 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "what meena reads",
+                    text = stringResource(R.string.privacy_reads_heading),
                     style = MaterialTheme.typography.titleMedium,
                     color = MeenaTextWhite
                 )
@@ -1467,7 +1481,7 @@ private fun SubPageContainer(
                         color = MeenaTextMuted
                     )
                     Text(
-                        text = "health connect: reads daily step counts, distance, active calories, sleep, and heart rate for display. never shared.",
+                        text = stringResource(R.string.privacy_health_line),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted
                     )
@@ -1475,13 +1489,13 @@ private fun SubPageContainer(
             }
             item {
                 Text(
-                    text = "backup & data safety",
+                    text = stringResource(R.string.privacy_backup_heading),
                     style = MaterialTheme.typography.titleMedium,
                     color = MeenaTextWhite
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "android cloud backup is permanently disabled (allowbackup=false) to ensure your data stays exclusively on this device. clearing app data in android settings deletes all local information immediately.",
+                    text = stringResource(R.string.privacy_backup_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MeenaTextMuted
                 )
@@ -1667,10 +1681,10 @@ private fun FinanceAccountSettings(
     if (holdingToDelete != null) {
         val holding = holdingToDelete!!
         MetroDialog(
-            title = "delete holding",
-            message = "delete this holding (${holding.symbol.lowercase()})?",
-            confirmText = "yes",
-            dismissText = "no",
+            title = stringResource(R.string.finance_delete_title),
+            message = stringResource(R.string.finance_delete_question, holding.symbol.lowercase()),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
             onConfirm = {
                 FinanceRepository.removeHolding(context, holding.id)
                 holdingToDelete = null
@@ -1682,12 +1696,12 @@ private fun FinanceAccountSettings(
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         // 1. Google Sheets Bridge
         Text(
-            text = "google sheets bridge",
+            text = stringResource(R.string.finance_sheet_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "connect your own google sheet with googlefinance() formulas. data may be delayed up to 20 minutes.",
+            text = stringResource(R.string.finance_sheet_intro),
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted
         )
@@ -1695,7 +1709,7 @@ private fun FinanceAccountSettings(
         OutlinedTextField(
             value = sheetUrlInput,
             onValueChange = { sheetUrlInput = it },
-            label = { Text("google sheet or csv url", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(stringResource(R.string.finance_sheet_link), style = MaterialTheme.typography.labelSmall) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = TextFieldDefaults.colors(
@@ -1720,7 +1734,7 @@ private fun FinanceAccountSettings(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(0.dp)
             ) {
-                Text("save & load sheet", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
 
             if (sheetUrlInput.isNotBlank()) {
@@ -1732,7 +1746,7 @@ private fun FinanceAccountSettings(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     shape = RoundedCornerShape(0.dp)
                 ) {
-                    Text("disconnect", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                    Text(stringResource(R.string.finance_sheet_unlink), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
         }
@@ -1745,17 +1759,17 @@ private fun FinanceAccountSettings(
             verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
             Text(
-                text = "google sheets setup guide",
+                text = stringResource(R.string.finance_guide_title),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "1. create a sheet with columns:\n   a: symbol (e.g. klse:bursa, btc, aapl)\n   b: price (=googlefinance(a2, \"price\"))\n   c: change (=googlefinance(a2, \"change\"))\n   d: changepct (=googlefinance(a2, \"changepct\"))\n   e: name\n2. share as 'anyone with link can view'\n3. paste the url above.",
+                text = stringResource(R.string.finance_guide_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MeenaTextMuted
             )
             Text(
-                text = "note: google finance quotes can be delayed ~20 min.",
+                text = stringResource(R.string.finance_delay_notice),
                 style = MaterialTheme.typography.labelSmall,
                 color = MeenaAmber
             )
@@ -1765,19 +1779,19 @@ private fun FinanceAccountSettings(
 
         // 2. Local Portfolio Holdings
         Text(
-            text = "portfolio holdings",
+            text = stringResource(R.string.finance_holdings_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "manage local stock and crypto holdings. all balances are stored privately on your phone.",
+            text = stringResource(R.string.finance_holdings_intro),
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted
         )
 
         SettingToggleRow(
-            title = "mask balances in public",
-            subtitle = "hide exact portfolio totals and share counts on home and money pages",
+            title = stringResource(R.string.finance_hide_amounts),
+            subtitle = stringResource(R.string.finance_hide_amounts_hint),
             checked = !settingsState.showFinanceAmounts,
             onCheckedChange = { masked ->
                 onUpdate { it.copy(showFinanceAmounts = !masked) }
@@ -1798,12 +1812,17 @@ private fun FinanceAccountSettings(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "${holding.symbol.lowercase()} (${holding.groupName.lowercase()})",
+                                text = stringResource(R.string.settings_status_pair, holding.symbol.lowercase(), holding.groupName.lowercase()),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MeenaTextWhite
                             )
                             Text(
-                                text = "${holding.shares.toInt()} shares · cost rm %.2f · now rm %.2f".format(holding.averageCost, holding.currentPrice),
+                                text = stringResource(
+                                    R.string.finance_holding_detail,
+                                    java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString(),
+                                    "%.2f".format(holding.averageCost),
+                                    "%.2f".format(holding.currentPrice)
+                                ),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
                             )
@@ -1811,14 +1830,14 @@ private fun FinanceAccountSettings(
                         IconButton(
                             onClick = { holdingToDelete = holding }
                         ) {
-                            Icon(ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_close), contentDescription = "delete", tint = MaterialTheme.colorScheme.error)
+                            Icon(ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_close), contentDescription = stringResource(R.string.finance_delete_desc), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
             }
         } else {
             Text(
-                text = "no holdings added yet.",
+                text = stringResource(R.string.finance_holdings_empty),
                 style = MaterialTheme.typography.bodySmall,
                 color = MeenaTextMuted
             )
@@ -1826,7 +1845,7 @@ private fun FinanceAccountSettings(
 
         // Add New Holding Form
         Text(
-            text = "add holding",
+            text = stringResource(R.string.finance_add_title),
             style = MaterialTheme.typography.titleSmall,
             color = MeenaTextWhite
         )
@@ -1834,7 +1853,7 @@ private fun FinanceAccountSettings(
         OutlinedTextField(
             value = newSymbol,
             onValueChange = { newSymbol = it },
-            label = { Text("symbol (e.g. bursa, hlal, btc)", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(stringResource(R.string.finance_symbol_label), style = MaterialTheme.typography.labelSmall) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = TextFieldDefaults.colors(
@@ -1852,7 +1871,7 @@ private fun FinanceAccountSettings(
             OutlinedTextField(
                 value = newShares,
                 onValueChange = { newShares = it },
-                label = { Text("shares/units", style = MaterialTheme.typography.labelSmall) },
+                label = { Text(stringResource(R.string.finance_units_label), style = MaterialTheme.typography.labelSmall) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -1866,7 +1885,7 @@ private fun FinanceAccountSettings(
             OutlinedTextField(
                 value = newAvgCost,
                 onValueChange = { newAvgCost = it },
-                label = { Text("avg cost (rm)", style = MaterialTheme.typography.labelSmall) },
+                label = { Text(stringResource(R.string.finance_cost_label), style = MaterialTheme.typography.labelSmall) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -1885,7 +1904,7 @@ private fun FinanceAccountSettings(
             OutlinedTextField(
                 value = newPrice,
                 onValueChange = { newPrice = it },
-                label = { Text("current price (rm)", style = MaterialTheme.typography.labelSmall) },
+                label = { Text(stringResource(R.string.finance_price_label), style = MaterialTheme.typography.labelSmall) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -1899,7 +1918,7 @@ private fun FinanceAccountSettings(
             OutlinedTextField(
                 value = newGroup,
                 onValueChange = { newGroup = it },
-                label = { Text("account (e.g. mplus)", style = MaterialTheme.typography.labelSmall) },
+                label = { Text(stringResource(R.string.finance_account_label), style = MaterialTheme.typography.labelSmall) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -1939,7 +1958,7 @@ private fun FinanceAccountSettings(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("add holding", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+            Text(stringResource(R.string.finance_add_button), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
     }
 }
@@ -1955,16 +1974,16 @@ private fun HealthAccountSettings(
 
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         Text(
-            text = "google fit has retired. health metrics sync securely on-device through android health connect.",
+            text = stringResource(R.string.health_connect_notice),
             style = MaterialTheme.typography.bodyMedium,
             color = MeenaTextMuted
         )
 
         val statusText = when (availability) {
-            HealthConnectAvailability.AVAILABLE -> "status · installed and ready"
-            HealthConnectAvailability.UPDATE_REQUIRED -> "status · update required"
-            HealthConnectAvailability.NOT_INSTALLED -> "status · not installed"
-            HealthConnectAvailability.NOT_SUPPORTED -> "status · not supported on this device"
+            HealthConnectAvailability.AVAILABLE -> stringResource(R.string.health_status_ready)
+            HealthConnectAvailability.UPDATE_REQUIRED -> stringResource(R.string.health_status_update)
+            HealthConnectAvailability.NOT_INSTALLED -> stringResource(R.string.health_status_missing)
+            HealthConnectAvailability.NOT_SUPPORTED -> stringResource(R.string.health_status_unsupported)
         }
 
         Text(
@@ -1986,7 +2005,7 @@ private fun HealthAccountSettings(
             shape = RoundedCornerShape(0.dp)
         ) {
             Text(
-                text = if (availability == HealthConnectAvailability.AVAILABLE) "manage health connect" else "get health connect",
+                text = stringResource(if (availability == HealthConnectAvailability.AVAILABLE) R.string.health_manage_permissions else R.string.health_install_app),
                 style = MaterialTheme.typography.labelSmall,
                 color = MeenaTextWhite
             )
@@ -1994,9 +2013,9 @@ private fun HealthAccountSettings(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("goals", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.health_goals_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         SettingSegmentedRow(
-            title = "daily step goal",
+            title = stringResource(R.string.health_step_goal_title),
             options = listOf(
                 "6000" to "6,000",
                 "8000" to "8,000",
@@ -2014,11 +2033,11 @@ private fun HealthAccountSettings(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("companion app", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.health_companion_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         if (installedApps.isNotEmpty()) {
-            val appOptions = listOf("" to "auto (detect installed)") + installedApps.map { it.packageName to it.displayName }
+            val appOptions = listOf("" to stringResource(R.string.health_companion_auto)) + installedApps.map { it.packageName to it.displayName }
             SettingSegmentedRow(
-                title = "paired device app",
+                title = stringResource(R.string.health_companion_pick),
                 options = appOptions,
                 selectedKey = settingsState.healthCompanionPackage,
                 onSelectKey = { pkg ->
@@ -2037,14 +2056,14 @@ private fun HealthAccountSettings(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("open companion app", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+            Text(stringResource(R.string.health_open_companion), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("air quality", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.air_quality_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text(
-            text = "air quality metrics are provided live by open-meteo using your coarse approximate location.",
+            text = stringResource(R.string.air_quality_source),
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted
         )
@@ -2056,7 +2075,7 @@ private fun HealthAccountSettings(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = RoundedCornerShape(0.dp)
         ) {
-            Text("view open-meteo air quality", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+            Text(stringResource(R.string.air_quality_open), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
     }
 }
@@ -2075,14 +2094,14 @@ private fun CalendarAccountSettings(
 
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         Text(
-            text = "meena reads your agenda directly from your android system calendar. no google login or cloud sync needed.",
+            text = stringResource(R.string.calendar_page_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MeenaTextMuted
         )
 
         if (!hasPerm) {
             Text(
-                text = "meena needs calendar access to show your upcoming agenda on today.",
+                text = stringResource(R.string.calendar_page_needs_access),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MeenaTextWhite
             )
@@ -2099,17 +2118,17 @@ private fun CalendarAccountSettings(
                 shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("turn on calendar access in settings", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                Text(stringResource(R.string.calendar_turn_on), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
         } else {
             Column {
-                Text("agenda lookahead", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                Text(stringResource(R.string.calendar_ahead_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
-                    listOf(1 to "1 day", 3 to "3 days", 7 to "7 days", 14 to "14 days").forEach { (days, label) ->
+                    listOf(1, 3, 7, 14).map { it to androidx.compose.ui.res.pluralStringResource(R.plurals.calendar_days_count, it, it) }.forEach { (days, label) ->
                         val isSelected = settingsState.calendarDaysAhead == days
                         Box(
                             modifier = Modifier
@@ -2131,18 +2150,18 @@ private fun CalendarAccountSettings(
             }
 
             SettingToggleRow(
-                title = "all-day events",
-                subtitle = "include all-day items and holidays in agenda widgets",
+                title = stringResource(R.string.calendar_all_day_title),
+                subtitle = stringResource(R.string.calendar_all_day_hint),
                 checked = settingsState.calendarShowAllDay,
                 onCheckedChange = { checked -> onUpdate { it.copy(calendarShowAllDay = checked) } }
             )
 
             Column {
-                Text("synced calendars", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                Text(stringResource(R.string.calendar_list_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
                 if (availableCalendars.isEmpty()) {
                     Text(
-                        text = "no local calendars found on this phone",
+                        text = stringResource(R.string.calendar_list_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MeenaTextMuted,
                         fontSize = 12.sp
@@ -2198,7 +2217,7 @@ private fun CalendarAccountSettings(
                 shape = RoundedCornerShape(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface)
             ) {
-                Text("open system calendar app", style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                Text(stringResource(R.string.calendar_open_app), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }
         }
     }
@@ -2321,7 +2340,7 @@ private fun NewsFeedManager(
                 newFeedUrl = it
                 addProblem = null
             },
-            placeholder = { Text("https://example.com/feed", color = MeenaTextMuted, fontSize = 12.sp) },
+            placeholder = { Text(stringResource(R.string.news_feed_url_hint), color = MeenaTextMuted, fontSize = 12.sp) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(0.dp),
@@ -2424,7 +2443,7 @@ private fun SolatZonePicker(
     onSelectZone: (String) -> Unit
 ) {
     val zones = listOf(
-        "" to "auto-detect by location (gps)",
+        "" to stringResource(R.string.settings_solat_auto),
         "WLY01" to "wly01 · kuala lumpur & putrajaya",
         "SGR01" to "sgr01 · gombak, petaling, sepang, hulu langat",
         "SGR02" to "sgr02 · kuala selangor, sabak bernam",
@@ -2467,29 +2486,29 @@ private fun DateTimeSettings(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
         Text(
-            text = "customize clock display, date formats and islamic hijri calendar offset.",
+            text = stringResource(R.string.datetime_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MeenaTextMuted
         )
 
         SettingToggleRow(
-            title = "24-hour clock",
-            subtitle = "display time in 24-hour format (e.g. 14:00 vs 2:00 pm)",
+            title = stringResource(R.string.datetime_24h_title),
+            subtitle = stringResource(R.string.datetime_24h_hint),
             checked = settingsState.is24HourFormat,
             onCheckedChange = { onUpdate { it.copy(is24HourFormat = it.is24HourFormat.not()) } }
         )
 
         SettingToggleRow(
-            title = "show seconds",
-            subtitle = "display live seconds on the main clock",
+            title = stringResource(R.string.datetime_seconds_title),
+            subtitle = stringResource(R.string.datetime_seconds_hint),
             checked = settingsState.showClockSeconds,
             onCheckedChange = { onUpdate { it.copy(showClockSeconds = it.showClockSeconds.not()) } }
         )
 
         Column {
-            Text("date pattern", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+            Text(stringResource(R.string.datetime_pattern_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("live preview using today's date", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
+            Text(stringResource(R.string.datetime_pattern_hint), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(8.dp))
             val patterns = listOf(
                 MeenaUserSettings.DEFAULT_DATE_PATTERN,
@@ -2526,23 +2545,23 @@ private fun DateTimeSettings(
         }
 
         SettingToggleRow(
-            title = "hijri date",
-            subtitle = "show islamic hijri date beneath the clock",
+            title = stringResource(R.string.datetime_hijri_title),
+            subtitle = stringResource(R.string.datetime_hijri_hint),
             checked = settingsState.showHijriDate,
             onCheckedChange = { onUpdate { it.copy(showHijriDate = it.showHijriDate.not()) } }
         )
 
         if (settingsState.showHijriDate) {
             Column {
-                Text("hijri day adjustment", style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+                Text(stringResource(R.string.datetime_hijri_offset_title), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("compensate for moon sighting differences", style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
+                Text(stringResource(R.string.datetime_hijri_offset_hint), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
-                    listOf(-2 to "-2d", -1 to "-1d", 0 to "exact", 1 to "+1d", 2 to "+2d").forEach { (offset, label) ->
+                    listOf(-2 to "-2", -1 to "-1", 0 to stringResource(R.string.datetime_hijri_offset_none), 1 to "+1", 2 to "+2").forEach { (offset, label) ->
                         val isSelected = settingsState.hijriDayOffset == offset
                         Box(
                             modifier = Modifier
