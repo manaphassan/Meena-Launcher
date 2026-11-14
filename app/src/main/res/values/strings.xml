@@ -282,6 +282,10 @@
     <string name="map_no_location_short">finding your area</string>
     <string name="map_accuracy">your rough area, within about %1$s km</string>
     <string name="map_accuracy_m">accurate to about %1$d m</string>
+    <string name="map_rings_title">distance rings</string>
+    <string name="map_rings_hint">3 km and 5 km circles around you, gently pulsing</string>
+    <string name="map_rings_hint_still">3 km and 5 km circles around you</string>
+    <string name="map_ring_label">%1$d km</string>
     <string name="map_attribution">openfreemap © openmaptiles · data from openstreetmap contributors (odbl)</string>
     <string name="map_zoom_in">zoom in</string>
     <string name="map_zoom_out">zoom out</string>

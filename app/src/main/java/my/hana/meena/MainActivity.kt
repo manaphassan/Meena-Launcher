@@ -658,6 +658,16 @@ fun MeenaHomeScreen(
                                         settingsRepository.saveSettings(userSettings.copy(widgetConfigs = currentMap))
                                     }
                                 }
+                            },
+                            onSetWidgetSetting = { widgetId, key, value ->
+                                coroutineScope.launch {
+                                    val currentMap = userSettings.widgetConfigs.toMutableMap()
+                                    val existing = currentMap[widgetId] ?: my.hana.meena.data.model.MeenaUserSettings.defaultWidgetMap()[widgetId]
+                                    if (existing != null) {
+                                        currentMap[widgetId] = existing.copy(customSettings = existing.customSettings + (key to value))
+                                        settingsRepository.saveSettings(userSettings.copy(widgetConfigs = currentMap))
+                                    }
+                                }
                             }
                         )
                         1 -> InboxHub(

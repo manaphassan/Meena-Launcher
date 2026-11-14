@@ -99,7 +99,8 @@ fun TodayHub(
     onOpenApps: () -> Unit = {},
     onTogglePin: (String) -> Unit = {},
     onReorderPin: (Int, Int) -> Unit = { _, _ -> },
-    onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
+    onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> },
+    onSetWidgetSetting: (widgetId: String, key: String, value: String) -> Unit = { _, _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -1317,7 +1318,11 @@ fun TodayHub(
 
                 "widget-map-radar" -> {
                     // Map radar
-                    OpenMapsRadarWidget()
+                    OpenMapsRadarWidget(
+                        ringsOn = settings.widgetConfigs[widgetId]?.customSettings?.get("rings") != "off",
+                        animate = !settings.reducedMotion,
+                        onRingsChange = { on -> onSetWidgetSetting(widgetId, "rings", if (on) "on" else "off") }
+                    )
                 }
 
                 "widget-device-telemetry" -> {

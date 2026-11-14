@@ -76,7 +76,10 @@ import my.hana.meena.theme.MeenaBlack
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun OpenMapsRadarWidget(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    ringsOn: Boolean = true,
+    animate: Boolean = true,
+    onRingsChange: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -108,17 +111,24 @@ fun OpenMapsRadarWidget(
 
     val hasRealFix = currentLocation.isGpsActive
     val placeName = ClockInfo.placeName(currentLocation.locationName, hasRealFix)
+    val ringLabels = MAP_RING_KM.map { stringResource(R.string.map_ring_label, it) }
 
     // Built once per look: later fixes move the dot through recenter() instead of reloading the page.
-    val mapHtml = remember(accentHex, styleUrl, pageColor) {
+    val mapHtml = remember(accentHex, styleUrl, pageColor, ringLabels) {
         generateDarkOpenMapsHtml(
             lat = currentLocation.latitude,
             lng = currentLocation.longitude,
             accuracyMeters = currentLocation.accuracyMeters,
             accent = accentHex,
             styleUrl = styleUrl,
-            pageColor = pageColor
+            pageColor = pageColor,
+            ringLabels = ringLabels
         )
+    }
+
+    // Rings follow the switch; the pulse also stops with reduced motion.
+    LaunchedEffect(ringsOn, animate, isMapLoaded, mapHtml) {
+        if (isMapLoaded) webViewRef?.evaluateJavascript("window.setRings && window.setRings($ringsOn, $animate);", null)
     }
 
     CollapsibleWidget(
@@ -244,6 +254,15 @@ fun OpenMapsRadarWidget(
             }
 
             // What the phone knows about this spot; all of it comes from the fix and the address lookup.
+            my.hana.meena.ui.components.MetroToggleRow(
+                title = stringResource(R.string.map_rings_title),
+                description = stringResource(if (animate) R.string.map_rings_hint else R.string.map_rings_hint_still),
+                checked = ringsOn,
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onRingsChange(it)
+                }
+            )
             val minutesAgo = ((System.currentTimeMillis() - currentLocation.fixTimeMillis) / 60_000L).coerceAtLeast(0L)
             val foundText = when {
                 currentLocation.fixTimeMillis <= 0L -> null
@@ -360,10 +379,13 @@ private fun MapTextAction(text: String, onClick: () -> Unit) {
     )
 }
 
+/** Distance rings drawn around the dot, in km. */
+private val MAP_RING_KM = listOf(3, 5)
+
 /**
  * HTML for the map: an OpenFreeMap vector style through MapLibre inside Leaflet, a plain dot
  * where the phone thinks it is and a thin ring as wide as that guess; the view is fitted to the
- * ring. Nothing on it pretends to be weather data.
+ * ring. Optional 3 and 5 km rings can pulse outward. Nothing on it pretends to be weather data.
  */
 private fun generateDarkOpenMapsHtml(
     lat: Double,
@@ -371,8 +393,11 @@ private fun generateDarkOpenMapsHtml(
     accuracyMeters: Float,
     accent: String,
     styleUrl: String,
-    pageColor: String
+    pageColor: String,
+    ringLabels: List<String>
 ): String {
+    val ringKm = MAP_RING_KM.joinToString(",")
+    val labels = ringLabels.joinToString(",") { "'" + it.replace("'", "") + "'" }
     val radius = accuracyMeters.coerceIn(100f, 5000f)
     return """
 <!DOCTYPE html>
@@ -392,6 +417,8 @@ private fun generateDarkOpenMapsHtml(
   /* Height is set from window.innerHeight in script: CSS vh and % resolve to 0 in this WebView. */
   #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: $pageColor; }
   .leaflet-container { background: $pageColor; }
+  /* Ring distance labels: plain accent text, no box. */
+  .ring-label { color: $accent; font: 12px sans-serif; white-space: nowrap; transform: translate(-50%, -100%); }
 </style>
 </head>
 <body>
@@ -412,8 +439,10 @@ private fun generateDarkOpenMapsHtml(
   // map from innerHeight in pixels and tell Leaflet whenever that changes.
   var fitted = false;
   function fitArea() {
-    // Show the whole ring the phone is unsure within, but never closer than street level.
-    map.fitBounds(area.getBounds(), { padding: [16, 16], maxZoom: 15, animate: false });
+    // With distance rings on, show the widest ring; else the ring the phone is unsure within,
+    // never closer than street level.
+    var target = (ringsOn && rings.length) ? rings[rings.length - 1].getBounds() : area.getBounds();
+    map.fitBounds(target, { padding: [16, 16], maxZoom: 15, animate: false });
   }
   function fitToWindow() {
     var el = document.getElementById('map');
@@ -455,12 +484,61 @@ private fun generateDarkOpenMapsHtml(
     interactive: false
   }).addTo(map);
 
+  // Distance rings (km): a thin still outline each, a soft wave that grows out to it, and a label
+  // at the top. The wave runs at about 20 frames a second and stops when the page is hidden.
+  var RING_KM = [$ringKm];
+  var RING_LABELS = [$labels];
+  var PULSE_MS = 3000;
+  var ringsOn = false, pulseOn = false, timer = null;
+  var rings = [], waves = [], tags = [];
+  function labelPoint(km) { return [lat + km / 111.32, lng]; }
+  RING_KM.forEach(function (km, i) {
+    rings.push(L.circle([lat, lng], { radius: km * 1000, color: accent, weight: 1, opacity: 0.7, fill: false, interactive: false }));
+    waves.push(L.circle([lat, lng], { radius: 1, color: accent, weight: 1.5, opacity: 0, fillColor: accent, fillOpacity: 0, interactive: false }));
+    tags.push(L.marker(labelPoint(km), {
+      icon: L.divIcon({ className: 'ring-label', html: RING_LABELS[i] || (km + ' km'), iconSize: null }),
+      interactive: false, keyboard: false
+    }));
+  });
+  function tick() {
+    if (document.hidden) return;
+    var now = Date.now();
+    RING_KM.forEach(function (km, i) {
+      // The two waves start half a beat apart so they don't move in step.
+      var t = ((now / PULSE_MS) + i * 0.5) % 1;
+      waves[i].setRadius(Math.max(1, t * km * 1000));
+      waves[i].setStyle({ opacity: 0.6 * (1 - t), fillOpacity: 0.08 * (1 - t) });
+    });
+  }
+  function stopPulse() {
+    if (timer) { clearInterval(timer); timer = null; }
+    waves.forEach(function (w) { map.removeLayer(w); });
+  }
+  window.setRings = function (on, animate) {
+    var changed = on !== ringsOn;
+    ringsOn = on;
+    pulseOn = on && animate;
+    stopPulse();
+    rings.concat(tags).forEach(function (layer) { if (on) layer.addTo(map); else map.removeLayer(layer); });
+    if (pulseOn) {
+      waves.forEach(function (w) { w.addTo(map); });
+      tick();
+      timer = setInterval(tick, 50);
+    }
+    if (changed && document.getElementById('map').clientHeight > 0) fitArea();
+  };
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && pulseOn) tick();
+  });
+
   window.recenter = function (newLat, newLng, newRadius) {
     if (newLat && newLng) {
       lat = newLat;
       lng = newLng;
       here.setLatLng([lat, lng]);
       area.setLatLng([lat, lng]);
+      rings.concat(waves).forEach(function (c) { c.setLatLng([lat, lng]); });
+      tags.forEach(function (m, i) { m.setLatLng(labelPoint(RING_KM[i])); });
     }
     if (newRadius) area.setRadius(newRadius);
     if (document.getElementById('map').clientHeight > 0) { fitArea(); } else { fitted = false; }
