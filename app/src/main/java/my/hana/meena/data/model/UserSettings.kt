@@ -40,6 +40,8 @@ data class MeenaUserSettings(
     val pinnedAppIds: List<String> = emptyList(),
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),
+    /** Feeds marked nsfw in news settings; their pictures are blurred. */
+    val nsfwFeeds: List<String> = emptyList(),
     val widgetConfigs: Map<String, WidgetConfig> = defaultWidgetMap(),
     // Calendar settings
     val calendarDaysAhead: Int = 7,
@@ -107,11 +109,19 @@ data class MeenaUserSettings(
             changed = true
         }
 
+        val feeds = newsFeeds.map { if (it in LEGACY_AMANZ_FEEDS) AMANZ_FEED else it }.distinct()
+        val nsfw = nsfwFeeds.map { if (it in LEGACY_AMANZ_FEEDS) AMANZ_FEED else it }.distinct()
+        if (feeds != newsFeeds || nsfw != nsfwFeeds) {
+            changed = true
+        }
+
         return if (changed) {
             copy(
                 widgetConfigs = updatedConfigs,
                 defaultHubIndex = clampedDefaultHubIndex,
-                dateFormatPattern = datePattern
+                dateFormatPattern = datePattern,
+                newsFeeds = feeds,
+                nsfwFeeds = nsfw
             )
         } else {
             this
@@ -133,6 +143,13 @@ data class MeenaUserSettings(
         /** The US-style date the app used to default to; moved to Malaysian English (day before month). */
         const val OLD_DEFAULT_DATE_PATTERN = "EEEE, MMMM d"
         const val DEFAULT_DATE_PATTERN = "EEEE, d MMMM"
+        /** Must match NewsRssRepository.AMANZ_FEED_URL. */
+        const val AMANZ_FEED = "https://news.google.com/rss/search?q=site:amanz.my&hl=ms-MY&gl=MY&ceid=MY:ms"
+        /** Amanz addresses that give no RSS: the old feed (now a bot check) and the home page. */
+        val LEGACY_AMANZ_FEEDS = setOf(
+            "https://amanz.my", "https://amanz.my/", "https://www.amanz.my", "https://www.amanz.my/",
+            "https://amanz.my/feed", "https://amanz.my/feed/", "https://cms.amanz.my/feed", "https://cms.amanz.my/feed/"
+        )
 
         /**
          * Today reads as a story, top to bottom: now (time, weather, what's next), the sky for

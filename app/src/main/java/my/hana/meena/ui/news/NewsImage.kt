@@ -13,7 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -61,17 +63,33 @@ fun rememberNewsImage(url: String?, targetPx: Int, fillSquare: Boolean): NewsIma
  * A news picture. Shows nothing while loading or when it can't load.
  * With [fitWidth] it fills the width at its own aspect ratio; otherwise it crops into [modifier]'s size.
  */
+/**
+ * A heavily blurred copy for pictures from feeds marked nsfw: shrunk to a few pixels, then smoothed
+ * when drawn. Works on every Android version, unlike Modifier.blur (Android 12 and later only).
+ */
+fun blurredCopy(image: ImageBitmap): ImageBitmap {
+    val src = image.asAndroidBitmap()
+    val w = (src.width / BLUR_FACTOR).coerceAtLeast(2)
+    val h = (src.height / BLUR_FACTOR).coerceAtLeast(2)
+    return src.scale(w, h).asImageBitmap()
+}
+
+private const val BLUR_FACTOR = 40
+
 @Composable
 fun NewsImage(
     url: String?,
     modifier: Modifier = Modifier,
     targetPx: Int,
-    fitWidth: Boolean = false
+    fitWidth: Boolean = false,
+    blurred: Boolean = false
 ) {
     val state = rememberNewsImage(url, targetPx, fillSquare = !fitWidth)
     if (state is NewsImageState.Ready) {
+        val shown = remember(state.image, blurred) { if (blurred) blurredCopy(state.image) else state.image }
         Image(
-            bitmap = state.image,
+            bitmap = shown,
+            filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
             contentDescription = null,
             modifier = if (fitWidth) {
                 modifier.fillMaxWidth().aspectRatio(state.aspectRatio.coerceAtLeast(0.2f))

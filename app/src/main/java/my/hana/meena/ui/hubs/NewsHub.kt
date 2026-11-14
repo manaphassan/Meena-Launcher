@@ -125,7 +125,9 @@ fun NewsHub(
     val nowMs = rememberNow()
     val separator = stringResource(R.string.news_meta_separator)
 
-    reading?.let { article -> NewsReader(article = article, onClose = { reading = null }) }
+    reading?.let { article ->
+        NewsReader(article = article, blurPictures = article.feedUrl in settings.nsfwFeeds, onClose = { reading = null })
+    }
 
     LazyColumn(
         state = listState,
@@ -242,6 +244,7 @@ fun NewsHub(
                                 article = article,
                                 nowMs = nowMs,
                                 separator = separator,
+                                blurPicture = article.feedUrl in settings.nsfwFeeds,
                                 modifier = if (index < FEATHER_ROWS) {
                                     Modifier.metroFeatherIn(index = index, reducedMotion = settings.reducedMotion)
                                 } else {
@@ -323,6 +326,7 @@ private fun NewsRow(
     article: NewsArticle,
     nowMs: Long,
     separator: String,
+    blurPicture: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -364,7 +368,10 @@ private fun NewsRow(
         when (thumb) {
             NewsImageState.Loading -> if (article.imageUrl != null) Spacer(modifier = Modifier.size(ThumbSize))
             is NewsImageState.Ready -> Image(
-                bitmap = thumb.image,
+                bitmap = remember(thumb.image, blurPicture) {
+                    if (blurPicture) my.hana.meena.ui.news.blurredCopy(thumb.image) else thumb.image
+                },
+                filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
                 contentDescription = null,
                 modifier = Modifier.size(ThumbSize),
                 contentScale = ContentScale.Crop

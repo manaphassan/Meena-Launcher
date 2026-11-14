@@ -1049,12 +1049,16 @@ private fun SubPageContainer(
             item {
                 NewsFeedManager(
                     currentFeeds = settingsState.newsFeeds,
+                    nsfwFeeds = settingsState.nsfwFeeds,
                     onUpdateFeeds = { feeds ->
                         // Saving exactly the built-in list keeps "using built-in feeds" behaviour.
                         val toSave = if (feeds == NewsRssRepository.DEFAULT_FEEDS) emptyList() else feeds
-                        onUpdate { it.copy(newsFeeds = toSave) }
+                        // A removed feed drops its nsfw mark too.
+                        val shown = NewsRssRepository.effectiveFeeds(toSave)
+                        onUpdate { it.copy(newsFeeds = toSave, nsfwFeeds = it.nsfwFeeds.filter { url -> url in shown }) }
                         NewsRssRepository.updateFeeds(toSave)
-                    }
+                    },
+                    onUpdateNsfw = { nsfw -> onUpdate { it.copy(nsfwFeeds = nsfw) } }
                 )
             }
         }
@@ -2261,15 +2265,20 @@ private fun CalendarAccountSettings(
 @Composable
 private fun NewsFeedManager(
     currentFeeds: List<String>,
-    onUpdateFeeds: (List<String>) -> Unit
+    nsfwFeeds: List<String>,
+    onUpdateFeeds: (List<String>) -> Unit,
+    onUpdateNsfw: (List<String>) -> Unit
 ) {
     var newFeedUrl by remember { mutableStateOf("") }
     var addProblem by remember { mutableStateOf<String?>(null) }
     var feedToRemove by remember { mutableStateOf<String?>(null) }
     val statuses by NewsRssRepository.feedStatuses.collectAsState()
+    // Settings can open before the news page has ever loaded; make sure the saved feeds are the ones checked.
+    LaunchedEffect(Unit) { NewsRssRepository.updateFeeds(currentFeeds) }
     val shownFeeds = NewsRssRepository.effectiveFeeds(currentFeeds)
     val usingDefaults = currentFeeds.isEmpty()
     val presetFeeds = listOf(
+        "amanz" to NewsRssRepository.AMANZ_FEED_URL,
         "bernama" to "https://news.google.com/rss/search?q=bernama&hl=en-MY&gl=MY&ceid=MY:en",
         "the star" to "https://www.thestar.com.my/rss/news/nation",
         "malaysiakini" to "https://www.malaysiakini.com/rss/en/news.rss",
@@ -2360,6 +2369,26 @@ private fun NewsFeedManager(
                 text = stringResource(R.string.news_feeds_defaults_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MeenaTextMuted
+            )
+        }
+
+        Text(
+            text = stringResource(R.string.news_nsfw_title),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.l)
+        )
+        Text(
+            text = stringResource(R.string.news_nsfw_intro),
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+        shownFeeds.forEach { url ->
+            SettingToggleRow(
+                title = NewsRssRepository.sourceNameFor(url).lowercase(),
+                subtitle = stringResource(if (url in nsfwFeeds) R.string.news_nsfw_on else R.string.news_nsfw_off),
+                checked = url in nsfwFeeds,
+                onCheckedChange = { on -> onUpdateNsfw(if (on) (nsfwFeeds + url).distinct() else nsfwFeeds - url) }
             )
         }
 

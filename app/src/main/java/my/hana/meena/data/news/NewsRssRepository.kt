@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import my.hana.meena.ui.widgets.RefreshPolicy
 import my.hana.meena.ui.widgets.WidgetSpec
@@ -41,7 +42,9 @@ data class NewsArticle(
     /** https thumbnail picked by [RssImage.pick], or null. */
     val imageUrl: String? = null,
     /** Raw content:encoded HTML for the reader; empty when the feed has none. */
-    val contentHtml: String = ""
+    val contentHtml: String = "",
+    /** The feed this came from, so per-feed choices (such as blurring pictures) can apply. */
+    val feedUrl: String = ""
 )
 
 /** What the last fetch of one feed found. Shown in settings, never invented. */
@@ -67,7 +70,11 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
 
     private const val TAG = "NewsRssRepository"
 
-    private const val AMANZ_FEED_URL = "https://amanz.my/feed/"
+    /**
+     * amanz.my/feed/ now redirects to cms.amanz.my/feed/, which answers with a bot-check page
+     * instead of RSS (checked 14 Nov 2026). Google News carries Amanz's articles as RSS, without pictures.
+     */
+    const val AMANZ_FEED_URL = my.hana.meena.data.model.MeenaUserSettings.AMANZ_FEED
     private const val SUAMISIHAT_FEED_URL = "https://suamisihat.com.my/feed/"
 
     /** Used while the user has not picked any feeds. */
@@ -102,26 +109,34 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
     val feedStatuses: StateFlow<List<FeedStatus>> = _feedStatuses.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.IO)
+    @Volatile
     private var customFeeds: List<String> = emptyList()
 
-    /** Called with the saved list at start and on every edit; a changed list always refetches. */
+    /** One fetch at a time, so a slow earlier fetch can't overwrite a newer one. */
+    private val refreshMutex = kotlinx.coroutines.sync.Mutex()
+
+    /** False until the saved list arrives, so the built-in feeds are never fetched in its place. */
+    @Volatile
+    private var feedsKnown = false
+
+    /** Called with the saved list at start and on every edit; the first call and any change refetch. */
     fun updateFeeds(feeds: List<String>) {
-        if (customFeeds != feeds) {
+        if (!feedsKnown || customFeeds != feeds) {
             customFeeds = feeds
+            feedsKnown = true
             scope.launch { refresh(force = true) }
         }
-    }
-
-    init {
-        // Fetch feeds in background upon repository init
-        scope.launch { refresh() }
     }
 
     override fun fetchInitialState(): WidgetState<List<NewsArticle>> = _newsFlow.value
 
     override suspend fun refresh(): WidgetState<List<NewsArticle>> = refresh(force = false)
 
-    suspend fun refresh(force: Boolean): WidgetState<List<NewsArticle>> {
+    suspend fun refresh(force: Boolean): WidgetState<List<NewsArticle>> =
+        refreshMutex.withLock { refreshLocked(force) }
+
+    private suspend fun refreshLocked(force: Boolean): WidgetState<List<NewsArticle>> {
+        if (!feedsKnown) return _newsFlow.value
         val now = System.currentTimeMillis()
         val currentData = _newsFlow.value
         
@@ -154,6 +169,8 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                 allArticles.addAll(result.first)
                 statuses += FeedStatus(feedUrl, name, result.first.size, System.currentTimeMillis(), result.second)
             }
+            // The feed list changed while fetching; a fetch for the new list is already queued.
+            if (feedList != effectiveFeeds(customFeeds)) return _newsFlow.value
             _feedStatuses.value = statuses
 
             val merged = NewsMerge.merge(allArticles, MAX_ARTICLES, MIN_PER_SOURCE)
@@ -220,7 +237,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
             val response = client.newCall(request).execute()
             if (response.isSuccessful) {
                 response.body?.byteStream()?.use { input ->
-                    items.addAll(parseRssXml(input, sourceName, sourceBadgeColor))
+                    items.addAll(parseRssXml(input, sourceName, sourceBadgeColor).map { it.copy(feedUrl = urlStr) })
                 }
             } else {
                 Log.w(TAG, "Failed to fetch $urlStr: HTTP ${response.code}")
@@ -258,6 +275,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
             var curThumbnail: String? = null
             var curMediaContent: String? = null
             var curEnclosure: String? = null
+            var curPublisher: String? = null
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 val tagName = parser.name?.lowercase(Locale.ROOT)
@@ -275,6 +293,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                             curThumbnail = null
                             curMediaContent = null
                             curEnclosure = null
+                            curPublisher = null
                         } else if (inItem) {
                             when (tagName) {
                                 "title" -> curTitle = readText(parser)
@@ -297,6 +316,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                                 ) {
                                     curEnclosure = ArticleHtml.safeImageUrl(parser.getAttributeValue(null, "url"))
                                 }
+                                "source" -> curPublisher = readText(parser)
                                 "category" -> {
                                     if (curCategory.isBlank()) {
                                         curCategory = readText(parser)
@@ -308,7 +328,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                     XmlPullParser.END_TAG -> {
                         if (tagName == "item" && inItem) {
                             inItem = false
-                            val cleanTitle = cleanHtml(curTitle)
+                            val cleanTitle = NewsTitles.stripPublisher(cleanHtml(curTitle), curPublisher)
                             if (cleanTitle.isNotBlank()) {
                                 val pubDateMs = parseDateToMillis(curPubDate)
                                 val formattedDate = formatRelativeTime(pubDateMs)

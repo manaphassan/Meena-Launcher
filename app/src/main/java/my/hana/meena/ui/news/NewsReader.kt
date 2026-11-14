@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -65,18 +67,40 @@ import my.hana.meena.ui.components.metroClickable
  * Hosted in a full-screen dialog so it covers the pager and back closes it.
  */
 @Composable
-fun NewsReader(article: NewsArticle, onClose: () -> Unit) {
+fun NewsReader(article: NewsArticle, blurPictures: Boolean = false, onClose: () -> Unit) {
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        NewsReaderContent(article = article, onClose = onClose)
+        NewsReaderContent(article = article, blurPictures = blurPictures, onClose = onClose)
+    }
+}
+
+/** A blurred picture with a note; tapping shows every picture in the article. */
+@Composable
+private fun ReaderImage(url: String, targetPx: Int, blurred: Boolean, onReveal: () -> Unit) {
+    if (!blurred) {
+        NewsImage(url = url, targetPx = targetPx, fitWidth = true)
+        return
+    }
+    Column(
+        modifier = Modifier.metroClickable(onClick = onReveal),
+        verticalArrangement = Arrangement.spacedBy(MeenaSpacing.s)
+    ) {
+        NewsImage(url = url, targetPx = targetPx, fitWidth = true, blurred = true)
+        Text(
+            text = stringResource(R.string.news_nsfw_tap_to_show),
+            style = MaterialTheme.typography.labelSmall,
+            color = MeenaTextMuted
+        )
     }
 }
 
 @Composable
-private fun NewsReaderContent(article: NewsArticle, onClose: () -> Unit) {
+private fun NewsReaderContent(article: NewsArticle, blurPictures: Boolean, onClose: () -> Unit) {
     val context = LocalContext.current
+    var revealed by remember(article.id) { mutableStateOf(false) }
+    val blurred = blurPictures && !revealed
     val density = LocalDensity.current
     val openFailed = stringResource(R.string.news_open_failed)
     val separator = stringResource(R.string.news_meta_separator)
@@ -141,7 +165,7 @@ private fun NewsReaderContent(article: NewsArticle, onClose: () -> Unit) {
                         modifier = Modifier.padding(top = MeenaSpacing.s),
                         verticalArrangement = Arrangement.spacedBy(MeenaSpacing.s)
                     ) {
-                        NewsImage(url = hero, targetPx = imageTargetPx, fitWidth = true)
+                        ReaderImage(url = hero, targetPx = imageTargetPx, blurred = blurred, onReveal = { revealed = true })
                         body?.heroCaption?.let { ImageCaption(it) }
                     }
                 }
@@ -149,7 +173,7 @@ private fun NewsReaderContent(article: NewsArticle, onClose: () -> Unit) {
 
             body?.let { readerBody ->
                 itemsIndexed(readerBody.blocks, key = { index, _ -> "block-$index" }) { _, block ->
-                    ReaderBlock(block, imageTargetPx, linkColor, onLink)
+                    ReaderBlock(block, imageTargetPx, linkColor, onLink, blurred) { revealed = true }
                 }
             }
 
@@ -206,7 +230,9 @@ private fun ReaderBlock(
     block: ArticleBlock,
     imageTargetPx: Int,
     linkColor: Color,
-    onLink: (String) -> Unit
+    onLink: (String) -> Unit,
+    blurred: Boolean,
+    onReveal: () -> Unit
 ) {
     val bodyStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = ReaderLineHeight, color = MeenaTextWhite)
     when (block) {
@@ -234,7 +260,7 @@ private fun ReaderBlock(
             modifier = Modifier.padding(vertical = MeenaSpacing.s),
             verticalArrangement = Arrangement.spacedBy(MeenaSpacing.s)
         ) {
-            NewsImage(url = block.src, targetPx = imageTargetPx, fitWidth = true)
+            ReaderImage(url = block.src, targetPx = imageTargetPx, blurred = blurred, onReveal = onReveal)
             block.caption?.let { ImageCaption(it) }
         }
     }

@@ -618,4 +618,9 @@
     <string name="inbox_alerts_prompt">want your alerts here? turn on notification access. meena reads them on your phone only.</string>
     <string name="inbox_chats_prompt">want your chats here? turn on notification access. meena reads them on your phone only.</string>
     <string name="weather_near_you">near you</string>
+    <string name="news_nsfw_title">nsfw</string>
+    <string name="news_nsfw_intro">turn a feed on to blur its pictures on the news page and in the reader. tap a picture in the reader to see it.</string>
+    <string name="news_nsfw_on">pictures blurred</string>
+    <string name="news_nsfw_off">pictures shown</string>
+    <string name="news_nsfw_tap_to_show">nsfw · tap to show</string>
 </resources>
