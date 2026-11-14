@@ -86,10 +86,11 @@ fun FavouriteTiles(
                     .background(tileColor),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "+",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = my.hana.meena.theme.MeenaOnAccent
+                androidx.compose.material3.Icon(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_thin_add),
+                    contentDescription = null,
+                    tint = my.hana.meena.theme.MeenaOnAccent,
+                    modifier = Modifier.size(24.dp)
                 )
             }
             Text(
@@ -206,10 +207,11 @@ fun FavouriteTiles(
                     .metroClickable(onClick = onOpenApps),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "+",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
+                androidx.compose.material3.Icon(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_thin_add),
+                    contentDescription = stringResource(R.string.favourites_add),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -414,7 +416,12 @@ private fun GroupTile(
                         contentAlignment = Alignment.Center
                     ) {
                         if (app == null) {
-                            Text(text = "+", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            androidx.compose.material3.Icon(
+                                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_thin_add),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         } else {
                             val glyph = if (isMonochrome) app.glyphBitmap else null
                             val bitmap = glyph ?: app.iconBitmap
