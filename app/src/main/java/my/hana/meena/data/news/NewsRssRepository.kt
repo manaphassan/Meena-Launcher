@@ -71,10 +71,16 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
     private const val TAG = "NewsRssRepository"
 
     /**
-     * amanz.my/feed/ now redirects to cms.amanz.my/feed/, which answers with a bot-check page
-     * instead of RSS (checked 14 Nov 2026). Google News carries Amanz's articles as RSS, without pictures.
+     * Amanz's own feed: it showed a bot-check page instead of RSS on 14 Nov 2026 and worked again
+     * later that day. If it fails or isn't RSS, Google News' copy (no pictures) is used instead,
+     * without changing the saved address.
      */
     const val AMANZ_FEED_URL = my.hana.meena.data.model.MeenaUserSettings.AMANZ_FEED
+    private const val AMANZ_FALLBACK_URL = my.hana.meena.data.model.MeenaUserSettings.AMANZ_GOOGLE_NEWS_FEED
+
+    /** The feed to try when [feedUrl] gives nothing, or null. Only Amanz has one. */
+    fun fallbackFor(feedUrl: String): String? =
+        if (hostOf(feedUrl)?.removePrefix("www.")?.endsWith("amanz.my") == true) AMANZ_FALLBACK_URL else null
     private const val SUAMISIHAT_FEED_URL = "https://suamisihat.com.my/feed/"
 
     /** Used while the user has not picked any feeds. */
@@ -165,7 +171,15 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
                     feedUrl.contains("ycombinator", ignoreCase = true) -> "#FA6800"
                     else -> "#00A4EF"
                 }
-                val result = fetchFeed(feedUrl, name, color)
+                val result = fetchFeed(feedUrl, name, color).let { first ->
+                    val fallback = fallbackFor(feedUrl)
+                    if (first.first.isEmpty() && fallback != null) {
+                        Log.w(TAG, "No articles from $feedUrl (${first.second ?: "not a feed"}); trying its fallback")
+                        val second = fetchFeed(fallback, name, color)
+                        // Articles keep the saved address, so per-feed settings such as nsfw still apply.
+                        if (second.first.isNotEmpty()) second.first.map { it.copy(feedUrl = feedUrl) } to null else first
+                    } else first
+                }
                 allArticles.addAll(result.first)
                 statuses += FeedStatus(feedUrl, name, result.first.size, System.currentTimeMillis(), result.second)
             }
@@ -238,6 +252,10 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
             if (response.isSuccessful) {
                 response.body?.byteStream()?.use { input ->
                     items.addAll(parseRssXml(input, sourceName, sourceBadgeColor).map { it.copy(feedUrl = urlStr) })
+                }
+                // A page that isn't a feed (a bot check, a home page) parses to nothing; say so.
+                if (items.isEmpty() && response.header("Content-Type")?.contains("html", ignoreCase = true) == true) {
+                    problem = "not a feed"
                 }
             } else {
                 Log.w(TAG, "Failed to fetch $urlStr: HTTP ${response.code}")

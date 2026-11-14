@@ -145,12 +145,17 @@ data class MeenaUserSettings(
         /** The US-style date the app used to default to; moved to Malaysian English (day before month). */
         const val OLD_DEFAULT_DATE_PATTERN = "EEEE, MMMM d"
         const val DEFAULT_DATE_PATTERN = "EEEE, d MMMM"
-        /** Must match NewsRssRepository.AMANZ_FEED_URL. */
-        const val AMANZ_FEED = "https://news.google.com/rss/search?q=site:amanz.my&hl=ms-MY&gl=MY&ceid=MY:ms"
-        /** Amanz addresses that give no RSS: the old feed (now a bot check) and the home page. */
+        /** Must match NewsRssRepository.AMANZ_FEED_URL. Amanz's own feed (amanz.my/feed/ redirects here). */
+        const val AMANZ_FEED = "https://cms.amanz.my/feed/"
+        /** Google News' copy of Amanz, used while the real feed showed a bot check; now only a fallback. */
+        const val AMANZ_GOOGLE_NEWS_FEED = "https://news.google.com/rss/search?q=site:amanz.my&hl=ms-MY&gl=MY&ceid=MY:ms"
+        /**
+         * Saved Amanz addresses that are moved to [AMANZ_FEED]: the home page (not a feed) and the Google
+         * News copy. Real feed addresses the user typed, such as amanz.my/feed, are left as they are.
+         */
         val LEGACY_AMANZ_FEEDS = setOf(
             "https://amanz.my", "https://amanz.my/", "https://www.amanz.my", "https://www.amanz.my/",
-            "https://amanz.my/feed", "https://amanz.my/feed/", "https://cms.amanz.my/feed", "https://cms.amanz.my/feed/"
+            AMANZ_GOOGLE_NEWS_FEED
         )
 
         /**
