@@ -504,7 +504,18 @@ fun AppsHub(
                     onConfirm = {
                         try {
                             InstalledAppsRepository.invalidateCache()
-                            val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:"))
+                            // The system uninstaller silently finishes for callers targeting API 28+
+                            // without REQUEST_DELETE_PACKAGES (AOSP UninstallerActivity.onCreate), so
+                            // without it we open the app's info page, where uninstall is one tap.
+                            val packageUri = Uri.parse("package:${target.packageName}")
+                            val canUninstallDirectly = context.checkSelfPermission(
+                                android.Manifest.permission.REQUEST_DELETE_PACKAGES
+                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            val intent = if (canUninstallDirectly) {
+                                Intent(Intent.ACTION_DELETE, packageUri)
+                            } else {
+                                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
+                            }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             context.startActivity(intent)
                         } catch (_: Exception) {}
                         showUninstallConfirm = false
