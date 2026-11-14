@@ -63,7 +63,9 @@ fun WeatherDetailSubPage(
                 val temp = if (isFahrenheit) (current.temperature * 9f / 5f + 32f).roundToInt() else current.temperature.roundToInt()
 
                 Text(
-                    text = "${current.locationName.lowercase()}",
+                    // The weather keeps a placeholder until a real place is known; don't show it as a place.
+                    text = my.hana.meena.data.system.ClockInfo.placeName(current.locationName, isRealFix = true)
+                        ?: stringResource(R.string.weather_near_you),
                     style = MaterialTheme.typography.displaySmall,
                     color = MeenaTextWhite
                 )

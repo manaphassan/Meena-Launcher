@@ -617,4 +617,5 @@
     <string name="favourites_move_right">move right</string>
     <string name="inbox_alerts_prompt">want your alerts here? turn on notification access. meena reads them on your phone only.</string>
     <string name="inbox_chats_prompt">want your chats here? turn on notification access. meena reads them on your phone only.</string>
+    <string name="weather_near_you">near you</string>
 </resources>

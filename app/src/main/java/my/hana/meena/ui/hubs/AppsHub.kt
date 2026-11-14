@@ -1,5 +1,6 @@
 ﻿package my.hana.meena.ui.hubs
 
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.res.stringResource
 import my.hana.meena.R
 import android.content.Intent
@@ -158,21 +159,28 @@ fun AppsHub(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // Authentic WP8.1 Search Bar (White background, black text, 0dp corners)
             item {
+                // No box: an accent underline on the page, like the picker search.
+                val underline = MaterialTheme.colorScheme.primary
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(focusRequester),
+                        .focusRequester(focusRequester)
+                        .drawWithContent {
+                            drawContent()
+                            val y = size.height - 1.dp.toPx()
+                            drawLine(underline, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width, y), strokeWidth = 2.dp.toPx())
+                        },
                     placeholder = { Text(stringResource(R.string.apps_search_hint), color = MeenaTextMuted, fontSize = 14.sp) },
-                    
+
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MeenaTextWhite,
-                        unfocusedContainerColor = MeenaTextWhite,
-                        focusedTextColor = MeenaBlack,
-                        unfocusedTextColor = MeenaBlack,
+                        focusedContainerColor = MeenaBlack,
+                        unfocusedContainerColor = MeenaBlack,
+                        focusedTextColor = MeenaTextWhite,
+                        unfocusedTextColor = MeenaTextWhite,
+                        cursorColor = underline,
                         focusedBorderColor = MeenaTextWhite.copy(alpha=0f),
                         unfocusedBorderColor = MeenaTextWhite.copy(alpha=0f)
                     ),
@@ -608,7 +616,7 @@ private fun AppRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = name,
+                    text = name.lowercase(),
                     style = MaterialTheme.typography.headlineMedium,
                     fontSize = 17.sp,
                     color = MeenaTextWhite
