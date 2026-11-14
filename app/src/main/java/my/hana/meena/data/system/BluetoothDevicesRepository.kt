@@ -196,8 +196,10 @@ object BluetoothDevicesRepository {
                 _state.value =
                     if (devices.isEmpty()) WidgetState.Empty else WidgetState.Ready(withReadings(), System.currentTimeMillis())
 
-                // Then ask low-energy devices that already have a link for signal and battery, one at a time.
-                val leLinked = (wearables + inputDevices).distinctBy { it.address }.filter { isLowEnergy(it) }
+                // Then ask devices that already have a low-energy (GATT) link for signal and battery, one at a
+                // time. Bands linked as a classic input device (HID) are left alone: reading them would make
+                // Android open a new LE link, which times out and costs battery.
+                val leLinked = wearables.distinctBy { it.address }.filter { isLowEnergy(it) }
                 var readAny = false
                 leLinked.forEach { device ->
                     val last = leReadings[device.address]
@@ -221,6 +223,20 @@ object BluetoothDevicesRepository {
         return byName.map { ConnectedDevice(it.key, it.value) }.sortedBy { it.name }
     }
 
+    /**
+     * Brand apps that keep a band's battery when Android doesn't have it (the band reports it only
+     * to its own app). com.xiaomi.wearable is Mi Fitness, checked on a phone with a Smart Band 9.
+     */
+    private val COMPANION_APPS = listOf(
+        "xiaomi" to "com.xiaomi.wearable",
+        "mi band" to "com.xiaomi.wearable",
+        "redmi" to "com.xiaomi.wearable"
+    )
+
+    /** The installed app that shows this device's battery, from its name; null when none is known. */
+    fun companionFor(deviceName: String, isInstalled: (String) -> Boolean): String? =
+        COMPANION_APPS.firstOrNull { (word, pkg) -> deviceName.lowercase().contains(word) && isInstalled(pkg) }?.second
+
     @SuppressLint("MissingPermission")
     private fun isLowEnergy(device: BluetoothDevice): Boolean =
         when (runCatching { device.type }.getOrNull()) {
@@ -231,7 +247,8 @@ object BluetoothDevicesRepository {
     /**
      * Joins the existing low-energy link as a GATT client, reads the signal strength
      * (readRemoteRssi) and, for paired devices, the standard battery level if offered, then leaves.
-     * Only devices that are already connected are asked, so this never starts a new link.
+     * Only call it for devices Android lists as GATT-connected; for anything else Android tries to
+     * open a new LE link (seen with a Smart Band 9 linked over classic HID).
      * Public APIs, BLUETOOTH_CONNECT only:
      * https://developer.android.com/reference/android/bluetooth/BluetoothGatt
      * https://developer.android.com/reference/android/bluetooth/BluetoothGattCallback

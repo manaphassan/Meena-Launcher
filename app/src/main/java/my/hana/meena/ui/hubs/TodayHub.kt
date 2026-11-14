@@ -646,8 +646,22 @@ fun TodayHub(
                                 val devices = (state as? WidgetState.Ready)?.data ?: (state as WidgetState.Stale).data
                                 Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                                     devices.forEach { device ->
-                                        val companion = settings.healthCompanionPackage.takeIf {
-                                            device.battery == null && device.kind == my.hana.meena.data.system.BluetoothDevicesRepository.KIND_WEARABLE && it.isNotBlank()
+                                        // The app that has this band's battery: the one picked in health settings, else
+                                        // the brand app if it's installed (Android itself doesn't get the battery).
+                                        val brandApp = remember(device.name, appsVersion) {
+                                            my.hana.meena.data.system.BluetoothDevicesRepository.companionFor(device.name) {
+                                                InstalledAppsRepository.getCachedApp(it) != null
+                                            }
+                                        }
+                                        val companion = if (device.battery != null) null else {
+                                            settings.healthCompanionPackage.takeIf {
+                                                device.kind == my.hana.meena.data.system.BluetoothDevicesRepository.KIND_WEARABLE && it.isNotBlank()
+                                            } ?: brandApp
+                                        }
+                                        val companionName = when {
+                                            companion == null -> ""
+                                            companion == settings.healthCompanionPackage && settings.healthCompanionName.isNotBlank() -> settings.healthCompanionName
+                                            else -> InstalledAppsRepository.getCachedApp(companion)?.label.orEmpty()
                                         }
                                         val kindText = when (device.kind) {
                                             my.hana.meena.data.system.BluetoothDevicesRepository.KIND_AUDIO -> stringResource(
@@ -690,7 +704,7 @@ fun TodayHub(
                                                         stringResource(
                                                             R.string.devices_battery_in_app,
                                                             kindLine,
-                                                            settings.healthCompanionName.ifBlank { stringResource(R.string.devices_its_app) }
+                                                            companionName.ifBlank { stringResource(R.string.devices_its_app) }
                                                                 .lowercase()
                                                         )
                                                     } else kindLine,
@@ -1449,64 +1463,6 @@ fun TodayHub(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                    }
-                }
-            }
-        }
-
-        // Pinned App Tiles (WP8.1 Metro Live Tiles)
-        if (settings.pinnedAppIds.isNotEmpty()) {
-            val currentAppsVersion = appsVersion
-            item {
-                Text(
-                    text = stringResource(R.string.pinned_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MeenaTextWhite,
-                    modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.s)
-                )
-            }
-            val chunked = settings.pinnedAppIds.chunked(3)
-            items(chunked) { rowApps ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                    horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-                ) {
-                    rowApps.forEach { pkgId ->
-                        // Read currentAppsVersion so recomposition triggers when cache is loaded
-                        if (currentAppsVersion >= 0) { }
-                        val app = InstalledAppsRepository.getCachedApp(pkgId)
-                        val label = app?.label?.lowercase() ?: pkgId.substringAfterLast('.').lowercase()
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(88.dp)
-                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
-                                .metroClickable { onLaunchPackage(pkgId) }
-                                .padding(my.hana.meena.theme.MeenaSpacing.s)
-                        ) {
-                            if (app?.iconBitmap != null) {
-                                Image(
-                                    bitmap = app.iconBitmap,
-                                    contentDescription = label,
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .align(Alignment.Center)
-                                )
-                            }
-                            Text(
-                                text = label,
-                                color = my.hana.meena.theme.MeenaOnAccent,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.align(Alignment.BottomStart),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                    repeat(3 - rowApps.size) {
-                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

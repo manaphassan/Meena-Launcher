@@ -2,6 +2,7 @@ package my.hana.meena
 
 import my.hana.meena.data.model.AppsSort
 import my.hana.meena.data.system.AppGrouping
+import my.hana.meena.data.system.BluetoothDevicesRepository
 import my.hana.meena.data.system.BluetoothSignal
 import my.hana.meena.data.system.DeviceAppInfo
 import my.hana.meena.data.system.LocationPick
@@ -78,6 +79,14 @@ class FewFixesTest {
         assertEquals(BluetoothSignal.STRONG, BluetoothSignal.level(-50))
         assertEquals(BluetoothSignal.GOOD, BluetoothSignal.level(-70))
         assertEquals(BluetoothSignal.WEAK, BluetoothSignal.level(-90))
+    }
+
+    @Test
+    fun bluetoothCompanion_findsTheBrandAppOnlyWhenInstalled() {
+        val installed = setOf("com.xiaomi.wearable")
+        assertEquals("com.xiaomi.wearable", BluetoothDevicesRepository.companionFor("xiaomi smart band 9 e34f") { it in installed })
+        assertNull(BluetoothDevicesRepository.companionFor("xiaomi smart band 9") { false })
+        assertNull(BluetoothDevicesRepository.companionFor("moondrop pill") { it in installed })
     }
 
     @Test
