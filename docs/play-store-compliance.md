@@ -73,9 +73,10 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 
 ## 2.5 Privacy Policy URL
 
-- **URL for Play Console (and the in-app link):** https://github.com/manaphassan/Meena-Launcher/blob/main/docs/privacy-policy.md
+- **URL for Play Console (and the in-app link):** https://manaphassan.github.io/Meena-Launcher/privacy-policy/
+- **Hosting:** GitHub Pages from the `gh-pages` branch (static HTML rendered from `docs/privacy-policy.md` by GitHub's Markdown API). Checked live on 14 Nov 2026: HTTP 200, public, not a PDF. After editing the policy, rebuild and push `gh-pages` so the page matches: `bash scripts/publish-privacy-policy.sh`, then `git -C build/tmp/ghpages push`.
 - **Shown in the app:** settings, then system, then about, then **privacy policy**; and from Health Connect's "privacy policy" link.
-- **Before entering it in Play Console:** the page must load publicly. On 14 Nov 2026 it still returned **404** (checked again): `main` has no `docs/` folder yet; the policy is only on the phase branches. Merge or push it to `main` first. Play requires an active, public, non-geofenced, non-PDF page ([User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)).
+- **Play's requirement:** an active, public, non-geofenced, non-PDF page ([User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)). The Pages URL above meets it; the old `github.com/.../blob/main/...` link returned 404 and is no longer used.
 
 ### 2.4 Nearby Devices (`BLUETOOTH_CONNECT`, plus `BLUETOOTH` with `maxSdkVersion=30`)
 - **Use:** the optional connected devices widget lists Bluetooth devices that are already connected (`BluetoothManager.getConnectedDevices(GATT)`, the A2DP, HEADSET and input-device (HID host) profile proxies, and link broadcasts) and shows their names. It also shows a device's battery level when Android reports one in its battery broadcast. No scanning (`BLUETOOTH_SCAN` is not requested), no connecting, no location use.

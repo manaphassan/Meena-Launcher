@@ -17,7 +17,7 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 - [x] Bundle Size: **5.22 MiB** (5,474,342 bytes; within the 15 MB charter limit)
 - [x] Baseline profile: `baseline.prof` packaged in the bundle
 - [ ] Release signing: bundle is **unsigned**; create `keystore.properties` from `keystore.properties.example` (or use Play App Signing with an upload key)
-- [ ] Privacy policy URL live: https://github.com/manaphassan/Meena-Launcher/blob/main/docs/privacy-policy.md (returns 404 until `docs/privacy-policy.md` is on `main`)
+- [x] Privacy policy URL live: https://manaphassan.github.io/Meena-Launcher/privacy-policy/ (GitHub Pages, `gh-pages` branch; HTTP 200 on 14 Nov 2026)
 - [x] R8 & ProGuard: Minification enabled, resource shrinking enabled
 - [x] 16 KB Page Alignment: `zipalign -c -P 16` passes and every `LOAD` segment is 16 KB aligned for `libandroidx.graphics.path.so` and `libdatastore_shared_counter.so` (checked 12 Nov on the live debug APK; the 13 Nov bundle still ships only these two libraries)
 - [x] Automated Tests: `testDemoDebugUnitTest` and `testLiveDebugUnitTest` passing, 142 tests each (13 Nov 2026)

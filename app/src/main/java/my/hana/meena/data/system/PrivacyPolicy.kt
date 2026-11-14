@@ -9,7 +9,8 @@ import android.net.Uri
  * from Health Connect's "privacy policy" link. It lives in the public repo on the main branch.
  */
 object PrivacyPolicy {
-    const val URL = "https://github.com/manaphassan/Meena-Launcher/blob/main/docs/privacy-policy.md"
+    /** Published on GitHub Pages from the gh-pages branch (rendered from docs/privacy-policy.md). */
+    const val URL = "https://manaphassan.github.io/Meena-Launcher/privacy-policy/"
 
     /** Health Connect's privacy policy link (up to Android 13, and the Android 14+ alias). */
     val RATIONALE_ACTIONS = setOf(
