@@ -1362,16 +1362,61 @@ fun TodayHub(
                     ) {
                         val unknown = stringResource(R.string.phone_unknown)
                         Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                            // Battery
+                            // Battery: level and charging speed, time to full or empty, and when to plug in or out.
                             Column {
                                 Text(stringResource(R.string.phone_battery_label), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
                                 val battery = telemetry.batteryPercent
                                 Text(
-                                    text = if (battery == null) unknown
-                                    else stringResource(if (telemetry.isCharging) R.string.phone_battery_charging else R.string.phone_battery_unplugged, battery),
+                                    text = when {
+                                        battery == null -> unknown
+                                        telemetry.isFull -> stringResource(R.string.phone_battery_full, battery)
+                                        telemetry.isCharging -> when (telemetry.chargeSpeed) {
+                                            my.hana.meena.data.system.ChargeSpeed.FAST -> stringResource(R.string.phone_battery_fast, battery)
+                                            my.hana.meena.data.system.ChargeSpeed.SLOW -> stringResource(R.string.phone_battery_slow, battery)
+                                            my.hana.meena.data.system.ChargeSpeed.NORMAL -> stringResource(R.string.phone_battery_normal, battery)
+                                            null -> stringResource(R.string.phone_battery_charging, battery)
+                                        }
+                                        else -> stringResource(R.string.phone_battery_unplugged, battery)
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (battery != null && battery <= 20) MaterialTheme.colorScheme.error else MeenaTextWhite
+                                    color = if (battery != null && battery <= 20 && !telemetry.isCharging) MaterialTheme.colorScheme.error else MeenaTextWhite
                                 )
+                                if (battery != null && !telemetry.isFull) {
+                                    @Composable
+                                    fun duration(minutes: Int): String = if (minutes >= 60) {
+                                        stringResource(R.string.phone_duration_hm, minutes / 60, minutes % 60)
+                                    } else stringResource(R.string.phone_duration_m, minutes.coerceAtLeast(1))
+                                    val timeText = when {
+                                        telemetry.isCharging && telemetry.minutesToFull != null ->
+                                            stringResource(R.string.phone_time_to_full, duration(telemetry.minutesToFull!!))
+                                        !telemetry.isCharging && telemetry.minutesToEmpty != null ->
+                                            stringResource(R.string.phone_time_to_empty, duration(telemetry.minutesToEmpty!!))
+                                        else -> stringResource(R.string.phone_time_working_out)
+                                    }
+                                    Text(
+                                        text = timeText,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                                if (battery != null) {
+                                    val advice = my.hana.meena.data.system.BatteryRules.advice(battery, telemetry.isCharging, telemetry.isFull)
+                                    val adviceText = when (advice) {
+                                        my.hana.meena.data.system.ChargeAdvice.PLUG_IN_NOW -> stringResource(R.string.phone_advice_plug_now)
+                                        my.hana.meena.data.system.ChargeAdvice.PLUG_IN_SOON -> stringResource(R.string.phone_advice_plug_soon)
+                                        my.hana.meena.data.system.ChargeAdvice.UNPLUG_NOW -> stringResource(R.string.phone_advice_unplug)
+                                        my.hana.meena.data.system.ChargeAdvice.FULL -> stringResource(R.string.phone_advice_full)
+                                        my.hana.meena.data.system.ChargeAdvice.NOT_YET -> null
+                                    }
+                                    if (adviceText != null) {
+                                        Text(
+                                            text = adviceText,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (advice == my.hana.meena.data.system.ChargeAdvice.PLUG_IN_NOW) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                                        )
+                                    }
+                                }
                             }
 
                             // Memory, then storage: free space, with a bar only when the phone reports it

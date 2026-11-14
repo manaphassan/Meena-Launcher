@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.provider.Settings
@@ -21,7 +22,17 @@ data class RealDeviceTelemetry(
     val memoryUsedPercent: Int? = null,
     val freeStorageGb: Double? = null,
     val storageUsedPercent: Int? = null,
-    val screenBrightnessPercent: Int? = null
+    val screenBrightnessPercent: Int? = null,
+    /** True when Android says the battery is full while plugged in. */
+    val isFull: Boolean = false,
+    /** Normal or fast, from the charger's own limits; null when the phone doesn't say. */
+    val chargeSpeed: ChargeSpeed? = null,
+    /** Minutes to 100% while charging, from Android or else Meena's estimate. */
+    val minutesToFull: Int? = null,
+    /** Minutes until empty while on battery, from Android or else Meena's estimate. */
+    val minutesToEmpty: Int? = null,
+    /** True when the time came from Meena's own estimate rather than Android. */
+    val isEstimate: Boolean = false
 )
 
 object DeviceTelemetryHelper {
@@ -64,6 +75,8 @@ object DeviceTelemetryHelper {
 
         var battery: Int? = null
         var isCharging = false
+        var isFull = false
+        var speed: ChargeSpeed? = null
         runCatching {
             val status =
                 context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return@runCatching
@@ -73,6 +86,30 @@ object DeviceTelemetryHelper {
             )
             val state = status.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
             isCharging = state == BatteryManager.BATTERY_STATUS_CHARGING || state == BatteryManager.BATTERY_STATUS_FULL
+            isFull = state == BatteryManager.BATTERY_STATUS_FULL
+            // Hidden extras (BatteryManager.EXTRA_MAX_CHARGING_CURRENT / _VOLTAGE), read by their string
+            // names; Android Settings uses the same two for "charging rapidly". Missing on some phones.
+            if (isCharging) speed = BatteryRules.speed(status.getIntExtra("max_charging_current", -1), status.getIntExtra("max_charging_voltage", -1))
+        }
+
+        val now = System.currentTimeMillis()
+        var estimate = false
+        val manager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+        // https://developer.android.com/reference/android/os/BatteryManager#computeChargeTimeRemaining()
+        val toFull = if (!isCharging || isFull) null else {
+            val fromAndroid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                runCatching { manager?.computeChargeTimeRemaining() }.getOrNull()?.takeIf { it > 0 }?.let { (it / 60_000L).toInt() }
+            } else null
+            fromAndroid ?: BatteryRules.minutesTo(BatteryHistory.samples(context), now, charging = true, target = 100)?.also { estimate = true }
+        }
+        // https://developer.android.com/reference/android/os/PowerManager#getBatteryDischargePrediction()
+        val toEmpty = if (isCharging) null else {
+            val fromAndroid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                runCatching {
+                    (context.getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager)?.batteryDischargePrediction
+                }.getOrNull()?.toMinutes()?.toInt()?.takeIf { it > 0 }
+            } else null
+            fromAndroid ?: BatteryRules.minutesTo(BatteryHistory.samples(context), now, charging = false, target = 0)?.also { estimate = true }
         }
 
         // Throws when the phone has no value, which leaves brightness unknown.
@@ -87,7 +124,12 @@ object DeviceTelemetryHelper {
             memoryUsedPercent = memoryUsed,
             freeStorageGb = freeStorageGb,
             storageUsedPercent = storageUsed,
-            screenBrightnessPercent = brightness
+            screenBrightnessPercent = brightness,
+            isFull = isFull,
+            chargeSpeed = speed,
+            minutesToFull = toFull,
+            minutesToEmpty = toEmpty,
+            isEstimate = estimate
         )
     }
 }
