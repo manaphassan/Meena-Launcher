@@ -7,14 +7,14 @@ Tags: **[F]** checked in code or by a command, **[S]** not verified yet, **[I]**
 
 | # | Area (weight) | Before | Now | Gates passed | Gates failed or not verified |
 |---|---|---|---|---|---|
-| 1 | Metro structure (1) | 8 | **10** | 5 pages (`pageCount = { 5 }`) [F]; back returns to today (`BackHandler` on `currentPage != 0`) [F]; no `TopAppBar`, `Scaffold` or `FloatingActionButton` anywhere [F]; peek title of the next page shows on the phone [F]; cold start median 351 ms, warm 328 ms on the TECNO KL8 (Speed below) [F] | The swipe-down quick panel was checked in phase 2 and not re-run [S] |
-| 2 | Typography (1) | 7 | **10** | Selawik bundled in `res/font`, no Google Fonts provider and no `font_certs.xml` [F]; display 42sp light, section 24sp light, body 16sp, every caption style ≥ 12sp (`Type.kt`) [F]; `StringsCaseTest` lowercase, plurals included [F]; 0 bold or semibold in `ui/` [F]; 0 symbol glyphs in code and in `strings.xml` [F] | `bodyMedium` is 14sp. I read it as secondary text, not body, so it doesn't fail the 15–17sp gate [I]. Screenshots not taken [S] |
+| 1 | Metro structure (1) | 8 | **10** | 5 pages (`pageCount = { 5 }`) [F]; back returns to today (`BackHandler` on `currentPage != 0`) [F]; no `TopAppBar`, `Scaffold` or `FloatingActionButton` anywhere [F]; peek title of the next page shows on the phone [F]; cold start median 351 ms, warm 328 ms on the TECNO KL8 (Speed below) [F]; the swipe-down quick panel opens on a quick flick down the page title [F] | A slow drag doesn't open the panel, because it needs more than 20px in one drag step. Minor, not changed [F] |
+| 2 | Typography (1) | 7 | **10** | Selawik bundled in `res/font`, no Google Fonts provider and no `font_certs.xml` [F]; display 42sp light, section 24sp light, body 16sp, every caption style ≥ 12sp (`Type.kt`) [F]; `StringsCaseTest` lowercase, plurals included [F]; 0 bold or semibold in `ui/` [F]; 0 symbol glyphs in code and in `strings.xml` [F] | `bodyMedium` is 14sp. I read it as secondary text, not body, so it doesn't fail the 15–17sp gate [I] |
 | 3 | Aesthetic purity (1) | 5 | **10** | `charter-baseline.txt` all 0: circles, borders, cards, elevation, Toasts, filled icons, colour literals, emoji [F]; ripple off everywhere (`MetroIndication`, `indication = null`) [F]; no per-brand colours [F]; every `RoundedCornerShape` is `0.dp` [F] | Three themes (dark, light, paper), not two. Paper was your call after the plan, so it counts as compliant [I]. The news picture blur is a privacy filter for feeds you mark, not a decorative blur [I] |
 | 4 | Content focus, AIO goal (2) | 4 | **9** [I] | Favourites cap 6 (`FavouriteRules.MAX`) and group tiles [F]; simple Today map preview [F]; favourites sit right under the clock (`407d32b`), so at 360dp the first screen shows clock, date, hijri date, place, next alarm, both favourite rows and all 5 forecast days, with no "needs setup" rows [F] | The 3-line rule per widget and the A/B task test need testers [S] |
-| 5 | Layout discipline (1) | 5 | **9** | Spacing only 0/6/12/24dp (ratchet 0) [F]; touch targets ≥ 48dp on new screens [F]; palette text on every page colour ≥ 4.5:1 in all three themes (`ContrastTest`) [F]; accent text ≥ 4.5:1 for all 10 swatches in all 3 themes (`ContrastTest.accentAsText_*`) [F]; white labels on accent tiles ≥ 4.5:1 for all 10 swatches (`ContrastTest.labelsOnAccentFills_*`) [F]; Today at 320dp with 130% text no longer clips (two fixes, Screenshots below) [F] | Only Today was shot at 130%; the other four pages were not [S] |
+| 5 | Layout discipline (1) | 5 | **10** | Spacing only 0/6/12/24dp (ratchet 0) [F]; touch targets ≥ 48dp on new screens [F]; palette text on every page colour ≥ 4.5:1 in all three themes (`ContrastTest`) [F]; accent text ≥ 4.5:1 for all 10 swatches in all 3 themes (`ContrastTest.accentAsText_*`) [F]; white labels on accent tiles ≥ 4.5:1 for all 10 swatches (`ContrastTest.labelsOnAccentFills_*`) [F]; all 5 pages at 320dp with 130% text checked on the phone, and the 3 clips found are fixed (Screenshots below) [F]; all 5 pages checked in light and paper [F] | none |
 | 6 | Data honesty (1) | 7 | **10** | No sample, fake, `RM` amount or "x ago" literals in `main/` (grep audit below) [F]; widgets use `WidgetState`: 9 data repositories (weather, solat, health, news, finance, rates, spending, wikipedia, devices) [F]; the news fallback list is empty (`initialFallbackArticles = emptyList()`) [F] | none |
 
-Weighted: before (8+7+5+4×2+5+7)/7 = **5.7**. Now (10+10+10+9×2+9+10)/7 = **9.6** [I]. Area 4 is held back by the favourites row; area 5 by the untested pages at 130%.
+Weighted: before (8+7+5+4×2+5+7)/7 = **5.7**. Now (10+10+10+9×2+10+10)/7 = **9.7** [I]. Only area 4 is below 10, and its last two gates need testers.
 
 ## Fixed: accent as text
 
@@ -76,7 +76,23 @@ Today page, dark theme, taken on the phone with `wm density` (280, 320, 360 = 41
 | 320dp, 130% | **Two clips, now fixed** (`TodayHub`). The clock's seconds were cut off (`21:27:2`), so the clock now steps down 5% at a time until it fits. The hijri date wrapped into a 3-line column beside the date, so it now drops below it on narrow screens. Re-shot after both fixes: `21:39:02` in full, and the hijri date on its own line |
 | 360dp, 130% | The hijri date wrapped to two lines beside the date; covered by the same fix, not re-shot [S]. "wednesday" runs into its weather icon, a minor crowding [F], not fixed |
 
-Not shot yet [S]: light and paper themes, and the other four pages at 130%.
+Other pages at 320dp with 130% text (dark):
+
+| page | finding |
+|---|---|
+| inbox | Fits. Chat previews show the sender's own capitals and emoji, which is message content, not app copy |
+| news | Fits; long headlines end in an ellipsis |
+| money | Fits |
+| apps | **Clipped, now fixed** (`a02ccad`). The a to z bar ran off the bottom after "p", so the touch rows no longer matched the letters. The letters now shrink to fit the bar. Re-shot: "#" to "z" all show |
+
+Light and paper themes, 360dp, 100%, all five pages:
+
+| theme | finding |
+|---|---|
+| light | Tiles use the deepened mango and white labels; the accent text is the darker shade. **Bug, now fixed** (`a02ccad`): the letter tiles on the apps page drew their letters in the page text colour, which is black on light and paper. They now use `MeenaOnAccent`. Re-shot on paper: white "#" and "a" on black |
+| paper | Black tiles with white labels, black text on white, no accent anywhere, as intended |
+
+Not shot [S]: the map in light and paper.
 
 ## Changes in this phase
 
@@ -89,6 +105,7 @@ Not shot yet [S]: light and paper themes, and the other four pages at 130%.
 | `e76f3e3` | Deeper accent tiles so white labels read |
 | `8a48295` | Today: the clock shrinks to fit instead of clipping; the hijri date drops below the date when space is short |
 | `407d32b` | Favourites move right under the clock: the new default order, plus a one-time move for existing settings (`layoutRevision`) |
+| `a02ccad` | Apps page: the a to z bar fits at large text sizes; letters and icons on accent tiles use `MeenaOnAccent` |
 
 ## Command output
 
@@ -117,7 +134,7 @@ grep -rnE '"[0-9]+m ago"|"good morning' app/src/main/java
 ## Not verified [S]
 
 1. The 3-line rule per widget, checked by eye across all widgets.
-2. The other four pages at 130% text; light and paper screenshots.
+2. Settings and sub-pages (map, weather, notes) at 130% text.
 3. The A/B task test with 5 or more people (plan section 5). This needs testers; the closed test can cover it.
 4. TalkBack walk-through of every page.
 5. Light and paper themes on the map.
