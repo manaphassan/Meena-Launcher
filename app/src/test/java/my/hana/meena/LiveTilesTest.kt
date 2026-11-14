@@ -87,4 +87,21 @@ class LiveTilesTest {
         assertEquals(emptyList<LiveFace>(), faces("chat.app", alarm = alarm))
         assertEquals(emptyList<LiveFace>(), faces("clock.app", alarm = NextAlarm(at("2026-11-14 03:30"), null)))
     }
+
+    @Test
+    fun chatNames_loseTheirEmoji_andEmojiOnlyNamesAreDropped() {
+        val group = listOf(notif("chat.app", "Cuci Mata Shopping \uD83D\uDE03\uD83D\uDE03\uD83D\uDE03 (10 messages)", true, 1))
+        assertEquals(listOf(LiveFace("1", "cuci mata shopping (10 messages)")), faces("chat.app", group))
+        val onlyEmoji = listOf(notif("chat.app", "\u2764\uFE0F\uD83D\uDD25", true, 1))
+        assertEquals(listOf(LiveFace("1", "new")), faces("chat.app", onlyEmoji))
+    }
+
+    @Test
+    fun stripEmoji_keepsLettersAndTypography() {
+        val p = my.hana.meena.data.system.PlainText
+        assertEquals("kuih raya 26° © 2026", p.stripEmoji("kuih \uD83C\uDF6A raya \uD83D\uDC4D\uD83C\uDFFD 26° © 2026"))
+        assertEquals("family", p.stripEmoji("family \uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67"))
+        assertEquals("malaysia", p.stripEmoji("\uD83C\uDDF2\uD83C\uDDFE malaysia"))
+        assertEquals("jawi جاوي", p.stripEmoji("jawi جاوي ⭐"))
+    }
 }

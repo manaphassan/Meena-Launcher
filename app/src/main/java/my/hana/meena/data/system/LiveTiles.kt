@@ -8,6 +8,32 @@ import java.util.TimeZone
 /** One back face of a live tile: a big line and a small line. Only real data, never a sample. */
 data class LiveFace(val primary: String, val secondary: String)
 
+/**
+ * Removes emoji from text Meena shows on tiles (GEMINI.md rule 7: no emoji). Covers the emoji
+ * blocks, dingbats, flags, skin tones and the joiners and selectors that glue emoji together.
+ * Letters, digits, punctuation, ° and © are kept. Spaces left behind are collapsed.
+ */
+object PlainText {
+    fun stripEmoji(text: String): String {
+        val out = StringBuilder(text.length)
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            if (!isEmojiPart(cp)) out.appendCodePoint(cp)
+            i += Character.charCount(cp)
+        }
+        return out.toString().replace(Regex("""\s{2,}"""), " ").trim()
+    }
+
+    private fun isEmojiPart(cp: Int): Boolean =
+        cp in 0x1F000..0x1FAFF || // emoticons, pictographs, transport, flags, skin tones, extended
+            cp in 0x2600..0x27BF || // misc symbols and dingbats
+            cp in 0x2B00..0x2BFF || // stars, arrows used as emoji
+            cp in 0xE0020..0xE007F || // tag characters (subdivision flags)
+            cp == 0x200D || cp == 0xFE0F || cp == 0xFE0E || cp == 0x20E3 ||
+            cp == 0x3030 || cp == 0x303D || cp == 0x3297 || cp == 0x3299
+}
+
 /** What the tiles can say about the next alarm: when it rings and which app set it. */
 data class NextAlarm(val triggerMillis: Long, val creatorPackage: String?)
 
@@ -46,7 +72,7 @@ object LiveTiles {
         if (mine.isNotEmpty()) {
             // Names only come from chats (sender or group); other apps' titles can be message text.
             val names = if (showNames) {
-                mine.filter { it.isConversation }.map { it.title.trim() }.filter { it.isNotBlank() }.distinct()
+                mine.filter { it.isConversation }.map { PlainText.stripEmoji(it.title) }.filter { it.isNotBlank() }.distinct()
             } else emptyList()
             val secondary = when {
                 names.isEmpty() -> words.new
@@ -59,7 +85,7 @@ object LiveTiles {
         if (packageName in calendarPackages) {
             nextEvent(events, nowMillis)?.let { event ->
                 faces += LiveFace(
-                    event.title.lowercase(Locale.UK),
+                    PlainText.stripEmoji(event.title).lowercase(Locale.UK),
                     whenText(event, nowMillis, is24Hour, words, timeZone)
                 )
             }
