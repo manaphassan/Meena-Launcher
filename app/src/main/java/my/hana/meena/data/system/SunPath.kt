@@ -65,6 +65,13 @@ object SunPath {
         )
     }
 
+    /** The sun every [stepMs] from sunrise to sunset, for drawing its path across the sky. */
+    fun path(riseMillis: Long, setMillis: Long, lat: Double, lng: Double, stepMs: Long = 15 * 60_000L): List<SunPosition> {
+        if (setMillis <= riseMillis) return emptyList()
+        val times = generateSequence(riseMillis) { it + stepMs }.takeWhile { it < setMillis }.toList() + setMillis
+        return times.map { position(it, lat, lng) }
+    }
+
     /** Halves the window until it is under a second wide. */
     private fun refine(from: Long, to: Long, lat: Double, lng: Double): Long {
         var a = from

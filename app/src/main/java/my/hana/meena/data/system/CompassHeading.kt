@@ -36,6 +36,12 @@ object Qibla {
 
     /** Smallest angle between two headings, 0 to 180. */
     fun difference(a: Double, b: Double): Double = kotlin.math.abs(((a - b + 540.0) % 360.0) - 180.0)
+
+    /** Within this many degrees counts as facing the qibla. */
+    const val FACING_DEGREES = 3.0
+
+    /** How far to turn to face [target] from [heading]: negative is left, positive is right. */
+    fun turn(heading: Double, target: Double): Double = ((target - heading + 540.0) % 360.0) - 180.0
 }
 
 /**

@@ -96,11 +96,11 @@ fun TodayHub(
     onRequestBluetoothPermission: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenWeatherDetail: () -> Unit = {},
+    onOpenNearbyMap: () -> Unit = {},
     onOpenApps: () -> Unit = {},
     onTogglePin: (String) -> Unit = {},
     onReorderPin: (Int, Int) -> Unit = { _, _ -> },
-    onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> },
-    onSetWidgetSetting: (widgetId: String, key: String, value: String) -> Unit = { _, _, _ -> }
+    onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -1322,7 +1322,7 @@ fun TodayHub(
                         ringsOn = settings.widgetConfigs[widgetId]?.customSettings?.get("rings") != "off",
                         animate = !settings.reducedMotion,
                         is24Hour = settings.is24HourFormat,
-                        onRingsChange = { on -> onSetWidgetSetting(widgetId, "rings", if (on) "on" else "off") }
+                        onOpen = onOpenNearbyMap
                     )
                 }
 

@@ -403,11 +403,13 @@ fun MeenaHomeScreen(
     var settingsInitialTab by remember { mutableStateOf("widgets") }
     var isActionCenterOpen by remember { mutableStateOf(false) }
     var isWeatherDetailOpen by remember { mutableStateOf(false) }
+    var isNearbyMapOpen by remember { mutableStateOf(false) }
     var focusAppsSearch by remember { mutableStateOf(false) }
 
     // Intercept hardware/gesture Back button (return to today hub)
-    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || pagerState.currentPage != 0) {
+    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || isNearbyMapOpen || pagerState.currentPage != 0) {
         when {
+            isNearbyMapOpen -> isNearbyMapOpen = false
             isWeatherDetailOpen -> isWeatherDetailOpen = false
             isSettingsOpen -> isSettingsOpen = false
             isActionCenterOpen -> isActionCenterOpen = false
@@ -635,6 +637,7 @@ fun MeenaHomeScreen(
                                 isSettingsOpen = true
                             },
                             onOpenWeatherDetail = { isWeatherDetailOpen = true },
+                            onOpenNearbyMap = { isNearbyMapOpen = true },
                             onOpenApps = {
                                 coroutineScope.launch { pagerState.animateScrollToPage(4) }
                             },
@@ -655,16 +658,6 @@ fun MeenaHomeScreen(
                                     val existing = currentMap[widgetId] ?: my.hana.meena.data.model.MeenaUserSettings.defaultWidgetMap()[widgetId]
                                     if (existing != null) {
                                         currentMap[widgetId] = existing.copy(isCollapsed = isCollapsed)
-                                        settingsRepository.saveSettings(userSettings.copy(widgetConfigs = currentMap))
-                                    }
-                                }
-                            },
-                            onSetWidgetSetting = { widgetId, key, value ->
-                                coroutineScope.launch {
-                                    val currentMap = userSettings.widgetConfigs.toMutableMap()
-                                    val existing = currentMap[widgetId] ?: my.hana.meena.data.model.MeenaUserSettings.defaultWidgetMap()[widgetId]
-                                    if (existing != null) {
-                                        currentMap[widgetId] = existing.copy(customSettings = existing.customSettings + (key to value))
                                         settingsRepository.saveSettings(userSettings.copy(widgetConfigs = currentMap))
                                     }
                                 }
@@ -747,6 +740,31 @@ fun MeenaHomeScreen(
                 aqiData = aqi,
                 animate = !userSettings.reducedMotion,
                 onNavigateBack = { isWeatherDetailOpen = false }
+            )
+        }
+
+        // Nearby map sub-page
+        AnimatedVisibility(
+            visible = isNearbyMapOpen,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it })
+        ) {
+            val mapConfig = userSettings.widgetConfigs["widget-map-radar"]
+            my.hana.meena.ui.hubs.NearbyMapSubPage(
+                ringsOn = mapConfig?.customSettings?.get("rings") != "off",
+                animate = !userSettings.reducedMotion,
+                is24Hour = userSettings.is24HourFormat,
+                onRingsChange = { on ->
+                    coroutineScope.launch {
+                        val currentMap = userSettings.widgetConfigs.toMutableMap()
+                        val existing = currentMap["widget-map-radar"] ?: my.hana.meena.data.model.MeenaUserSettings.defaultWidgetMap()["widget-map-radar"]
+                        if (existing != null) {
+                            currentMap["widget-map-radar"] = existing.copy(customSettings = existing.customSettings + ("rings" to if (on) "on" else "off"))
+                            settingsRepository.saveSettings(userSettings.copy(widgetConfigs = currentMap))
+                        }
+                    }
+                },
+                onNavigateBack = { isNearbyMapOpen = false }
             )
         }
 

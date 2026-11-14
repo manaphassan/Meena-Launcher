@@ -118,6 +118,27 @@ class FewFixesTest {
     }
 
     @Test
+    fun qibla_turnSaysWhichWayAndHowFar() {
+        assertEquals(-40.0, Qibla.turn(333.0, 293.0), 1e-9)
+        assertEquals(20.0, Qibla.turn(350.0, 10.0), 1e-9)
+        assertEquals(0.0, Qibla.turn(293.0, 293.0), 1e-9)
+    }
+
+    @Test
+    fun sunPath_runsFromSunriseToSunset() {
+        val lat = 3.1390
+        val lng = 101.6869
+        val midnight = java.time.ZonedDateTime.of(2026, 11, 14, 0, 0, 0, 0, java.time.ZoneId.of("Asia/Kuala_Lumpur"))
+            .toInstant().toEpochMilli()
+        val events = SunPath.events(midnight, lat, lng)
+        val path = SunPath.path(events.riseMillis!!, events.setMillis!!, lat, lng)
+        assertEquals(events.riseAzimuth!!, path.first().azimuth, 0.01)
+        assertEquals(events.setAzimuth!!, path.last().azimuth, 0.01)
+        assertTrue(path.maxOf { it.elevation } > 65.0)
+        assertTrue(SunPath.path(10L, 5L, lat, lng).isEmpty())
+    }
+
+    @Test
     fun qibla_smoothTakesTheShortWayRound() {
         assertEquals(1.0, Qibla.smooth(359.0, 3.0, 0.5), 1e-9)
         assertEquals(355.0, Qibla.smooth(5.0, 345.0, 0.5), 1e-9)
