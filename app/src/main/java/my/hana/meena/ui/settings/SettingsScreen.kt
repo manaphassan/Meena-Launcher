@@ -843,7 +843,7 @@ private fun SubPageContainer(
                         Button(
                             onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                             shape = RoundedCornerShape(0.dp)
                         ) {
                             Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -860,7 +860,7 @@ private fun SubPageContainer(
                         Button(
                             onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                             shape = RoundedCornerShape(0.dp)
                         ) {
                             Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -877,7 +877,7 @@ private fun SubPageContainer(
                         Button(
                             onClick = { showNotificationDisclosure = true },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                             shape = RoundedCornerShape(0.dp)
                         ) {
                             Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -925,7 +925,7 @@ private fun SubPageContainer(
                                 } catch (e: Exception) { }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                             shape = RoundedCornerShape(0.dp)
                         ) {
                             Text(stringResource(R.string.health_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -978,7 +978,7 @@ private fun SubPageContainer(
                 Button(
                     onClick = { showNotificationDisclosure = true },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                     shape = RoundedCornerShape(0.dp)
                 ) {
                     Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -1166,7 +1166,7 @@ private fun SubPageContainer(
                         stringResource(themeLabelRes(settingsState.baseTheme))
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isAccessible) MeenaTextSecondary else MeenaLossRed
+                    color = MeenaTextSecondary
                 )
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
 
@@ -1392,7 +1392,7 @@ private fun SubPageContainer(
                 Button(
                     onClick = onExportBackup,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                     shape = RoundedCornerShape(0.dp)
                 ) {
                     Text(stringResource(R.string.backup_share), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -1829,7 +1829,7 @@ private fun FinanceAccountSettings(
                     FinanceRepository.setSheetUrl(context, sheetUrlInput)
                 },
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
                 shape = RoundedCornerShape(0.dp)
             ) {
                 Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -2040,7 +2040,7 @@ private fun FinanceAccountSettings(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
             shape = RoundedCornerShape(0.dp)
         ) {
             Text(stringResource(R.string.finance_add_button), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
@@ -2086,7 +2086,7 @@ private fun HealthAccountSettings(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
             shape = RoundedCornerShape(0.dp)
         ) {
             Text(
@@ -2201,7 +2201,7 @@ private fun CalendarAccountSettings(
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 shape = RoundedCornerShape(0.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill)
             ) {
                 Text(stringResource(R.string.calendar_turn_on), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
             }

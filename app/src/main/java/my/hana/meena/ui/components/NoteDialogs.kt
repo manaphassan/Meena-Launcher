@@ -219,7 +219,7 @@ fun NoteEditDialog(initial: String, onSave: (String) -> Boolean, onDismiss: () -
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 48.dp)
-                            .background(if (canSave) accent else my.hana.meena.theme.MeenaTextDisabled)
+                            .background(if (canSave) my.hana.meena.theme.MeenaAccentFill else my.hana.meena.theme.MeenaTextDisabled)
                             .metroClickable(enabled = canSave) { if (onSave(value.text)) onDismiss() },
                         contentAlignment = Alignment.Center
                     ) {

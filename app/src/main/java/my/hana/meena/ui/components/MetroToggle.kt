@@ -65,7 +65,7 @@ fun MetroToggle(
     )
 
     val trackColor by animateColorAsState(
-        targetValue = if (checked) MaterialTheme.colorScheme.primary else MeenaBlack,
+        targetValue = if (checked) my.hana.meena.theme.MeenaAccentFill else MeenaBlack,
         animationSpec = tween(durationMillis = 150),
         label = "metroToggleTrackColor"
     )

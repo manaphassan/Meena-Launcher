@@ -1,6 +1,7 @@
 package my.hana.meena.ui
 
 import my.hana.meena.data.model.MeenaUserSettings
+import my.hana.meena.theme.Meena10AccentSwatches
 import my.hana.meena.theme.MeenaCyan
 import my.hana.meena.theme.MeenaDarkPalette
 import my.hana.meena.theme.MeenaLightPalette
@@ -38,6 +39,28 @@ class ContrastTest {
             }
         }
         assertTrue("contrast below 4.5:1:\n" + failures.joinToString("\n"), failures.isEmpty())
+    }
+
+    @Test
+    fun accentAsText_readsOnEveryPage_forEverySwatchAndTheme() {
+        val failures = mutableListOf<String>()
+        for (p in palettes) for (s in Meena10AccentSwatches) {
+            val primary = getMeenaColorScheme(p.id, s.color).primary
+            for (page in my.hana.meena.theme.pageColours(p)) {
+                val ratio = calculateContrastRatio(primary, page)
+                if (ratio < 4.5f) failures += "${p.id}/${s.name}: ${"%.2f".format(ratio)}:1"
+            }
+        }
+        assertTrue("accent text below 4.5:1:\n" + failures.joinToString("\n"), failures.isEmpty())
+    }
+
+    @Test
+    fun readableAccent_keepsColoursThatAlreadyRead_andKeepsTheHue() {
+        // Default blue on black is 7.56:1, so the dark theme shows it untouched.
+        assertEquals(MeenaCyan, getMeenaColorScheme("dark", MeenaCyan).primary)
+        // On white it is deepened, not swapped: blue stays the strongest channel.
+        val onLight = getMeenaColorScheme("light", MeenaCyan).primary
+        assertTrue(onLight != MeenaCyan && onLight.blue > onLight.red && onLight.blue > onLight.green)
     }
 
     @Test

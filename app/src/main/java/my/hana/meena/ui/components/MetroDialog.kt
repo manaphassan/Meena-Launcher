@@ -88,7 +88,7 @@ fun MetroDialog(
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 48.dp)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .background(my.hana.meena.theme.MeenaAccentFill)
                             .metroClickable(onClick = onConfirm),
                         contentAlignment = Alignment.Center
                     ) {

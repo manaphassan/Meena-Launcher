@@ -304,7 +304,7 @@ fun AppsHub(
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .background(primaryColor)
+                                    .background(my.hana.meena.theme.MeenaAccentFill)
                                     .metroClickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         isJumpListOpen = true
@@ -462,7 +462,7 @@ fun AppsHub(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(68.dp)
-                    .background(primaryColor),
+                    .background(my.hana.meena.theme.MeenaAccentFill),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -539,7 +539,7 @@ fun AppsHub(
                                 Box(
                                     modifier = Modifier
                                         .size(48.dp)
-                                        .background(primaryColor),
+                                        .background(my.hana.meena.theme.MeenaAccentFill),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (target.iconBitmap != null) {
@@ -667,7 +667,7 @@ private fun AppRow(
     name: String,
     icon: ImageVector? = null,
     iconBitmap: ImageBitmap? = null,
-    iconBg: Color = MaterialTheme.colorScheme.primary,
+    iconBg: Color = my.hana.meena.theme.MeenaAccentFill,
     notificationSnippet: String? = null,
     badge: Int = 0,
     time: String? = null,
@@ -711,7 +711,7 @@ private fun AppRow(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(0.dp))
+                        .background(my.hana.meena.theme.MeenaAccentFill, RoundedCornerShape(0.dp))
                         .padding(horizontal = my.hana.meena.theme.MeenaSpacing.s, vertical = 0.dp)
                 ) {
                     Text(

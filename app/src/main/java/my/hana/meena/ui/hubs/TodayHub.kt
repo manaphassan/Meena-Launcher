@@ -1495,11 +1495,11 @@ fun TodayHub(
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     val quickActions = listOf(
-                        Triple(stringResource(R.string.quick_action_phone), MaterialTheme.colorScheme.primary, onOpenDialer),
-                        Triple(stringResource(R.string.quick_action_messages), MaterialTheme.colorScheme.primary, onOpenMessages),
-                        Triple(stringResource(R.string.quick_action_email), MaterialTheme.colorScheme.primary, onOpenEmail),
-                        Triple(stringResource(R.string.quick_action_camera), MaterialTheme.colorScheme.primary, onOpenCamera),
-                        Triple(stringResource(R.string.quick_action_calculator), MaterialTheme.colorScheme.primary, onOpenCalculator)
+                        Triple(stringResource(R.string.quick_action_phone), my.hana.meena.theme.MeenaAccentFill, onOpenDialer),
+                        Triple(stringResource(R.string.quick_action_messages), my.hana.meena.theme.MeenaAccentFill, onOpenMessages),
+                        Triple(stringResource(R.string.quick_action_email), my.hana.meena.theme.MeenaAccentFill, onOpenEmail),
+                        Triple(stringResource(R.string.quick_action_camera), my.hana.meena.theme.MeenaAccentFill, onOpenCamera),
+                        Triple(stringResource(R.string.quick_action_calculator), my.hana.meena.theme.MeenaAccentFill, onOpenCalculator)
                     )
                     quickActions.forEach { (label, bg, action) ->
                         Box(

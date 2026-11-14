@@ -112,6 +112,10 @@ fun meenaPaletteFor(baseTheme: String): MeenaPalette = when (baseTheme) {
 
 val LocalMeenaPalette = staticCompositionLocalOf { MeenaDarkPalette }
 
+/** The accent exactly as chosen, for solid fills only (tiles, buttons, toggle tracks). */
+val LocalMeenaAccentFill = staticCompositionLocalOf { MeenaCyan }
+val MeenaAccentFill: Color @Composable @ReadOnlyComposable get() = LocalMeenaAccentFill.current
+
 val MeenaBlack: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.background
 val MeenaDarkSlate: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.darkSlate
 val MeenaSurface: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.surface
@@ -179,6 +183,30 @@ fun relativeLuminance(color: Color): Float {
     }
     return 0.2126f * channel(color.red) + 0.7152f * channel(color.green) + 0.0722f * channel(color.blue)
 }
+
+/**
+ * The accent as text: unchanged when it already reads at [minRatio] on every page colour,
+ * otherwise mixed toward black (light pages) or white (dark pages) in small steps until it
+ * does, so the hue stays recognisable. GEMINI.md rule 7 asks for 4.5:1 on all text.
+ */
+fun readableAccent(accent: Color, pages: List<Color>, minRatio: Float = 4.5f): Color {
+    fun reads(c: Color) = pages.all { calculateContrastRatio(c, it) >= minRatio }
+    if (reads(accent)) return accent
+    val pole = if (pages.all { relativeLuminance(it) > 0.5f }) Color.Black else Color.White
+    for (step in 1..50) {
+        val t = step / 50f
+        val mixed = Color(
+            red = accent.red + (pole.red - accent.red) * t,
+            green = accent.green + (pole.green - accent.green) * t,
+            blue = accent.blue + (pole.blue - accent.blue) * t
+        )
+        if (reads(mixed)) return mixed
+    }
+    return pole
+}
+
+/** The page colours text sits on in [p]; the accent shade must read on all of them. */
+fun pageColours(p: MeenaPalette): List<Color> = listOf(p.background, p.surface, p.darkSlate)
 
 /**
  * Calculates contrast ratio between foreground and background (range 1.0 to 21.0).

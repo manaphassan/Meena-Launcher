@@ -69,7 +69,7 @@ fun FavouriteTiles(
     val slots = FavouriteRules.visible(pinnedAppIds) { pkg -> InstalledAppsRepository.getCachedApp(pkg) }
     val perRow = FavouriteRules.PER_ROW
 
-    val tileColor = MaterialTheme.colorScheme.primary
+    val tileColor = my.hana.meena.theme.MeenaAccentFill
 
     if (slots.isEmpty()) {
         Row(

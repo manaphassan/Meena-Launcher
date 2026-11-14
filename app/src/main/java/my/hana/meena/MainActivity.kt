@@ -1043,7 +1043,7 @@ fun ActionCenterSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(my.hana.meena.theme.MeenaAccentFill)
                     .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -1106,7 +1106,7 @@ private fun ActionTile(
     Box(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .background(if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary)
+            .background(my.hana.meena.theme.MeenaAccentFill)
             .metroClickable(onClick = onClick)
             .padding(my.hana.meena.theme.MeenaSpacing.m)
     ) {
@@ -1124,7 +1124,7 @@ private fun ActionNotificationItem(app: String, text: String, time: String) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .background(MaterialTheme.colorScheme.primary)
+            .background(my.hana.meena.theme.MeenaAccentFill)
             .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.s),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

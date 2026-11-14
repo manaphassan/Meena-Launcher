@@ -41,7 +41,7 @@ fun FrequentAppTiles(
         return
     }
 
-    val tileColor = MaterialTheme.colorScheme.primary
+    val tileColor = my.hana.meena.theme.MeenaAccentFill
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),

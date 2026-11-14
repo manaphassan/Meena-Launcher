@@ -23,7 +23,8 @@ fun getMeenaColorScheme(
     accent: Color = MeenaCyan
 ): androidx.compose.material3.ColorScheme {
     val p = meenaPaletteFor(baseTheme)
-    val primary = p.accentOverride ?: accent
+    // Text, icons and links use a shade that reads on the page; fills use MeenaAccentFill.
+    val primary = readableAccent(p.accentOverride ?: accent, pageColours(p))
     return if (p.isLight) {
         lightColorScheme(
             primary = primary,
@@ -61,17 +62,20 @@ fun MeenaLauncherTheme(
     val palette = meenaPaletteFor(baseTheme)
     val accent = palette.accentOverride ?: accentColor
     val colorScheme = getMeenaColorScheme(baseTheme, accentColor)
-    val typography = androidx.compose.runtime.remember(fontScalePercent, accent, palette) {
+    val typography = androidx.compose.runtime.remember(fontScalePercent, colorScheme.primary, palette) {
         getMeenaTypography(
             fontScalePercent = fontScalePercent,
-            titleAccentColor = accent,
+            titleAccentColor = colorScheme.primary,
             textColor = palette.text,
             secondaryColor = palette.textSecondary,
             mutedColor = palette.textMuted
         )
     }
 
-    androidx.compose.runtime.CompositionLocalProvider(LocalMeenaPalette provides palette) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalMeenaPalette provides palette,
+        LocalMeenaAccentFill provides accent
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = typography,

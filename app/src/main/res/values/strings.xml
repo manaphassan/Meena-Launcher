@@ -430,7 +430,7 @@
     <string name="theme_paper_note">black on white with calm motion, for e-ink screens. it has no accent colour.</string>
     <string name="theme_accent_title">accent colour</string>
     <string name="theme_accent_readable">%1$s · easy to read on %2$s</string>
-    <string name="theme_accent_hard">%1$s · hard to read on %2$s. try another colour</string>
+    <string name="theme_accent_hard">%1$s · text on %2$s uses a shade of it that stays easy to read</string>
     <string name="text_size_row">size</string>
     <string name="hand_left_title">left-handed</string>
     <string name="hand_left_hint">swipe in from the right edge to search apps, and flip the quick panel</string>
