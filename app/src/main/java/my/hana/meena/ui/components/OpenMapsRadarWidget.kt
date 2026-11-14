@@ -432,9 +432,11 @@ internal object MapAssets {
         runCatching { inlineTags(context.applicationContext) }
     }
 
-    /** The licence notices for the map libraries, as shipped. */
+    /** The licence notices for the map libraries and the bundled Selawik font, as shipped. */
     fun licences(context: android.content.Context): String =
-        runCatching { context.assets.open("map/LICENSES.txt").bufferedReader().use { it.readText() } }.getOrDefault("")
+        listOf("map/LICENSES.txt", "licences/selawik-OFL.txt").joinToString("\n\n") { path ->
+            runCatching { context.assets.open(path).bufferedReader().use { it.readText() } }.getOrDefault("")
+        }.trim()
 
     fun inlineTags(context: android.content.Context): String = cached ?: synchronized(this) {
         cached ?: buildString {

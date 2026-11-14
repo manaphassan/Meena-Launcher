@@ -1485,7 +1485,7 @@ private fun SubPageContainer(
                 )
             }
             item {
-                // The map libraries' licences ask for their notices to ship with the app; shown word for word.
+                // The map libraries' and font's licences ask for their notices to ship with the app; shown word for word.
                 var showMapLicences by remember { mutableStateOf(false) }
                 Text(
                     text = stringResource(R.string.about_map_libraries),
