@@ -652,6 +652,9 @@ fun MeenaHomeScreen(
                                     }
                                 }
                             },
+                            onSetPinned = { updated ->
+                                coroutineScope.launch { settingsRepository.saveSettings(userSettings.copy(pinnedAppIds = updated)) }
+                            },
                             onToggleWidgetCollapse = { widgetId, isCollapsed ->
                                 coroutineScope.launch {
                                     val currentMap = userSettings.widgetConfigs.toMutableMap()

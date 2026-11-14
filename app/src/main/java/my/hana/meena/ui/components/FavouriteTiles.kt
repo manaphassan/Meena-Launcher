@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -25,11 +25,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import my.hana.meena.data.system.DeviceAppInfo
+import my.hana.meena.data.system.FavouriteRules
+import my.hana.meena.data.system.FavouriteSlot
+import my.hana.meena.data.system.InstalledAppsRepository
 import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaTextWhite
 import androidx.compose.foundation.combinedClickable
@@ -46,20 +54,24 @@ fun FavouriteTiles(
     onOpenApps: () -> Unit,
     onTogglePin: (String) -> Unit,
     onMoveApp: (Int, Int) -> Unit,
+    onSetPinned: (List<String>) -> Unit = {},
     liveFaces: Map<String, List<my.hana.meena.data.system.LiveFace>> = emptyMap(),
     animateLive: Boolean = false
 ) {
     val haptic = LocalHapticFeedback.current
     var selectedForMenu by remember { mutableStateOf<String?>(null) }
-    
-    val pinnedApps = my.hana.meena.data.system.FavouriteRules.visible(pinnedAppIds) { pkg ->
-        my.hana.meena.data.system.InstalledAppsRepository.getCachedApp(pkg)
-    }
-    val perRow = my.hana.meena.data.system.FavouriteRules.PER_ROW
-        
+    // Slot id whose group is getting a new app, or losing one.
+    var addingTo by remember { mutableStateOf<String?>(null) }
+    var removingFrom by remember { mutableStateOf<String?>(null) }
+    var confirmRemoveGroup by remember { mutableStateOf<String?>(null) }
+    val groupFullMsg = stringResource(R.string.favourites_group_full)
+
+    val slots = FavouriteRules.visible(pinnedAppIds) { pkg -> InstalledAppsRepository.getCachedApp(pkg) }
+    val perRow = FavouriteRules.PER_ROW
+
     val tileColor = MaterialTheme.colorScheme.primary
-    
-    if (pinnedApps.isEmpty()) {
+
+    if (slots.isEmpty()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,76 +107,97 @@ fun FavouriteTiles(
         verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
         maxItemsInEachRow = perRow
     ) {
-        pinnedApps.forEachIndexed { index, app ->
-            val unreadCount = notificationCounts[app.packageName] ?: 0
-            val faces = liveFaces[app.packageName].orEmpty()
-            val tileDescription = buildString {
-                append(app.label.lowercase())
-                faces.forEach { append(", ").append(it.primary).append(' ').append(it.secondary) }
-            }
-
-            val pressSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-            LiveTileFlip(
-                faces = faces,
-                animate = animateLive,
-                index = index,
-                color = tileColor,
-                interactionSource = pressSource,
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .semantics { contentDescription = tileDescription }
-                    .combinedClickable(
-                        interactionSource = pressSource,
-                        indication = null, // no ripple (Meena UI)
-                        onClick = { onLaunchApp(app.packageName) },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            selectedForMenu = app.packageName
-                        }
-                    )
-            ) {
-                // App Icon: in monochrome, the app's glyph in white; without one, its normal icon (never a white blob).
-                val glyph = if (isMonochrome) app.glyphBitmap else null
-                val bitmap = glyph ?: app.iconBitmap
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(if (glyph != null) 40.dp else 32.dp),
-                        colorFilter = if (glyph != null) ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent) else null
-                    )
-                }
-
-                // App Label
-                Text(
-                    text = app.label.lowercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = my.hana.meena.theme.MeenaOnAccent,
-                    maxLines = 1,
+        slots.forEachIndexed { index, slot ->
+            when (slot) {
+                is FavouriteSlot.Group -> GroupTile(
+                    apps = slot.apps,
+                    color = tileColor,
+                    isMonochrome = isMonochrome,
+                    notificationCounts = notificationCounts,
+                    onLaunchApp = onLaunchApp,
+                    onAdd = { addingTo = slot.id },
+                    onLongPress = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        selectedForMenu = slot.id
+                    },
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(my.hana.meena.theme.MeenaSpacing.s)
+                        .weight(1f)
+                        .aspectRatio(1f)
                 )
 
-                // Unread count, Metro style: a plain number in the corner, no badge box.
-                if (unreadCount > 0) {
-                    Text(
-                        text = unreadCount.toString(),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = my.hana.meena.theme.MeenaOnAccent,
+                is FavouriteSlot.App -> {
+                    val app = slot.app
+                    val unreadCount = notificationCounts[app.packageName] ?: 0
+                    val faces = liveFaces[app.packageName].orEmpty()
+                    val tileDescription = buildString {
+                        append(app.label.lowercase())
+                        faces.forEach { append(", ").append(it.primary).append(' ').append(it.secondary) }
+                    }
+
+                    val pressSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    LiveTileFlip(
+                        faces = faces,
+                        animate = animateLive,
+                        index = index,
+                        color = tileColor,
+                        interactionSource = pressSource,
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(my.hana.meena.theme.MeenaSpacing.s)
-                    )
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .semantics { contentDescription = tileDescription }
+                            .combinedClickable(
+                                interactionSource = pressSource,
+                                indication = null, // no ripple (Meena UI)
+                                onClick = { onLaunchApp(app.packageName) },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    selectedForMenu = slot.id
+                                }
+                            )
+                    ) {
+                        // App Icon: in monochrome, the app's glyph in white; without one, its normal icon (never a white blob).
+                        val glyph = if (isMonochrome) app.glyphBitmap else null
+                        val bitmap = glyph ?: app.iconBitmap
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(if (glyph != null) 40.dp else 32.dp),
+                                colorFilter = if (glyph != null) ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent) else null
+                            )
+                        }
+
+                        // App Label
+                        Text(
+                            text = app.label.lowercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = my.hana.meena.theme.MeenaOnAccent,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(my.hana.meena.theme.MeenaSpacing.s)
+                        )
+
+                        // Unread count, Metro style: a plain number in the corner, no badge box.
+                        if (unreadCount > 0) {
+                            Text(
+                                text = unreadCount.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = my.hana.meena.theme.MeenaOnAccent,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(my.hana.meena.theme.MeenaSpacing.s)
+                            )
+                        }
+                    }
                 }
             }
         }
-        
+
         // Add button while there is room
-        if (pinnedApps.size < my.hana.meena.data.system.FavouriteRules.MAX) {
+        if (slots.size < FavouriteRules.MAX) {
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -179,16 +212,16 @@ fun FavouriteTiles(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            
+
             // Fill remainder of row with empty spaces to maintain exact size
-            val remainder = perRow - ((pinnedApps.size + 1) % perRow)
+            val remainder = perRow - ((slots.size + 1) % perRow)
             if (remainder < perRow) {
                 for (i in 0 until remainder) {
                     Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
                 }
             }
         } else {
-             val remainder = perRow - (pinnedApps.size % perRow)
+             val remainder = perRow - (slots.size % perRow)
              if (remainder < perRow) {
                  for (i in 0 until remainder) {
                      Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
@@ -197,11 +230,13 @@ fun FavouriteTiles(
         }
     }
 
-    // Long press menu
-    if (selectedForMenu != null) {
-        val app = my.hana.meena.data.system.InstalledAppsRepository.getCachedApp(selectedForMenu!!)
-        val index = pinnedAppIds.indexOf(selectedForMenu)
-        if (app != null) {
+    // Long press menu, for an app or a group
+    val menuId = selectedForMenu
+    if (menuId != null) {
+        val index = pinnedAppIds.indexOf(menuId)
+        val isGroup = FavouriteRules.isGroup(menuId)
+        val members = FavouriteRules.members(menuId).mapNotNull { InstalledAppsRepository.getCachedApp(it) }
+        if (index >= 0 && members.isNotEmpty()) {
             Dialog(onDismissRequest = { selectedForMenu = null }) {
                 Box(
                     modifier = Modifier
@@ -211,52 +246,186 @@ fun FavouriteTiles(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)) {
                         Text(
-                            text = app.label.lowercase(),
+                            text = if (isGroup) stringResource(R.string.favourites_group_title) else members.first().label.lowercase(),
                             style = MaterialTheme.typography.titleLarge,
                             color = MeenaTextWhite
                         )
-                        
-                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                            if (index > 0) {
-                                Text(
-                                    text = stringResource(R.string.favourites_move_left),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MeenaTextWhite,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .metroClickable {
-                                            onMoveApp(index, index - 1)
-                                            selectedForMenu = null
-                                        }
-                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
-                                )
-                            }
-                            if (index < pinnedApps.size - 1) {
-                                Text(
-                                    text = stringResource(R.string.favourites_move_right),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MeenaTextWhite,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .metroClickable {
-                                            onMoveApp(index, index + 1)
-                                            selectedForMenu = null
-                                        }
-                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
-                                )
-                            }
+                        if (isGroup) {
                             Text(
-                                text = stringResource(R.string.action_remove),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .metroClickable {
-                                        onTogglePin(app.packageName)
-                                        selectedForMenu = null
-                                    }
-                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                                text = members.joinToString(", ") { it.label.lowercase() },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = my.hana.meena.theme.MeenaTextMuted
                             )
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
+                            @Composable
+                            fun MenuItem(text: String, color: Color = MeenaTextWhite, onClick: () -> Unit) {
+                                Text(
+                                    text = text,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = color,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .metroClickable {
+                                            selectedForMenu = null
+                                            onClick()
+                                        }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                            if (isGroup && members.size < FavouriteRules.GROUP_MAX) {
+                                MenuItem(stringResource(R.string.favourites_group_add)) { addingTo = menuId }
+                            }
+                            if (!isGroup) {
+                                MenuItem(stringResource(R.string.favourites_make_group)) {
+                                    val grouped = FavouriteRules.makeGroup(pinnedAppIds, index)
+                                    onSetPinned(grouped)
+                                    addingTo = grouped[index]
+                                }
+                            }
+                            if (index > 0) {
+                                MenuItem(stringResource(R.string.favourites_move_left)) { onMoveApp(index, index - 1) }
+                            }
+                            if (index < pinnedAppIds.size - 1) {
+                                MenuItem(stringResource(R.string.favourites_move_right)) { onMoveApp(index, index + 1) }
+                            }
+                            if (isGroup) {
+                                MenuItem(stringResource(R.string.favourites_group_take_out)) { removingFrom = menuId }
+                                MenuItem(stringResource(R.string.favourites_group_remove), MaterialTheme.colorScheme.error) {
+                                    confirmRemoveGroup = menuId
+                                }
+                            } else {
+                                MenuItem(stringResource(R.string.action_remove), MaterialTheme.colorScheme.error) {
+                                    onTogglePin(members.first().packageName)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Pick an app to add to a group: every installed app not already in it, with search.
+    val addId = addingTo
+    if (addId != null) {
+        val members = FavouriteRules.members(addId)
+        val choices = InstalledAppsRepository.cachedAppList()
+            .filter { it.packageName !in members }
+            .distinctBy { it.packageName }
+        MetroListPicker(
+            title = stringResource(R.string.favourites_group_add_title),
+            items = choices.map { MetroPickerItem(key = it.packageName, title = it.label.lowercase()) },
+            selectedKey = "",
+            onSelect = { pkg ->
+                val index = pinnedAppIds.indexOf(addId)
+                if (index >= 0) {
+                    val updated = FavouriteRules.addToGroup(pinnedAppIds, index, pkg)
+                    if (updated == null) MetroMessage.show(groupFullMsg) else onSetPinned(updated)
+                }
+            },
+            onDismiss = { addingTo = null },
+            enableSearch = true
+        )
+    }
+
+    // Pick an app to take out of a group.
+    val takeOutId = removingFrom
+    if (takeOutId != null) {
+        val members = FavouriteRules.members(takeOutId).mapNotNull { InstalledAppsRepository.getCachedApp(it) }
+        MetroListPicker(
+            title = stringResource(R.string.favourites_group_take_out_title),
+            items = members.map { MetroPickerItem(key = it.packageName, title = it.label.lowercase()) },
+            selectedKey = "",
+            onSelect = { pkg -> onSetPinned(FavouriteRules.remove(pinnedAppIds, pkg)) },
+            onDismiss = { removingFrom = null },
+            enableSearch = false
+        )
+    }
+
+    val removeId = confirmRemoveGroup
+    if (removeId != null) {
+        MetroDialog(
+            title = stringResource(R.string.favourites_group_remove_title),
+            message = stringResource(R.string.favourites_group_remove_question),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
+            onConfirm = {
+                onSetPinned(pinnedAppIds - removeId)
+                confirmRemoveGroup = null
+            },
+            onDismiss = { confirmRemoveGroup = null }
+        )
+    }
+}
+
+/**
+ * One favourite slot split into four small tiles, Windows Phone style. Each small tile opens its
+ * own app; a spare one adds an app. The gaps are drawn, so every small tile keeps its full
+ * quarter of the slot as a touch target. Long press anywhere opens the group menu.
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun GroupTile(
+    apps: List<DeviceAppInfo>,
+    color: Color,
+    isMonochrome: Boolean,
+    notificationCounts: Map<String, Int>,
+    onLaunchApp: (String) -> Unit,
+    onAdd: () -> Unit,
+    onLongPress: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val gap = my.hana.meena.theme.MeenaSpacing.s
+    val addLabel = stringResource(R.string.favourites_group_add)
+    Column(modifier = modifier) {
+        for (row in 0 until 2) {
+            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                for (col in 0 until 2) {
+                    val app = apps.getOrNull(row * 2 + col)
+                    val unread = app?.let { notificationCounts[it.packageName] } ?: 0
+                    val description = when {
+                        app == null -> addLabel
+                        unread > 0 -> "${app.label.lowercase()}, $unread"
+                        else -> app.label.lowercase()
+                    }
+                    val fill = if (app == null) color.copy(alpha = 0.2f) else color
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                            .drawBehind {
+                                // Half the gap on the inner sides only, so the group lines up with whole tiles.
+                                val half = gap.toPx() / 2f
+                                val left = if (col == 1) half else 0f
+                                val right = if (col == 0) half else 0f
+                                val top = if (row == 1) half else 0f
+                                val bottom = if (row == 0) half else 0f
+                                drawRect(fill, Offset(left, top), Size(size.width - left - right, size.height - top - bottom))
+                            }
+                            .semantics { contentDescription = description }
+                            .combinedClickable(
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                indication = null,
+                                onClick = { if (app != null) onLaunchApp(app.packageName) else onAdd() },
+                                onLongClick = onLongPress
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (app == null) {
+                            Text(text = "+", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        } else {
+                            val glyph = if (isMonochrome) app.glyphBitmap else null
+                            val bitmap = glyph ?: app.iconBitmap
+                            if (bitmap != null) {
+                                Image(
+                                    bitmap = bitmap,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(if (glyph != null) 28.dp else 24.dp),
+                                    colorFilter = if (glyph != null) ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent) else null
+                                )
+                            }
                         }
                     }
                 }

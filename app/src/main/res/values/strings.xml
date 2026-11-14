@@ -694,6 +694,16 @@
     <string name="favourites_move_left">move left</string>
     <string name="favourites_move_right">move right</string>
     <string name="favourites_full">today has room for 6 favourites. remove one first.</string>
+    <string name="favourites_make_group">make a group of 4 small tiles</string>
+    <string name="favourites_group_title">group</string>
+    <string name="favourites_group_add">add an app</string>
+    <string name="favourites_group_add_title">add to group</string>
+    <string name="favourites_group_take_out">take an app out</string>
+    <string name="favourites_group_take_out_title">take out of group</string>
+    <string name="favourites_group_remove">remove group</string>
+    <string name="favourites_group_remove_title">remove group</string>
+    <string name="favourites_group_remove_question">take this group and its apps off today? the apps stay on your phone.</string>
+    <string name="favourites_group_full">a group holds 4 apps. take one out first.</string>
     <string name="inbox_alerts_prompt">want your alerts here? turn on notification access. meena reads them on your phone only.</string>
     <string name="inbox_chats_prompt">want your chats here? turn on notification access. meena reads them on your phone only.</string>
     <string name="weather_near_you">near you</string>

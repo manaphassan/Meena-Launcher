@@ -100,6 +100,7 @@ fun TodayHub(
     onOpenApps: () -> Unit = {},
     onTogglePin: (String) -> Unit = {},
     onReorderPin: (Int, Int) -> Unit = { _, _ -> },
+    onSetPinned: (List<String>) -> Unit = {},
     onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
@@ -560,7 +561,7 @@ fun TodayHub(
                         settings.liveTileNames,
                         settings.is24HourFormat
                     ) {
-                        if (!liveOn) emptyMap() else settings.pinnedAppIds.associateWith { pkg ->
+                        if (!liveOn) emptyMap() else settings.pinnedAppIds.filterNot { my.hana.meena.data.system.FavouriteRules.isGroup(it) }.associateWith { pkg ->
                             my.hana.meena.data.system.LiveTiles.facesFor(
                                 packageName = pkg,
                                 notifications = notifications,
@@ -582,6 +583,7 @@ fun TodayHub(
                         onOpenApps = onOpenApps,
                         onTogglePin = onTogglePin,
                         onMoveApp = onReorderPin,
+                        onSetPinned = onSetPinned,
                         liveFaces = liveFaces,
                         animateLive = liveOn && !settings.reducedMotion
                     )
@@ -592,7 +594,7 @@ fun TodayHub(
                     val frequentApps = remember(launchVersion, appsVersion, settings.pinnedAppIds, limit) {
                         val stats = my.hana.meena.data.system.AppLaunchStats.load(context)
                         val installed = stats.keys.filter { InstalledAppsRepository.getCachedApp(it) != null }.toSet()
-                        my.hana.meena.data.system.AppLaunchStats.rank(stats, installed, settings.pinnedAppIds.toSet(), limit)
+                        my.hana.meena.data.system.AppLaunchStats.rank(stats, installed, my.hana.meena.data.system.FavouriteRules.allPackages(settings.pinnedAppIds).toSet(), limit)
                     }
                     CollapsibleWidget(
                         title = stringResource(R.string.widget_frequent_apps_title),

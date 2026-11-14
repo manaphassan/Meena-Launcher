@@ -60,6 +60,12 @@ object InstalledAppsRepository {
         return cachedApps?.firstOrNull { it.packageName == packageName }
     }
 
+    /** Everything loaded so far, a to z; empty until the first load finishes. */
+    fun cachedAppList(): List<DeviceAppInfo> {
+        revisionState.intValue
+        return cachedApps.orEmpty()
+    }
+
     /** Switches the icon pack ("" = system icons) and redraws the icons if it changed. */
     suspend fun setIconPack(context: Context, packageName: String) {
         val previous = iconPack

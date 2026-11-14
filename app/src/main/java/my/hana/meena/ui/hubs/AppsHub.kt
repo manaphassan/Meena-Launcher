@@ -494,7 +494,7 @@ fun AppsHub(
         // METRO APP PROPERTIES DIALOG
         val target = selectedTargetForProperties
         if (target != null) {
-            val isPinned = pinnedAppIds.contains(target.packageName)
+            val isPinned = my.hana.meena.data.system.FavouriteRules.contains(pinnedAppIds, target.packageName)
             if (showUninstallConfirm) {
                 MetroDialog(
                     title = stringResource(R.string.dialog_uninstall_title),
