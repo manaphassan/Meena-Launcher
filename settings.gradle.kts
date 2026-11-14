@@ -31,3 +31,4 @@ plugins {
 
 rootProject.name = "Meena Launcher"
 include(":app")
+include(":macrobenchmark")

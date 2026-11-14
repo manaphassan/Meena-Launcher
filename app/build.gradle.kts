@@ -43,6 +43,13 @@ android {
             }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        // Release copy signed with the local debug key, only for :macrobenchmark runs.
+        // https://developer.android.com/topic/performance/benchmarking/macrobenchmark-overview
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     flavorDimensions += "env"
