@@ -80,7 +80,7 @@ Meena requests only the minimal set of Android permissions necessary to provide 
 
 - **Android Keystore Encryption:** Your portfolio holdings, Google Sheet link and notes are encrypted with an AES-256-GCM key held in the Android Keystore. Holdings saved by earlier versions are encrypted automatically the next time you open the money page. Earlier versions offered an optional Gemini brief; any Gemini API key they saved is deleted when you update.
 - **App-Private Storage:** Other settings and cached weather, rates, news and news pictures are stored in Meena's private app storage, which other apps cannot read.
-- **No System Cloud Backup (`allowBackup="false"`):** Android Auto Backup is explicitly disabled to prevent sensitive settings, tokens, or locally parsed balances from syncing to cloud drive backups.
+- **No System Cloud Backup (`allowBackup="false"`):** Android Auto Backup is explicitly disabled to prevent sensitive settings, tokens, or locally parsed balances from syncing to cloud drive backups. On Android 12 and later, backup rules also exclude all app data from cloud backup and from device-to-device transfer, so nothing is copied to a new phone.
 - **Data Deletion:** You can delete all locally stored settings, custom feeds, and cached data at any time by selecting **Clear Storage / Clear Data** in Android App Info or tapping **reset to defaults** in Meena Settings.
 
 ---
