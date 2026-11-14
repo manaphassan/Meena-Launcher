@@ -28,7 +28,9 @@ data class DeviceAppInfo(
     val glyphBitmap: ImageBitmap? = null,
     val isRealApp: Boolean = true,
     val componentName: android.content.ComponentName? = null,
-    val userHandle: android.os.UserHandle? = null
+    val userHandle: android.os.UserHandle? = null,
+    /** ApplicationInfo.category (Android 8+); -1 when the app doesn't say. */
+    val category: Int = -1
 )
 
 object InstalledAppsRepository {
@@ -136,7 +138,8 @@ object InstalledAppsRepository {
                         glyphBitmap = glyph,
                         isRealApp = true,
                         componentName = info.componentName,
-                        userHandle = profile
+                        userHandle = profile,
+                        category = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) info.applicationInfo.category else -1
                     )
                 )
             }

@@ -25,7 +25,7 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 | Data Category | Data Type | Collected? | Shared? | Processed Ephemerally? | Required or Optional? | Purpose |
 |---|---|---|---|---|---|---|
-| **Location** | Approximate Location (`ACCESS_COARSE_LOCATION`) | Yes | **No** | **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather, rain outlook, air quality, JAKIM prayer times, and the nearby map's tiles) |
+| **Location** | Precise and approximate location (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`) | Yes | **No** | **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather, rain outlook, air quality, JAKIM prayer times, and the nearby map's tiles) |
 | **Financial Info** | Purchase history (parsed bank alerts) | **No** (on-device only) | **No** | N/A | Optional (spending opt-in, off by default) | Not transmitted; parsed and stored on the device |
 | **Health & Fitness** | Fitness info (Steps, distance, calories) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying daily activity summary on Today hub) |
 | **Health & Fitness** | Health info (Sleep duration, heart rate) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying health metrics on Today hub) |
@@ -79,8 +79,8 @@ Use the following exact values when completing the Google Play Console **Data Sa
 In accordance with Google Play Developer Policy and Meena architecture rules:
 1. **`QUERY_ALL_PACKAGES` Removed:**  
    The broad `QUERY_ALL_PACKAGES` permission has been completely removed from `AndroidManifest.xml`. App discovery is handled via Android system `LauncherApps` callbacks and targeted `<queries>` containing `android.intent.action.MAIN` with `android.intent.category.LAUNCHER`, plus the icon pack actions used by launchers (`org.adw.launcher.THEMES`, `com.novalauncher.THEME` and similar) so installed icon packs can be listed. `<queries>` entries are not permissions.
-2. **`ACCESS_FINE_LOCATION` Removed:**  
-   Meena requests only `ACCESS_COARSE_LOCATION`. Precise GPS coordinates and background location monitoring are not used.
+2. **Location: no background access.**  
+   Meena requests `ACCESS_FINE_LOCATION` with `ACCESS_COARSE_LOCATION` (precise location approved by the owner on 14 Nov 2026, for the nearby map), only while it is open. On Android 12+ the user can keep it approximate. `ACCESS_BACKGROUND_LOCATION` is not requested. Coordinates sent to Open-Meteo are rounded to 2 decimals (about 1 km).
 
 ---
 

@@ -322,7 +322,8 @@ fun MeenaHomeScreen(
     val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val granted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        val granted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+            permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] == true
         if (granted) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
             my.hana.meena.data.system.WeatherRepository.refresh(context, force = true)
@@ -341,9 +342,10 @@ fun MeenaHomeScreen(
     }
 
     val locationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        // Android 12+ asks for both together and the person can still choose approximate.
+        if (results.values.any { it }) {
             my.hana.meena.data.system.DeviceLocationHelper.refreshLocation(context)
             my.hana.meena.data.system.WeatherRepository.refresh(context, force = true)
             my.hana.meena.data.health.HealthRepository.refreshTelemetry(context, userSettings)
@@ -554,16 +556,18 @@ fun MeenaHomeScreen(
                 }
             }
 
+            val favouritesFullMsg = stringResource(R.string.favourites_full)
             val onTogglePin = { pkgId: String ->
                 coroutineScope.launch {
                     val settingsNonNull = userSettings
-                    val currentList = settingsNonNull.pinnedAppIds.toMutableList()
-                    if (currentList.contains(pkgId)) {
-                        currentList.remove(pkgId)
-                    } else {
-                        currentList.add(pkgId)
+                    val updated = my.hana.meena.data.system.FavouriteRules.toggle(settingsNonNull.pinnedAppIds, pkgId) {
+                        my.hana.meena.data.system.InstalledAppsRepository.getCachedApp(it) != null
                     }
-                    settingsRepository.saveSettings(settingsNonNull.copy(pinnedAppIds = currentList))
+                    if (updated == null) {
+                        my.hana.meena.ui.components.MetroMessage.show(favouritesFullMsg)
+                    } else {
+                        settingsRepository.saveSettings(settingsNonNull.copy(pinnedAppIds = updated))
+                    }
                 }
             }
 
@@ -677,6 +681,10 @@ fun MeenaHomeScreen(
                             pinnedAppIds = userSettings.pinnedAppIds,
                             focusSearch = focusAppsSearch,
                             reducedMotion = userSettings.reducedMotion,
+                            sortMode = userSettings.appsSortMode,
+                            onSortModeChange = { mode ->
+                                coroutineScope.launch { settingsRepository.saveSettings(userSettings.copy(appsSortMode = mode)) }
+                            },
                             onSearchFocused = { focusAppsSearch = false },
                             onTogglePinApp = { pkg -> onTogglePin(pkg) },
                             onLaunchApp = onLaunchApp
@@ -727,6 +735,7 @@ fun MeenaHomeScreen(
             my.hana.meena.ui.hubs.WeatherDetailSubPage(
                 isFahrenheit = isFahrenheit,
                 aqiData = aqi,
+                animate = !userSettings.reducedMotion,
                 onNavigateBack = { isWeatherDetailOpen = false }
             )
         }
@@ -817,7 +826,12 @@ fun MeenaHomeScreen(
                 dismissText = stringResource(R.string.action_no),
                 onConfirm = {
                     showLocationDisclosure = false
-                    locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                    locationPermissionLauncher.launch(
+                        arrayOf(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
                 },
                 onDismiss = { showLocationDisclosure = false }
             )
@@ -865,6 +879,7 @@ fun MeenaHomeScreen(
                     }
                     permissionLauncher.launch(
                         arrayOf(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
                             android.Manifest.permission.ACCESS_COARSE_LOCATION,
                             android.Manifest.permission.READ_CALENDAR
                         )

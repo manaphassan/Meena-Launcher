@@ -52,9 +52,10 @@ fun FavouriteTiles(
     val haptic = LocalHapticFeedback.current
     var selectedForMenu by remember { mutableStateOf<String?>(null) }
     
-    val pinnedApps = pinnedAppIds
-        .mapNotNull { pkg -> my.hana.meena.data.system.InstalledAppsRepository.getCachedApp(pkg) }
-        .take(8)
+    val pinnedApps = my.hana.meena.data.system.FavouriteRules.visible(pinnedAppIds) { pkg ->
+        my.hana.meena.data.system.InstalledAppsRepository.getCachedApp(pkg)
+    }
+    val perRow = my.hana.meena.data.system.FavouriteRules.PER_ROW
         
     val tileColor = MaterialTheme.colorScheme.primary
     
@@ -92,7 +93,7 @@ fun FavouriteTiles(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
         verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-        maxItemsInEachRow = 4
+        maxItemsInEachRow = perRow
     ) {
         pinnedApps.forEachIndexed { index, app ->
             val unreadCount = notificationCounts[app.packageName] ?: 0
@@ -162,8 +163,8 @@ fun FavouriteTiles(
             }
         }
         
-        // Add Button if less than 8
-        if (pinnedApps.size < 8) {
+        // Add button while there is room
+        if (pinnedApps.size < my.hana.meena.data.system.FavouriteRules.MAX) {
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -180,15 +181,15 @@ fun FavouriteTiles(
             }
             
             // Fill remainder of row with empty spaces to maintain exact size
-            val remainder = 4 - ((pinnedApps.size + 1) % 4)
-            if (remainder < 4) {
+            val remainder = perRow - ((pinnedApps.size + 1) % perRow)
+            if (remainder < perRow) {
                 for (i in 0 until remainder) {
                     Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
                 }
             }
         } else {
-             val remainder = 4 - (pinnedApps.size % 4)
-             if (remainder < 4) {
+             val remainder = perRow - (pinnedApps.size % perRow)
+             if (remainder < perRow) {
                  for (i in 0 until remainder) {
                      Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
                  }

@@ -92,6 +92,10 @@ fun OpenMapsRadarWidget(
 
     val accentHex = String.format("#%06X", 0xFFFFFF and MaterialTheme.colorScheme.primary.toArgb())
     val radiusMeters = currentLocation.accuracyMeters.coerceIn(100f, 5000f)
+    // OpenFreeMap's own styles (https://openfreemap.org/quick_start/): dark on black, positron on white and paper.
+    val isLightTheme = my.hana.meena.theme.LocalMeenaPalette.current.isLight
+    val styleUrl = if (isLightTheme) "https://tiles.openfreemap.org/styles/positron" else "https://tiles.openfreemap.org/styles/dark"
+    val pageColor = String.format("#%06X", 0xFFFFFF and my.hana.meena.theme.LocalMeenaPalette.current.background.toArgb())
 
     LaunchedEffect(currentLocation.latitude, currentLocation.longitude, radiusMeters, isMapLoaded) {
         if (isMapLoaded) {
@@ -105,13 +109,15 @@ fun OpenMapsRadarWidget(
     val hasRealFix = currentLocation.isGpsActive
     val placeName = ClockInfo.placeName(currentLocation.locationName, hasRealFix)
 
-    // Built once per accent: later fixes move the dot through recenter() instead of reloading the page.
-    val mapHtml = remember(accentHex) {
+    // Built once per look: later fixes move the dot through recenter() instead of reloading the page.
+    val mapHtml = remember(accentHex, styleUrl, pageColor) {
         generateDarkOpenMapsHtml(
             lat = currentLocation.latitude,
             lng = currentLocation.longitude,
             accuracyMeters = currentLocation.accuracyMeters,
-            accent = accentHex
+            accent = accentHex,
+            styleUrl = styleUrl,
+            pageColor = pageColor
         )
     }
 
@@ -155,10 +161,14 @@ fun OpenMapsRadarWidget(
                     )
                 }
                 Text(
-                    text = stringResource(
-                        R.string.map_accuracy,
-                        ((currentLocation.accuracyMeters / 1000f).coerceAtLeast(0.1f)).let { "%.1f".format(java.util.Locale.UK, it) }
-                    ),
+                    text = if (currentLocation.accuracyMeters < 1000f) {
+                        stringResource(R.string.map_accuracy_m, currentLocation.accuracyMeters.coerceAtLeast(1f).toInt())
+                    } else {
+                        stringResource(
+                            R.string.map_accuracy,
+                            (currentLocation.accuracyMeters / 1000f).let { "%.1f".format(java.util.Locale.UK, it) }
+                        )
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
@@ -183,7 +193,7 @@ fun OpenMapsRadarWidget(
                                 loadWithOverviewMode = true
                                 useWideViewPort = true
                             }
-                            setBackgroundColor(AndroidColor.parseColor("#080808"))
+                            setBackgroundColor(AndroidColor.parseColor(pageColor))
 
                             webViewClient = object : WebViewClient() {
                                 override fun onPageFinished(view: WebView?, url: String?) {
@@ -218,7 +228,50 @@ fun OpenMapsRadarWidget(
                             webViewRef = this
                         }
                     },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    // A new look (theme or accent) needs the page loaded again.
+                    update = { view ->
+                        if (view.tag != mapHtml) {
+                            if (view.tag != null) {
+                                isMapLoaded = false
+                                view.setBackgroundColor(AndroidColor.parseColor(pageColor))
+                                view.loadDataWithBaseURL("https://www.openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
+                            }
+                            view.tag = mapHtml
+                        }
+                    }
+                )
+            }
+
+            // What the phone knows about this spot; all of it comes from the fix and the address lookup.
+            val minutesAgo = ((System.currentTimeMillis() - currentLocation.fixTimeMillis) / 60_000L).coerceAtLeast(0L)
+            val foundText = when {
+                currentLocation.fixTimeMillis <= 0L -> null
+                minutesAgo < 1L -> stringResource(R.string.map_found_just_now)
+                minutesAgo < 60L -> stringResource(R.string.map_found_minutes, minutesAgo.toInt())
+                else -> stringResource(R.string.map_found_hours, (minutesAgo / 60L).toInt())
+            }
+            Column {
+                currentLocation.region?.let { MapDetailRow(stringResource(R.string.map_detail_region), it) }
+                MapDetailRow(stringResource(R.string.map_detail_coordinates), currentLocation.formattedCoordinates)
+                foundText?.let { MapDetailRow(stringResource(R.string.map_detail_found), it) }
+            }
+            // Without precise location Android blurs the spot on purpose; say so and point to the switch.
+            if (currentLocation.accuracyMeters >= 1000f) {
+                Text(
+                    text = stringResource(
+                        if (DeviceLocationHelper.hasPreciseLocation(context)) R.string.map_rough_note_signal else R.string.map_rough_note
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable {
+                            if (DeviceLocationHelper.hasPreciseLocation(context)) DeviceLocationHelper.refreshLocation(context)
+                            else DeviceLocationHelper.openAppSettings(context)
+                        }
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
                 )
             }
 
@@ -270,12 +323,27 @@ fun OpenMapsRadarWidget(
                     )
                 }
             }
-
-            // The official radar opens in the browser; nothing on this map is weather data.
-            MapTextAction(stringResource(R.string.map_rain_radar)) {
-                my.hana.meena.data.system.RainRadar.open(context)
-            }
         }
+    }
+}
+
+@Composable
+private fun MapDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextWhite,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m)
+        )
     }
 }
 
@@ -293,15 +361,17 @@ private fun MapTextAction(text: String, onClick: () -> Unit) {
 }
 
 /**
- * HTML for the map: OpenFreeMap's dark vector style through MapLibre inside Leaflet, a plain dot
- * where the phone thinks it is and a thin ring as wide as that guess. Nothing animates, and
- * nothing on it pretends to be weather data.
+ * HTML for the map: an OpenFreeMap vector style through MapLibre inside Leaflet, a plain dot
+ * where the phone thinks it is and a thin ring as wide as that guess; the view is fitted to the
+ * ring. Nothing on it pretends to be weather data.
  */
 private fun generateDarkOpenMapsHtml(
     lat: Double,
     lng: Double,
     accuracyMeters: Float,
-    accent: String
+    accent: String,
+    styleUrl: String,
+    pageColor: String
 ): String {
     val radius = accuracyMeters.coerceIn(100f, 5000f)
     return """
@@ -318,10 +388,10 @@ private fun generateDarkOpenMapsHtml(
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; background: #080808; overflow: hidden; }
+  html, body { width: 100%; height: 100%; background: $pageColor; overflow: hidden; }
   /* Height is set from window.innerHeight in script: CSS vh and % resolve to 0 in this WebView. */
-  #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: #080808; }
-  .leaflet-container { background: #080808; }
+  #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: $pageColor; }
+  .leaflet-container { background: $pageColor; }
 </style>
 </head>
 <body>
@@ -340,12 +410,18 @@ private fun generateDarkOpenMapsHtml(
   }).setView([lat, lng], 13);
   // The WebView is laid out at 0 height inside Today's list and CSS heights stay 0, so size the
   // map from innerHeight in pixels and tell Leaflet whenever that changes.
+  var fitted = false;
+  function fitArea() {
+    // Show the whole ring the phone is unsure within, but never closer than street level.
+    map.fitBounds(area.getBounds(), { padding: [16, 16], maxZoom: 15, animate: false });
+  }
   function fitToWindow() {
     var el = document.getElementById('map');
     var h = window.innerHeight;
     if (h > 0 && el.clientHeight !== h) {
       el.style.height = h + 'px';
       map.invalidateSize();
+      if (!fitted) { fitArea(); fitted = true; }
     }
   }
   window.addEventListener('resize', fitToWindow);
@@ -355,8 +431,8 @@ private fun generateDarkOpenMapsHtml(
     if (++fitTries > 40) clearInterval(fitTimer);
   }, 250);
 
-  // OpenFreeMap dark vector style (free, no key; https://openfreemap.org). Credit is shown below the map.
-  L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/dark' }).addTo(map);
+  // OpenFreeMap vector style (free, no key; https://openfreemap.org). Credit is shown below the map.
+  L.maplibreGL({ style: '$styleUrl' }).addTo(map);
 
   // How rough the location is: a thin ring, barely filled.
   var area = L.circle([lat, lng], {
@@ -387,7 +463,7 @@ private fun generateDarkOpenMapsHtml(
       area.setLatLng([lat, lng]);
     }
     if (newRadius) area.setRadius(newRadius);
-    map.setView([lat, lng], 13, { animate: true });
+    if (document.getElementById('map').clientHeight > 0) { fitArea(); } else { fitted = false; }
   };
 
   window.zoomIn = function() {

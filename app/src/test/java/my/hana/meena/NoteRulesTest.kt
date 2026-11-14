@@ -2,7 +2,9 @@ package my.hana.meena
 
 import my.hana.meena.data.system.NoteRules
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NoteRulesTest {
@@ -34,5 +36,29 @@ class NoteRulesTest {
         val notes = listOf("one", "two \"quoted\"", "line\nbreak")
         assertEquals(notes, NoteRules.decode(NoteRules.encode(notes)))
         assertNull(NoteRules.decode("not json"))
+    }
+
+    @Test
+    fun replace_editsInPlace_andRefusesBlankOrMissing() {
+        assertEquals(listOf("a", "B", "c"), NoteRules.replace(listOf("a", "b", "c"), 1, " B "))
+        assertNull(NoteRules.replace(listOf("a"), 0, "  "))
+        assertNull(NoteRules.replace(listOf("a"), 3, "x"))
+    }
+
+    @Test
+    fun toList_splitsLinesOrCommas_andToTextUndoesIt() {
+        assertEquals("- milk\n- eggs\n- bread", NoteRules.toList("milk, eggs; bread"))
+        assertEquals("- call mum\n- pay bills, today", NoteRules.toList("call mum\npay bills, today"))
+        assertEquals("- already", NoteRules.toList("- already"))
+        assertTrue(NoteRules.isList(NoteRules.toList("a, b")))
+        assertFalse(NoteRules.isList("a\n- b"))
+        assertEquals("milk\neggs", NoteRules.toText("- milk\n- eggs"))
+    }
+
+    @Test
+    fun lines_andTitle_dropTheListMark() {
+        assertEquals(listOf("milk" to true, "plain" to false), NoteRules.lines("- milk\n\nplain"))
+        assertEquals("milk", NoteRules.title("- milk\n- eggs"))
+        assertEquals("", NoteRules.title("   "))
     }
 }

@@ -38,6 +38,8 @@ data class MeenaUserSettings(
     /** Title at the top of the home pages; empty hides it. See [HomeTitle]. */
     val homeTitle: String = HomeTitle.DEFAULT,
     val pinnedAppIds: List<String> = emptyList(),
+    /** How the apps page is laid out: see [AppsSort]. */
+    val appsSortMode: String = AppsSort.AZ,
     val solatZone: String = "",
     val newsFeeds: List<String> = emptyList(),
     /** Feeds marked nsfw in news settings; their pictures are blurred. */

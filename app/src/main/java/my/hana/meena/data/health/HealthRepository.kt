@@ -358,7 +358,7 @@ object HealthRepository : WidgetSpec<HealthData> {
         try {
             val url = String.format(
                 Locale.US,
-                "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%.4f&longitude=%.4f&current=us_aqi,pm10,pm2_5&timezone=auto",
+                "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%.2f&longitude=%.2f&current=us_aqi,pm10,pm2_5&timezone=auto",
                 lat,
                 lng
             )

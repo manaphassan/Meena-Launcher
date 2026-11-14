@@ -26,6 +26,51 @@ object NoteRules {
     fun remove(notes: List<String>, index: Int): List<String> =
         if (index in notes.indices) notes.filterIndexed { i, _ -> i != index } else notes
 
+    /** Swaps the note at [index] for [input]; null when the edit is empty or the note is gone. */
+    fun replace(notes: List<String>, index: Int, input: String): List<String>? {
+        if (index !in notes.indices) return null
+        val note = clean(input) ?: return null
+        return notes.toMutableList().also { it[index] = note }
+    }
+
+    /** List lines are stored as plain text starting with this, so saved notes keep their format. */
+    const val BULLET = "- "
+
+    /** True when every line of [note] is a list line. */
+    fun isList(note: String): Boolean {
+        val lines = note.lines().filter { it.isNotBlank() }
+        return lines.isNotEmpty() && lines.all { it.trimStart().startsWith(BULLET) }
+    }
+
+    /**
+     * One list line per line of the note. A single line is split at commas and semicolons
+     * first, so "milk, eggs, bread" becomes three lines.
+     */
+    fun toList(note: String): String {
+        val lines = note.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        val items =
+            if (lines.size == 1) lines.single().split(',', ';').map { it.trim() }.filter { it.isNotEmpty() } else lines
+        return items.joinToString("\n") { BULLET + it.removePrefix(BULLET).trim() }
+    }
+
+    /** Plain lines again, one per list line. */
+    fun toText(note: String): String =
+        note.lines().joinToString("\n") { line ->
+            val trimmed = line.trimStart()
+            if (trimmed.startsWith(BULLET)) trimmed.removePrefix(BULLET).trim() else line
+        }
+
+    /** Lines to draw: the text and whether it is a list line. */
+    fun lines(note: String): List<Pair<String, Boolean>> =
+        note.lines().filter { it.isNotBlank() }.map { line ->
+            val trimmed = line.trimStart()
+            if (trimmed.startsWith(BULLET)) trimmed.removePrefix(BULLET).trim() to true else line to false
+        }
+
+    /** A short title for a calendar reminder: the first line, without the list mark. */
+    fun title(note: String, max: Int = 60): String =
+        lines(note).firstOrNull()?.first?.take(max)?.trim().orEmpty()
+
     fun encode(notes: List<String>): String = Json.encodeToString(ListSerializer(String.serializer()), notes)
 
     /** Null when the saved text isn't a list of notes. */
@@ -86,6 +131,14 @@ object NotesRepository {
     fun remove(context: Context, index: Int) {
         if (_unreadable.value) return
         save(context, NoteRules.remove(_notes.value, index))
+    }
+
+    /** Returns false when the edit was empty or can't be saved. */
+    fun update(context: Context, index: Int, input: String): Boolean {
+        if (_unreadable.value) return false
+        val updated = NoteRules.replace(_notes.value, index, input) ?: return false
+        save(context, updated)
+        return true
     }
 
     private fun save(context: Context, updated: List<String>) {

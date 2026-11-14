@@ -82,6 +82,8 @@ fun AppsHub(
     pinnedAppIds: List<String> = emptyList(),
     focusSearch: Boolean = false,
     reducedMotion: Boolean = false,
+    sortMode: String = my.hana.meena.data.model.AppsSort.AZ,
+    onSortModeChange: (String) -> Unit = {},
     onSearchFocused: () -> Unit = {},
     onTogglePinApp: (String) -> Unit = {},
     onLaunchApp: (String) -> Unit
@@ -128,9 +130,53 @@ fun AppsHub(
         }
     }
 
-    val groupedApps = remember(displayApps) {
-        displayApps.groupBy { it.firstLetter }.toSortedMap()
+    // A to z keeps the letter tiles and scrubber; the other layouts use plain section titles.
+    val mode = my.hana.meena.data.model.AppsSort.of(sortMode)
+    var isSortPickerOpen by remember { mutableStateOf(false) }
+    val launchVersion by my.hana.meena.data.system.AppLaunchStats.version.collectAsState()
+    val otherTitle = stringResource(R.string.apps_category_other)
+    val recentTitles = mapOf(
+        my.hana.meena.data.system.AppGrouping.BUCKET_TODAY to stringResource(R.string.apps_recent_today),
+        my.hana.meena.data.system.AppGrouping.BUCKET_WEEK to stringResource(R.string.apps_recent_week),
+        my.hana.meena.data.system.AppGrouping.BUCKET_EARLIER to stringResource(R.string.apps_recent_earlier),
+        my.hana.meena.data.system.AppGrouping.BUCKET_NEVER to stringResource(R.string.apps_recent_never)
+    )
+    val sections = remember(displayApps, mode, launchVersion, otherTitle, recentTitles) {
+        when (mode) {
+            my.hana.meena.data.model.AppsSort.CATEGORY -> my.hana.meena.data.system.AppGrouping.byCategory(
+                displayApps,
+                titleOf = { category ->
+                    if (category < 0 || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) null
+                    else runCatching { android.content.pm.ApplicationInfo.getCategoryTitle(context, category)?.toString() }.getOrNull()
+                },
+                otherTitle = otherTitle
+            )
+
+            my.hana.meena.data.model.AppsSort.RECENT -> {
+                val now = System.currentTimeMillis()
+                val startOfToday = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                my.hana.meena.data.system.AppGrouping.byRecent(
+                    displayApps,
+                    lastUsed = my.hana.meena.data.system.AppLaunchStats.load(context).mapValues { it.value.lastUsed },
+                    nowMillis = now,
+                    startOfTodayMillis = startOfToday,
+                    titleOf = { recentTitles[it].orEmpty() }
+                )
+            }
+
+            else -> my.hana.meena.data.system.AppGrouping.byLetter(displayApps)
+        }
     }
+    val sortTitles = mapOf(
+        my.hana.meena.data.model.AppsSort.AZ to stringResource(R.string.apps_sort_az),
+        my.hana.meena.data.model.AppsSort.CATEGORY to stringResource(R.string.apps_sort_category),
+        my.hana.meena.data.model.AppsSort.RECENT to stringResource(R.string.apps_sort_recent)
+    )
 
     val activeLetters = remember(realInstalledApps) {
         realInstalledApps.map { it.firstLetter }.toSet()
@@ -139,12 +185,12 @@ fun AppsHub(
     val alphabet = remember { listOf('#') + ('A'..'Z').toList() }
     var activeScrubLetter by remember { mutableStateOf<Char?>(null) }
 
-    val letterIndexMap = remember(groupedApps) {
+    val letterIndexMap = remember(sections) {
         val map = mutableMapOf<Char, Int>()
-        var currentIndex = 2 // after top spacer (0) and search box (1)
-        groupedApps.forEach { (char, apps) ->
-            map[char] = currentIndex
-            currentIndex += 1 + apps.size
+        var currentIndex = 3 // after top spacer (0), search box (1) and the sort line (2)
+        sections.forEach { section ->
+            section.letter?.let { map[it] = currentIndex }
+            currentIndex += 1 + section.apps.size
         }
         map
     }
@@ -189,6 +235,28 @@ fun AppsHub(
                 )
             }
 
+            item(key = "sort") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { isSortPickerOpen = true },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.apps_sort_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted,
+                        modifier = Modifier.padding(end = my.hana.meena.theme.MeenaSpacing.m)
+                    )
+                    Text(
+                        text = sortTitles[mode].orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = primaryColor
+                    )
+                }
+            }
+
             if (isLoadingApps) {
                 item {
                     Box(
@@ -200,7 +268,7 @@ fun AppsHub(
                         MetroDottedProgress()
                     }
                 }
-            } else if (groupedApps.isEmpty()) {
+            } else if (sections.isEmpty()) {
                 item {
                     Text(
                         text = if (searchQuery.isNotBlank()) stringResource(R.string.apps_no_match, searchQuery) else stringResource(R.string.apps_none),
@@ -210,9 +278,23 @@ fun AppsHub(
                     )
                 }
             } else {
-                groupedApps.forEach { (letter, appsInLetter) ->
-                    // Metro Jump-List Header Tile (48x48dp, 0dp corner radius, metroClickable)
-                    item(key = "header-$letter") {
+                sections.forEach { section ->
+                    val appsInLetter = section.apps
+                    val letter = section.letter
+                    item(key = "header-${section.key}") {
+                        if (letter == null) {
+                            // Category or time block: a plain lowercase title, no tile.
+                            Text(
+                                text = section.title,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = primaryColor,
+                                modifier = Modifier
+                                    .metroFeatherIn(index = 0, reducedMotion = reducedMotion)
+                                    .padding(top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.s)
+                            )
+                            return@item
+                        }
+                        // Metro Jump-List Header Tile (48x48dp, 0dp corner radius, metroClickable)
                         Row(
                             modifier = Modifier
                                 .metroFeatherIn(index = 0, reducedMotion = reducedMotion)
@@ -270,8 +352,8 @@ fun AppsHub(
             item { Spacer(modifier = Modifier.height(72.dp)) }
         }
 
-        // Floating Alphabet Scrubber on the Right Edge for Fast Scrolling
-        Box(
+        // Floating Alphabet Scrubber on the Right Edge for Fast Scrolling (a to z only)
+        if (mode == my.hana.meena.data.model.AppsSort.AZ) Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight()
@@ -348,6 +430,30 @@ fun AppsHub(
                     )
                 }
             }
+        }
+
+        if (isSortPickerOpen) {
+            my.hana.meena.ui.components.MetroListPicker(
+                title = stringResource(R.string.apps_sort_title),
+                items = my.hana.meena.data.model.AppsSort.ALL.map { key ->
+                    my.hana.meena.ui.components.MetroPickerItem(
+                        key = key,
+                        title = sortTitles[key].orEmpty(),
+                        subtitle = when (key) {
+                            my.hana.meena.data.model.AppsSort.CATEGORY -> stringResource(R.string.apps_sort_category_hint)
+                            my.hana.meena.data.model.AppsSort.RECENT -> stringResource(R.string.apps_sort_recent_hint)
+                            else -> null
+                        }
+                    )
+                },
+                selectedKey = mode,
+                onSelect = { key ->
+                    onSortModeChange(key)
+                    coroutineScope.launch { listState.scrollToItem(0) }
+                },
+                onDismiss = { isSortPickerOpen = false },
+                enableSearch = false
+            )
         }
 
         // Floating Magnified Alphabet Indicator when actively scrubbing

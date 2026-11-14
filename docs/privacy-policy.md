@@ -1,6 +1,6 @@
 # Privacy Policy for Meena
 
-**Effective Date:** 13 November 2026  
+**Effective Date:** 14 November 2026  
 **Application:** Meena (Package: `my.hana.meena`)  
 **Developer:** HaNa Innovation  
 **Contact:** privacy@hana.my  
@@ -21,15 +21,15 @@ Meena talks directly to these services from your phone; it has no servers of its
 
 | Service | When | What it receives |
 |---|---|---|
-| Open-Meteo (weather, rain outlook and air quality) | Weather or air quality widget is on | Approximate coordinates |
-| OpenFreeMap map tiles (may be served through Cloudflare), unpkg (map libraries: Leaflet, MapLibre) | Map widget is on | The map area around your approximate location |
+| Open-Meteo (weather, rain outlook and air quality) | Weather or air quality widget is on | Coordinates rounded to about 1 km |
+| OpenFreeMap map tiles (may be served through Cloudflare), unpkg (map libraries: Leaflet, MapLibre) | Map widget is on | The map area you are looking at, around your location |
 | JAKIM e-Solat | Prayer times widget is on | Your prayer zone code |
 | Frankfurter (exchange rates) | Rates widget is on | Your base currency |
 | Google Sheets | You link a sheet | A request for the sheet you linked |
 | News feeds you add | News page is on | A request for each feed, and for the pictures in its posts (thumbnails and the article reader) |
 | Wikipedia (Wikimedia REST API) | Wikipedia widget is on | A request for a random article; nothing about you |
 
-Some links open outside Meena, in your browser or another app, only when you tap them: MET Malaysia's rain radar page, a news article's "open on" link and links inside articles, and "open in maps". Meena sends those sites nothing; what they see is your own visit.
+Some links open outside Meena, in your browser or another app, only when you tap them: a news article's "open on" link and links inside articles, and "open in maps". Meena sends those sites nothing; what they see is your own visit.
 
 ---
 
@@ -37,9 +37,9 @@ Some links open outside Meena, in your browser or another app, only when you tap
 
 Meena requests only the minimal set of Android permissions necessary to provide core launcher features. Each permission is described below, along with its exact purpose and handling guarantees:
 
-### 2.1 Approximate / Coarse Location (`android.permission.ACCESS_COARSE_LOCATION`)
-- **Purpose:** Used to resolve your local prayer timetable (JAKIM zone), query current weather and air quality (via public Open-Meteo APIs), and show the optional map widget.
-- **Handling:** Only coarse (city/regional level) coordinates are used. Meena **never** requests precise GPS location (`ACCESS_FINE_LOCATION`), never monitors background location, and does not keep a location history.
+### 2.1 Location (`android.permission.ACCESS_FINE_LOCATION`, `android.permission.ACCESS_COARSE_LOCATION`)
+- **Purpose:** Used to resolve your local prayer timetable (JAKIM zone), query current weather and air quality (via public Open-Meteo APIs), and show where you are on the optional map widget.
+- **Handling:** On Android 12 and later you choose precise or approximate when asked. Your location is used only while Meena is open: Meena never monitors background location (`ACCESS_BACKGROUND_LOCATION` is not requested) and does not keep a location history. Precise coordinates stay on your phone; weather and air-quality requests carry coordinates rounded to about 1 km.
 
 ### 2.2 Calendar Access (`android.permission.READ_CALENDAR`)
 - **Purpose:** Displays your upcoming daily agenda events directly on the Today panoramic hub.

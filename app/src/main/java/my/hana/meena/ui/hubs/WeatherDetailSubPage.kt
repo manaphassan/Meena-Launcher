@@ -32,6 +32,7 @@ import kotlin.math.roundToInt
 fun WeatherDetailSubPage(
     isFahrenheit: Boolean,
     aqiData: AirQualityIndexInfo?,
+    animate: Boolean = true,
     onNavigateBack: () -> Unit
 ) {
     val weatherState by WeatherRepository.state.collectAsState()
@@ -80,11 +81,20 @@ fun WeatherDetailSubPage(
                         style = MaterialTheme.typography.displayLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        text = current.condition,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MeenaTextWhite
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        my.hana.meena.ui.components.AnimatedWeatherIcon(
+                            code = current.weatherCode,
+                            isDay = current.isDay,
+                            color = MeenaTextWhite,
+                            size = 56.dp,
+                            animate = animate
+                        )
+                        Text(
+                            text = current.condition,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MeenaTextWhite
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))

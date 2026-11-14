@@ -1,14 +1,16 @@
 ﻿package my.hana.meena.ui
 
 import my.hana.meena.data.system.DeviceAppInfo
+import my.hana.meena.data.system.FavouriteRules
 import my.hana.meena.data.system.LiveNotificationItem
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class FavouriteTilesLogicTest {
 
     @Test
-    fun `pinned apps cap at 8 and maintain order`() {
+    fun `pinned apps cap at 6 and maintain order`() {
         val pinnedAppIds = listOf(
             "app1", "app2", "app3", "app4", "app5", "app6", "app7", "app8", "app9"
         )
@@ -24,9 +26,24 @@ class FavouriteTilesLogicTest {
 
         val result = getPinnedApps(pinnedAppIds, installedApps)
 
-        assertEquals(8, result.size)
+        assertEquals(6, result.size)
         assertEquals("app1", result[0].packageName)
-        assertEquals("app8", result[7].packageName)
+        assertEquals("app6", result[5].packageName)
+    }
+
+    @Test
+    fun `toggle refuses a seventh pin but always unpins`() {
+        val six = (1..6).map { "app$it" }
+        assertNull(FavouriteRules.toggle(six, "app7"))
+        assertEquals(six - "app3", FavouriteRules.toggle(six, "app3"))
+        assertEquals(listOf("app1", "app2"), FavouriteRules.toggle(listOf("app1"), "app2"))
+    }
+
+    @Test
+    fun `pins for removed apps do not count towards the limit`() {
+        val six = (1..6).map { "app$it" }
+        val result = FavouriteRules.toggle(six, "app7") { it != "app2" }
+        assertEquals(six + "app7", result)
     }
 
     @Test
@@ -47,11 +64,8 @@ class FavouriteTilesLogicTest {
     private fun getPinnedApps(
         pinnedAppIds: List<String>,
         installedApps: List<DeviceAppInfo>
-    ): List<DeviceAppInfo> {
-        return pinnedAppIds
-            .mapNotNull { pkg -> installedApps.find { it.packageName == pkg } }
-            .take(8)
-    }
+    ): List<DeviceAppInfo> =
+        FavouriteRules.visible(pinnedAppIds) { pkg -> installedApps.find { it.packageName == pkg } }
 
     private fun getNotificationCounts(notifications: List<LiveNotificationItem>): Map<String, Int> {
         return notifications.groupingBy { it.packageName }.eachCount()

@@ -280,12 +280,24 @@ fun TodayHub(
                                 } else {
                                     "--°"
                                 }
-                                Text(
-                                    text = tempText,
-                                    fontSize = 28.sp,
-                                    color = MeenaTextWhite,
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (weatherData != null) {
+                                        my.hana.meena.ui.components.AnimatedWeatherIcon(
+                                            code = weatherData.current.weatherCode,
+                                            isDay = weatherData.current.isDay,
+                                            color = MeenaTextWhite,
+                                            size = 28.dp,
+                                            animate = !settings.reducedMotion,
+                                            modifier = Modifier.padding(end = my.hana.meena.theme.MeenaSpacing.s)
+                                        )
+                                    }
+                                    Text(
+                                        text = tempText,
+                                        fontSize = 28.sp,
+                                        color = MeenaTextWhite,
+                                        style = MaterialTheme.typography.headlineMedium
+                                    )
+                                }
                                 val conditionText = when (weatherState) {
                                     is WidgetState.NeedsSetup -> stringResource(R.string.state_allow_location)
                                     is WidgetState.Loading -> stringResource(R.string.state_checking)
@@ -415,7 +427,7 @@ fun TodayHub(
                             onRequestLocation = onRequestLocationPermission,
                             onRetry = { WeatherRepository.refresh(context, force = true) }
                         )
-                        // Rain in the next few hours (a forecast, not radar), and the real radar one tap away.
+                        // Rain in the next few hours, from the forecast.
                         val rainData =
                             (weatherState as? WidgetState.Ready)?.data ?: (weatherState as? WidgetState.Stale)?.data
                         val rainOutlook = remember(rainData, currentTime) {
@@ -453,8 +465,7 @@ fun TodayHub(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 48.dp)
-                                    .metroClickable { my.hana.meena.data.system.RainRadar.open(context) },
+                                    .heightIn(min = 48.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
@@ -469,12 +480,6 @@ fun TodayHub(
                                     color = MeenaTextMuted,
                                     maxLines = 2,
                                     modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = stringResource(R.string.rain_radar),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m)
                                 )
                             }
                         }
@@ -665,6 +670,14 @@ fun TodayHub(
                                                 } else Modifier),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            val signalLevel = device.signalDbm?.let { my.hana.meena.data.system.BluetoothSignal.level(it) }
+                                            val signalText = when (signalLevel) {
+                                                my.hana.meena.data.system.BluetoothSignal.STRONG -> stringResource(R.string.devices_signal_strong)
+                                                my.hana.meena.data.system.BluetoothSignal.GOOD -> stringResource(R.string.devices_signal_good)
+                                                my.hana.meena.data.system.BluetoothSignal.WEAK -> stringResource(R.string.devices_signal_weak)
+                                                else -> null
+                                            }
+                                            val kindLine = if (signalText != null) stringResource(R.string.devices_kind_with_signal, kindText, signalText) else kindText
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     text = device.name,
@@ -675,13 +688,20 @@ fun TodayHub(
                                                     text = if (companion != null) {
                                                         stringResource(
                                                             R.string.devices_battery_in_app,
-                                                            kindText,
+                                                            kindLine,
                                                             settings.healthCompanionName.ifBlank { stringResource(R.string.devices_its_app) }
                                                                 .lowercase()
                                                         )
-                                                    } else kindText,
+                                                    } else kindLine,
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = if (companion != null) MaterialTheme.colorScheme.primary else MeenaTextMuted
+                                                )
+                                            }
+                                            if (signalLevel != null) {
+                                                my.hana.meena.ui.components.SignalBars(
+                                                    level = signalLevel,
+                                                    color = MeenaTextWhite,
+                                                    modifier = Modifier.padding(end = my.hana.meena.theme.MeenaSpacing.m)
                                                 )
                                             }
                                             device.battery?.let { level ->
@@ -1043,8 +1063,60 @@ fun TodayHub(
                         }
                     ) {
                         var openNote by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+                        var editNote by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
                         var noteToRemove by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
                         var draft by remember { mutableStateOf("") }
+                        val noCalendarMsg = stringResource(R.string.notes_remind_failed)
+                        if (openNote in quickNotes.indices) {
+                            val note = quickNotes[openNote]
+                            my.hana.meena.ui.components.NoteActionsDialog(
+                                note = note,
+                                onEdit = {
+                                    editNote = openNote
+                                    openNote = -1
+                                },
+                                onToggleList = {
+                                    val changed = if (my.hana.meena.data.system.NoteRules.isList(note)) {
+                                        my.hana.meena.data.system.NoteRules.toText(note)
+                                    } else {
+                                        my.hana.meena.data.system.NoteRules.toList(note)
+                                    }
+                                    my.hana.meena.data.system.NotesRepository.update(context, openNote, changed)
+                                    openNote = -1
+                                },
+                                onRemind = {
+                                    // Next whole hour at least half an hour away; the calendar lets them change it.
+                                    val begin = java.util.Calendar.getInstance().apply {
+                                        add(java.util.Calendar.MINUTE, 30)
+                                        if (get(java.util.Calendar.MINUTE) > 0 || get(java.util.Calendar.SECOND) > 0) add(java.util.Calendar.HOUR_OF_DAY, 1)
+                                        set(java.util.Calendar.MINUTE, 0)
+                                        set(java.util.Calendar.SECOND, 0)
+                                        set(java.util.Calendar.MILLISECOND, 0)
+                                    }.timeInMillis
+                                    val opened = DeviceCalendarRepository.openNewReminder(
+                                        context = context,
+                                        title = my.hana.meena.data.system.NoteRules.title(note),
+                                        description = my.hana.meena.data.system.NoteRules.toText(note),
+                                        beginMillis = begin
+                                    )
+                                    if (!opened) my.hana.meena.ui.components.MetroMessage.show(noCalendarMsg)
+                                    openNote = -1
+                                },
+                                onRemove = {
+                                    noteToRemove = openNote
+                                    openNote = -1
+                                },
+                                onDismiss = { openNote = -1 }
+                            )
+                        }
+                        if (editNote in quickNotes.indices) {
+                            val index = editNote
+                            my.hana.meena.ui.components.NoteEditDialog(
+                                initial = quickNotes[index],
+                                onSave = { text -> my.hana.meena.data.system.NotesRepository.update(context, index, text) },
+                                onDismiss = { editNote = -1 }
+                            )
+                        }
                         if (noteToRemove in quickNotes.indices) {
                             my.hana.meena.ui.components.MetroDialog(
                                 title = stringResource(R.string.notes_remove_title),
@@ -1053,7 +1125,6 @@ fun TodayHub(
                                 dismissText = stringResource(R.string.action_no),
                                 onConfirm = {
                                     my.hana.meena.data.system.NotesRepository.remove(context, noteToRemove)
-                                    openNote = -1
                                     noteToRemove = -1
                                 },
                                 onDismiss = { noteToRemove = -1 }
@@ -1072,38 +1143,18 @@ fun TodayHub(
                                     color = MeenaTextMuted
                                 )
                             }
-                            // One line each until tapped, so a glance at the home screen doesn't show it all.
+                            // One line each, so a glance at the home screen doesn't show it all; tap for the rest.
                             quickNotes.forEachIndexed { index, note ->
-                                val isOpen = openNote == index
-                                Row(
+                                my.hana.meena.ui.components.NoteText(
+                                    note = note,
+                                    color = MeenaTextWhite,
+                                    maxLines = 1,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
-                                        .metroClickable { openNote = if (isOpen) -1 else index }
-                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = note,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MeenaTextWhite,
-                                        maxLines = if (isOpen) Int.MAX_VALUE else 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    if (isOpen) {
-                                        Text(
-                                            text = stringResource(R.string.action_remove),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier
-                                                .heightIn(min = 48.dp)
-                                                .metroClickable { noteToRemove = index }
-                                                .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.m)
-                                        )
-                                    }
-                                }
+                                        .metroClickable { openNote = index }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                                )
                             }
                             if (!notesUnreadable) {
                                 val underline = MaterialTheme.colorScheme.primary

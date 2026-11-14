@@ -852,7 +852,7 @@ class MeenaLauncherLogicTest {
         
         val forbidden = setOf(
             "android.permission.QUERY_ALL_PACKAGES",
-            "android.permission.ACCESS_FINE_LOCATION"
+            "android.permission.ACCESS_BACKGROUND_LOCATION"
         )
         val found = mutableListOf<String>()
 
@@ -880,6 +880,8 @@ class MeenaLauncherLogicTest {
             "android.permission.INTERNET",
             "android.permission.ACCESS_NETWORK_STATE",
             "android.permission.ACCESS_COARSE_LOCATION",
+            // Precise location for the nearby map, approved by the owner on 14 Nov 2026.
+            "android.permission.ACCESS_FINE_LOCATION",
             "android.permission.READ_CALENDAR",
             // Connected devices widget, approved by the owner on 12 Nov 2026 (plan D14).
             "android.permission.BLUETOOTH",

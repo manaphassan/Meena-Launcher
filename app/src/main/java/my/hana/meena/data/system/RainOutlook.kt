@@ -1,9 +1,5 @@
 package my.hana.meena.data.system
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-
 /**
  * One forecast hour from Open-Meteo: [endMillis] closes the hour (precipitation and its
  * probability cover the hour before it, per https://open-meteo.com/en/docs).
@@ -46,18 +42,4 @@ object RainOutlookCalculator {
     }
 
     private const val HOUR_MS = 3_600_000L
-}
-
-/** MET Malaysia's public radar page; opened in the browser, nothing is sent from Meena. */
-object RainRadar {
-    const val MET_MALAYSIA_RADAR_URL = "https://www.met.gov.my/pencerapan/radar/"
-
-    fun open(context: Context) {
-        try {
-            context.startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(MET_MALAYSIA_RADAR_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
-        } catch (_: Exception) {
-        }
-    }
 }

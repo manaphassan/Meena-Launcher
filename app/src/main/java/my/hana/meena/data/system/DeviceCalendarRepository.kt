@@ -258,6 +258,27 @@ object DeviceCalendarRepository {
         } catch (_: Exception) {}
     }
 
+    /**
+     * Opens the calendar app's new-event screen filled in, so the user picks the time and the
+     * calendar does the reminding (no alarm or notification access needed in Meena). Extras from
+     * https://developer.android.com/identity/providers/calendar-provider ("use an intent to insert an event").
+     * Returns false when no calendar app takes it.
+     */
+    fun openNewReminder(context: Context, title: String, description: String, beginMillis: Long): Boolean =
+        try {
+            val intent = Intent(Intent.ACTION_INSERT)
+                .setData(CalendarContract.Events.CONTENT_URI)
+                .putExtra(CalendarContract.Events.TITLE, title)
+                .putExtra(CalendarContract.Events.DESCRIPTION, description)
+                .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginMillis)
+                .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, beginMillis + 30 * 60_000L)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+
     fun openEventDetail(context: Context, eventId: Long) {
         try {
             val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)

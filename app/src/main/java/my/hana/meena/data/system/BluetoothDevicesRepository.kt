@@ -5,6 +5,9 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
@@ -15,7 +18,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,8 +34,24 @@ import kotlinx.coroutines.withTimeoutOrNull
 import my.hana.meena.ui.widgets.WidgetState
 import kotlin.coroutines.resume
 
-/** A connected device; [battery] is a percentage only when the device has told Android one. */
-data class ConnectedDevice(val name: String, val kind: String, val battery: Int? = null)
+/**
+ * A connected device. [battery] is a percentage and [signalDbm] the received signal strength,
+ * each only when the device or Android has reported one; neither is ever estimated.
+ */
+data class ConnectedDevice(val name: String, val kind: String, val battery: Int? = null, val signalDbm: Int? = null)
+
+/** Signal strength in words for people. The bands are rough [I]: Bluetooth doesn't define them. */
+object BluetoothSignal {
+    const val STRONG = 3
+    const val GOOD = 2
+    const val WEAK = 1
+
+    fun level(dbm: Int): Int = when {
+        dbm >= -60 -> STRONG
+        dbm >= -75 -> GOOD
+        else -> WEAK
+    }
+}
 
 /**
  * Bluetooth devices connected right now: low-energy devices (GATT), headphones and speakers
@@ -73,6 +95,17 @@ object BluetoothDevicesRepository {
     /** BluetoothProfile.HID_HOST, a @SystemApi constant; its proxy answers getConnectedDevices with BLUETOOTH_CONNECT. */
     private const val PROFILE_HID_HOST = 4
 
+    /** Standard Battery Service and Battery Level characteristic (Bluetooth SIG assigned numbers). */
+    private val BATTERY_SERVICE: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
+    private val BATTERY_LEVEL: UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
+
+    /** What a low-energy device last told us, by address. */
+    private data class LeReading(val battery: Int?, val signalDbm: Int?, val atMillis: Long)
+    private val leReadings = ConcurrentHashMap<String, LeReading>()
+
+    /** How often each low-energy device is asked again; the widget refreshes every 30 s. */
+    private const val LE_READ_EVERY_MS = 60_000L
+
     private val aclReceiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(context: Context, intent: Intent) {
@@ -89,6 +122,7 @@ object BluetoothDevicesRepository {
                     if (level in 0..100) batteryByName[nameOf(device)] = level else batteryByName.remove(nameOf(device))
                 }
             }
+            if (intent.action == BluetoothDevice.ACTION_ACL_DISCONNECTED) leReadings.remove(device.address)
             refresh(context)
         }
     }
@@ -141,14 +175,39 @@ object BluetoothDevicesRepository {
                 val inputDevices = connectedOn(context, adapter, PROFILE_HID_HOST)
                 val audio = connectedOn(context, adapter, BluetoothProfile.A2DP) +
                     connectedOn(context, adapter, BluetoothProfile.HEADSET)
+                val aclLinked = aclDevices.keys.mapNotNull { runCatching { adapter.getRemoteDevice(it) }.getOrNull() }
+                // First device object per shown name, so readings can be matched back to a row.
+                val byName = linkedMapOf<String, BluetoothDevice>()
+                (audio + wearables + inputDevices + aclLinked).forEach { byName.putIfAbsent(nameOf(it), it) }
                 val devices = merge(
                     wearables.map { nameOf(it) to KIND_WEARABLE } +
                             inputDevices.map { nameOf(it) to kindOf(it).let { k -> if (k == KIND_OTHER) KIND_WEARABLE else k } } +
                             aclDevices.values,
                     audio.map { nameOf(it) to KIND_AUDIO }
-                ).map { it.copy(battery = batteryByName[it.name]) }
+                )
+                fun withReadings(): List<ConnectedDevice> = devices.map { device ->
+                    val linked = byName[device.name]
+                    val reading = linked?.let { leReadings[it.address] }
+                    device.copy(
+                        battery = batteryByName[device.name] ?: reading?.battery ?: linked?.let { systemBatteryLevel(it) },
+                        signalDbm = reading?.signalDbm
+                    )
+                }
                 _state.value =
-                    if (devices.isEmpty()) WidgetState.Empty else WidgetState.Ready(devices, System.currentTimeMillis())
+                    if (devices.isEmpty()) WidgetState.Empty else WidgetState.Ready(withReadings(), System.currentTimeMillis())
+
+                // Then ask low-energy devices that already have a link for signal and battery, one at a time.
+                val leLinked = (wearables + inputDevices).distinctBy { it.address }.filter { isLowEnergy(it) }
+                var readAny = false
+                leLinked.forEach { device ->
+                    val last = leReadings[device.address]
+                    if (last != null && System.currentTimeMillis() - last.atMillis < LE_READ_EVERY_MS) return@forEach
+                    leReadings[device.address] = readLowEnergy(context, device)
+                    readAny = true
+                }
+                if (readAny && devices.isNotEmpty()) {
+                    _state.value = WidgetState.Ready(withReadings(), System.currentTimeMillis())
+                }
             } catch (_: SecurityException) {
                 _state.value = WidgetState.NeedsSetup
             }
@@ -160,6 +219,107 @@ object BluetoothDevicesRepository {
         val byName = linkedMapOf<String, String>()
         (audio + wearables).forEach { (name, kind) -> if (name !in byName) byName[name] = kind }
         return byName.map { ConnectedDevice(it.key, it.value) }.sortedBy { it.name }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun isLowEnergy(device: BluetoothDevice): Boolean =
+        when (runCatching { device.type }.getOrNull()) {
+            BluetoothDevice.DEVICE_TYPE_LE, BluetoothDevice.DEVICE_TYPE_DUAL -> true
+            else -> false
+        }
+
+    /**
+     * Joins the existing low-energy link as a GATT client, reads the signal strength
+     * (readRemoteRssi) and, for paired devices, the standard battery level if offered, then leaves.
+     * Only devices that are already connected are asked, so this never starts a new link.
+     * Public APIs, BLUETOOTH_CONNECT only:
+     * https://developer.android.com/reference/android/bluetooth/BluetoothGatt
+     * https://developer.android.com/reference/android/bluetooth/BluetoothGattCallback
+     */
+    @SuppressLint("MissingPermission")
+    private suspend fun readLowEnergy(context: Context, device: BluetoothDevice): LeReading {
+        val signal = AtomicReference<Int?>(null)
+        // Reading from a device that isn't paired could make Android ask to pair; only ask for its signal then.
+        val askBattery = runCatching { device.bondState == BluetoothDevice.BOND_BONDED }.getOrDefault(false)
+        val battery = withTimeoutOrNull(8_000L) {
+            suspendCancellableCoroutine<Int?> { cont ->
+                val done = AtomicBoolean(false)
+                val gattRef = AtomicReference<BluetoothGatt?>(null)
+                fun finish(gatt: BluetoothGatt?, level: Int?) {
+                    if (!done.compareAndSet(false, true)) return
+                    runCatching { gatt?.disconnect() }
+                    runCatching { gatt?.close() }
+                    if (cont.isActive) cont.resume(level)
+                }
+                fun onBattery(gatt: BluetoothGatt, value: ByteArray?, status: Int) {
+                    val level = value?.firstOrNull()?.toInt()?.and(0xFF)
+                    finish(gatt, if (status == BluetoothGatt.GATT_SUCCESS && level != null && level in 0..100) level else null)
+                }
+                val callback = object : BluetoothGattCallback() {
+                    override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                        when (newState) {
+                            BluetoothProfile.STATE_CONNECTED -> if (!gatt.readRemoteRssi()) {
+                                if (!askBattery || !gatt.discoverServices()) finish(gatt, null)
+                            }
+                            BluetoothProfile.STATE_DISCONNECTED -> finish(gatt, null)
+                        }
+                    }
+
+                    override fun onReadRemoteRssi(gatt: BluetoothGatt, rssi: Int, status: Int) {
+                        if (status == BluetoothGatt.GATT_SUCCESS) signal.set(rssi)
+                        if (!askBattery || !gatt.discoverServices()) finish(gatt, null)
+                    }
+
+                    override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+                        val level = gatt.getService(BATTERY_SERVICE)?.getCharacteristic(BATTERY_LEVEL)
+                        if (status != BluetoothGatt.GATT_SUCCESS || level == null || !gatt.readCharacteristic(level)) finish(gatt, null)
+                    }
+
+                    // Android 13+; both read callbacks may arrive, finish() only acts once.
+                    override fun onCharacteristicRead(
+                        gatt: BluetoothGatt,
+                        characteristic: BluetoothGattCharacteristic,
+                        value: ByteArray,
+                        status: Int
+                    ) = onBattery(gatt, value, status)
+
+                    // Android 12 and older.
+                    @Deprecated("Deprecated in Java")
+                    @Suppress("DEPRECATION")
+                    override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) =
+                        onBattery(gatt, characteristic.value, status)
+                }
+                cont.invokeOnCancellation { runCatching { gattRef.get()?.close() } }
+                val gatt = runCatching { device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE) }.getOrNull()
+                gattRef.set(gatt)
+                if (gatt == null) finish(null, null)
+            }
+        }
+        return LeReading(battery, signal.get(), System.currentTimeMillis())
+    }
+
+    /** Set once Android refuses the hidden battery call, so it isn't tried again this run. */
+    @Volatile
+    private var systemBatteryBlocked = false
+
+    /**
+     * The battery level Android already knows for a device (what the status bar shows for
+     * headphones), so it shows right away instead of waiting for the next change broadcast.
+     * BluetoothDevice.getBatteryLevel() is a @SystemApi; it is called by name and Android may
+     * block it for normal apps [S], in which case this quietly returns null. Source:
+     * https://android.googlesource.com/platform/packages/modules/Bluetooth/+/refs/heads/main/framework/java/android/bluetooth/BluetoothDevice.java
+     */
+    @SuppressLint("DiscouragedPrivateApi", "PrivateApi", "SoonBlockedPrivateApi")
+    private fun systemBatteryLevel(device: BluetoothDevice): Int? {
+        if (systemBatteryBlocked) return null
+        return try {
+            (BluetoothDevice::class.java.getMethod("getBatteryLevel").invoke(device) as? Int)?.takeIf { it in 0..100 }
+        } catch (_: NoSuchMethodException) {
+            systemBatteryBlocked = true
+            null
+        } catch (_: Exception) {
+            null
+        }
     }
 
     @SuppressLint("MissingPermission")
