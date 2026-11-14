@@ -112,9 +112,14 @@ fun meenaPaletteFor(baseTheme: String): MeenaPalette = when (baseTheme) {
 
 val LocalMeenaPalette = staticCompositionLocalOf { MeenaDarkPalette }
 
-/** The accent exactly as chosen, for solid fills only (tiles, buttons, toggle tracks). */
-val LocalMeenaAccentFill = staticCompositionLocalOf { MeenaCyan }
+/**
+ * The accent for solid fills (tiles, buttons, toggle tracks, badges): the chosen colour, deepened
+ * only as far as needed for the white labels on it to read at 4.5:1.
+ */
+val LocalMeenaAccentFill = staticCompositionLocalOf { accentFill(MeenaCyan, MeenaDarkPalette) }
 val MeenaAccentFill: Color @Composable @ReadOnlyComposable get() = LocalMeenaAccentFill.current
+
+fun accentFill(accent: Color, p: MeenaPalette): Color = readableAccent(p.accentOverride ?: accent, listOf(p.onAccent))
 
 val MeenaBlack: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.background
 val MeenaDarkSlate: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.darkSlate

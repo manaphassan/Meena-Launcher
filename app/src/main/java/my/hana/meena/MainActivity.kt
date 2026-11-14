@@ -1111,9 +1111,9 @@ private fun ActionTile(
             .padding(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         Column {
-            Text(title, style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+            Text(title, style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(state, style = MaterialTheme.typography.bodySmall, color = MeenaTextWhite.copy(alpha = 0.7f), fontSize = 12.sp)
+            Text(state, style = MaterialTheme.typography.bodySmall, color = my.hana.meena.theme.MeenaOnAccent, fontSize = 12.sp)
         }
     }
 }

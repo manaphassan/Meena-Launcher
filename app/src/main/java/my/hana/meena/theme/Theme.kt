@@ -60,7 +60,6 @@ fun MeenaLauncherTheme(
     content: @Composable () -> Unit,
 ) {
     val palette = meenaPaletteFor(baseTheme)
-    val accent = palette.accentOverride ?: accentColor
     val colorScheme = getMeenaColorScheme(baseTheme, accentColor)
     val typography = androidx.compose.runtime.remember(fontScalePercent, colorScheme.primary, palette) {
         getMeenaTypography(
@@ -74,7 +73,7 @@ fun MeenaLauncherTheme(
 
     androidx.compose.runtime.CompositionLocalProvider(
         LocalMeenaPalette provides palette,
-        LocalMeenaAccentFill provides accent
+        LocalMeenaAccentFill provides accentFill(accentColor, palette)
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
