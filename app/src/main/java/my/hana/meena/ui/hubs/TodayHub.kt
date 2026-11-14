@@ -266,12 +266,22 @@ fun TodayHub(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Bottom
                         ) {
+                            // Steps the clock down in 5% stages while it overflows, so seconds never clip
+                            // on narrow screens or large text (seen at 320dp with 130% text).
+                            val clockStyle = MaterialTheme.typography.displayMedium
+                            var clockShrink by remember(clockStyle) { mutableStateOf(1f) }
                             Text(
                                 text = currentTime,
-                                style = MaterialTheme.typography.displayMedium,
+                                style = clockStyle.copy(
+                                    fontSize = clockStyle.fontSize * clockShrink,
+                                    lineHeight = clockStyle.lineHeight * clockShrink
+                                ),
                                 color = MeenaTextWhite,
                                 maxLines = 1,
                                 softWrap = false,
+                                onTextLayout = { layout ->
+                                    if (layout.hasVisualOverflow && clockShrink > 0.6f) clockShrink -= 0.05f
+                                },
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                             Column(
@@ -327,23 +337,25 @@ fun TodayHub(
                                 )
                             }
                         }
-                        Row(
+                        // Flows so the hijri date drops below the date when both don't fit (320dp, 130% text).
+                        androidx.compose.foundation.layout.FlowRow(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = my.hana.meena.theme.MeenaSpacing.s),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 text = currentDate,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1
                             )
                             if (hijriDateStr != null) {
                                 Text(
                                     text = hijriDateStr,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MeenaTextMuted
+                                    color = MeenaTextMuted,
+                                    maxLines = 1
                                 )
                             }
                         }
