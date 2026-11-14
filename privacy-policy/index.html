@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy for Meena</title>
+<style>
+  body { margin: 0 auto; max-width: 760px; padding: 24px; font: 16px/1.6 "Segoe UI", system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-weight: 300; font-size: 2.2em; line-height: 1.2; }
+  h2 { font-weight: 400; margin-top: 2em; }
+  h3 { font-weight: 400; }
+  a { color: #0050a0; }
+  code { font-family: Consolas, monospace; font-size: 0.9em; background: #f2f2f2; padding: 0 4px; }
+  table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 12px 6px 0; border-bottom: 1px solid #ddd; }
+  hr { border: 0; border-top: 1px solid #ddd; margin: 24px 0; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #eee; background: #000; } a { color: #4fb3ff; }
+    code { background: #1a1a1a; } th, td, hr { border-color: #333; }
+  }
+</style>
+</head>
+<body>
+<h1 dir="auto">Privacy Policy for Meena</h1>
+<p dir="auto"><strong>Effective Date:</strong> 14 November 2026<br>
+<strong>Application:</strong> Meena (Package: <code class="notranslate">my.hana.meena</code>)<br>
+<strong>Developer:</strong> HaNa Innovation<br>
+<strong>Contact:</strong> <a href="mailto:privacy@hana.my">privacy@hana.my</a></p>
+<hr>
+<h2 dir="auto">1. Overview &amp; Architecture Charter</h2>
+<p dir="auto">Meena is a personal Android launcher designed around the Meena UI principles: <em>clean, light, open, fast</em>.</p>
+<p dir="auto">We believe that your personal phone is your private space. Meena does not run its own servers or collect your data:</p>
+<ul dir="auto">
+<li><strong>Zero Third-Party Telemetry:</strong> We do not include any analytics SDKs, crash trackers, advertising identifiers, or tracking pixels.</li>
+<li><strong>Zero Remote Databases:</strong> We do not operate remote user databases, authentication servers, or logging backends.</li>
+<li><strong>Local In-Memory Processing:</strong> Notifications, bank transaction alerts, calendar events and health metrics are processed on your device and never leave it.</li>
+</ul>
+<h3 dir="auto">1.1 Online services Meena contacts</h3>
+<p dir="auto">Meena talks directly to these services from your phone; it has no servers of its own. Each service receives only what is listed here, plus your IP address as part of any internet connection.</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>Service</th>
+<th>When</th>
+<th>What it receives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Open-Meteo (weather, rain outlook and air quality)</td>
+<td>Weather or air quality widget is on</td>
+<td>Coordinates rounded to about 1 km</td>
+</tr>
+<tr>
+<td>OpenFreeMap map tiles (may be served through Cloudflare)</td>
+<td>Map widget is on</td>
+<td>The map area you are looking at, around your location. The map libraries (Leaflet, MapLibre) are built into the app, so nothing else is fetched to draw it.</td>
+</tr>
+<tr>
+<td>JAKIM e-Solat</td>
+<td>Prayer times widget is on</td>
+<td>Your prayer zone code</td>
+</tr>
+<tr>
+<td>Frankfurter (exchange rates)</td>
+<td>Rates widget is on</td>
+<td>Your base currency</td>
+</tr>
+<tr>
+<td>Google Sheets</td>
+<td>You link a sheet</td>
+<td>A request for the sheet you linked</td>
+</tr>
+<tr>
+<td>News feeds you add</td>
+<td>News page is on</td>
+<td>A request for each feed, and for the pictures in its posts (thumbnails and the article reader)</td>
+</tr>
+<tr>
+<td>Wikipedia (Wikimedia REST API)</td>
+<td>Wikipedia widget is on</td>
+<td>A request for a random article; nothing about you</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p dir="auto">Some links open outside Meena, in your browser or another app, only when you tap them: a news article's "open on" link and links inside articles, and "open in maps". Meena sends those sites nothing; what they see is your own visit.</p>
+<hr>
+<h2 dir="auto">2. Information Handled &amp; Permissions</h2>
+<p dir="auto">Meena requests only the minimal set of Android permissions necessary to provide core launcher features. Each permission is described below, along with its exact purpose and handling guarantees:</p>
+<h3 dir="auto">2.1 Location (<code class="notranslate">android.permission.ACCESS_FINE_LOCATION</code>, <code class="notranslate">android.permission.ACCESS_COARSE_LOCATION</code>)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> Used to resolve your local prayer timetable (JAKIM zone), query current weather and air quality (via public Open-Meteo APIs), and show where you are on the optional map widget.</li>
+<li><strong>Handling:</strong> On Android 12 and later you choose precise or approximate when asked. Your location is used only while Meena is open: Meena never monitors background location (<code class="notranslate">ACCESS_BACKGROUND_LOCATION</code> is not requested) and does not keep a location history. Precise coordinates stay on your phone; weather and air-quality requests carry coordinates rounded to about 1 km.</li>
+</ul>
+<h3 dir="auto">2.2 Calendar Access (<code class="notranslate">android.permission.READ_CALENDAR</code>)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> Displays your upcoming daily agenda events directly on the Today panoramic hub.</li>
+<li><strong>Handling:</strong> Events are read locally using the Android system <code class="notranslate">CalendarContract</code> provider. Meena has read-only access, does not modify your calendars, and never sends your event titles, attendees, or notes off your device.</li>
+</ul>
+<h3 dir="auto">2.3 Notification Listener (<code class="notranslate">android.permission.BIND_NOTIFICATION_LISTENER_SERVICE</code>)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> Powers the Inbox hub (alerts and active chats), unread counts and chat names on live favourite tiles, and the opt-in personal spending tracker.</li>
+<li><strong>Handling:</strong>
+<ul dir="auto">
+<li>Incoming notification text and titles are inspected strictly in memory on-device.</li>
+<li>Live tiles show only how many notifications an app has and, for chats, who they are from (the sender or group name), never the message itself. Showing names can be turned off in settings.</li>
+<li>The opt-in spending tracker only reads notifications from an allowlist of banking and e-wallet apps; amounts and merchant names are parsed locally in memory. Notifications from other apps are never parsed for spending.</li>
+<li>No notification text, personal messages, or payment details are ever saved to plain logs or uploaded anywhere.</li>
+</ul>
+</li>
+</ul>
+<h3 dir="auto">2.4 Health Connect Permissions (<code class="notranslate">androidx.health.connect.client</code>)</h3>
+<ul dir="auto">
+<li><strong>Requested Types:</strong> <code class="notranslate">READ_STEPS</code>, <code class="notranslate">READ_DISTANCE</code>, <code class="notranslate">READ_TOTAL_CALORIES_BURNED</code>, <code class="notranslate">READ_SLEEP</code>, <code class="notranslate">READ_HEART_RATE</code>.</li>
+<li><strong>Purpose:</strong> Displays aggregated daily fitness summaries (steps taken, distance walked, calories burned, sleep hours, resting heart rate) directly on the Today hub.</li>
+<li><strong>Handling:</strong>
+<ul dir="auto">
+<li>Read-only access requested via Android Health Connect API.</li>
+<li>Data is fetched locally and rendered in memory.</li>
+<li>Health data is never transmitted across the network, never sold, and never shared with advertisers or third parties.</li>
+</ul>
+</li>
+</ul>
+<h3 dir="auto">2.5 Nearby Devices (<code class="notranslate">android.permission.BLUETOOTH_CONNECT</code>; <code class="notranslate">BLUETOOTH</code> on Android 11 and older)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> The optional connected devices widget shows which Bluetooth devices are connected right now, such as a band, watch or headphones.</li>
+<li><strong>Handling:</strong> Meena only reads the names of devices that are already connected and, when a device reports one to Android, its battery level. It does not scan for new devices, does not connect to anything, and never logs, stores or sends device names or battery levels. The permission is asked for only when you turn the widget on, after a short explanation.</li>
+</ul>
+<h3 dir="auto">2.6 Apps You Open</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> The optional frequent apps widget shows the apps you open most from Meena.</li>
+<li><strong>Handling:</strong> Meena counts launches it makes itself, on your phone only. It does not read Android's usage history. You can wipe the counts at any time with <strong>clear app history</strong> in the widget's settings.</li>
+</ul>
+<h3 dir="auto">2.7 Installed Applications (<code class="notranslate">LauncherApps</code> &amp; Queries)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> Core launcher functionality to discover and display installed applications on the Apps hub, and allow launching, pinning, or uninstalling apps.</li>
+<li><strong>Handling:</strong> Applications are queried locally via the Android system <code class="notranslate">LauncherApps</code> API. The broad <code class="notranslate">QUERY_ALL_PACKAGES</code> permission has been completely eliminated in favor of targeted intent filters. Your app list is never shared or profiled.</li>
+<li><strong>Icon packs:</strong> If you choose an icon pack, Meena finds installed icon packs through the same kind of targeted filters and reads the pack's own icon list from it on your phone. Nothing about your apps or the pack leaves the device.</li>
+</ul>
+<hr>
+<h2 dir="auto">3. Data Storage &amp; Security</h2>
+<ul dir="auto">
+<li><strong>Android Keystore Encryption:</strong> Your portfolio holdings, Google Sheet link and notes are encrypted with an AES-256-GCM key held in the Android Keystore. Holdings saved by earlier versions are encrypted automatically the next time you open the money page. Earlier versions offered an optional Gemini brief; any Gemini API key they saved is deleted when you update.</li>
+<li><strong>App-Private Storage:</strong> Other settings and cached weather, rates, news and news pictures are stored in Meena's private app storage, which other apps cannot read.</li>
+<li><strong>No System Cloud Backup (<code class="notranslate">allowBackup="false"</code>):</strong> Android Auto Backup is explicitly disabled to prevent sensitive settings, tokens, or locally parsed balances from syncing to cloud drive backups. On Android 12 and later, backup rules also exclude all app data from cloud backup and from device-to-device transfer, so nothing is copied to a new phone.</li>
+<li><strong>Data Deletion:</strong> You can delete all locally stored settings, custom feeds, and cached data at any time by selecting <strong>Clear Storage / Clear Data</strong> in Android App Info or tapping <strong>reset to defaults</strong> in Meena Settings.</li>
+</ul>
+<hr>
+<h2 dir="auto">4. Financial Features Policy Compliance</h2>
+<p dir="auto">Meena is not a bank, lender, credit broker, or payment processor:</p>
+<ul dir="auto">
+<li>Meena does not process financial transactions, initiate money transfers, or hold customer balances.</li>
+<li>The optional spending widget acts strictly as an offline digital ledger, parsing transaction amounts from notification texts generated by user-installed banking apps that the user has explicitly authorized.</li>
+</ul>
+<hr>
+<h2 dir="auto">5. Age Requirement &amp; Children's Privacy</h2>
+<p dir="auto">Meena is a general productivity launcher intended for people aged 13 and older (or the minimum age in your country, if higher). Meena is not directed at children and does not knowingly collect personal information from children under 13.</p>
+<hr>
+<h2 dir="auto">6. Updates &amp; Inquiries</h2>
+<p dir="auto">We may update this Privacy Policy from time to time to reflect app changes or Google Play policy updates. When we do, the effective date at the top changes and the updated policy is published at the address below.</p>
+<p dir="auto">For questions regarding this policy or Meena's privacy architecture, contact:</p>
+<ul dir="auto">
+<li><strong>Email:</strong> <a href="mailto:privacy@hana.my">privacy@hana.my</a></li>
+<li><strong>Repository:</strong> <a href="https://github.com/manaphassan/Meena-Launcher">https://github.com/manaphassan/Meena-Launcher</a></li>
+<li><strong>This policy online:</strong> <a href="https://manaphassan.github.io/Meena-Launcher/privacy-policy/" rel="nofollow">https://manaphassan.github.io/Meena-Launcher/privacy-policy/</a></li>
+</ul>
+</body>
+</html>
