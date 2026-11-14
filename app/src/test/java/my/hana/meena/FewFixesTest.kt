@@ -6,6 +6,8 @@ import my.hana.meena.data.system.BluetoothSignal
 import my.hana.meena.data.system.DeviceAppInfo
 import my.hana.meena.data.system.LocationPick
 import my.hana.meena.data.system.Qibla
+import my.hana.meena.data.system.SunPath
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -84,6 +86,35 @@ class FewFixesTest {
         assertEquals(292.5, Qibla.bearing(3.1390, 101.6869), 0.5)
         // From due south of the Kaaba, it's straight north.
         assertEquals(0.0, Qibla.bearing(10.0, Qibla.KAABA_LNG), 0.01)
+    }
+
+    @Test
+    fun sunPath_kualaLumpurMidNovember() {
+        // KL, 14 Nov 2026, local midnight +08:00. Published times are about 07:03 and 19:01 [I],
+        // with sunrise in the east-south-east and sunset in the west-south-west.
+        val lat = 3.1390
+        val lng = 101.6869
+        val midnight = java.time.ZonedDateTime.of(2026, 11, 14, 0, 0, 0, 0, java.time.ZoneId.of("Asia/Kuala_Lumpur"))
+            .toInstant().toEpochMilli()
+        val events = SunPath.events(midnight, lat, lng)
+        val riseMinutes = (events.riseMillis!! - midnight) / 60_000.0
+        val setMinutes = (events.setMillis!! - midnight) / 60_000.0
+        assertEquals(7 * 60 + 3.0, riseMinutes, 6.0)
+        assertEquals(19 * 60 + 1.0, setMinutes, 6.0)
+        assertEquals(108.0, events.riseAzimuth!!, 2.0)
+        assertEquals(252.0, events.setAzimuth!!, 2.0)
+        // Around 13:00 the sun is high in the south.
+        val noon = SunPath.position(midnight + 13L * 3_600_000, lat, lng)
+        assertEquals(180.0, noon.azimuth, 15.0)
+        assertTrue(noon.elevation > 65.0)
+    }
+
+    @Test
+    fun sunPath_polarNightHasNoSunrise() {
+        val midnight = java.time.ZonedDateTime.of(2026, 12, 21, 0, 0, 0, 0, java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val events = SunPath.events(midnight, 80.0, 0.0)
+        assertNull(events.riseMillis)
+        assertNull(events.setMillis)
     }
 
     @Test

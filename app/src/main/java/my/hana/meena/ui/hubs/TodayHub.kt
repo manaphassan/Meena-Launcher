@@ -1321,6 +1321,7 @@ fun TodayHub(
                     OpenMapsRadarWidget(
                         ringsOn = settings.widgetConfigs[widgetId]?.customSettings?.get("rings") != "off",
                         animate = !settings.reducedMotion,
+                        is24Hour = settings.is24HourFormat,
                         onRingsChange = { on -> onSetWidgetSetting(widgetId, "rings", if (on) "on" else "off") }
                     )
                 }

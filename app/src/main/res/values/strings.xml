@@ -283,8 +283,8 @@
     <string name="map_accuracy">your rough area, within about %1$s km</string>
     <string name="map_accuracy_m">accurate to about %1$d m</string>
     <string name="map_rings_title">rings and qibla</string>
-    <string name="map_rings_hint">3 km and 5 km rings, gently pulsing. the outer ring is a compass with the qibla on it.</string>
-    <string name="map_rings_hint_still">3 km and 5 km rings. the outer ring is a compass with the qibla on it.</string>
+    <string name="map_rings_hint">3 km and 5 km rings, gently pulsing. the outer ring is a compass with north, sunrise and sunset; the qibla is on the inner ring.</string>
+    <string name="map_rings_hint_still">3 km and 5 km rings. the outer ring is a compass with north, sunrise and sunset; the qibla is on the inner ring.</string>
     <string name="map_ring_label">%1$d km</string>
     <string name="map_compass_n">n</string>
     <string name="map_compass_e">e</string>
@@ -294,6 +294,9 @@
     <string name="map_qibla_bearing">qibla is %1$d° from north. hold your phone flat and turn till the arrow points up.</string>
     <string name="map_compass_unsteady">the compass is unsure. move your phone in a figure 8, away from metal.</string>
     <string name="map_compass_missing">this phone has no compass, so north stays at the top. qibla is %1$d° from north.</string>
+    <string name="map_sun_times">sunrise %1$s (filled dot), sunset %2$s (open dot). the dotted line is where the sun is now.</string>
+    <string name="map_sun_rise_only">sunrise %1$s. no sunset today here.</string>
+    <string name="map_sun_set_only">sunset %1$s. no sunrise today here.</string>
     <string name="map_attribution">openfreemap © openmaptiles · data from openstreetmap contributors (odbl)</string>
     <string name="map_zoom_in">zoom in</string>
     <string name="map_zoom_out">zoom out</string>

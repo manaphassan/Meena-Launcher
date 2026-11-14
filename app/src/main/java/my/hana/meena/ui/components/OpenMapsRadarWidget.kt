@@ -80,6 +80,7 @@ fun OpenMapsRadarWidget(
     modifier: Modifier = Modifier,
     ringsOn: Boolean = true,
     animate: Boolean = true,
+    is24Hour: Boolean = true,
     onRingsChange: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -116,6 +117,7 @@ fun OpenMapsRadarWidget(
     val palette = my.hana.meena.theme.LocalMeenaPalette.current
     val textHex = String.format("#%06X", 0xFFFFFF and palette.text.toArgb())
     val mutedHex = String.format("#%06X", 0xFFFFFF and palette.textMuted.toArgb())
+    val sunHex = String.format("#%06X", 0xFFFFFF and palette.warning.toArgb())
     val compassWords = CompassWords(
         north = stringResource(R.string.map_compass_n),
         east = stringResource(R.string.map_compass_e),
@@ -125,7 +127,7 @@ fun OpenMapsRadarWidget(
     )
 
     // Built once per look: later fixes move the dot through recenter() instead of reloading the page.
-    val mapHtml = remember(accentHex, styleUrl, pageColor, ringLabels, textHex, mutedHex, compassWords) {
+    val mapHtml = remember(accentHex, styleUrl, pageColor, ringLabels, textHex, mutedHex, sunHex, compassWords) {
         generateDarkOpenMapsHtml(
             lat = currentLocation.latitude,
             lng = currentLocation.longitude,
@@ -136,6 +138,7 @@ fun OpenMapsRadarWidget(
             ringLabels = ringLabels,
             textColor = textHex,
             mutedColor = mutedHex,
+            sunColor = sunHex,
             words = compassWords
         )
     }
@@ -169,6 +172,44 @@ fun OpenMapsRadarWidget(
         if (isMapLoaded) {
             webViewRef?.evaluateJavascript(
                 "window.setCompass && window.setCompass(${"%.1f".format(java.util.Locale.US, heading)}, ${"%.2f".format(java.util.Locale.US, qiblaBearing)});",
+                null
+            )
+        }
+    }
+
+    // The sun, worked out on the phone: today's rise and set directions, and where it is now.
+    var sunClock by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(ringsOn) {
+        while (ringsOn) {
+            sunClock = System.currentTimeMillis()
+            kotlinx.coroutines.delay(60_000L)
+        }
+    }
+    val dayStart = remember(sunClock / 3_600_000L) {
+        java.util.Calendar.getInstance().apply {
+            timeInMillis = sunClock
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+    // Rounded so small fixes don't redo the whole day.
+    val sunLat = (currentLocation.latitude * 100).roundToInt() / 100.0
+    val sunLng = (currentLocation.longitude * 100).roundToInt() / 100.0
+    val sunEvents = remember(dayStart, sunLat, sunLng) { my.hana.meena.data.system.SunPath.events(dayStart, sunLat, sunLng) }
+    val sunNow = remember(sunClock, sunLat, sunLng) { my.hana.meena.data.system.SunPath.position(sunClock, sunLat, sunLng) }
+    val sunUp = sunNow.elevation > my.hana.meena.data.system.SunPath.HORIZON
+    val timeFormat = remember(is24Hour) { java.text.SimpleDateFormat(if (is24Hour) "HH:mm" else "h:mm a", java.util.Locale.UK) }
+    val riseText = sunEvents.riseMillis?.let { timeFormat.format(java.util.Date(it)).lowercase(java.util.Locale.UK) }
+    val setText = sunEvents.setMillis?.let { timeFormat.format(java.util.Date(it)).lowercase(java.util.Locale.UK) }
+    LaunchedEffect(sunEvents, sunNow, sunUp, riseText, setText, isMapLoaded, mapHtml) {
+        if (isMapLoaded) {
+            fun num(v: Double?) = v?.let { "%.1f".format(java.util.Locale.US, it) } ?: "null"
+            fun str(v: String?) = v?.let { jsString(it) } ?: "null"
+            webViewRef?.evaluateJavascript(
+                "window.setSun && window.setSun(${num(sunEvents.riseAzimuth)}, ${num(sunEvents.setAzimuth)}, " +
+                    "${num(if (sunUp) sunNow.azimuth else null)}, ${str(riseText)}, ${str(setText)});",
                 null
             )
         }
@@ -316,6 +357,17 @@ fun OpenMapsRadarWidget(
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )
+                if (riseText != null || setText != null) {
+                    Text(
+                        text = when {
+                            riseText != null && setText != null -> stringResource(R.string.map_sun_times, riseText, setText)
+                            riseText != null -> stringResource(R.string.map_sun_rise_only, riseText)
+                            else -> stringResource(R.string.map_sun_set_only, setText!!)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted
+                    )
+                }
             }
             val minutesAgo = ((System.currentTimeMillis() - currentLocation.fixTimeMillis) / 60_000L).coerceAtLeast(0L)
             val foundText = when {
@@ -456,6 +508,7 @@ private fun generateDarkOpenMapsHtml(
     ringLabels: List<String>,
     textColor: String,
     mutedColor: String,
+    sunColor: String,
     words: CompassWords
 ): String {
     val ringKm = MAP_RING_KM.joinToString(",")
@@ -499,6 +552,8 @@ private fun generateDarkOpenMapsHtml(
     attributionControl: false,
     minZoom: 9,
     maxZoom: 17,
+    // Quarter steps so the 5 km ring can fill the frame instead of snapping to half its size.
+    zoomSnap: 0.25,
     preferCanvas: true
   }).setView([lat, lng], 13);
   // The WebView is laid out at 0 height inside Today's list and CSS heights stay 0, so size the
@@ -518,7 +573,10 @@ private fun generateDarkOpenMapsHtml(
       el.style.height = h + 'px';
       document.getElementById('overlay').style.height = h + 'px';
       map.invalidateSize();
-      if (!fitted) { fitArea(); fitted = true; }
+      // Refit whenever the height changes: the WebView grows after first layout, and fitting
+      // only once left the rings sitting low.
+      fitArea();
+      fitted = true;
       drawCompass();
     }
   }
@@ -560,11 +618,12 @@ private fun generateDarkOpenMapsHtml(
   var RING_LABELS = [$labels];
   var CARDINALS = [$cardinals];
   var QIBLA_WORD = $qiblaWord;
-  var TEXT = '$textColor', MUTED = '$mutedColor';
+  var TEXT = '$textColor', MUTED = '$mutedColor', SUN = '$sunColor';
   var PULSE_MS = 3000;
   var WAVE_OPACITY = [0.6, 0.3];
   var ringsOn = false, pulseOn = false, timer = null;
   var heading = 0, qibla = null;
+  var sun = { rise: null, set: null, now: null, riseText: null, setText: null };
   var rings = [], waves = [];
   RING_KM.forEach(function (km, i) {
     rings.push(L.circle([lat, lng], { radius: km * 1000, color: accent, weight: 1.2, opacity: 0.85, fill: false, interactive: false }));
@@ -626,28 +685,57 @@ private fun generateDarkOpenMapsHtml(
         fill: i === 0 ? accent : TEXT, 'fill-opacity': i === 0 ? 1 : 0.7 }, word);
     });
 
-    // Ring sizes on the right, where the map has room; they don't turn. 3 km sits just inside its
-    // ring and 5 km just outside its own, so the two never run together.
+    // North pointer: a small solid triangle on the 5 km ring, tip pointing out, with n just inside.
+    var nTip = at(c, r5 + 9, 0), nLeft = at(c, r5 - 1, -4), nRight = at(c, r5 - 1, 4);
+    el('path', { d: 'M' + nTip.x + ',' + nTip.y + 'L' + nLeft.x + ',' + nLeft.y + 'L' + nRight.x + ',' + nRight.y + 'Z', fill: accent });
+
+    // Ring sizes, where the map has room; they don't turn. 3 km sits just inside its ring on the
+    // right, 5 km just outside its own at the top right, so neither meets the sunrise mark.
     el('text', { x: c.x + r3 - 4, y: c.y - 4, 'text-anchor': 'end', fill: accent }, RING_LABELS[0] || '');
-    el('text', { x: c.x + r5 + 4, y: c.y - 4, fill: accent, 'fill-opacity': 0.6 }, RING_LABELS[RING_LABELS.length - 1] || '');
+    el('text', { x: c.x + r5 * 0.72 + 4, y: c.y - r5 * 0.72 - 2, fill: accent, 'fill-opacity': 0.6 }, RING_LABELS[RING_LABELS.length - 1] || '');
+
+    // Sun: where it is now, as a dotted line from the dot to the 5 km ring (only while it's up),
+    // and today's sunrise (filled) and sunset (open) on the ring, with their times outside.
+    if (sun.now !== null) {
+      var s1 = at(c, 9, sun.now), s2 = at(c, r5 - 5, sun.now);
+      el('path', { d: 'M' + s1.x + ',' + s1.y + 'L' + s2.x + ',' + s2.y, stroke: SUN, 'stroke-width': 2,
+        'stroke-dasharray': '0.1 5', 'stroke-linecap': 'round', fill: 'none' });
+      el('circle', { cx: s2.x, cy: s2.y, r: 3, fill: SUN });
+    }
+    [['rise', sun.rise, sun.riseText], ['set', sun.set, sun.setText]].forEach(function (e) {
+      if (e[1] === null) return;
+      var p = at(c, r5, e[1]);
+      el('circle', e[0] === 'rise'
+        ? { cx: p.x, cy: p.y, r: 4, fill: SUN }
+        : { cx: p.x, cy: p.y, r: 3.5, fill: 'none', stroke: SUN, 'stroke-width': 1.5 });
+      if (e[2]) {
+        var t = at(c, r5 + 16, e[1]);
+        el('text', { x: t.x, y: t.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: SUN }, e[2]);
+      }
+    });
 
     if (qibla !== null) {
-      // Arrow: from just past the dot to the 3 km ring, with an open head at the ring.
-      var from = at(c, 9, qibla), tip = at(c, r3, qibla);
+      // The qibla sits on the 3 km ring (a small square, the Kaaba), and the arrow runs from just
+      // past the dot to it.
+      var m = at(c, r3, qibla);
+      var from = at(c, 9, qibla), tip = at(c, r3 - 6, qibla);
       var left = at(tip, 7, qibla + 155), right = at(tip, 7, qibla - 155);
       el('path', {
         d: 'M' + from.x + ',' + from.y + 'L' + tip.x + ',' + tip.y + 'M' + left.x + ',' + left.y + 'L' + tip.x + ',' + tip.y + 'L' + right.x + ',' + right.y,
         stroke: accent, 'stroke-width': 1.5, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
       });
-      // Mark on the 5 km ring: a small square (the Kaaba), turned with the compass, and its word outside.
-      var m = at(c, r5, qibla);
       el('rect', { x: m.x - 3.5, y: m.y - 3.5, width: 7, height: 7, fill: accent,
         transform: 'rotate(' + (qibla - heading) + ' ' + m.x + ' ' + m.y + ')' });
-      var w = at(c, r5 + 12, qibla);
+      var w = at(c, r3 + 13, qibla);
       el('text', { x: w.x, y: w.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: accent }, QIBLA_WORD);
     }
   }
   map.on('move zoom zoomend resize', drawCompass);
+
+  window.setSun = function (rise, set, now, riseText, setText) {
+    sun = { rise: rise, set: set, now: now, riseText: riseText, setText: setText };
+    drawCompass();
+  };
 
   window.setCompass = function (newHeading, newQibla) {
     heading = newHeading || 0;
