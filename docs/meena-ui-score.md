@@ -10,11 +10,11 @@ Tags: **[F]** checked in code or by a command, **[S]** not verified yet, **[I]**
 | 1 | Metro structure (1) | 8 | **10** | 5 pages (`pageCount = { 5 }`) [F]; back returns to today (`BackHandler` on `currentPage != 0`) [F]; no `TopAppBar`, `Scaffold` or `FloatingActionButton` anywhere [F]; peek title of the next page shows on the phone [F]; cold start median 351 ms, warm 328 ms on the TECNO KL8 (Speed below) [F] | The swipe-down quick panel was checked in phase 2 and not re-run [S] |
 | 2 | Typography (1) | 7 | **10** | Selawik bundled in `res/font`, no Google Fonts provider and no `font_certs.xml` [F]; display 42sp light, section 24sp light, body 16sp, every caption style ≥ 12sp (`Type.kt`) [F]; `StringsCaseTest` lowercase, plurals included [F]; 0 bold or semibold in `ui/` [F]; 0 symbol glyphs in code and in `strings.xml` [F] | `bodyMedium` is 14sp. I read it as secondary text, not body, so it doesn't fail the 15–17sp gate [I]. Screenshots not taken [S] |
 | 3 | Aesthetic purity (1) | 5 | **10** | `charter-baseline.txt` all 0: circles, borders, cards, elevation, Toasts, filled icons, colour literals, emoji [F]; ripple off everywhere (`MetroIndication`, `indication = null`) [F]; no per-brand colours [F]; every `RoundedCornerShape` is `0.dp` [F] | Three themes (dark, light, paper), not two. Paper was your call after the plan, so it counts as compliant [I]. The news picture blur is a privacy filter for feeds you mark, not a decorative blur [I] |
-| 4 | Content focus, AIO goal (2) | 4 | **7** [I] | Favourites cap 6 (`FavouriteRules.MAX`) and group tiles [F]; simple Today map preview [F]; first screen at 360 and 411dp shows clock, date, hijri date, place, next alarm, 5 forecast days, rain line and air quality, with no "needs setup" rows [F] | **Failed: the favourites row is not on the first screen** at 320, 360 or 411dp, so launching one takes a scroll [F]. The 3-line rule and the A/B task test need testers [S] |
+| 4 | Content focus, AIO goal (2) | 4 | **9** [I] | Favourites cap 6 (`FavouriteRules.MAX`) and group tiles [F]; simple Today map preview [F]; favourites sit right under the clock (`407d32b`), so at 360dp the first screen shows clock, date, hijri date, place, next alarm, both favourite rows and all 5 forecast days, with no "needs setup" rows [F] | The 3-line rule per widget and the A/B task test need testers [S] |
 | 5 | Layout discipline (1) | 5 | **9** | Spacing only 0/6/12/24dp (ratchet 0) [F]; touch targets ≥ 48dp on new screens [F]; palette text on every page colour ≥ 4.5:1 in all three themes (`ContrastTest`) [F]; accent text ≥ 4.5:1 for all 10 swatches in all 3 themes (`ContrastTest.accentAsText_*`) [F]; white labels on accent tiles ≥ 4.5:1 for all 10 swatches (`ContrastTest.labelsOnAccentFills_*`) [F]; Today at 320dp with 130% text no longer clips (two fixes, Screenshots below) [F] | Only Today was shot at 130%; the other four pages were not [S] |
 | 6 | Data honesty (1) | 7 | **10** | No sample, fake, `RM` amount or "x ago" literals in `main/` (grep audit below) [F]; widgets use `WidgetState`: 9 data repositories (weather, solat, health, news, finance, rates, spending, wikipedia, devices) [F]; the news fallback list is empty (`initialFallbackArticles = emptyList()`) [F] | none |
 
-Weighted: before (8+7+5+4×2+5+7)/7 = **5.7**. Now (10+10+10+7×2+9+10)/7 = **9.0** [I]. Area 4 is held back by the favourites row; area 5 by the untested pages at 130%.
+Weighted: before (8+7+5+4×2+5+7)/7 = **5.7**. Now (10+10+10+9×2+9+10)/7 = **9.6** [I]. Area 4 is held back by the favourites row; area 5 by the untested pages at 130%.
 
 ## Fixed: accent as text
 
@@ -62,7 +62,7 @@ TECNO KL8, Android 14, the R8 release build signed with the local debug key. `ad
 | warm | `force-stop`, then start (Android restarts the process for the notification listener, so the launch is WARM) | 329, 326, 312, 337, 355, 330, 315, 314, 323, 359, 324, 361 | **328** | ≤ 500, pass |
 | hot | home, then start again | 100, 90, 121, 102, 94, 77, 60, 55, 87, 56 | **89** | none |
 
-The notification listener was allowed again straight after the cold runs and reconnected (`dumpsys notification`). The macrobenchmark module (`:macrobenchmark`) was also tried. It hung with no output after 20 minutes, after Grab came to the front mid-run. It was stopped and removed from the phone; the cause wasn't found [S].
+The notification listener was allowed again straight after the cold runs and reconnected (`dumpsys notification`). The first launch right after installing a new build took 2,065 ms. That one-off includes the settings move and code that isn't compiled yet, so it isn't counted as a cold start. The macrobenchmark module (`:macrobenchmark`) was also tried. It hung with no output after 20 minutes, after Grab came to the front mid-run. It was stopped and removed from the phone; the cause wasn't found [S].
 
 ## Screenshots
 
@@ -88,6 +88,7 @@ Not shot yet [S]: light and paper themes, and the other four pages at 130%.
 | `cd911ba` | Accent text gets a shade that reads on every page |
 | `e76f3e3` | Deeper accent tiles so white labels read |
 | `8a48295` | Today: the clock shrinks to fit instead of clipping; the hijri date drops below the date when space is short |
+| `407d32b` | Favourites move right under the clock: the new default order, plus a one-time move for existing settings (`layoutRevision`) |
 
 ## Command output
 
@@ -115,7 +116,7 @@ grep -rnE '"[0-9]+m ago"|"good morning' app/src/main/java
 
 ## Not verified [S]
 
-1. The favourites row is below the first screen. Moving it up changes the Today layout, so it needs your call.
+1. The 3-line rule per widget, checked by eye across all widgets.
 2. The other four pages at 130% text; light and paper screenshots.
 3. The A/B task test with 5 or more people (plan section 5). This needs testers; the closed test can cover it.
 4. TalkBack walk-through of every page.
