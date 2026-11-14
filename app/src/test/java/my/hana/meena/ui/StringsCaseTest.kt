@@ -116,4 +116,52 @@ class StringsCaseTest {
             violations.isEmpty()
         )
     }
+
+    /** Every user-facing value: plain strings plus plural and array items. */
+    private fun allValues(): List<Pair<String, String>> {
+        val file = File(findProjectRoot(), "src/main/res/values/strings.xml")
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+        val out = mutableListOf<Pair<String, String>>()
+        for (tag in listOf("string", "item")) {
+            val nodes = doc.getElementsByTagName(tag)
+            for (i in 0 until nodes.length) {
+                val el = nodes.item(i) as? Element ?: continue
+                val name = el.getAttribute("name").ifEmpty {
+                    (el.parentNode as? Element)?.getAttribute("name").orEmpty() + "[" + el.getAttribute("quantity") + "]"
+                }
+                out += name to (el.textContent ?: "")
+            }
+        }
+        return out
+    }
+
+    @Test
+    fun pluralItemsAreLowercase() {
+        val bad = allValues().filter { (name, _) -> name.contains("[") }
+            .filter { (_, text) -> text.replace(Regex("""%[0-9]+\$[a-zA-Z]|%[a-zA-Z]"""), "").any { it.isUpperCase() } }
+        assertTrue("uppercase in plurals: $bad", bad.isEmpty())
+    }
+
+    // GEMINI.md rule 8: copy is jargon-free.
+    @Test
+    fun noBannedWords() {
+        val banned = listOf("telemetry", "ram", "ltpo", "realtime sync", "permission", "intent", "package", "canvas", "proactive", "context")
+        val bad = allValues().flatMap { (name, text) ->
+            banned.filter { Regex("""\b${Regex.escape(it)}\b""", RegexOption.IGNORE_CASE).containsMatchIn(text) }.map { "$name: $it" }
+        }
+        assertTrue("banned words in strings.xml:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+
+    // GEMINI.md rule 7: no emoji or symbol glyphs. The middle dot separator, degree sign and the
+    // map attribution's copyright sign are typography, not decoration, so they stay allowed.
+    @Test
+    fun noSymbolGlyphs() {
+        val symbols = setOf('•', '✕', '×', '▲', '▼', '→', '←', '↑', '↓', '⚡', '✓', '✔', '★', '☆')
+        val bad = allValues().filter { (_, text) ->
+            text.any { it in symbols } ||
+                text.codePoints().anyMatch { it in 0x1F300..0x1FAFF || it in 0x2600..0x27BF } ||
+                Regex("""(^|\s)\+(\s|$)""").containsMatchIn(text)
+        }
+        assertTrue("symbols in strings.xml:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
 }

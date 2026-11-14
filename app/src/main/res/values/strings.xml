@@ -18,7 +18,7 @@
     <string name="action_clear_all">clear all</string>
     <string name="action_all_settings">all settings</string>
     <string name="action_search">search</string>
-    <string name="action_new_event">+ new event</string>
+    <string name="action_new_event">new event</string>
 
     <!-- App Menu -->
     <string name="menu_pin_today">pin to today</string>
@@ -552,7 +552,7 @@
     <string name="calendar_allow_prompt">want your schedule here? tap to allow calendar access.</string>
     <string name="action_allow">allow</string>
     <string name="agenda_empty">all quiet, nothing coming up</string>
-    <string name="agenda_add_event">+ event</string>
+    <string name="agenda_add_event">add event</string>
     <string name="notes_empty_short">empty</string>
     <string name="notes_empty">no notes yet. write one below.</string>
     <string name="action_remove">remove</string>

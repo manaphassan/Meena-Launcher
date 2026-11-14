@@ -148,7 +148,9 @@ class CharterLintTest {
         val colorNamedRegex = Regex("""\bColor\.(White|Gray|Black|DarkGray|LightGray)\b""")
         val iconsRegex = Regex("""\bIcons\.(Default|Filled|Rounded|AutoMirrored\.Filled)\b""")
         val fontWeightRegex = Regex("""\bFontWeight\.(Bold|SemiBold|ExtraBold|Black)\b""")
-        val symbolChars = listOf('•', '✕', '▲', '▼', '→', '⚡')
+        val symbolChars = listOf('•', '✕', '▲', '▼', '→', '⚡', '←', '↑', '↓', '×', '✓')
+        // A lone plus or arrow as visible text (the old add tile and back button).
+        val glyphTextRegex = Regex("""\btext\s*=\s*"[+←→]"""")
 
         for (file in files) {
             val content = file.readText()
@@ -190,6 +192,7 @@ class CharterLintTest {
             for (sym in symbolChars) {
                 emojiAndSymbolsCount += content.count { it == sym }
             }
+            emojiAndSymbolsCount += glyphTextRegex.findAll(content).count()
             // Check surrogate pairs for emojis
             for (i in 0 until content.length - 1) {
                 val code = Character.codePointAt(content, i)
