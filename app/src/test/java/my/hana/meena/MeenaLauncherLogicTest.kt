@@ -60,15 +60,15 @@ class MeenaLauncherLogicTest {
         assertEquals(
             listOf(
                 "widget-clock-weather",
+                "widget-favourites",
                 "widget-weather-forecast",
                 "widget-tasks",
-                "widget-solat",
-                "widget-favourites"
+                "widget-solat"
             ),
             enabledTodayWidgets
         )
 
-        // 3. Acceptance verification: on a fresh install Today reads now, sky, your week, prayer, apps.
+        // 3. Acceptance verification: on a fresh install Today reads now, apps, sky, your week, prayer.
         val freshSettings = MeenaUserSettings()
         val visibleTodayWidgetsOnFreshInstall = freshSettings.widgetConfigs.entries
             .filter {
@@ -83,13 +83,33 @@ class MeenaLauncherLogicTest {
         assertEquals(
             listOf(
                 "widget-clock-weather",
+                "widget-favourites",
                 "widget-weather-forecast",
                 "widget-tasks",
-                "widget-solat",
-                "widget-favourites"
+                "widget-solat"
             ),
             visibleTodayWidgetsOnFreshInstall
         )
+    }
+
+    @Test
+    fun migrate_movesFavouritesUnderTheClockOnce() {
+        // An older install: favourites fifth, below prayer times, with notes moved to the top by hand.
+        val old = MeenaUserSettings().let { s ->
+            val legacy = mapOf(
+                "widget-notes" to 0, "widget-clock-weather" to 1, "widget-weather-forecast" to 2,
+                "widget-tasks" to 3, "widget-solat" to 4, "widget-favourites" to 5
+            )
+            s.copy(widgetConfigs = s.widgetConfigs.mapValues { (id, c) -> legacy[id]?.let { c.copy(position = it) } ?: c.copy(position = c.position + 10) })
+        }
+        val migrated = old.migrate()
+        val today = migrated.widgetConfigs.filterValues { it.hubId == "today" }.entries.sortedBy { it.value.position }.map { it.key }
+        assertEquals(listOf("widget-notes", "widget-clock-weather", "widget-favourites", "widget-weather-forecast"), today.take(4))
+        assertEquals(MeenaUserSettings.FAVOURITES_FIRST_REVISION, migrated.layoutRevision)
+
+        // Afterwards the user's own order is kept: moving favourites back down sticks.
+        val userMoved = migrated.copy(widgetConfigs = migrated.widgetConfigs.mapValues { (id, c) -> if (id == "widget-favourites") c.copy(position = 99) else c })
+        assertEquals(99, userMoved.migrate().widgetConfigs["widget-favourites"]?.position)
     }
 
     @Test
@@ -106,7 +126,7 @@ class MeenaLauncherLogicTest {
         }
         val sorted = custom.withStoryOrder().widgetConfigs
         assertEquals(0, sorted["widget-clock-weather"]?.position)
-        assertEquals(3, sorted["widget-solat"]?.position)
+        assertEquals(4, sorted["widget-solat"]?.position)
         assertEquals("money", sorted["widget-solat"]?.hubId)
         assertTrue(sorted["widget-solat"]?.isCollapsed == true)
         assertTrue(sorted["widget-map-radar"]?.isEnabled == true)
