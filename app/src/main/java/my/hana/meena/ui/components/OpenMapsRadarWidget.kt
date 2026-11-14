@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import kotlin.math.roundToInt
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -112,9 +113,19 @@ fun OpenMapsRadarWidget(
     val hasRealFix = currentLocation.isGpsActive
     val placeName = ClockInfo.placeName(currentLocation.locationName, hasRealFix)
     val ringLabels = MAP_RING_KM.map { stringResource(R.string.map_ring_label, it) }
+    val palette = my.hana.meena.theme.LocalMeenaPalette.current
+    val textHex = String.format("#%06X", 0xFFFFFF and palette.text.toArgb())
+    val mutedHex = String.format("#%06X", 0xFFFFFF and palette.textMuted.toArgb())
+    val compassWords = CompassWords(
+        north = stringResource(R.string.map_compass_n),
+        east = stringResource(R.string.map_compass_e),
+        south = stringResource(R.string.map_compass_s),
+        west = stringResource(R.string.map_compass_w),
+        qibla = stringResource(R.string.map_qibla)
+    )
 
     // Built once per look: later fixes move the dot through recenter() instead of reloading the page.
-    val mapHtml = remember(accentHex, styleUrl, pageColor, ringLabels) {
+    val mapHtml = remember(accentHex, styleUrl, pageColor, ringLabels, textHex, mutedHex, compassWords) {
         generateDarkOpenMapsHtml(
             lat = currentLocation.latitude,
             lng = currentLocation.longitude,
@@ -122,13 +133,45 @@ fun OpenMapsRadarWidget(
             accent = accentHex,
             styleUrl = styleUrl,
             pageColor = pageColor,
-            ringLabels = ringLabels
+            ringLabels = ringLabels,
+            textColor = textHex,
+            mutedColor = mutedHex,
+            words = compassWords
         )
     }
 
     // Rings follow the switch; the pulse also stops with reduced motion.
     LaunchedEffect(ringsOn, animate, isMapLoaded, mapHtml) {
         if (isMapLoaded) webViewRef?.evaluateJavascript("window.setRings && window.setRings($ringsOn, $animate);", null)
+    }
+
+    // Compass: only while the rings show and Meena is on screen, so the sensor never runs in the background.
+    var heading by remember { mutableDoubleStateOf(0.0) }
+    var compassUnsteady by remember { mutableStateOf(false) }
+    val compass = remember {
+        my.hana.meena.data.system.CompassHeading(
+            context.applicationContext,
+            onHeading = { heading = it },
+            onUnsteady = { compassUnsteady = it }
+        )
+    }
+    val qiblaBearing = remember(currentLocation.latitude, currentLocation.longitude) {
+        my.hana.meena.data.system.Qibla.bearing(currentLocation.latitude, currentLocation.longitude)
+    }
+    LaunchedEffect(currentLocation.latitude, currentLocation.longitude) {
+        compass.setPlace(currentLocation.latitude, currentLocation.longitude, System.currentTimeMillis())
+    }
+    androidx.lifecycle.compose.LifecycleResumeEffect(ringsOn, hasRealFix) {
+        if (ringsOn && hasRealFix) compass.start()
+        onPauseOrDispose { compass.stop() }
+    }
+    LaunchedEffect(heading, qiblaBearing, isMapLoaded, mapHtml) {
+        if (isMapLoaded) {
+            webViewRef?.evaluateJavascript(
+                "window.setCompass && window.setCompass(${"%.1f".format(java.util.Locale.US, heading)}, ${"%.2f".format(java.util.Locale.US, qiblaBearing)});",
+                null
+            )
+        }
     }
 
     CollapsibleWidget(
@@ -263,6 +306,17 @@ fun OpenMapsRadarWidget(
                     onRingsChange(it)
                 }
             )
+            if (ringsOn) {
+                Text(
+                    text = when {
+                        !compass.isAvailable -> stringResource(R.string.map_compass_missing, qiblaBearing.roundToInt())
+                        compassUnsteady -> stringResource(R.string.map_compass_unsteady)
+                        else -> stringResource(R.string.map_qibla_bearing, qiblaBearing.roundToInt())
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
+            }
             val minutesAgo = ((System.currentTimeMillis() - currentLocation.fixTimeMillis) / 60_000L).coerceAtLeast(0L)
             val foundText = when {
                 currentLocation.fixTimeMillis <= 0L -> null
@@ -379,8 +433,13 @@ private fun MapTextAction(text: String, onClick: () -> Unit) {
     )
 }
 
-/** Distance rings drawn around the dot, in km. */
+/** Distance rings drawn around the dot, in km. The last one is the compass ring. */
 private val MAP_RING_KM = listOf(3, 5)
+
+/** Words drawn on the compass, from strings.xml. */
+private data class CompassWords(val north: String, val east: String, val south: String, val west: String, val qibla: String)
+
+private fun jsString(text: String): String = "'" + text.replace("\\", "").replace("'", "") + "'"
 
 /**
  * HTML for the map: an OpenFreeMap vector style through MapLibre inside Leaflet, a plain dot
@@ -394,10 +453,15 @@ private fun generateDarkOpenMapsHtml(
     accent: String,
     styleUrl: String,
     pageColor: String,
-    ringLabels: List<String>
+    ringLabels: List<String>,
+    textColor: String,
+    mutedColor: String,
+    words: CompassWords
 ): String {
     val ringKm = MAP_RING_KM.joinToString(",")
-    val labels = ringLabels.joinToString(",") { "'" + it.replace("'", "") + "'" }
+    val labels = ringLabels.joinToString(",") { jsString(it) }
+    val cardinals = listOf(words.north, words.east, words.south, words.west).joinToString(",") { jsString(it) }
+    val qiblaWord = jsString(words.qibla)
     val radius = accuracyMeters.coerceIn(100f, 5000f)
     return """
 <!DOCTYPE html>
@@ -417,12 +481,14 @@ private fun generateDarkOpenMapsHtml(
   /* Height is set from window.innerHeight in script: CSS vh and % resolve to 0 in this WebView. */
   #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: $pageColor; }
   .leaflet-container { background: $pageColor; }
-  /* Ring distance labels: plain accent text, no box. */
-  .ring-label { color: $accent; font: 12px sans-serif; white-space: nowrap; transform: translate(-50%, -100%); }
+  /* Compass and ring labels sit over the map and never take touches. */
+  #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 0; pointer-events: none; z-index: 1000; overflow: visible; }
+  #overlay text { font: 12px sans-serif; }
 </style>
 </head>
 <body>
 <div id="map"></div>
+<svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
 <script>
   var lat = $lat;
   var lng = $lng;
@@ -441,7 +507,8 @@ private fun generateDarkOpenMapsHtml(
   function fitArea() {
     // With distance rings on, show the widest ring; else the ring the phone is unsure within,
     // never closer than street level.
-    var target = (ringsOn && rings.length) ? rings[rings.length - 1].getBounds() : area.getBounds();
+    var outerKm = RING_KM[RING_KM.length - 1];
+    var target = ringsOn ? L.latLng(lat, lng).toBounds(outerKm * 2000) : area.getBounds();
     map.fitBounds(target, { padding: [16, 16], maxZoom: 15, animate: false });
   }
   function fitToWindow() {
@@ -449,8 +516,10 @@ private fun generateDarkOpenMapsHtml(
     var h = window.innerHeight;
     if (h > 0 && el.clientHeight !== h) {
       el.style.height = h + 'px';
+      document.getElementById('overlay').style.height = h + 'px';
       map.invalidateSize();
       if (!fitted) { fitArea(); fitted = true; }
+      drawCompass();
     }
   }
   window.addEventListener('resize', fitToWindow);
@@ -484,48 +553,122 @@ private fun generateDarkOpenMapsHtml(
     interactive: false
   }).addTo(map);
 
-  // Distance rings (km): a thin still outline each, a soft wave that grows out to it, and a label
-  // at the top. The wave runs at about 20 frames a second and stops when the page is hidden.
+  // Distance rings (km). The 3 km ring is a clear line on the map; the 5 km ring is a lighter
+  // compass ring drawn over it. A soft wave grows out to each one (about 20 frames a second,
+  // paused when the page is hidden).
   var RING_KM = [$ringKm];
   var RING_LABELS = [$labels];
+  var CARDINALS = [$cardinals];
+  var QIBLA_WORD = $qiblaWord;
+  var TEXT = '$textColor', MUTED = '$mutedColor';
   var PULSE_MS = 3000;
+  var WAVE_OPACITY = [0.6, 0.3];
   var ringsOn = false, pulseOn = false, timer = null;
-  var rings = [], waves = [], tags = [];
-  function labelPoint(km) { return [lat + km / 111.32, lng]; }
+  var heading = 0, qibla = null;
+  var rings = [], waves = [];
   RING_KM.forEach(function (km, i) {
-    rings.push(L.circle([lat, lng], { radius: km * 1000, color: accent, weight: 1, opacity: 0.7, fill: false, interactive: false }));
+    rings.push(L.circle([lat, lng], { radius: km * 1000, color: accent, weight: 1.2, opacity: 0.85, fill: false, interactive: false }));
     waves.push(L.circle([lat, lng], { radius: 1, color: accent, weight: 1.5, opacity: 0, fillColor: accent, fillOpacity: 0, interactive: false }));
-    tags.push(L.marker(labelPoint(km), {
-      icon: L.divIcon({ className: 'ring-label', html: RING_LABELS[i] || (km + ' km'), iconSize: null }),
-      interactive: false, keyboard: false
-    }));
   });
   function tick() {
     if (document.hidden) return;
     var now = Date.now();
     RING_KM.forEach(function (km, i) {
-      // The two waves start half a beat apart so they don't move in step.
+      // The two waves start half a beat apart so they don't move in step; the outer one is fainter.
       var t = ((now / PULSE_MS) + i * 0.5) % 1;
+      var top = WAVE_OPACITY[i] || 0.3;
       waves[i].setRadius(Math.max(1, t * km * 1000));
-      waves[i].setStyle({ opacity: 0.6 * (1 - t), fillOpacity: 0.08 * (1 - t) });
+      waves[i].setStyle({ opacity: top * (1 - t), fillOpacity: top * 0.12 * (1 - t) });
     });
   }
   function stopPulse() {
     if (timer) { clearInterval(timer); timer = null; }
     waves.forEach(function (w) { map.removeLayer(w); });
   }
+
+  // Compass overlay (SVG): the 5 km ring with ticks and n e s w turned so n points to real north,
+  // a qibla arrow from the dot out to the 3 km ring, and a qibla mark that moves round the 5 km ring.
+  // Words stay upright. heading = which way the top of the phone points, from true north.
+  var NS = 'http://www.w3.org/2000/svg';
+  var overlay = document.getElementById('overlay');
+  function el(name, attrs, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text) e.textContent = text;
+    overlay.appendChild(e);
+    return e;
+  }
+  function px(km) {
+    var c = map.latLngToContainerPoint([lat, lng]);
+    return c.distanceTo(map.latLngToContainerPoint([lat + km / 111.32, lng]));
+  }
+  function at(c, r, bearing) {
+    var a = (bearing - heading) * Math.PI / 180;
+    return { x: c.x + r * Math.sin(a), y: c.y - r * Math.cos(a) };
+  }
+  function drawCompass() {
+    while (overlay.firstChild) overlay.removeChild(overlay.firstChild);
+    if (!ringsOn || !document.getElementById('map').clientHeight) return;
+    var c = map.latLngToContainerPoint([lat, lng]);
+    var r3 = px(RING_KM[0]), r5 = px(RING_KM[RING_KM.length - 1]);
+
+    el('circle', { cx: c.x, cy: c.y, r: r5, fill: 'none', stroke: accent, 'stroke-width': 1, 'stroke-opacity': 0.35 });
+    var d = '';
+    for (var b = 0; b < 360; b += 10) {
+      var len = (b % 90 === 0) ? 8 : (b % 30 === 0 ? 5 : 3);
+      var p1 = at(c, r5, b), p2 = at(c, r5 - len, b);
+      d += 'M' + p1.x.toFixed(1) + ',' + p1.y.toFixed(1) + 'L' + p2.x.toFixed(1) + ',' + p2.y.toFixed(1);
+    }
+    el('path', { d: d, stroke: MUTED, 'stroke-width': 1, 'stroke-opacity': 0.8, fill: 'none' });
+    CARDINALS.forEach(function (word, i) {
+      var p = at(c, r5 - 16, i * 90);
+      el('text', { x: p.x, y: p.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+        fill: i === 0 ? accent : TEXT, 'fill-opacity': i === 0 ? 1 : 0.7 }, word);
+    });
+
+    // Ring sizes on the right, where the map has room; they don't turn. 3 km sits just inside its
+    // ring and 5 km just outside its own, so the two never run together.
+    el('text', { x: c.x + r3 - 4, y: c.y - 4, 'text-anchor': 'end', fill: accent }, RING_LABELS[0] || '');
+    el('text', { x: c.x + r5 + 4, y: c.y - 4, fill: accent, 'fill-opacity': 0.6 }, RING_LABELS[RING_LABELS.length - 1] || '');
+
+    if (qibla !== null) {
+      // Arrow: from just past the dot to the 3 km ring, with an open head at the ring.
+      var from = at(c, 9, qibla), tip = at(c, r3, qibla);
+      var left = at(tip, 7, qibla + 155), right = at(tip, 7, qibla - 155);
+      el('path', {
+        d: 'M' + from.x + ',' + from.y + 'L' + tip.x + ',' + tip.y + 'M' + left.x + ',' + left.y + 'L' + tip.x + ',' + tip.y + 'L' + right.x + ',' + right.y,
+        stroke: accent, 'stroke-width': 1.5, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+      });
+      // Mark on the 5 km ring: a small square (the Kaaba), turned with the compass, and its word outside.
+      var m = at(c, r5, qibla);
+      el('rect', { x: m.x - 3.5, y: m.y - 3.5, width: 7, height: 7, fill: accent,
+        transform: 'rotate(' + (qibla - heading) + ' ' + m.x + ' ' + m.y + ')' });
+      var w = at(c, r5 + 12, qibla);
+      el('text', { x: w.x, y: w.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: accent }, QIBLA_WORD);
+    }
+  }
+  map.on('move zoom zoomend resize', drawCompass);
+
+  window.setCompass = function (newHeading, newQibla) {
+    heading = newHeading || 0;
+    qibla = (newQibla === null || newQibla === undefined) ? null : newQibla;
+    drawCompass();
+  };
+
   window.setRings = function (on, animate) {
     var changed = on !== ringsOn;
     ringsOn = on;
     pulseOn = on && animate;
     stopPulse();
-    rings.concat(tags).forEach(function (layer) { if (on) layer.addTo(map); else map.removeLayer(layer); });
+    // Only the 3 km ring is a map layer; the 5 km ring is the compass.
+    if (on) rings[0].addTo(map); else map.removeLayer(rings[0]);
     if (pulseOn) {
       waves.forEach(function (w) { w.addTo(map); });
       tick();
       timer = setInterval(tick, 50);
     }
     if (changed && document.getElementById('map').clientHeight > 0) fitArea();
+    drawCompass();
   };
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && pulseOn) tick();
@@ -538,10 +681,10 @@ private fun generateDarkOpenMapsHtml(
       here.setLatLng([lat, lng]);
       area.setLatLng([lat, lng]);
       rings.concat(waves).forEach(function (c) { c.setLatLng([lat, lng]); });
-      tags.forEach(function (m, i) { m.setLatLng(labelPoint(RING_KM[i])); });
     }
     if (newRadius) area.setRadius(newRadius);
     if (document.getElementById('map').clientHeight > 0) { fitArea(); } else { fitted = false; }
+    drawCompass();
   };
 
   window.zoomIn = function() {

@@ -5,6 +5,7 @@ import my.hana.meena.data.system.AppGrouping
 import my.hana.meena.data.system.BluetoothSignal
 import my.hana.meena.data.system.DeviceAppInfo
 import my.hana.meena.data.system.LocationPick
+import my.hana.meena.data.system.Qibla
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -75,5 +76,21 @@ class FewFixesTest {
         assertEquals(BluetoothSignal.STRONG, BluetoothSignal.level(-50))
         assertEquals(BluetoothSignal.GOOD, BluetoothSignal.level(-70))
         assertEquals(BluetoothSignal.WEAK, BluetoothSignal.level(-90))
+    }
+
+    @Test
+    fun qibla_bearingFromKualaLumpurIsWestNorthWest() {
+        // Published qibla for Kuala Lumpur is about 292.5 degrees from true north.
+        assertEquals(292.5, Qibla.bearing(3.1390, 101.6869), 0.5)
+        // From due south of the Kaaba, it's straight north.
+        assertEquals(0.0, Qibla.bearing(10.0, Qibla.KAABA_LNG), 0.01)
+    }
+
+    @Test
+    fun qibla_smoothTakesTheShortWayRound() {
+        assertEquals(1.0, Qibla.smooth(359.0, 3.0, 0.5), 1e-9)
+        assertEquals(355.0, Qibla.smooth(5.0, 345.0, 0.5), 1e-9)
+        assertEquals(10.0, Qibla.difference(355.0, 5.0), 1e-9)
+        assertEquals(350.0, Qibla.normalize(-10.0), 1e-9)
     }
 }
