@@ -76,6 +76,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import my.hana.meena.ui.components.OpenMapsRadarWidget
 import kotlinx.coroutines.delay
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -174,9 +177,13 @@ fun TodayHub(
         } else null
     }
 
+    // Loops below only run while home is on screen, so a dark or covered launcher does no work.
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val isOnScreen = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+
     // Connection changes have no callback here, so poll gently while the widget is on screen.
-    LaunchedEffect(isBluetoothWidgetOn) {
-        while (isBluetoothWidgetOn) {
+    LaunchedEffect(isBluetoothWidgetOn, isOnScreen) {
+        while (isBluetoothWidgetOn && isOnScreen) {
             my.hana.meena.data.system.BluetoothDevicesRepository.refresh(context)
             delay(30_000L)
         }
@@ -186,7 +193,8 @@ fun TodayHub(
         if (isWikipediaWidgetOn) my.hana.meena.data.system.WikipediaRepository.refresh(context)
     }
 
-    LaunchedEffect(settings.is24HourFormat, settings.dateFormatPattern, settings.showClockSeconds) {
+    LaunchedEffect(settings.is24HourFormat, settings.dateFormatPattern, settings.showClockSeconds, isOnScreen) {
+        if (!isOnScreen) return@LaunchedEffect
         val timePattern = when {
             settings.is24HourFormat && settings.showClockSeconds -> "HH:mm:ss"
             settings.is24HourFormat -> "HH:mm"
