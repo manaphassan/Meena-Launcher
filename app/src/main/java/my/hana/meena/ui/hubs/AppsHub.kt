@@ -314,7 +314,7 @@ fun AppsHub(
                                 Text(
                                     text = letter.toString().lowercase(),
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = MeenaTextWhite,
+                                    color = my.hana.meena.theme.MeenaOnAccent,
                                     fontSize = 24.sp
                                 )
                             }
@@ -415,6 +415,12 @@ fun AppsHub(
                 },
             contentAlignment = Alignment.Center
         ) {
+            // Every letter must fit: at large text sizes 27 letters overflow the screen and the
+            // touch rows (size.height / 27) stop matching what is drawn. Shrink only as needed.
+            androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxHeight()) {
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val slotSp = with(density) { (maxHeight / alphabet.size * 0.75f).toSp() }
+            val letterSize = if (slotSp.value < 12f) slotSp else 12.sp
             Column(
                 modifier = Modifier.fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween,
@@ -424,11 +430,13 @@ fun AppsHub(
                     val hasApps = activeLetters.contains(char) || (char == '#' && activeLetters.contains('#'))
                     Text(
                         text = char.toString().lowercase(),
-                        fontSize = 12.sp,
+                        fontSize = letterSize,
+                        lineHeight = letterSize,
                         fontWeight = if (hasApps) FontWeight.Medium else FontWeight.Normal,
                         color = if (activeScrubLetter == char) primaryColor else if (hasApps) MeenaTextWhite.copy(alpha = 0.9f) else MeenaTextMuted
                     )
                 }
+            }
             }
         }
 
@@ -469,7 +477,7 @@ fun AppsHub(
                     text = activeScrubLetter.toString().lowercase(),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MeenaTextWhite
+                    color = my.hana.meena.theme.MeenaOnAccent
                 )
             }
         }
@@ -545,7 +553,7 @@ fun AppsHub(
                                     if (target.iconBitmap != null) {
                                         Image(bitmap = target.iconBitmap, contentDescription = target.label, modifier = Modifier.size(32.dp))
                                     } else {
-                                        Text(target.firstLetter.toString().lowercase(), fontSize = 24.sp, fontWeight = FontWeight.Medium, color = MeenaTextWhite)
+                                        Text(target.firstLetter.toString().lowercase(), fontSize = 24.sp, fontWeight = FontWeight.Medium, color = my.hana.meena.theme.MeenaOnAccent)
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(14.dp))
@@ -698,11 +706,11 @@ private fun AppRow(
                     modifier = Modifier.size(32.dp)
                 )
             } else if (icon != null) {
-                Icon(icon, contentDescription = name, tint = MeenaTextWhite, modifier = Modifier.size(26.dp))
+                Icon(icon, contentDescription = name, tint = my.hana.meena.theme.MeenaOnAccent, modifier = Modifier.size(26.dp))
             } else {
                 Text(
                     text = name.firstOrNull()?.lowercase() ?: "#",
-                    color = MeenaTextWhite,
+                    color = my.hana.meena.theme.MeenaOnAccent,
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 20.sp
                 )
