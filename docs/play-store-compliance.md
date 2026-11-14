@@ -3,7 +3,7 @@
 **Application:** Meena (`my.hana.meena`)  
 **Target SDK:** 36 (Android 16 / 15)  
 **Track:** Closed Test (Personal Developer Account)  
-**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery)  
+**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded)  
 
 ---
 
@@ -23,24 +23,33 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 ### 1.2 Data Type Breakdown Table
 
+Checked against Play's [Data safety help](https://support.google.com/googleplay/android-developer/answer/10787469) on 14 Nov 2026:
+- "Collect" means sending data off the device.
+- Data that is only processed on the device "does **not** need to be disclosed".
+- Location sharper than 3 km² counts as **precise**, including location that can be inferred. Meena rounds coordinates to 2 decimals, a cell of about 1.1 × 1.1 km (about 1.2 km²), so what reaches Open-Meteo, and the map tiles fetched around the user, count as precise.
+
+**Declare in the form (the only data that leaves the phone):**
+
 | Data Category | Data Type | Collected? | Shared? | Processed Ephemerally? | Required or Optional? | Purpose |
 |---|---|---|---|---|---|---|
-| **Location** | Precise and approximate location (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`) | Yes | **No** | **Yes** | Optional (fallback to manual solat zone) | App functionality (local weather, rain outlook, air quality, JAKIM prayer times, and the nearby map's tiles) |
-| **Financial Info** | Purchase history (parsed bank alerts) | **No** (on-device only) | **No** | N/A | Optional (spending opt-in, off by default) | Not transmitted; parsed and stored on the device |
-| **Health & Fitness** | Fitness info (Steps, distance, calories) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying daily activity summary on Today hub) |
-| **Health & Fitness** | Health info (Sleep duration, heart rate) | Yes | **No** | **Yes** | Optional (requires Health Connect permission) | App functionality (displaying health metrics on Today hub) |
-| **Calendar** | Calendar events | **No** (on-device only) | **No** | N/A | Optional (requires calendar permission) | Not transmitted; agenda shown on the Today hub |
-| **Messages** | Other in-app messages / notification text | Yes | **No** | **Yes** | Optional (requires notification listener permission) | App functionality (Inbox hub alerts, chat summaries, live tile counts and chat names, and spending parser) |
-| **App Info & Performance** | Installed apps | Yes | **No** | **Yes** | **Required** | Core launcher functionality (discovering, launching, and organizing apps) |
-| **App activity** | App interactions (how often apps are opened from Meena) | **No** (on-device only) | **No** | N/A | Optional (frequent apps widget, off by default) | Not transmitted; ranks the frequent apps widget |
-| **Device or other IDs** | Names and battery levels of connected Bluetooth devices | **No** (on-device only) | **No** | N/A | Optional (connected devices widget, off by default) | Not transmitted; shown on the Today hub |
-| **Personal Identifiers** | Name, Email, Phone, Device IDs | **No** | **No** | N/A | N/A | Meena collects zero personal identifiers or device IDs |
+| **Location** | Precise location (rounded to about 1 km, and inferred from map tiles) | Yes | **No** [I] | **Yes** | Optional (fallback to manual solat zone; weather and map show "needs setup") | App functionality (local weather, rain outlook, air quality, JAKIM prayer zone, nearby map tiles) |
+| **Location** | Approximate location (when the user picks approximate on Android 12+) | Yes | **No** [I] | **Yes** | Optional | Same as above |
 
-**[S] Check before submitting:** health, messages and installed-apps rows say "Collected: Yes" but are never sent off the device. Play's [Data safety help](https://support.google.com/googleplay/android-developer/answer/10787469) says on-device-only data "does **not** need to be disclosed". Confirm whether to keep them or mark them not collected.
+[I] "Shared: No": Open-Meteo and OpenFreeMap get coordinates or tiles only to answer the request, and the user turned the feature on. Play's help lists two exceptions to "sharing": service providers, and transfers based on a user-initiated action. Both fit, but that reading is mine, not Google's.
 
-**[S] Also check:** whether map tile requests to OpenFreeMap count as sending approximate location. They carry no coordinates, only the tiles around the user's area. If Play treats that as collection, it is already covered by the Location row ("Collected: Yes"); mention OpenFreeMap in the privacy policy (done, §1.1).
+**On the phone only, not declared** (per the help page above): parsed bank alerts, Health Connect readings, calendar events, notification and chat text, installed apps, app-open counts, Bluetooth device names and battery levels, notes and holdings. None of these is sent anywhere. The privacy policy still lists them, so users can see what Meena reads.
 
-**Not user data (no row needed):** news pictures are fetched from the feed sites the user added, and links the user taps (MET Malaysia rain radar, "open on" for news, "open in maps") open in the user's own browser or app; Meena sends those sites nothing.
+| Data | Where it stays |
+|---|---|
+| Purchase history (parsed bank alerts) | Phone only; spending widget is opt-in, off by default |
+| Fitness and health info (Health Connect) | Phone only; shown on Today |
+| Calendar events | Phone only |
+| Notification and chat text | Phone only; chat names on live tiles are emoji-stripped and never sent |
+| Installed apps, app-open counts | Phone only |
+| Bluetooth device names and battery | Phone only; widget off by default |
+| Personal identifiers, device IDs | Not collected at all |
+
+**Not user data (no row needed):** news pictures are fetched from the feed sites the user added. Links the user taps ("open on" for news, "open in maps") open in the user's own browser or app, and Meena sends those sites nothing.
 
 ---
 
@@ -66,7 +75,7 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 - **URL for Play Console (and the in-app link):** https://github.com/manaphassan/Meena-Launcher/blob/main/docs/privacy-policy.md
 - **Shown in the app:** settings, then system, then about, then **privacy policy**; and from Health Connect's "privacy policy" link.
-- **Before entering it in Play Console:** the page must load publicly. On 13 Nov 2026 it returned **404** because `docs/privacy-policy.md` is only on `phase/08-release`, not on `main`. Merge or push it to `main` first. Play requires an active, public, non-geofenced, non-PDF page ([User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)).
+- **Before entering it in Play Console:** the page must load publicly. On 14 Nov 2026 it still returned **404** (checked again): `main` has no `docs/` folder yet; the policy is only on the phase branches. Merge or push it to `main` first. Play requires an active, public, non-geofenced, non-PDF page ([User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)).
 
 ### 2.4 Nearby Devices (`BLUETOOTH_CONNECT`, plus `BLUETOOTH` with `maxSdkVersion=30`)
 - **Use:** the optional connected devices widget lists Bluetooth devices that are already connected (`BluetoothManager.getConnectedDevices(GATT)`, the A2DP, HEADSET and input-device (HID host) profile proxies, and link broadcasts) and shows their names. It also shows a device's battery level when Android reports one in its battery broadcast. No scanning (`BLUETOOTH_SCAN` is not requested), no connecting, no location use.
