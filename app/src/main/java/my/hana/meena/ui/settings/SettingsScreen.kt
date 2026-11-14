@@ -1485,6 +1485,32 @@ private fun SubPageContainer(
                 )
             }
             item {
+                // The map libraries' licences ask for their notices to ship with the app; shown word for word.
+                var showMapLicences by remember { mutableStateOf(false) }
+                Text(
+                    text = stringResource(R.string.about_map_libraries),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+                Text(
+                    text = stringResource(if (showMapLicences) R.string.about_map_licences_hide else R.string.about_map_licences_show),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable { showMapLicences = !showMapLicences }
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                )
+                if (showMapLicences) {
+                    val licences = remember { my.hana.meena.ui.components.MapAssets.licences(context) }
+                    Text(
+                        text = licences,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted
+                    )
+                }
+            }
+            item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.about_version, aboutVersion),

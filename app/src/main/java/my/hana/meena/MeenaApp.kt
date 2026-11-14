@@ -26,6 +26,8 @@ class MeenaApp : Application() {
             }
         }
         scope.launch { runCatching { InstalledAppsRepository.loadInstalledApps(this@MeenaApp) } }
+        // About 1.3 MB of map libraries from assets, read once so the first map opens without a pause.
+        scope.launch { my.hana.meena.ui.components.MapAssets.preload(this@MeenaApp) }
         // Link changes are only announced as they happen, so start listening as early as possible.
         runCatching { my.hana.meena.data.system.BluetoothDevicesRepository.startListening(this) }
         // Battery levels for the phone section's time-left estimate; kept on the phone only.

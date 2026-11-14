@@ -452,6 +452,9 @@
     <string name="privacy_portfolio_line">portfolio and notes: your holdings, sheet link and notes are stored encrypted on your phone.</string>
     <string name="about_open_source_title">open source</string>
     <string name="about_open_source_body">built with kotlin, jetpack compose, androidx, kotlinx serialization and okhttp, all under the apache 2.0 licence.</string>
+    <string name="about_map_libraries">the map is drawn with leaflet (bsd 2-clause), maplibre gl js (bsd 3-clause) and maplibre-gl-leaflet (isc), shipped inside the app.</string>
+    <string name="about_map_licences_show">read the map licences</string>
+    <string name="about_map_licences_hide">hide the map licences</string>
     <string name="privacy_on_device_heading">stays on your phone</string>
     <string name="privacy_reads_heading">what meena reads</string>
     <string name="privacy_health_line">health connect: steps, distance, calories burned, sleep and heart rate, shown on today. never shared.</string>

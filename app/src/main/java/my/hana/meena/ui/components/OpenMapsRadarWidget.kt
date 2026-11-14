@@ -311,7 +311,11 @@ fun NearbyMap(
     val radiusMeters = location.accuracyMeters.coerceIn(100f, 5000f)
 
     // Built once per look: later fixes move the dot through recenter() instead of reloading the page.
-    val mapHtml = remember(look) { generateMapHtml(location.latitude, location.longitude, location.accuracyMeters, look) }
+    val context = LocalContext.current
+    val mapHtml = remember(look) {
+        generateMapHtml(location.latitude, location.longitude, location.accuracyMeters, look)
+            .replace(MAP_LIBS_MARKER, MapAssets.inlineTags(context))
+    }
 
     LaunchedEffect(location.latitude, location.longitude, radiusMeters, isMapLoaded) {
         if (isMapLoaded) {
@@ -356,9 +360,10 @@ fun NearbyMap(
                     settings.apply {
                         javaScriptEnabled = true
                         domStorageEnabled = true
-                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        allowContentAccess = true
-                        allowFileAccess = true
+                        mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                        // The map libraries are inlined into the page, so it never reads files.
+                        allowContentAccess = false
+                        allowFileAccess = false
                         cacheMode = WebSettings.LOAD_DEFAULT
                         loadWithOverviewMode = true
                         useWideViewPort = true
@@ -410,6 +415,39 @@ fun NearbyMap(
 /** Distance rings drawn around the dot, in km. The last one is the compass ring. */
 private val MAP_RING_KM = listOf(3, 5)
 
+private const val MAP_LIBS_MARKER = "<!--MEENA_MAP_LIBS-->"
+
+/**
+ * Leaflet 1.9.4, MapLibre GL JS 5.24.1 and maplibre-gl-leaflet 0.1.4, shipped in assets/map
+ * (licences in assets/map/LICENSES.txt; bundling approved 14 Nov 2026) instead of loaded from
+ * unpkg.com each time. They are read once and inlined into the page, so the page needs no file
+ * access and its origin stays the same for the tile servers.
+ */
+internal object MapAssets {
+    @Volatile
+    private var cached: String? = null
+
+    /** Reads the libraries ahead of time (off the main thread), so the first map opens without a pause. */
+    fun preload(context: android.content.Context) {
+        runCatching { inlineTags(context.applicationContext) }
+    }
+
+    /** The licence notices for the map libraries, as shipped. */
+    fun licences(context: android.content.Context): String =
+        runCatching { context.assets.open("map/LICENSES.txt").bufferedReader().use { it.readText() } }.getOrDefault("")
+
+    fun inlineTags(context: android.content.Context): String = cached ?: synchronized(this) {
+        cached ?: buildString {
+            fun read(name: String) = context.assets.open("map/$name").bufferedReader().use { it.readText() }
+            append("<style>").append(read("leaflet.css")).append("</style>\n")
+            append("<style>").append(read("maplibre-gl.css")).append("</style>\n")
+            append("<script>").append(read("leaflet.js")).append("</script>\n")
+            append("<script>").append(read("maplibre-gl.js")).append("</script>\n")
+            append("<script>").append(read("leaflet-maplibre-gl.js")).append("</script>\n")
+        }.also { cached = it }
+    }
+}
+
 /** Everything that, when it changes, needs the map page built again. */
 private data class MapLook(
     val accent: String,
@@ -450,12 +488,7 @@ private fun generateMapHtml(lat: Double, lng: Double, accuracyMeters: Float, loo
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- OpenFreeMap vector tiles need MapLibre; the connector lets Leaflet host them (approved 13 Nov 2026). -->
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css" />
-<script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
+$MAP_LIBS_MARKER
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 100%; height: 100%; background: $pageColor; overflow: hidden; }

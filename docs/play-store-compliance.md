@@ -13,7 +13,7 @@ Use the following exact values when completing the Google Play Console **Data Sa
 
 ### 1.1 Overview Questions
 - **Does your app collect or share any of the required user data types?**  
-  **Yes.** Approximate location is sent to Open-Meteo for weather, the rain outlook and air quality. The map widget also loads map tiles from OpenFreeMap (and map libraries from unpkg), and the tiles requested reveal the approximate area around the user [I]. Everything else listed below is only processed on the device.
+  **Yes.** Location rounded to about 1 km is sent to Open-Meteo for weather, the rain outlook and air quality. The map widget also loads map tiles from OpenFreeMap (its libraries are built into the app), and the tiles requested reveal the area around the user [I]. Everything else listed below is only processed on the device.
 - **Is all of the user data collected by your app encrypted in transit?**  
   **Yes** (all requests for weather, map tiles, news RSS and news pictures, solat schedules and exchange rates use HTTPS; cleartext traffic is blocked by default at target SDK 36).
 - **Do you provide a way for users to request that their data be deleted?**  
