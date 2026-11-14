@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import my.hana.meena.data.system.WeatherRepository
 import my.hana.meena.theme.MeenaSurface
@@ -134,11 +137,14 @@ private fun MetroAppBar(title: String, onNavigateBack: () -> Unit) {
             .padding(top = my.hana.meena.theme.MeenaSpacing.l, start = my.hana.meena.theme.MeenaSpacing.l, end = my.hana.meena.theme.MeenaSpacing.l, bottom = my.hana.meena.theme.MeenaSpacing.m),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "←",
-            style = MaterialTheme.typography.displayMedium,
-            color = MeenaTextWhite,
-            modifier = Modifier.metroClickable { onNavigateBack() }.padding(end = my.hana.meena.theme.MeenaSpacing.m)
+        Icon(
+            painter = painterResource(R.drawable.ic_thin_back),
+            contentDescription = stringResource(R.string.settings_back),
+            tint = MeenaTextWhite,
+            modifier = Modifier
+                .size(48.dp)
+                .metroClickable(onClick = onNavigateBack)
+                .padding(my.hana.meena.theme.MeenaSpacing.m)
         )
         Text(
             text = title,
