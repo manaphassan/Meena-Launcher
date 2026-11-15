@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- Play feature graphic, 1024 x 500. Rendered with store/tools/render.sh, then flattened to
+     a 24-bit PNG (no alpha). Key content stays inside the centre, away from the cut-off edges. -->
+<html><head><meta charset="utf-8"><style>
+@font-face { font-family: Selawik; font-weight: 300; src: url("../../app/src/main/res/font/selawik_light.ttf"); }
+@font-face { font-family: Selawik; font-weight: 400; src: url("../../app/src/main/res/font/selawik_regular.ttf"); }
+html, body { margin: 0; width: 1024px; height: 500px; overflow: hidden; }
+body { background: #0050EF; font-family: Selawik, sans-serif; color: #fff; position: relative; }
+.copy { position: absolute; left: 150px; top: 150px; }
+.word { font-weight: 300; font-size: 120px; line-height: 1; letter-spacing: -3px; }
+.tag { font-weight: 400; font-size: 30px; margin-top: 18px; opacity: 0.92; }
+.tiles { position: absolute; right: 150px; top: 130px; display: grid; grid-template-columns: repeat(3, 72px); gap: 8px; }
+.tiles div { width: 72px; height: 72px; background: rgba(255,255,255,0.18); }
+.tiles .on { background: #fff; }
+.tiles .wide { grid-column: span 2; width: 152px; }
+</style></head><body>
+<div class="copy"><div class="word">meena</div><div class="tag">clean, light, open, fast</div></div>
+<div class="tiles">
+  <div class="on"></div><div></div><div></div>
+  <div class="wide"></div><div class="on"></div>
+  <div></div><div class="on"></div><div></div>
+</div>
+</body></html>
