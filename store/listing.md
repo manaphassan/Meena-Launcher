@@ -45,6 +45,7 @@ news
 
 money
 - gold, silver, bitcoin and ether over the past year on one chart, from free daily prices
+- kijang emas coin prices from bank negara malaysia
 - exchange rates on one line
 - prices from your own google sheet
 - spending picked up from your bank alerts, kept on your phone

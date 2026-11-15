@@ -59,6 +59,7 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 
 **Money**
 - Do the markets chart and prices load? They are daily prices, so they won't move minute by minute.
+- Do the kijang emas prices match what your bank shows?
 - Do the exchange rates load? If you use Google Sheets, try linking a sheet.
 - If your bank sends alerts, does spending get picked up correctly? Does it ever pick up something that isn't spending?
 

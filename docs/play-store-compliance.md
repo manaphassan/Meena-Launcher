@@ -15,7 +15,7 @@ Use the following exact values when completing the Google Play Console **Data Sa
 - **Does your app collect or share any of the required user data types?**  
   **Yes.** Location rounded to about 1 km is sent to Open-Meteo for weather, the rain outlook and air quality. The map widget also loads map tiles from OpenFreeMap (its libraries are built into the app), and the tiles requested reveal the area around the user [I]. Everything else listed below is only processed on the device.
 - **Is all of the user data collected by your app encrypted in transit?**  
-  **Yes** (all requests for weather, map tiles, news RSS and news pictures, solat schedules, exchange rates and markets prices use HTTPS; cleartext traffic is blocked by default at target SDK 36).
+  **Yes** (all requests for weather, map tiles, news RSS and news pictures, solat schedules, exchange rates, markets and kijang emas prices use HTTPS; cleartext traffic is blocked by default at target SDK 36).
 - **Do you provide a way for users to request that their data be deleted?**  
   **Yes** (users can clear all data directly via Android system App Settings or the in-app "reset to defaults" button; no remote servers store user data).
 
@@ -90,7 +90,12 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 
 ### 2.7 Markets prices
 - **Source:** Frankfurter v2 blended rates (`api.frankfurter.dev/v2/rates`, base MYR, quotes XAU, BTC, ETH, XAG), keyless. Its [FAQ](https://frankfurter.dev) says blended rates are "free to use" commercially, caching is "encouraged", and requests "qualify as Data Not Collected under Apple and Google Play guidelines". No attribution is required; the widget names the source anyway.
-- **Financial features declaration:** Meena only displays prices; it is not an exchange or wallet. Whether showing crypto prices changes any answer in Play's financial features declaration is [S] unverified; check the form when filling it in.
+- **Financial features declaration:** Meena only displays prices; it is not an exchange or wallet. Whether showing crypto prices changes any answer in Play's financial features declaration is [S] unverified; the owner checks the form when filling it in.
+
+### 2.8 Kijang Emas prices
+- **Source:** Bank Negara Malaysia Open API, keyless: `https://api.bnm.gov.my/public/kijang-emas/year/{y}/month/{m}` with `Accept: application/vnd.BNM.API.v1+json` (without it the API answers 404). One call per refresh, two at the start of a month; at most every 3 hours. An empty month answers 404 "No records found.", read as "no prices yet".
+- **Terms:** the API portal (apikijangportal.bnm.gov.my) blocks automated readers, so its terms of use and rate limits are [S] unverified by the agent. The owner approved building it on 15 Nov 2026; read the terms in a browser before release.
+- **Labels:** BNM's "selling" is shown as "you pay" and "buying" as "you get back". It is the coin's price, not spot gold, and the widget says so.
 
 ---
 
@@ -113,6 +118,7 @@ In accordance with Google Play Developer Policy and Meena architecture rules:
   2. A read-only Google Sheets bridge where the user views their personal spreadsheet.
   3. An optional offline spending ledger parsed from device notification text.
   4. A markets widget showing daily reference prices for gold, silver, bitcoin and ether (Frankfurter), labelled "a rough guide, not for buying or selling". No trading, wallets or advice.
+  5. A kijang emas widget showing Bank Negara Malaysia's published buy and sell prices for the Kijang Emas coin.
 
 ---
 
