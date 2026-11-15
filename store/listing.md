@@ -67,8 +67,8 @@ meena is in early testing. tell us what feels wrong at harussani@outlook.my.
 |---|---|---|
 | App icon | `store/graphics/icon-512.png` | 512 x 512, 32-bit PNG with alpha |
 | Feature graphic | `store/graphics/feature-graphic-1024x500.png` | 1024 x 500, 24-bit PNG, no alpha |
-| Phone screenshots | not made yet | 4 to 8 shots, 1080 x 1920, 24-bit PNG, no alpha. Full battery and signal, no notifications, no personal data. |
+| Phone screenshots | `store/screenshots/01-today.png` to `06-apps.png` | 1080 x 1920, 24-bit PNG, no alpha. Upload in this order. |
 
 ## Screenshot alt text (140 max each)
 
-Write one line per screenshot when they are made.
+See `store/screenshots/alt-text.md`.
