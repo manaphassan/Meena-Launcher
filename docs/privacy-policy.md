@@ -1,9 +1,10 @@
 # Privacy Policy for Meena
 
 **Effective Date:** 14 November 2026  
+**Last Updated:** 15 November 2026 (new contact email)  
 **Application:** Meena (Package: `my.hana.meena`)  
 **Developer:** HaNa Innovation  
-**Contact:** privacy@hana.my  
+**Contact:** harussani@outlook.my  
 
 ---
 
@@ -104,6 +105,6 @@ Meena is a general productivity launcher intended for people aged 13 and older (
 We may update this Privacy Policy from time to time to reflect app changes or Google Play policy updates. When we do, the effective date at the top changes and the updated policy is published at the address below.
 
 For questions regarding this policy or Meena's privacy architecture, contact:
-- **Email:** privacy@hana.my
+- **Email:** harussani@outlook.my
 - **Repository:** https://github.com/manaphassan/Meena-Launcher
 - **This policy online:** https://manaphassan.github.io/Meena-Launcher/privacy-policy/

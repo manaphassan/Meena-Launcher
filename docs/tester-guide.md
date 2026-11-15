@@ -6,7 +6,7 @@ This guide covers how to join, what to try and how to tell us what you find.
 
 ## 1. Join the test
 
-1. Send your Google account email (the one your phone's Play Store uses) to privacy@hana.my.
+1. Send your Google account email (the one your phone's Play Store uses) to harussani@outlook.my.
 2. You'll get an opt-in link. Open it on your phone, read the short note about being a tester, and opt in.
 3. Install Meena from the Play Store link on that page.
 
@@ -74,7 +74,7 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 ## 5. Tell us what you find
 
 - **In the Play Store:** open Meena's page and send private feedback from there (testers can do this during the test), or
-- **By email:** privacy@hana.my
+- **By email:** harussani@outlook.my
 
 Helpful things to include:
 - What you did, what you expected and what happened instead.

@@ -8,7 +8,7 @@ Limits and rules: https://support.google.com/googleplay/android-developer/answer
 | App name (30 max) | `Meena` |
 | Category | Personalization |
 | Tags | Launcher, Home screen |
-| Contact email | privacy@hana.my |
+| Contact email | harussani@outlook.my |
 | Website | https://manaphassan.github.io/Meena-Launcher/ |
 | Privacy policy | https://manaphassan.github.io/Meena-Launcher/privacy-policy/ |
 | Tester guide (closed test feedback page) | https://manaphassan.github.io/Meena-Launcher/tester-guide/ |
@@ -58,7 +58,7 @@ your phone, your data
 - weather and the map get your location rounded to about 1 km, and only when those widgets are on
 - every widget shows real information or tells you what it needs. nothing is made up.
 
-meena is in early testing. tell us what feels wrong at privacy@hana.my.
+meena is in early testing. tell us what feels wrong at harussani@outlook.my.
 ```
 
 ## Graphics

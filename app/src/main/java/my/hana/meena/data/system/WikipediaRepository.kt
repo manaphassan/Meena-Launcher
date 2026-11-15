@@ -72,7 +72,7 @@ object WikipediaRepository {
         if (current is WidgetState.Ready) _state.value = WidgetState.Stale(current.data, current.updatedAt)
         else if (current !is WidgetState.Stale) _state.value = WidgetState.Loading
 
-        val userAgent = "Meena/${versionName(context)} (https://github.com/manaphassan/Meena-Launcher; privacy@hana.my) okhttp/4.12.0"
+        val userAgent = "Meena/${versionName(context)} (https://github.com/manaphassan/Meena-Launcher; harussani@outlook.my) okhttp/4.12.0"
         activeJob = scope.launch {
             try {
                 repeat(MAX_TRIES) {
