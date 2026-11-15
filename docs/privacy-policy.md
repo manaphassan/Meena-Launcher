@@ -25,7 +25,7 @@ Meena talks directly to these services from your phone; it has no servers of its
 | Open-Meteo (weather, rain outlook and air quality) | Weather or air quality widget is on | Coordinates rounded to about 1 km |
 | OpenFreeMap map tiles (may be served through Cloudflare) | Map widget is on | The map area you are looking at, around your location. The map libraries (Leaflet, MapLibre) are built into the app, so nothing else is fetched to draw it. |
 | JAKIM e-Solat | Prayer times widget is on | Your prayer zone code |
-| Frankfurter (exchange rates, and daily gold, silver, bitcoin and ether prices) | Rates or markets widget is on | Your base currency (ringgit) and which prices to look up; nothing about you |
+| Frankfurter (exchange rates, daily prices for metals and coins, and the list "add ticker" searches) | Rates or markets widget is on, or you open add ticker | Your base currency (ringgit) and which prices to look up; nothing about you |
 | Bank Negara Malaysia Open API (Kijang Emas prices) | Kijang emas widget is on | A request for this month's prices; nothing about you |
 | Google Sheets | You link a sheet | A request for the sheet you linked |
 | News feeds you add | News page is on | A request for each feed, and for the pictures in its posts (thumbnails and the article reader) |

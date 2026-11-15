@@ -44,9 +44,9 @@ news
 - the feeds you choose, with pictures and a clean reader view
 
 money
-- gold, silver, bitcoin and ether over the past year on one chart, from free daily prices
+- gold, silver, bitcoin and ether over the past year on one chart, from free daily prices. search and add other coins and metals
 - kijang emas coin prices from bank negara malaysia
-- exchange rates on one line
+- exchange rates in a table, with the day's change. add any currency you need
 - prices from your own google sheet
 - spending picked up from your bank alerts, kept on your phone
 
