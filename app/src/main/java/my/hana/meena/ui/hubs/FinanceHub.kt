@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.components.metroFeatherIn
 import my.hana.meena.ui.components.sensitive
@@ -41,6 +42,10 @@ import my.hana.meena.R
 import my.hana.meena.data.finance.ExchangeRateRepository
 import my.hana.meena.data.finance.FinanceHolding
 import my.hana.meena.data.finance.FinanceRepository
+import my.hana.meena.data.finance.MarketQuote
+import my.hana.meena.data.finance.Markets
+import my.hana.meena.data.finance.MarketsData
+import my.hana.meena.data.finance.MarketsRepository
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.system.SpendingRepository
 import my.hana.meena.theme.MeenaProfitGreen
@@ -75,6 +80,7 @@ fun FinanceHub(
     LaunchedEffect(Unit) {
         ExchangeRateRepository.initialize(context, baseCurrency = "MYR")
         FinanceRepository.initialize(context)
+        MarketsRepository.initialize(context)
     }
 
     LaunchedEffect(settings) {
@@ -84,6 +90,7 @@ fun FinanceHub(
 
     val financeState by FinanceRepository.state.collectAsState()
     val exchangeRateState by ExchangeRateRepository.state.collectAsState()
+    val marketsState by MarketsRepository.state.collectAsState()
     val spendingState by SpendingRepository.state.collectAsState()
 
     val liveTransactions = (spendingState as? WidgetState.Ready)?.data ?: emptyList()
@@ -139,6 +146,14 @@ fun FinanceHub(
                     .metroFeatherIn(index = index, reducedMotion = settings.reducedMotion)
             ) {
                 when (widgetId) {
+                    "widget-markets" -> {
+                        MarketsSection(
+                            state = marketsState,
+                            maxItems = settings.widgetLines,
+                            onRefresh = { MarketsRepository.refresh(context, force = true) }
+                        )
+                    }
+
                     "widget-finance-charts" -> androidx.compose.foundation.layout.Box(Modifier.sensitive()) {
                         PortfolioSection(
                             state = financeState,
@@ -160,6 +175,7 @@ fun FinanceHub(
                     "widget-exchange-rates" -> {
                         ExchangeRatesSection(
                             state = exchangeRateState,
+                            maxPairs = settings.widgetLines * 2,
                             onRefresh = { ExchangeRateRepository.refresh(context, "MYR", force = true) },
                             onOpenSettings = onOpenSettings
                         )
@@ -368,41 +384,53 @@ private fun PortfolioSection(
                     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                         data.watchlist.forEach { item ->
                             val isBull = item.change >= 0
+                            val hasPrice = item.price > 0.0
+                            val ticker = item.tickerDisplay.lowercase()
+                            val name = item.name.lowercase().takeIf { item.name.isNotBlank() && item.name != item.symbol }
+                            val muted = MeenaTextMuted
+                            // AIO's one-line quote: "ticker name   price  change", or a dash when the sheet has no price.
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 48.dp)
                                     .metroClickable {
                                         FinanceRepository.openQuote(context, item)
-                                    }
-                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                    },
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
-                                    Text(
-                                        text = item.tickerDisplay.lowercase(),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MeenaTextWhite
-                                    )
-                                    if (item.name.isNotBlank() && item.name != item.symbol) {
-                                        Text(
-                                            text = item.name.lowercase(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MeenaTextMuted
-                                        )
-                                    }
-                                }
-                                Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = androidx.compose.ui.text.buildAnnotatedString {
+                                        append(ticker)
+                                        if (name != null) {
+                                            pushStyle(androidx.compose.ui.text.SpanStyle(color = muted))
+                                            append("  ")
+                                            append(name)
+                                            pop()
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MeenaTextWhite,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (hasPrice) {
                                     Text(
                                         text = "%.2f".format(item.price),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MeenaTextWhite
                                     )
                                     Text(
-                                        text = "${if (isBull) "+" else ""}%.2f (%.1f%%)".format(item.change, item.changePercent),
+                                        text = signedPercent(item.changePercent),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (isBull) MeenaProfitGreen else MaterialTheme.colorScheme.error
+                                    )
+                                } else {
+                                    Text(
+                                        text = stringResource(R.string.finance_no_price),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MeenaTextMuted
                                     )
                                 }
                             }
@@ -449,6 +477,7 @@ private fun PortfolioSection(
 @Composable
 private fun ExchangeRatesSection(
     state: WidgetState<my.hana.meena.data.finance.ExchangeRatesData>,
+    maxPairs: Int,
     onRefresh: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -504,44 +533,23 @@ private fun ExchangeRatesSection(
                     color = MeenaTextMuted
                 )
 
-                Spacer(modifier = Modifier.height(2.dp))
-
-                // Rate rows
-                Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                    data.rates.chunked(2).forEach { pair ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            pair.forEach { item ->
-                                val target = item.currency.lowercase()
-                                val unit = if (target == "jpy" || target == "thb" || target == "idr") 100 else 1
-                                val price = if (unit == 100) item.rateToBase * 100 else item.rateToBase
-
-                                Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .heightIn(min = 48.dp)
-                                        .metroClickable { onRefresh() }
-                                ) {
-                                    Text(
-                                        text = "$unit $target",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextMuted
-                                    )
-                                    Text(
-                                        text = "%.2f $base".format(price),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MeenaTextWhite
-                                    )
-                                }
-                            }
-                            if (pair.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
-                    }
-                }
+                // AIO's one-line strip: "1 usd = 4.08 myr   1 sgd = 3.17 myr". Each pair is held together
+                // with no-break spaces, so a line only breaks between pairs. Tap to update.
+                val strip = data.rates.take(maxPairs).map { item ->
+                    val target = item.currency.lowercase()
+                    val unit = if (target == "jpy" || target == "thb" || target == "idr") 100 else 1
+                    val price = if (unit == 100) item.rateToBase * 100 else item.rateToBase
+                    stringResource(R.string.rates_pair, unit, target, "%.2f".format(price), base)
+                }.joinToString("   ")
+                Text(
+                    text = strip,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MeenaTextWhite,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onRefresh() }
+                )
             }
 
             is WidgetState.Error -> {
@@ -686,6 +694,144 @@ private fun SpendingSection(
 
 
 
+
+/**
+ * Markets: AIO's quotes chart and finance list in one. A year of gold, bitcoin, ether and silver on
+ * one chart, then "name   price   change" per line, each name in its line's colour.
+ * Daily reference prices from Frankfurter, said plainly so nobody takes them for live quotes.
+ */
+@Composable
+private fun MarketsSection(
+    state: WidgetState<MarketsData>,
+    maxItems: Int,
+    onRefresh: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+        Text(
+            text = stringResource(R.string.widget_name_markets),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        when (state) {
+            is WidgetState.NeedsSetup, is WidgetState.Loading -> {
+                Text(
+                    text = stringResource(R.string.markets_loading),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+
+            is WidgetState.Ready, is WidgetState.Stale -> {
+                val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
+                val updatedAt = if (state is WidgetState.Ready) state.updatedAt else (state as WidgetState.Stale).updatedAt
+                val palette = my.hana.meena.theme.LocalMeenaPalette.current
+                val colours = my.hana.meena.theme.chartSeriesColours(palette)
+                val quotes = data.quotes.take(maxItems)
+                val colourOf = { quote: MarketQuote -> colours[Markets.ASSETS.indexOf(quote.code).coerceIn(0, colours.lastIndex)] }
+                val names = quotes.map { marketName(it.code) }
+
+                my.hana.meena.ui.components.MarketChart(
+                    series = quotes.map { my.hana.meena.ui.components.ChartSeries(it.history, colourOf(it)) },
+                    zeroLineColor = MeenaTextMuted,
+                    monochrome = palette.monochrome,
+                    description = stringResource(R.string.markets_chart_description, names.joinToString(", ")),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                )
+                val firstDate = quotes.mapNotNull { it.history.firstOrNull()?.date }.minOrNull()
+                val lastDate = quotes.maxOfOrNull { it.date }
+                if (firstDate != null && lastDate != null) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(Markets.monthLabel(firstDate), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                        Text(Markets.monthLabel(lastDate), style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+                    }
+                }
+
+                quotes.forEachIndexed { index, quote ->
+                    val change = quote.dayChangePercent
+                    val perOunce = quote.code == "XAU" || quote.code == "XAG"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = names[index],
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = colourOf(quote),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = if (perOunce) stringResource(R.string.markets_price_ounce, Markets.formatPrice(quote.price))
+                            else stringResource(R.string.finance_amount, Markets.formatPrice(quote.price)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MeenaTextWhite
+                        )
+                        Text(
+                            text = if (change == null) stringResource(R.string.finance_no_price) else signedPercent(change),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = when {
+                                change == null -> MeenaTextMuted
+                                change >= 0 -> MeenaProfitGreen
+                                else -> MaterialTheme.colorScheme.error
+                            },
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                            modifier = Modifier.widthIn(min = 48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = if (state is WidgetState.Stale) stringResource(R.string.markets_source_saved, updatedAgoText(updatedAt))
+                    else stringResource(R.string.markets_source, updatedAgoText(updatedAt)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
+                Text(
+                    text = stringResource(R.string.markets_note),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
+            }
+
+            is WidgetState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onRefresh() }
+                ) {
+                    Text(
+                        text = state.message.lowercase(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            is WidgetState.Empty -> {
+                Text(
+                    text = stringResource(R.string.markets_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun marketName(code: String): String = stringResource(
+    when (code) {
+        "XAU" -> R.string.markets_gold
+        "BTC" -> R.string.markets_bitcoin
+        "ETH" -> R.string.markets_ether
+        else -> R.string.markets_silver
+    }
+)
 
 /** "+rm 1.20" or "-rm 1.20". */
 @androidx.compose.runtime.Composable

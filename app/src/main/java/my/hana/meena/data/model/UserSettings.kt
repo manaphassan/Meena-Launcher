@@ -69,6 +69,8 @@ data class MeenaUserSettings(
     val shortWidgets: Boolean = true,
     /** Shaking the phone hides chats, email, alerts, notes and money until shaken again. */
     val shakeToHide: Boolean = true,
+    /** Double tap an empty spot on a home page to lock the phone. Needs Android's device admin okay. */
+    val doubleTapToLock: Boolean = false,
     /** Bumped when a one-time Today layout change is applied, so it never runs twice. */
     val layoutRevision: Int = 0
 ) {
@@ -142,6 +144,12 @@ data class MeenaUserSettings(
             revision = EMAIL_SECTION_REVISION
             changed = true
         }
+        // Revision 3 (Nov 2026): the money page opens with the markets chart.
+        if (revision < MARKETS_FIRST_REVISION) {
+            moveMarketsToTop(updatedConfigs)
+            revision = MARKETS_FIRST_REVISION
+            changed = true
+        }
 
         return if (changed) {
             copy(
@@ -179,6 +187,15 @@ data class MeenaUserSettings(
         order.forEachIndexed { index, id -> configs[id] = configs.getValue(id).copy(position = index) }
     }
 
+    private fun moveMarketsToTop(configs: MutableMap<String, WidgetConfig>) {
+        val markets = configs[MARKETS_ID] ?: return
+        val order = configs.filterValues { it.hubId == markets.hubId }
+            .entries.sortedBy { it.value.position }.map { it.key }
+            .filter { it != MARKETS_ID }.toMutableList()
+        order.add(0, MARKETS_ID)
+        order.forEachIndexed { index, id -> configs[id] = configs.getValue(id).copy(position = index) }
+    }
+
     /**
      * Puts every widget back in the story order of [defaultWidgetMap], keeping which ones are on,
      * which page each is on and its own settings. Only runs when the user asks for it.
@@ -193,12 +210,14 @@ data class MeenaUserSettings(
     companion object {
         const val FAVOURITES_FIRST_REVISION = 1
         const val EMAIL_SECTION_REVISION = 2
+        const val MARKETS_FIRST_REVISION = 3
         const val SHORT_LINES = 3
         const val LONG_LINES = 5
         private const val FAVOURITES_ID = "widget-favourites"
         private const val CLOCK_ID = "widget-clock-weather"
         private const val EMAIL_ID = "widget-email"
         private const val ALERTS_ID = "widget-notifications"
+        private const val MARKETS_ID = "widget-markets"
         /** The US-style date the app used to default to; moved to Malaysian English (day before month). */
         const val OLD_DEFAULT_DATE_PATTERN = "EEEE, MMMM d"
         const val DEFAULT_DATE_PATTERN = "EEEE, d MMMM"
@@ -244,10 +263,11 @@ data class MeenaUserSettings(
             // News Hub
             "widget-news-feed" to WidgetConfig("news", 0, isEnabled = true),
 
-            // Money Hub (portfolio & watchlist, exchange rates, spending)
-            "widget-finance-charts" to WidgetConfig("money", 0, isEnabled = true),
-            "widget-exchange-rates" to WidgetConfig("money", 1, isEnabled = true),
-            "widget-spending-summary" to WidgetConfig("money", 2, isEnabled = true)
+            // Money Hub (markets, portfolio & watchlist, exchange rates, spending)
+            "widget-markets" to WidgetConfig("money", 0, isEnabled = true),
+            "widget-finance-charts" to WidgetConfig("money", 1, isEnabled = true),
+            "widget-exchange-rates" to WidgetConfig("money", 2, isEnabled = true),
+            "widget-spending-summary" to WidgetConfig("money", 3, isEnabled = true)
         )
     }
 }

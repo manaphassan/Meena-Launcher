@@ -302,7 +302,7 @@ fun SettingsScreen(
                                 SETTINGS_TAB_PAGES -> pagesTab(settingsState, onSortStory = { confirmStoryOrder = true }) { openSubPage(it) }
                                 SETTINGS_TAB_CONNECTIONS -> connectionsTab(settingsState, context) { openSubPage(it) }
                                 SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState) { openSubPage(it) }
-                                SETTINGS_TAB_SYSTEM -> systemTab(context) { openSubPage(it) }
+                                SETTINGS_TAB_SYSTEM -> systemTab(settingsState, context) { openSubPage(it) }
                             }
                             item { Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.l)) }
                         }
@@ -354,6 +354,7 @@ internal val SETTINGS_WIDGET_TITLES = linkedMapOf<String, Int>(
     "widget-email" to R.string.widget_name_email,
     "widget-notifications" to R.string.widget_name_alerts,
     "widget-news-feed" to R.string.widget_name_news,
+    "widget-markets" to R.string.widget_name_markets,
     "widget-finance-charts" to R.string.widget_name_portfolio,
     "widget-exchange-rates" to R.string.widget_name_rates,
     "widget-spending-summary" to R.string.widget_name_spending
@@ -567,7 +568,7 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
     }
 }
 
-private fun LazyListScope.systemTab(context: android.content.Context, open: (String) -> Unit) {
+private fun LazyListScope.systemTab(settingsState: MeenaUserSettings, context: android.content.Context, open: (String) -> Unit) {
     settingsGroupLabel(R.string.settings_group_your_data)
     item {
         SettingsPivotRow(
@@ -598,6 +599,15 @@ private fun LazyListScope.systemTab(context: android.content.Context, open: (Str
             title = stringResource(R.string.home_app_title),
             status = stringResource(if (isHome) R.string.home_app_status_on else R.string.home_app_status_off),
             onClick = { open("look:homeapp") }
+        )
+    }
+    item {
+        val isOn = settingsState.doubleTapToLock && my.hana.meena.data.system.DeviceLock.isActive(context)
+        SettingsPivotRow(
+            title = stringResource(R.string.lock_title),
+            status = stringResource(if (isOn) R.string.lock_status_on else R.string.lock_status_off),
+            isDimmed = !isOn,
+            onClick = { open("look:lock") }
         )
     }
     item {
@@ -1400,6 +1410,66 @@ private fun SubPageContainer(
                     subtitle = stringResource(R.string.shake_hide_toggle_hint),
                     checked = settingsState.shakeToHide,
                     onCheckedChange = { on -> onUpdate { it.copy(shakeToHide = on) } }
+                )
+            }
+        }
+
+        subPageId == "look:lock" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_system),
+                    pageTitle = stringResource(R.string.lock_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.lock_intro),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
+                )
+            }
+            item {
+                val lockContext = LocalContext.current
+                val explanation = stringResource(R.string.lock_admin_description)
+                // Android's own page answers; only an active admin turns the setting on.
+                val adminLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+                ) {
+                    val active = my.hana.meena.data.system.DeviceLock.isActive(lockContext)
+                    onUpdate { it.copy(doubleTapToLock = active) }
+                }
+                SettingToggleRow(
+                    title = stringResource(R.string.lock_toggle),
+                    subtitle = stringResource(R.string.lock_toggle_hint),
+                    checked = settingsState.doubleTapToLock && my.hana.meena.data.system.DeviceLock.isActive(lockContext),
+                    onCheckedChange = { on ->
+                        if (!on) {
+                            my.hana.meena.data.system.DeviceLock.deactivate(lockContext)
+                            onUpdate { it.copy(doubleTapToLock = false) }
+                        } else if (my.hana.meena.data.system.DeviceLock.isActive(lockContext)) {
+                            onUpdate { it.copy(doubleTapToLock = true) }
+                        } else {
+                            runCatching {
+                                adminLauncher.launch(my.hana.meena.data.system.DeviceLock.requestIntent(lockContext, explanation))
+                            }
+                        }
+                    }
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.lock_after_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.lock_uninstall_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
                 )
             }
         }

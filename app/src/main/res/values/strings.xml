@@ -657,6 +657,23 @@
     <string name="rates_setup">pick your currencies. tap to set up.</string>
     <string name="rates_loading">loading exchange rates</string>
     <string name="rates_empty">no exchange rates right now</string>
+    <!-- 1 usd = 4.08 myr, kept on one line with no-break spaces -->
+    <string name="rates_pair">%1$d %2$s = %3$s %4$s</string>
+    <string name="finance_no_price">-</string>
+
+    <!-- Markets (money page) -->
+    <string name="widget_name_markets">markets</string>
+    <string name="markets_loading">loading prices</string>
+    <string name="markets_empty">no prices right now</string>
+    <string name="markets_gold">gold</string>
+    <string name="markets_bitcoin">bitcoin</string>
+    <string name="markets_ether">ether</string>
+    <string name="markets_silver">silver</string>
+    <string name="markets_price_ounce">rm %1$s an oz</string>
+    <string name="markets_chart_description">%1$s over the past year</string>
+    <string name="markets_source">%1$s · daily prices via frankfurter</string>
+    <string name="markets_source_saved">%1$s · daily prices via frankfurter · saved copy</string>
+    <string name="markets_note">a rough guide, not for buying or selling</string>
     <string name="spending_today">rm %1$s today</string>
     <string name="spending_turn_on">turn on spending</string>
     <string name="spending_opt_in">tap to track payments from the banking apps meena knows.</string>
@@ -747,4 +764,16 @@
     <string name="shake_hide_toggle_hint">two firm shakes. walking or setting the phone down won\'t do it.</string>
     <string name="shake_hidden_message">hidden. shake again to show.</string>
     <string name="shake_shown_message">showing again.</string>
+
+    <!-- Double tap to lock -->
+    <string name="lock_title">double tap to lock</string>
+    <string name="lock_status_on">on · double tap an empty spot</string>
+    <string name="lock_status_off">off</string>
+    <string name="lock_intro">double tap an empty spot on your home pages to turn the screen off and lock the phone. buttons, tiles and links work as usual.</string>
+    <string name="lock_toggle">double tap to lock</string>
+    <string name="lock_toggle_hint">android will ask you to let meena lock the screen</string>
+    <string name="lock_after_note">the next unlock needs your pin, pattern or password, not your fingerprint or face.</string>
+    <string name="lock_uninstall_note">to uninstall meena, turn this off first.</string>
+    <string name="lock_admin_description">lets meena lock the screen when you double tap an empty spot on your home pages. it can\'t do anything else.</string>
+    <string name="lock_not_allowed">meena can\'t lock the phone now. turn double tap to lock on again in settings.</string>
 </resources>

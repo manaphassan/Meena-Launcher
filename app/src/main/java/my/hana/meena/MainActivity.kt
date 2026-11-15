@@ -651,6 +651,19 @@ fun MeenaHomeScreen(
 
             // 5 Lateral Panoramic Canvas Hubs with Windows Phone 3D Turnstile Continuity
             val isReduced = userSettings.reducedMotion
+            // Double tap to lock: only taps nothing else took (buttons, tiles and links consume theirs).
+            val lockNotAllowed = stringResource(R.string.lock_not_allowed)
+            val doubleTapToLock = if (userSettings.doubleTapToLock) {
+                Modifier.pointerInput(Unit) {
+                    detectTapGestures(onDoubleTap = {
+                        if (!my.hana.meena.data.system.DeviceLock.lock(context)) {
+                            my.hana.meena.ui.components.MetroMessage.show(lockNotAllowed)
+                        }
+                    })
+                }
+            } else {
+                Modifier
+            }
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -660,6 +673,7 @@ fun MeenaHomeScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .then(doubleTapToLock)
                         .graphicsLayer {
                             val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
                             // A page more than a step away must never show. The pager keeps a focused page (like
