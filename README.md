@@ -41,7 +41,7 @@ Swipe sideways through five pages.
 | **today** | Clock, date and hijri date. Weather with an animated icon and forecast. Up to six favourite app tiles, plus a tile that holds four small ones. Your week from the calendar. JAKIM prayer times. A nearby map with 3 km and 5 km rings, compass, qibla line and sun path. Notes. Battery with charge speed, time to full and time left. Connected Bluetooth devices with battery. Health Connect steps, distance, calories, heart rate and sleep. |
 | **inbox** | Alerts and chats from your notifications, read on the phone. |
 | **news** | RSS and Atom feeds you choose, with pictures and a reader view. |
-| **money** | Exchange rates, prices from your own Google Sheet (`GOOGLEFINANCE`), and spending picked up from bank alerts. |
+| **money** | Gold, silver, bitcoin and ether over the past year on one chart (daily prices from Frankfurter), exchange rates, prices from your own Google Sheet (`GOOGLEFINANCE`), and spending picked up from bank alerts. |
 | **apps** | Every app with search and a letter index. Sort a to z, by category or by last used. Icon packs. |
 
 Every widget can be shown or hidden, moved to another page, or set to start folded.

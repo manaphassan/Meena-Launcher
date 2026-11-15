@@ -35,6 +35,7 @@ today
 - battery: how fast it is charging, time to full, time left, and when to plug in
 - bluetooth devices you have connected, with their battery when the device shares it
 - steps, distance, calories, heart rate and sleep from health connect, if you allow it
+- double tap an empty spot to lock the phone, if you turn it on
 
 inbox
 - your alerts and chats in one quiet place, ready to open or clear
@@ -43,7 +44,8 @@ news
 - the feeds you choose, with pictures and a clean reader view
 
 money
-- exchange rates
+- gold, silver, bitcoin and ether over the past year on one chart, from free daily prices
+- exchange rates on one line
 - prices from your own google sheet
 - spending picked up from your bank alerts, kept on your phone
 

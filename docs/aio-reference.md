@@ -47,9 +47,9 @@ Reference only: we study layout and behaviour. We do not copy AIO code, icons, f
 | 3 | Battery percent and battery temperature | phone widget (off by default) | check what it shows | todo |
 | 4 | 7-day calendar strip with event dots, weekends marked | month grid, agenda list | nothing new | **done** (part of "your week" with the agenda, on by default; all-day events placed by UTC date; tap a day opens the calendar) |
 | 5 | Week numbers in the month grid | month grid | nothing new | **done** (ISO weeks, event dots, weekends muted; replaces the duplicate event list) |
-| 6 | Quote list "symbol price (date)" with a dash when missing | portfolio, watchlist from sheet | nothing new | todo |
-| 7 | Multi-symbol price chart | none | chart drawn with Compose canvas, no library | todo |
-| 8 | More currency pairs | 9 pairs grid | nothing new | todo |
+| 6 | Quote list "symbol price (date)" with a dash when missing | portfolio, watchlist from sheet | nothing new | **done** (watchlist rows on one line, "-" when the sheet has no price; markets lines "name price change" in the line colour) |
+| 7 | Multi-symbol price chart | none | chart drawn with Compose canvas, no library | **done** (markets: gold, bitcoin, ether, silver, 1 year, percent change on one scale; Frankfurter v2, keyless) |
+| 8 | More currency pairs | 9 pairs grid | nothing new | **done** (AIO one-line strip; up to 6 or 10 pairs with the widget length setting) |
 | 9 | Frequent apps row | favourites only | count launches inside Meena (no permission); system usage stats need a special permission, so not that | **done** (approved) |
 | 10 | Notes hidden on home until tapped | notes widget | nothing new | todo |
 | 11 | Connected Bluetooth devices | none | `BLUETOOTH_CONNECT` on Android 12+ (approved) | **done**: GATT, audio and input-device (HID host) profile queries, so bands like the Xiaomi Smart Band 9 show at any time, plus link broadcasts. Battery shows when a device reports it to Android; the Smart Band 9 only reports to Mi Fitness, so its row can open the companion app instead |

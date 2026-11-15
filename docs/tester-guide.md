@@ -58,6 +58,7 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 - Add a feed you read. Do the pictures load? Is the reader view easy to read?
 
 **Money**
+- Do the markets chart and prices load? They are daily prices, so they won't move minute by minute.
 - Do the exchange rates load? If you use Google Sheets, try linking a sheet.
 - If your bank sends alerts, does spending get picked up correctly? Does it ever pick up something that isn't spending?
 
@@ -67,6 +68,7 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 - Install and uninstall an app. Does the list update?
 
 **Everywhere**
+- Try **double tap to lock** (settings, system). Does a double tap on an empty spot lock the phone? Does a double tap on a tile or link ever lock it by mistake?
 - Anything slow, stuck, cut off, hard to read or hard to tap?
 - Anything that shows made-up looking numbers? Meena should only ever show real information, or say what it needs.
 - Any words that feel confusing?

@@ -3,7 +3,7 @@
 **Application:** Meena (`my.hana.meena`)  
 **Target SDK:** 36 (Android 16 / 15)  
 **Track:** Closed Test (Personal Developer Account)  
-**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded)  
+**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded; 15 November 2026: markets prices, double tap to lock through device admin)  
 
 ---
 
@@ -15,7 +15,7 @@ Use the following exact values when completing the Google Play Console **Data Sa
 - **Does your app collect or share any of the required user data types?**  
   **Yes.** Location rounded to about 1 km is sent to Open-Meteo for weather, the rain outlook and air quality. The map widget also loads map tiles from OpenFreeMap (its libraries are built into the app), and the tiles requested reveal the area around the user [I]. Everything else listed below is only processed on the device.
 - **Is all of the user data collected by your app encrypted in transit?**  
-  **Yes** (all requests for weather, map tiles, news RSS and news pictures, solat schedules and exchange rates use HTTPS; cleartext traffic is blocked by default at target SDK 36).
+  **Yes** (all requests for weather, map tiles, news RSS and news pictures, solat schedules, exchange rates and markets prices use HTTPS; cleartext traffic is blocked by default at target SDK 36).
 - **Do you provide a way for users to request that their data be deleted?**  
   **Yes** (users can clear all data directly via Android system App Settings or the in-app "reset to defaults" button; no remote servers store user data).
 
@@ -82,6 +82,16 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 - **Use:** the optional connected devices widget lists Bluetooth devices that are already connected (`BluetoothManager.getConnectedDevices(GATT)`, the A2DP, HEADSET and input-device (HID host) profile proxies, and link broadcasts) and shows their names. It also shows a device's battery level when Android reports one in its battery broadcast. No scanning (`BLUETOOTH_SCAN` is not requested), no connecting, no location use.
 - **Prominent disclosure:** a yes/no dialog (`disclosure_bluetooth_*`) explains what is read before the system permission prompt, and only appears when the user turns the widget on.
 
+### 2.6 Device admin (double tap to lock)
+- **Use:** `MeenaDeviceAdminReceiver` declares only `<force-lock/>` (`res/xml/device_admin.xml`) and calls `DevicePolicyManager.lockNow()` when the user double taps an empty spot. Off by default; turning it on opens Android's own `ACTION_ADD_DEVICE_ADMIN` page with an explanation; turning it off calls `removeActiveAdmin()`. Approved by the owner on 15 Nov 2026. `BIND_DEVICE_ADMIN` protects the receiver; it is not a `uses-permission`.
+- **Platform:** force-lock is still available to ordinary (non device owner) apps ([device admin deprecation](https://developers.google.com/android/work/device-admin-deprecation): "The following policies will continue to be available... USES_POLICY_FORCE_LOCK"). After `lockNow()` "the device must be unlocked using strong authentication (PIN, pattern, or password)" ([DevicePolicyManager](https://developer.android.com/reference/android/app/admin/DevicePolicyManager#lockNow())); the settings page says so.
+- **Play policy:** no declaration form for device admin was found in the Play Policy Center. The [Malware policy](https://support.google.com/googleplay/android-developer/answer/9888380) asks apps to "obtain explicit user consent for any device management features", "don't use device admin features to block uninstallation" and "provide a clear and easy way for users to remove your app". Meena: consent through Android's own page, one switch to turn it off, and the settings page says to turn it off before uninstalling. Whether no other page (User Data, Mobile Unwanted Software) adds a requirement is [S] unverified.
+- **Data safety:** nothing is collected; no row needed.
+
+### 2.7 Markets prices
+- **Source:** Frankfurter v2 blended rates (`api.frankfurter.dev/v2/rates`, base MYR, quotes XAU, BTC, ETH, XAG), keyless. Its [FAQ](https://frankfurter.dev) says blended rates are "free to use" commercially, caching is "encouraged", and requests "qualify as Data Not Collected under Apple and Google Play guidelines". No attribution is required; the widget names the source anyway.
+- **Financial features declaration:** Meena only displays prices; it is not an exchange or wallet. Whether showing crypto prices changes any answer in Play's financial features declaration is [S] unverified; check the form when filling it in.
+
 ---
 
 ## 3. High-Risk Permissions Eliminated
@@ -102,6 +112,7 @@ In accordance with Google Play Developer Policy and Meena architecture rules:
   1. A manual local asset portfolio tracker (stored on-device, encrypted with an Android Keystore key; not sent anywhere).
   2. A read-only Google Sheets bridge where the user views their personal spreadsheet.
   3. An optional offline spending ledger parsed from device notification text.
+  4. A markets widget showing daily reference prices for gold, silver, bitcoin and ether (Frankfurter), labelled "a rough guide, not for buying or selling". No trading, wallets or advice.
 
 ---
 
