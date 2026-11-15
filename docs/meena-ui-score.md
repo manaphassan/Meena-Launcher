@@ -135,7 +135,7 @@ grep -rnE '"[0-9]+m ago"|"good morning' app/src/main/java
 
 1. The 3-line rule per widget, checked by eye across all widgets.
 2. Settings and sub-pages (map, weather, notes) at 130% text.
-3. The A/B task test with 5 or more people (plan section 5). This needs testers; the closed test can cover it.
+3. The A/B task test with 5 or more people (plan section 5). This needs testers; the closed test can cover it. Plan and score sheet: `docs/task-test-plan.md`.
 4. TalkBack walk-through of every page.
 5. Light and paper themes on the map.
 6. The checks still pending on the phone:
