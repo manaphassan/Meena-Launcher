@@ -54,6 +54,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.layout.Layout
@@ -385,9 +387,15 @@ fun MeenaHomeScreen(
         }
     }
 
-    LaunchedEffect(userSettings.solatZone) {
-        val zone = userSettings.solatZone
-        if (!zone.isNullOrBlank()) {
+    // A zone picked in settings wins; on auto, use the zone worked out from the rough location.
+    val autoSolatZone by remember {
+        my.hana.meena.data.system.DeviceLocationHelper.locationFlow
+            .map { it.solatZone }
+            .distinctUntilChanged()
+    }.collectAsState(initial = null)
+    LaunchedEffect(userSettings.solatZone, autoSolatZone) {
+        val zone = userSettings.solatZone.ifBlank { autoSolatZone.orEmpty() }
+        if (zone.isNotBlank()) {
             my.hana.meena.data.system.JakimSolatRepository.setZone(zone)
             my.hana.meena.data.system.JakimSolatRepository.refresh()
         }

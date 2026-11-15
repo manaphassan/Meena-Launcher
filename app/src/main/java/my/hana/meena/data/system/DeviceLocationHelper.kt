@@ -37,6 +37,8 @@ data class DeviceLocation(
     val dmsCoordinates: String = "3°08'48\" n, 101°42'40\" e",
     /** State and postcode from the phone's address lookup, lowercase; null until known. */
     val region: String? = null,
+    /** JAKIM prayer zone worked out from the address lookup; null when unknown or unclear. */
+    val solatZone: String? = null,
     /** When the phone took this fix (Location.getTime); 0 for the built-in default. */
     val fixTimeMillis: Long = 0L
 )
@@ -225,18 +227,25 @@ object DeviceLocationHelper {
             formattedCoordinates = formatted,
             dmsCoordinates = dms,
             region = if (previous.isGpsActive) previous.region else null,
+            solatZone = if (previous.isGpsActive) previous.solatZone else null,
             fixTimeMillis = location.time
         )
 
         // Asynchronously resolve locality
         scope.launch {
-            val (name, region) = resolveLocationName(context, lat, lng)
-            _locationFlow.value = _locationFlow.value.copy(locationName = name, region = region)
+            val place = resolveLocationName(context, lat, lng)
+            _locationFlow.value = _locationFlow.value.copy(
+                locationName = place.name,
+                region = place.region,
+                solatZone = place.solatZone
+            )
         }
     }
 
-    /** Area name ("sub-area, town") and region ("state postcode"), lowercase. */
-    private suspend fun resolveLocationName(context: Context, lat: Double, lng: Double): Pair<String, String?> {
+    private data class ResolvedPlace(val name: String, val region: String?, val solatZone: String?)
+
+    /** Area name ("sub-area, town"), region ("state postcode", lowercase) and the prayer zone. */
+    private suspend fun resolveLocationName(context: Context, lat: Double, lng: Double): ResolvedPlace {
         return withContext(Dispatchers.IO) {
             try {
                 val geocoder = Geocoder(context, Locale.getDefault())
@@ -255,12 +264,16 @@ object DeviceLocationHelper {
                         address.adminArea?.takeIf { it.isNotBlank() && it != locality },
                         address.postalCode?.takeIf { it.isNotBlank() }
                     ).joinToString(" ").ifBlank { null }
-                    result.lowercase() to region?.lowercase()
+                    val zone = SolatZoneMatcher.zoneFor(
+                        state = address.adminArea,
+                        places = listOf(address.subAdminArea, address.locality, address.subLocality)
+                    )
+                    ResolvedPlace(result.lowercase(), region?.lowercase(), zone)
                 } else {
-                    formatCoordinates(lat, lng) to null
+                    ResolvedPlace(formatCoordinates(lat, lng), null, null)
                 }
             } catch (e: Exception) {
-                formatCoordinates(lat, lng) to null
+                ResolvedPlace(formatCoordinates(lat, lng), null, null)
             }
         }
     }

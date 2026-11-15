@@ -548,7 +548,7 @@
     <string name="forecast_summary">%1$s, %2$s</string>
     <string name="solat_loading">loading prayer times</string>
     <string name="solat_load_failed">couldn\'t load prayer times. check your connection, then tap to retry.</string>
-    <string name="solat_no_times">no prayer times for this place yet.</string>
+    <string name="solat_no_times">can\'t tell your prayer zone yet. pick it in settings, connections, prayer times.</string>
     <string name="calendar_allow_prompt">want your schedule here? tap to allow calendar access.</string>
     <string name="action_allow">allow</string>
     <string name="agenda_empty">all quiet, nothing coming up</string>
