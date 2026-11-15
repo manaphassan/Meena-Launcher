@@ -83,7 +83,8 @@ page "Meena: a home screen for Android" "$(cat <<EOF
   <li><a href="privacy-policy/">Privacy policy</a></li>
   <li><a href="tester-guide/">Tester guide</a></li>
   <li><a href="$repo">Source code on GitHub</a></li>
-  <li>Contact: <a href="mailto:privacy@hana.my">privacy@hana.my</a></li>
+  <li>Contact: <a href="mailto:harussani@outlook.my">harussani@outlook.my</a></li>
+  <li>Like Meena? <a href="https://paypal.me/manaphassan">Buy me a coffee on PayPal</a></li>
 </ul>
 EOF
 )" > "$site/index.html"

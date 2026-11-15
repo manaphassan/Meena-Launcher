@@ -94,11 +94,19 @@ You need Android Studio, JDK 17 and Android SDK 36.
 # install on a connected phone
 ./gradlew installLiveDebug
 
-# release build (signing: copy keystore.properties.example to keystore.properties)
+# release build, signed with the upload key in keystore.properties
+# (first time: node scripts/make-upload-key.js)
 ./gradlew bundleLiveRelease
 ```
 
 Store assets (icon, feature graphic, listing text) are in [`store/`](store/).
+
+---
+
+## Support
+
+- Questions and bug reports: harussani@outlook.my, or open an issue.
+- If Meena is useful to you, you can buy me a coffee at [paypal.me/manaphassan](https://paypal.me/manaphassan). Thank you!
 
 ---
 
