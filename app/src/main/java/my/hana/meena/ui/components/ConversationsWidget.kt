@@ -51,7 +51,8 @@ import my.hana.meena.theme.MeenaBlack
  */
 @Composable
 fun ConversationsWidget(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    is24Hour: Boolean = true
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -126,10 +127,18 @@ fun ConversationsWidget(
                         }
                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                 )
+            } else if (conversations.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.state_all_quiet),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                )
             } else {
                 conversations.take(6).forEach { item ->
                     ConversationRow(
                         item = item,
+                        is24Hour = is24Hour,
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             NotificationRepository.openConversation(context, item)
@@ -144,6 +153,7 @@ fun ConversationsWidget(
 @Composable
 private fun ConversationRow(
     item: LiveConversationItem,
+    is24Hour: Boolean,
     onClick: () -> Unit
 ) {
     val appColor = MeenaTextWhite
@@ -200,7 +210,7 @@ private fun ConversationRow(
                     }
                 }
                 Text(
-                    text = item.formattedTime.lowercase(),
+                    text = my.hana.meena.data.system.MalaysianEnglish.clockTime(item.timestamp, is24Hour),
                     style = MaterialTheme.typography.labelSmall,
                     color = MeenaTextMuted
                 )

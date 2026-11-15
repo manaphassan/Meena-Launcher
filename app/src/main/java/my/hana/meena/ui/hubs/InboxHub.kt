@@ -108,7 +108,7 @@ fun InboxHub(
             when (widgetId) {
                 "widget-conversations" -> {
                     // Chats and messaging threads
-                    ConversationsWidget()
+                    ConversationsWidget(is24Hour = settings.is24HourFormat)
                 }
 
                 "widget-notifications" -> {
@@ -157,7 +157,7 @@ fun InboxHub(
                                         app = notif.appName,
                                         title = notif.title,
                                         text = notif.text,
-                                        time = notif.formattedTime,
+                                        time = my.hana.meena.data.system.MalaysianEnglish.clockTime(notif.timestamp, settings.is24HourFormat),
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             NotificationRepository.openNotification(context, notif)
@@ -189,7 +189,15 @@ fun InboxHub(
                                             .padding(vertical = my.hana.meena.theme.MeenaSpacing.s, horizontal = my.hana.meena.theme.MeenaSpacing.s)
                                     )
                                 }
-                            } }
+                            } else {
+                                Text(
+                                    text = stringResource(R.string.state_all_quiet),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -47,6 +47,15 @@ object MalaysianEnglish {
             .format(Date(dayMillis)).lowercase(Locale.UK)
     }
 
+    /** A time of day in the person's chosen clock: "15:48" or "3:48 pm". */
+    fun clockTime(
+        millis: Long,
+        is24Hour: Boolean,
+        timeZone: TimeZone = TimeZone.getDefault()
+    ): String =
+        SimpleDateFormat(if (is24Hour) "HH:mm" else "h:mm a", Locale.UK)
+            .apply { this.timeZone = timeZone }.format(Date(millis)).lowercase(Locale.UK)
+
     /**
      * When the next alarm rings: "today 6:30 am", "tomorrow 03:30", "saturday 07:00", and the
      * date ("21 november 07:00") once it is a week or more away.
@@ -58,8 +67,7 @@ object MalaysianEnglish {
         timeZone: TimeZone = TimeZone.getDefault()
     ): String {
         val days = daysBetween(nowMillis, triggerMillis, timeZone)
-        val time = SimpleDateFormat(if (is24Hour) "HH:mm" else "h:mm a", Locale.UK)
-            .apply { this.timeZone = timeZone }.format(Date(triggerMillis)).lowercase(Locale.UK)
+        val time = clockTime(triggerMillis, is24Hour, timeZone)
         val day = if (days >= 7) {
             SimpleDateFormat("d MMMM", Locale.UK).apply { this.timeZone = timeZone }
                 .format(Date(triggerMillis)).lowercase(Locale.UK)
