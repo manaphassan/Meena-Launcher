@@ -2202,12 +2202,18 @@ private fun FinanceAccountSettings(
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MeenaTextWhite
                             )
+                            val units = java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString()
                             Text(
-                                text = stringResource(
+                                text = if (holding.hasCost) stringResource(
                                     R.string.finance_holding_detail,
-                                    java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString(),
+                                    units,
                                     "%.2f".format(holding.averageCost),
                                     "%.2f".format(holding.currentPrice)
+                                ) else stringResource(
+                                    R.string.finance_holding_detail_short,
+                                    units,
+                                    if (holding.hasPrice) stringResource(R.string.finance_amount, "%.2f".format(holding.currentPrice))
+                                    else stringResource(R.string.finance_no_price)
                                 ),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MeenaTextMuted
@@ -2320,7 +2326,8 @@ private fun FinanceAccountSettings(
             onClick = {
                 val shares = newShares.toDoubleOrNull() ?: 0.0
                 val cost = newAvgCost.toDoubleOrNull() ?: 0.0
-                val price = newPrice.toDoubleOrNull() ?: cost
+                // No price typed: leave it empty (0) for the sheet to fill, rather than pretending it equals the cost.
+                val price = newPrice.toDoubleOrNull() ?: 0.0
                 if (newSymbol.isNotBlank() && shares > 0.0) {
                     FinanceRepository.addHolding(
                         context,

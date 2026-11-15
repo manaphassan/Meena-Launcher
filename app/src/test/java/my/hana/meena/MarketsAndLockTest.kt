@@ -262,6 +262,32 @@ class MarketsAndLockTest {
         assertEquals("FFB", my.hana.meena.data.finance.plainTicker("ffb.kl"))
     }
 
+    @Test
+    fun portfolio_withoutCostOrPrice_neverShowsAMadeUpGain() {
+        fun h(symbol: String, units: Double, cost: Double, price: Double) =
+            my.hana.meena.data.finance.FinanceHolding(symbol = symbol, name = symbol, shares = units, averageCost = cost, currentPrice = price)
+        // 100 FFB and 100 SENHENG, no cost given, before the sheet loads.
+        val waiting = my.hana.meena.data.finance.portfolioTotals(listOf(h("FFB", 100.0, 0.0, 0.0), h("SENHENG", 100.0, 0.0, 0.0)))
+        assertFalse(waiting.anyPriced)
+        assertNull(waiting.change)
+        // Sheet loaded: value counts, still no gain or loss without a cost.
+        val priced = listOf(h("FFB", 100.0, 0.0, 1.50), h("SENHENG", 100.0, 0.0, 0.30))
+        val totals = my.hana.meena.data.finance.portfolioTotals(priced)
+        assertEquals(180.0, totals.value, 1e-9)
+        assertNull(totals.change)
+        assertEquals(0.0, priced[0].profitLoss, 0.0)
+        // With a cost on one, only that one counts toward the change.
+        val mixed = my.hana.meena.data.finance.portfolioTotals(listOf(h("FFB", 100.0, 1.00, 1.50), h("SENHENG", 100.0, 0.0, 0.30)))
+        assertEquals(50.0, mixed.change!!, 1e-9)
+        assertEquals(50.0, mixed.changePercent!!, 1e-9)
+    }
+
+    @Test
+    fun googleQuoteUrl_flipsTheSheetCode() {
+        assertEquals("https://www.google.com/finance/quote/FFB:KLSE", my.hana.meena.data.finance.googleQuoteUrl("klse:ffb"))
+        assertEquals("https://www.google.com/finance/quote/HLAL:NASDAQ", my.hana.meena.data.finance.googleQuoteUrl("NASDAQ:HLAL"))
+    }
+
     // Double tap to lock
 
     @Test

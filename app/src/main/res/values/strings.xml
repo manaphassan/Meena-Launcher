@@ -472,14 +472,15 @@
     <string name="finance_holdings_intro">add the stocks and crypto you own. they\'re stored encrypted on your phone.</string>
     <string name="finance_hide_amounts_hint">hide totals and units on your home pages</string>
     <string name="finance_holding_detail">%1$s units · cost rm %2$s · now rm %3$s</string>
+    <string name="finance_holding_detail_short">%1$s units · now %2$s</string>
     <string name="finance_delete_desc">delete</string>
     <string name="finance_holdings_empty">nothing here yet. add your first one below.</string>
     <string name="finance_add_title">add a holding</string>
     <string name="finance_add_button">add</string>
-    <string name="finance_symbol_label">symbol, like bursa or btc</string>
+    <string name="finance_symbol_label">symbol, like ffb or senheng, as in your sheet</string>
     <string name="finance_units_label">units</string>
-    <string name="finance_cost_label">average cost (rm)</string>
-    <string name="finance_price_label">price now (rm)</string>
+    <string name="finance_cost_label">average cost (rm), optional</string>
+    <string name="finance_price_label">price now (rm), optional</string>
     <string name="finance_account_label">account, like mplus</string>
     <string name="health_status_ready">health connect is ready</string>
     <string name="health_status_update">health connect needs an update</string>
@@ -650,6 +651,7 @@
     <string name="finance_signed_amount">%1$srm %2$s</string>
     <string name="finance_signed_percent">%1$s%%</string>
     <string name="finance_units_avg">%1$s units · avg rm %2$s</string>
+    <string name="finance_units">%1$s units</string>
     <string name="finance_units_hidden">··· units · avg rm ··.··</string>
     <string name="finance_watchlist_title">watchlist</string>
     <string name="finance_portfolio_empty">nothing in your portfolio yet</string>

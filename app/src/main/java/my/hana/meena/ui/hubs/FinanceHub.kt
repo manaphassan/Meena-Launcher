@@ -278,11 +278,10 @@ private fun PortfolioSection(
 
             is WidgetState.Ready, is WidgetState.Stale -> {
                 val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
-                val totalValue = data.holdings.sumOf { it.currentValue }
-                val totalCost = data.holdings.sumOf { it.totalCost }
-                val totalChange = totalValue - totalCost
-                val changePct = if (totalCost > 0) (totalChange / totalCost) * 100.0 else 0.0
-                val isProfit = totalChange >= 0
+                val totals = my.hana.meena.data.finance.portfolioTotals(data.holdings)
+                val totalChange = totals.change
+                val changePct = totals.changePercent
+                val isProfit = (totalChange ?: 0.0) >= 0
 
                 val context = LocalContext.current
                 Column(
@@ -298,12 +297,17 @@ private fun PortfolioSection(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = if (showAmounts) stringResource(R.string.finance_amount, "%.2f".format(totalValue)) else stringResource(R.string.finance_amount_hidden),
+                            text = when {
+                                !showAmounts -> stringResource(R.string.finance_amount_hidden)
+                                // No price yet (sheet not loaded): say so instead of showing rm 0.00.
+                                !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_amount, stringResource(R.string.finance_no_price))
+                                else -> stringResource(R.string.finance_amount, "%,.2f".format(totals.value))
+                            },
                             fontSize = 32.sp,
                             style = MaterialTheme.typography.displaySmall,
                             color = MeenaTextWhite
                         )
-                        if (data.holdings.isNotEmpty()) {
+                        if (totalChange != null && changePct != null) {
                             val changeText = if (showAmounts) {
                                 stringResource(R.string.finance_change, signedRm(totalChange), signedPercent(changePct))
                             } else {
@@ -347,7 +351,10 @@ private fun PortfolioSection(
                                         interactionSource = interactionSource,
                                         indication = null,
                                         onClick = {
-                                            FinanceRepository.openQuoteUrl(context, "https://www.google.com/finance/quote/${holding.symbol}")
+                                            val sheetRow = data.watchlist.firstOrNull {
+                                                my.hana.meena.data.finance.plainTicker(it.symbol) == my.hana.meena.data.finance.plainTicker(holding.symbol)
+                                            }
+                                            FinanceRepository.openQuoteUrl(context, my.hana.meena.data.finance.googleQuoteUrl(sheetRow?.symbol ?: holding.symbol))
                                         },
                                         onLongClick = {
                                             onDeleteHolding(holding)
@@ -363,10 +370,11 @@ private fun PortfolioSection(
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MeenaTextWhite
                                     )
-                                    val sharesText = if (showAmounts) {
-                                        stringResource(R.string.finance_units_avg, java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString(), "%.2f".format(holding.averageCost))
-                                    } else {
-                                        stringResource(R.string.finance_units_hidden)
+                                    val units = java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString()
+                                    val sharesText = when {
+                                        !showAmounts -> stringResource(R.string.finance_units_hidden)
+                                        holding.hasCost -> stringResource(R.string.finance_units_avg, units, "%.2f".format(holding.averageCost))
+                                        else -> stringResource(R.string.finance_units, units)
                                     }
                                     Text(
                                         text = sharesText,
@@ -375,22 +383,29 @@ private fun PortfolioSection(
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
-                                    val valText = if (showAmounts) stringResource(R.string.finance_amount, "%.2f".format(holding.currentValue)) else stringResource(R.string.finance_amount_hidden)
+                                    val valText = when {
+                                        !showAmounts -> stringResource(R.string.finance_amount_hidden)
+                                        !holding.hasPrice -> stringResource(R.string.finance_no_price)
+                                        else -> stringResource(R.string.finance_amount, "%,.2f".format(holding.currentValue))
+                                    }
                                     Text(
                                         text = valText,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MeenaTextWhite
+                                        color = if (holding.hasPrice || !showAmounts) MeenaTextWhite else MeenaTextMuted
                                     )
-                                    val profitText = if (showAmounts) {
-                                        stringResource(R.string.finance_change, signedRm(holding.profitLoss), signedPercent(holding.profitLossPercent))
-                                    } else {
-                                        stringResource(R.string.finance_change, stringResource(R.string.finance_hidden_short), signedPercent(holding.profitLossPercent))
+                                    // Gain or loss only when both a cost and a price are known.
+                                    if (holding.hasCost && holding.hasPrice) {
+                                        val profitText = if (showAmounts) {
+                                            stringResource(R.string.finance_change, signedRm(holding.profitLoss), signedPercent(holding.profitLossPercent))
+                                        } else {
+                                            stringResource(R.string.finance_change, stringResource(R.string.finance_hidden_short), signedPercent(holding.profitLossPercent))
+                                        }
+                                        Text(
+                                            text = profitText,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (hProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error
+                                        )
                                     }
-                                    Text(
-                                        text = profitText,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (hProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error
-                                    )
                                 }
                             }
                         }

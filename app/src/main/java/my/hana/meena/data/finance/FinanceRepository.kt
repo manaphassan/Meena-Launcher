@@ -26,6 +26,16 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /**
+ * Google Finance's page for a sheet symbol. Sheets write "KLSE:FFB" but the page address is
+ * "FFB:KLSE" (checked on google.com/finance, 16 Nov 2026).
+ */
+fun googleQuoteUrl(symbol: String): String {
+    val clean = symbol.trim().uppercase()
+    val page = if (':' in clean) "${clean.substringAfter(':')}:${clean.substringBefore(':')}" else clean
+    return "https://www.google.com/finance/quote/$page"
+}
+
+/**
  * Data model for a portfolio holding.
  */
 data class FinanceHolding(
@@ -38,10 +48,30 @@ data class FinanceHolding(
     val currency: String = "MYR",
     val groupName: String = "mplus" // e.g. "mplus", "luno", "bank"
 ) {
+    /** False when no average cost was given; then there is no gain or loss to show. */
+    val hasCost: Boolean get() = averageCost > 0.0
+    /** False until a price is known (typed in, or loaded from the sheet). */
+    val hasPrice: Boolean get() = currentPrice > 0.0
     val totalCost: Double get() = shares * averageCost
     val currentValue: Double get() = shares * currentPrice
-    val profitLoss: Double get() = currentValue - totalCost
-    val profitLossPercent: Double get() = if (totalCost > 0) (profitLoss / totalCost) * 100.0 else 0.0
+    val profitLoss: Double get() = if (hasCost && hasPrice) currentValue - totalCost else 0.0
+    val profitLossPercent: Double get() = if (hasCost && hasPrice) (profitLoss / totalCost) * 100.0 else 0.0
+}
+
+/** Value of the holdings that have a price, and the gain or loss of those that also have a cost. */
+data class PortfolioTotals(val value: Double, val change: Double?, val changePercent: Double?, val anyPriced: Boolean)
+
+fun portfolioTotals(holdings: List<FinanceHolding>): PortfolioTotals {
+    val priced = holdings.filter { it.hasPrice }
+    val costed = priced.filter { it.hasCost }
+    val cost = costed.sumOf { it.totalCost }
+    val change = costed.sumOf { it.profitLoss }
+    return PortfolioTotals(
+        value = priced.sumOf { it.currentValue },
+        change = if (costed.isEmpty()) null else change,
+        changePercent = if (cost > 0.0) change / cost * 100.0 else null,
+        anyPriced = priced.isNotEmpty()
+    )
 }
 
 /**
@@ -194,11 +224,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         return holdingsList.sumOf { it.profitLoss }
     }
 
-    fun getTotalPortfolioChangePercent(): Double {
-        val totalCost = holdingsList.sumOf { it.totalCost }
-        val totalChange = getTotalPortfolioChange()
-        return if (totalCost > 0) (totalChange / totalCost) * 100.0 else 0.0
-    }
+    fun getTotalPortfolioChangePercent(): Double = portfolioTotals(holdingsList).changePercent ?: 0.0
 
     fun addHolding(context: Context, holding: FinanceHolding) {
         if (isStorageLocked) return
@@ -361,7 +387,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
                     change = change,
                     changePercent = changePercent,
                     currency = "MYR",
-                    quoteUrl = "https://www.google.com/finance/quote/$symbol"
+                    quoteUrl = googleQuoteUrl(symbol)
                 )
             )
 
@@ -401,15 +427,12 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     private fun evaluateState() {
         val groups = holdingsList.groupBy { it.groupName }
         val accounts = groups.map { (groupName, list) ->
-            val totalVal = list.sumOf { it.currentValue }
-            val totalCost = list.sumOf { it.totalCost }
-            val change = totalVal - totalCost
-            val changePct = if (totalCost > 0) (change / totalCost) * 100.0 else 0.0
+            val totals = portfolioTotals(list)
             PortfolioAccount(
                 name = groupName,
-                value = totalVal,
-                change = change,
-                changePercent = changePct,
+                value = totals.value,
+                change = totals.change ?: 0.0,
+                changePercent = totals.changePercent ?: 0.0,
                 currency = "MYR"
             )
         }
