@@ -674,6 +674,19 @@
     <string name="markets_source">%1$s · daily prices via frankfurter</string>
     <string name="markets_source_saved">%1$s · daily prices via frankfurter · saved copy</string>
     <string name="markets_note">a rough guide, not for buying or selling</string>
+
+    <!-- Kijang Emas (money page), from Bank Negara Malaysia -->
+    <string name="widget_name_kijang">kijang emas</string>
+    <string name="kijang_loading">loading kijang emas prices</string>
+    <string name="kijang_you_pay">you pay</string>
+    <string name="kijang_you_get">you get back</string>
+    <string name="kijang_one_oz">1 oz</string>
+    <string name="kijang_half_oz">half oz</string>
+    <string name="kijang_quarter_oz">quarter oz</string>
+    <string name="kijang_change">1 oz %1$s since %2$s</string>
+    <string name="kijang_source">%1$s · prices for %2$s · bank negara malaysia</string>
+    <string name="kijang_source_saved">%1$s · prices for %2$s · bank negara malaysia · saved copy</string>
+    <string name="kijang_note">bank negara\'s gold coin, so it differs from world gold</string>
     <string name="spending_today">rm %1$s today</string>
     <string name="spending_turn_on">turn on spending</string>
     <string name="spending_opt_in">tap to track payments from the banking apps meena knows.</string>

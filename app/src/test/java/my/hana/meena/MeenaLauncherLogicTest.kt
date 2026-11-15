@@ -105,8 +105,8 @@ class MeenaLauncherLogicTest {
         val migrated = old.migrate()
         val today = migrated.widgetConfigs.filterValues { it.hubId == "today" }.entries.sortedBy { it.value.position }.map { it.key }
         assertEquals(listOf("widget-notes", "widget-clock-weather", "widget-favourites", "widget-weather-forecast"), today.take(4))
-        // Every one-time layout change has now run (the latest puts markets first on the money page).
-        assertEquals(MeenaUserSettings.MARKETS_FIRST_REVISION, migrated.layoutRevision)
+        // Every one-time layout change has now run (the latest puts kijang emas under markets).
+        assertEquals(MeenaUserSettings.KIJANG_EMAS_REVISION, migrated.layoutRevision)
 
         // Afterwards the user's own order is kept: moving favourites back down sticks.
         val userMoved = migrated.copy(widgetConfigs = migrated.widgetConfigs.mapValues { (id, c) -> if (id == "widget-favourites") c.copy(position = 99) else c })

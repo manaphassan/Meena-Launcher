@@ -2,6 +2,7 @@ package my.hana.meena.data.finance
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -127,9 +128,9 @@ object MarketsRepository : WidgetSpec<MarketsData> {
     }
 
     private fun saveCachedData(context: Context, json: String, timestamp: Long) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            .putString(KEY_CACHED_JSON, json)
-            .putLong(KEY_CACHED_TIME, timestamp)
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            putString(KEY_CACHED_JSON, json)
+            putLong(KEY_CACHED_TIME, timestamp)
+        }
     }
 }

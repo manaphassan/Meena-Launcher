@@ -42,6 +42,9 @@ import my.hana.meena.R
 import my.hana.meena.data.finance.ExchangeRateRepository
 import my.hana.meena.data.finance.FinanceHolding
 import my.hana.meena.data.finance.FinanceRepository
+import my.hana.meena.data.finance.KijangEmas
+import my.hana.meena.data.finance.KijangEmasData
+import my.hana.meena.data.finance.KijangEmasRepository
 import my.hana.meena.data.finance.MarketQuote
 import my.hana.meena.data.finance.Markets
 import my.hana.meena.data.finance.MarketsData
@@ -81,6 +84,7 @@ fun FinanceHub(
         ExchangeRateRepository.initialize(context, baseCurrency = "MYR")
         FinanceRepository.initialize(context)
         MarketsRepository.initialize(context)
+        KijangEmasRepository.initialize(context)
     }
 
     LaunchedEffect(settings) {
@@ -91,6 +95,7 @@ fun FinanceHub(
     val financeState by FinanceRepository.state.collectAsState()
     val exchangeRateState by ExchangeRateRepository.state.collectAsState()
     val marketsState by MarketsRepository.state.collectAsState()
+    val kijangState by KijangEmasRepository.state.collectAsState()
     val spendingState by SpendingRepository.state.collectAsState()
 
     val liveTransactions = (spendingState as? WidgetState.Ready)?.data ?: emptyList()
@@ -151,6 +156,14 @@ fun FinanceHub(
                             state = marketsState,
                             maxItems = settings.widgetLines,
                             onRefresh = { MarketsRepository.refresh(context, force = true) }
+                        )
+                    }
+
+                    "widget-kijang-emas" -> {
+                        KijangEmasSection(
+                            state = kijangState,
+                            maxItems = settings.widgetLines,
+                            onRefresh = { KijangEmasRepository.refresh(context, force = true) }
                         )
                     }
 
@@ -820,6 +833,136 @@ private fun MarketsSection(
                 )
             }
         }
+    }
+}
+
+/**
+ * Kijang Emas: Bank Negara's gold coin, one line per size with what you pay and what you get back,
+ * like a bank's price board. Published once each business day, so the date is always shown.
+ */
+@Composable
+private fun KijangEmasSection(
+    state: WidgetState<KijangEmasData>,
+    maxItems: Int,
+    onRefresh: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+        Text(
+            text = stringResource(R.string.widget_name_kijang),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        when (state) {
+            is WidgetState.NeedsSetup, is WidgetState.Loading -> {
+                Text(
+                    text = stringResource(R.string.kijang_loading),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+
+            is WidgetState.Ready, is WidgetState.Stale -> {
+                val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
+                val updatedAt = if (state is WidgetState.Ready) state.updatedAt else (state as WidgetState.Stale).updatedAt
+                val change = data.changePercent
+                val since = data.previousDate?.let { KijangEmas.dayLabel(it) }.orEmpty()
+                if (change != null && since.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.kijang_change, signedPercent(change), since),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (change >= 0) MeenaProfitGreen else MaterialTheme.colorScheme.error
+                    )
+                }
+                KijangEmasRow(
+                    label = "",
+                    pay = stringResource(R.string.kijang_you_pay),
+                    get = stringResource(R.string.kijang_you_get),
+                    isHeader = true
+                )
+                data.prices.take(maxItems).forEach { price ->
+                    KijangEmasRow(
+                        label = stringResource(
+                            when (price.size) {
+                                "one_oz" -> R.string.kijang_one_oz
+                                "half_oz" -> R.string.kijang_half_oz
+                                else -> R.string.kijang_quarter_oz
+                            }
+                        ),
+                        pay = stringResource(R.string.finance_amount, Markets.formatPrice(price.youPay)),
+                        get = stringResource(R.string.finance_amount, Markets.formatPrice(price.youGet)),
+                        isHeader = false
+                    )
+                }
+                val day = KijangEmas.dayLabel(data.date)
+                Text(
+                    text = if (state is WidgetState.Stale) stringResource(R.string.kijang_source_saved, updatedAgoText(updatedAt), day)
+                    else stringResource(R.string.kijang_source, updatedAgoText(updatedAt), day),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
+                Text(
+                    text = stringResource(R.string.kijang_note),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MeenaTextMuted
+                )
+            }
+
+            is WidgetState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onRefresh() }
+                ) {
+                    Text(
+                        text = state.message.lowercase(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            is WidgetState.Empty -> {
+                Text(
+                    text = stringResource(R.string.markets_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun KijangEmasRow(label: String, pay: String, get: String, isHeader: Boolean) {
+    val style = if (isHeader) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodyMedium
+    val colour = if (isHeader) MeenaTextMuted else MeenaTextWhite
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MeenaTextWhite,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = pay,
+            style = style,
+            color = colour,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            modifier = Modifier.widthIn(min = 96.dp)
+        )
+        Text(
+            text = get,
+            style = style,
+            color = colour,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            modifier = Modifier.widthIn(min = 96.dp)
+        )
     }
 }
 

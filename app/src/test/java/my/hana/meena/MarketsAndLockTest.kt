@@ -126,7 +126,7 @@ class MarketsAndLockTest {
     fun migrate_putsMarketsFirstOnTheMoneyPage_once() {
         val old = MeenaUserSettings(
             layoutRevision = MeenaUserSettings.EMAIL_SECTION_REVISION,
-            widgetConfigs = MeenaUserSettings.defaultWidgetMap() - "widget-markets" + mapOf(
+            widgetConfigs = MeenaUserSettings.defaultWidgetMap() - "widget-markets" - "widget-kijang-emas" + mapOf(
                 "widget-finance-charts" to WidgetConfig("money", 0),
                 "widget-exchange-rates" to WidgetConfig("money", 1),
                 "widget-spending-summary" to WidgetConfig("money", 2)
@@ -135,12 +135,55 @@ class MarketsAndLockTest {
         val migrated = old.migrate()
         val money = migrated.widgetConfigs.filterValues { it.hubId == "money" }.entries
             .sortedBy { it.value.position }.map { it.key }
-        assertEquals(listOf("widget-markets", "widget-finance-charts", "widget-exchange-rates", "widget-spending-summary"), money)
-        assertEquals(MeenaUserSettings.MARKETS_FIRST_REVISION, migrated.layoutRevision)
+        assertEquals(listOf("widget-markets", "widget-kijang-emas", "widget-finance-charts", "widget-exchange-rates", "widget-spending-summary"), money)
+        assertEquals(MeenaUserSettings.KIJANG_EMAS_REVISION, migrated.layoutRevision)
 
         // Afterwards the user's own order is kept.
         val moved = migrated.copy(widgetConfigs = migrated.widgetConfigs + ("widget-markets" to WidgetConfig("money", 9)))
         assertEquals(9, moved.migrate().widgetConfigs.getValue("widget-markets").position)
+    }
+
+    // Kijang Emas (Bank Negara Malaysia)
+
+    // Trimmed from https://api.bnm.gov.my/public/kijang-emas/year/2026/month/11 (15 Nov 2026), out of order.
+    private val bnmMonth = """
+        {"data":[{"effective_date":"2026-11-12","one_oz":{"buying":16544,"selling":17241},"half_oz":{"buying":8272,"selling":8783},"quarter_oz":{"buying":4136,"selling":4473}},
+                 {"effective_date":"2026-11-11","one_oz":{"buying":16707,"selling":17415},"half_oz":{"buying":8353,"selling":8872},"quarter_oz":{"buying":4177,"selling":4518}}],
+         "meta":{"last_updated":"2026-11-12 02:00:47","total_result":2}}
+    """.trimIndent()
+
+    @Test
+    fun kijangEmas_sellingIsWhatYouPay_andChangeIsFromTheDayBefore() {
+        val days = my.hana.meena.data.finance.KijangEmas.parseDays(bnmMonth)
+        assertEquals(listOf("2026-11-11", "2026-11-12"), days.map { it.date })
+        val summary = my.hana.meena.data.finance.KijangEmas.summarise(days)!!
+        assertEquals("2026-11-12", summary.date)
+        val oneOz = summary.prices.first()
+        assertEquals("one_oz", oneOz.size)
+        assertEquals(17241.0, oneOz.youPay, 0.0)
+        assertEquals(16544.0, oneOz.youGet, 0.0)
+        assertEquals(listOf("one_oz", "half_oz", "quarter_oz"), summary.prices.map { it.size })
+        assertEquals("2026-11-11", summary.previousDate)
+        assertEquals((17241.0 / 17415.0 - 1) * 100, summary.changePercent!!, 1e-9)
+    }
+
+    @Test
+    fun kijangEmas_oneDayReply_andBadReplies() {
+        val one = """{"data":{"effective_date":"2026-11-12","one_oz":{"buying":16544,"selling":17241}},"meta":{}}"""
+        val summary = my.hana.meena.data.finance.KijangEmas.summarise(my.hana.meena.data.finance.KijangEmas.parseDays(one))!!
+        assertNull(summary.changePercent)
+        assertNull(summary.previousDate)
+        assertTrue(my.hana.meena.data.finance.KijangEmas.parseDays("""{"message":"No records found.","code":404}""").isEmpty())
+        assertTrue(my.hana.meena.data.finance.KijangEmas.parseDays("<html>").isEmpty())
+        assertNull(my.hana.meena.data.finance.KijangEmas.summarise(emptyList()))
+    }
+
+    @Test
+    fun kijangEmas_cacheRoundTrips_andDatesReadNaturally() {
+        val days = my.hana.meena.data.finance.KijangEmas.parseDays(bnmMonth)
+        assertEquals(days, my.hana.meena.data.finance.KijangEmas.decode(my.hana.meena.data.finance.KijangEmas.encode(days)))
+        assertEquals("12 nov", my.hana.meena.data.finance.KijangEmas.dayLabel("2026-11-12"))
+        assertEquals("https://api.bnm.gov.my/public/kijang-emas/year/2026/month/11", my.hana.meena.data.finance.KijangEmas.monthUrl(2026, 11))
     }
 
     // Double tap to lock

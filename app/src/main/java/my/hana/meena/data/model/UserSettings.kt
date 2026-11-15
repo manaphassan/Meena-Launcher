@@ -150,6 +150,12 @@ data class MeenaUserSettings(
             revision = MARKETS_FIRST_REVISION
             changed = true
         }
+        // Revision 4 (Nov 2026): kijang emas sits right under markets.
+        if (revision < KIJANG_EMAS_REVISION) {
+            placeKijangEmasUnderMarkets(updatedConfigs)
+            revision = KIJANG_EMAS_REVISION
+            changed = true
+        }
 
         return if (changed) {
             copy(
@@ -196,6 +202,17 @@ data class MeenaUserSettings(
         order.forEachIndexed { index, id -> configs[id] = configs.getValue(id).copy(position = index) }
     }
 
+    private fun placeKijangEmasUnderMarkets(configs: MutableMap<String, WidgetConfig>) {
+        val kijang = configs[KIJANG_EMAS_ID] ?: return
+        val markets = configs[MARKETS_ID] ?: return
+        if (kijang.hubId != markets.hubId) return
+        val order = configs.filterValues { it.hubId == markets.hubId }
+            .entries.sortedBy { it.value.position }.map { it.key }
+            .filter { it != KIJANG_EMAS_ID }.toMutableList()
+        order.add(order.indexOf(MARKETS_ID) + 1, KIJANG_EMAS_ID)
+        order.forEachIndexed { index, id -> configs[id] = configs.getValue(id).copy(position = index) }
+    }
+
     /**
      * Puts every widget back in the story order of [defaultWidgetMap], keeping which ones are on,
      * which page each is on and its own settings. Only runs when the user asks for it.
@@ -211,6 +228,7 @@ data class MeenaUserSettings(
         const val FAVOURITES_FIRST_REVISION = 1
         const val EMAIL_SECTION_REVISION = 2
         const val MARKETS_FIRST_REVISION = 3
+        const val KIJANG_EMAS_REVISION = 4
         const val SHORT_LINES = 3
         const val LONG_LINES = 5
         private const val FAVOURITES_ID = "widget-favourites"
@@ -218,6 +236,7 @@ data class MeenaUserSettings(
         private const val EMAIL_ID = "widget-email"
         private const val ALERTS_ID = "widget-notifications"
         private const val MARKETS_ID = "widget-markets"
+        private const val KIJANG_EMAS_ID = "widget-kijang-emas"
         /** The US-style date the app used to default to; moved to Malaysian English (day before month). */
         const val OLD_DEFAULT_DATE_PATTERN = "EEEE, MMMM d"
         const val DEFAULT_DATE_PATTERN = "EEEE, d MMMM"
@@ -263,11 +282,12 @@ data class MeenaUserSettings(
             // News Hub
             "widget-news-feed" to WidgetConfig("news", 0, isEnabled = true),
 
-            // Money Hub (markets, portfolio & watchlist, exchange rates, spending)
+            // Money Hub (markets, kijang emas, portfolio & watchlist, exchange rates, spending)
             "widget-markets" to WidgetConfig("money", 0, isEnabled = true),
-            "widget-finance-charts" to WidgetConfig("money", 1, isEnabled = true),
-            "widget-exchange-rates" to WidgetConfig("money", 2, isEnabled = true),
-            "widget-spending-summary" to WidgetConfig("money", 3, isEnabled = true)
+            "widget-kijang-emas" to WidgetConfig("money", 1, isEnabled = true),
+            "widget-finance-charts" to WidgetConfig("money", 2, isEnabled = true),
+            "widget-exchange-rates" to WidgetConfig("money", 3, isEnabled = true),
+            "widget-spending-summary" to WidgetConfig("money", 4, isEnabled = true)
         )
     }
 }
