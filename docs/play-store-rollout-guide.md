@@ -1,9 +1,9 @@
 # Google Play Store Release & Rollout Guide
 
 **Application:** Meena (`my.hana.meena`)  
-**Release Version:** v1.0 (versionCode: 1)  
-**Track Schedule:** Internal Test → Closed Test (14 days) → Production Staged Rollout  
-**Document Date:** October 2026 (checklist rerun 13 November 2026)  
+**Release Version:** 0.1.0 (versionCode: 1)
+**Track Schedule:** Internal Test → Closed Test (14 days) → Production Staged Rollout
+**Document Date:** October 2026 (checklist rerun 13 November 2026; updated 16 November 2026 for 0.1.0)  
 
 ---
 
@@ -13,15 +13,16 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 
 - [x] Package Name: `my.hana.meena` (Permanent unique identifier)
 - [x] Compilation: Target SDK 36, Min SDK 24, Compose 2026 BOM
-- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, rerun 13 Nov 2026 at commit `b6e0bea`)
-- [x] Bundle Size: **5.22 MiB** (5,474,342 bytes; within the 15 MB charter limit)
+- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, rerun 16 Nov 2026 at commit `78e60c5`)
+- [x] Bundle Size: **5.72 MiB** (5,998,847 bytes; within the 15 MB charter limit). Release APK 2.96 MB (2,955,481 bytes)
 - [x] Baseline profile: `baseline.prof` packaged in the bundle
-- [ ] Release signing: bundle is **unsigned**; create `keystore.properties` from `keystore.properties.example` (or use Play App Signing with an upload key)
+- [x] Release signing: bundle and APK signed with the upload key (`CN=HaNa Innovation, O=HaNa Innovation, C=MY`, SHA-256 `b9e59f8c…696d`, checked with `apksigner verify` and `keytool -printcert`, 16 Nov 2026). Turn on Play App Signing at the first upload
 - [x] Privacy policy URL live: https://manaphassan.github.io/Meena-Launcher/privacy-policy/ (GitHub Pages, `gh-pages` branch; HTTP 200 on 14 Nov 2026)
 - [x] R8 & ProGuard: Minification enabled, resource shrinking enabled
 - [x] 16 KB Page Alignment: `zipalign -c -P 16` passes and every `LOAD` segment is 16 KB aligned for `libandroidx.graphics.path.so` and `libdatastore_shared_counter.so` (checked 12 Nov on the live debug APK; the 13 Nov bundle still ships only these two libraries)
-- [x] Automated Tests: `testDemoDebugUnitTest` and `testLiveDebugUnitTest` passing, 142 tests each (13 Nov 2026)
-- [x] Android Lint (`lintLiveRelease`): 0 errors, 149 warnings (mostly `UnusedResources` and `UseKtx`)
+- [x] Automated Tests: `testLiveDebugUnitTest` 238 and `testDemoDebugUnitTest` 163, 0 failed (16 Nov 2026)
+- [x] Android Lint (`lint`): 0 errors, 136 warnings (mostly `UnusedResources`) (16 Nov 2026)
+- [x] Release smoke test: R8 release APK installed on the emulator; today, money (markets, kijang emas, rates), add ticker and the device admin prompt all work, no crashes (16 Nov 2026)
 
 ---
 
@@ -32,7 +33,7 @@ The Internal Testing track provides instant distribution (bypassing Google Play 
 1. **Navigate:** Google Play Console $\to$ **Testing** $\to$ **Internal testing**.
 2. **Create Release:**
    - Upload `app-live-release.aab`.
-   - Release name: `1.0 (1) - Internal Pre-Release`.
+   - Release name: `0.1.0 (1) - Internal Pre-Release`.
    - Release notes: Copy from `distribution/metadata/en-US/release_notes.txt`.
 3. **Tester List:** Add developer Google accounts to the internal tester email list.
 4. **Accept & Install:** Open the internal opt-in link on your Android test devices and install.

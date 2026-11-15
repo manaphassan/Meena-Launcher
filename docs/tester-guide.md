@@ -61,6 +61,7 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 - Do the markets chart and prices load? They are daily prices, so they won't move minute by minute.
 - Add a coin or a currency: settings, pages, markets (or exchange rates), **add ticker**. Does the search find it, and does it show up with a price?
 - Do the kijang emas prices match what your bank shows?
+- If you hold Bursa shares, try the sheet template: see "Bursa stocks" in the README (https://github.com/manaphassan/Meena-Launcher#bursa-stocks). Do your prices come through?
 - Do the exchange rates load? If you use Google Sheets, try linking a sheet.
 - If your bank sends alerts, does spending get picked up correctly? Does it ever pick up something that isn't spending?
 

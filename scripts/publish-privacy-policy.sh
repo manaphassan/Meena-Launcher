@@ -75,9 +75,9 @@ page "Meena: a home screen for Android" "$(cat <<EOF
 <p>Big type, plenty of space and flat colour, inspired by Windows Phone Metro. Swipe sideways through five pages:</p>
 <ul>
   <li><strong>today</strong>: time, weather, favourite apps, your week, prayer times, a nearby map, notes, battery and connected devices</li>
-  <li><strong>inbox</strong>: your alerts and chats</li>
+  <li><strong>inbox</strong>: your chats, email and alerts</li>
   <li><strong>news</strong>: the feeds you choose, with a clean reader</li>
-  <li><strong>money</strong>: exchange rates, your own Google Sheet and spending from bank alerts</li>
+  <li><strong>money</strong>: markets, Kijang Emas, exchange rates, your own Google Sheet and spending from bank alerts</li>
   <li><strong>apps</strong>: search, a letter index, and sorting by category or last used</li>
 </ul>
 <p>Every widget shows real information or says what it needs. No ads, no accounts, no tracking.</p>
@@ -86,7 +86,7 @@ page "Meena: a home screen for Android" "$(cat <<EOF
   <img src="screenshots/03-nearby-map.png" width="1080" height="1920" alt="Nearby map with 3 km and 5 km rings, compass and qibla line">
   <img src="screenshots/06-apps.png" width="1080" height="1920" alt="Apps page sorted by category">
 </div>
-<p>Version 0.1.0 is getting ready for a Google Play closed test. It is not on the Play Store yet.</p>
+<p>Version 0.1.0 is the first public build: <a href="$repo/releases/latest">download it from GitHub</a>. It is getting ready for a Google Play closed test and is not on the Play Store yet.</p>
 <h2>Links</h2>
 <ul class="links">
   <li><a href="privacy-policy/">Privacy policy</a></li>

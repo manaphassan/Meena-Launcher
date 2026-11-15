@@ -1,19 +1,40 @@
-meena is a personal android launcher built with jetpack compose, designed around clean typography, generous whitespace, and pure speed.
+meena is a home screen built around big type, open space and plain colour. no cards, no clutter. swipe sideways through five pages and see what matters at a glance.
 
-inspired by windows phone metro ui and aio launcher, meena replaces boxes, cards, and cluttered app grids with a lightweight five-page panoramic experience. hierarchy comes from type size and space alone.
+today
+- the time, the date and the hijri date
+- weather with a moving icon, the day's high and low, and the next few days
+- up to six favourite app tiles, plus one tile that holds four small ones
+- your week from your calendar, with what is coming up next
+- prayer times for your zone from jakim
+- a nearby map with 3 km and 5 km rings, a compass, the qibla line and the sun's path
+- notes you can edit, turn into a list, or add to your calendar as a reminder
+- battery: how fast it is charging, time to full, time left, and when to plug in
+- bluetooth devices you have connected, with their battery when the device shares it
+- steps, distance, calories, heart rate and sleep from health connect, if you allow it
+- double tap an empty spot to lock the phone, if you turn it on
 
-five panoramic hubs:
-• today: glanceable daily clock, live local weather, official jakim prayer times, upcoming calendar agenda, and daily health metrics.
-• inbox: unified notification alert stream, recent conversation threads, and quick panel toggles.
-• news: lightweight, distraction-free rss reader with instant on-device parsing and offline reading.
-• money: private offline spending ledger and local asset portfolio tracker with live currency conversion.
-• apps: vertical alphabetical application list with an instant letter-picker jump grid and search.
+inbox
+- your alerts and chats in one quiet place, ready to open or clear
 
-the meena ui charter:
-• clean: zero cards, zero drop shadows, zero rounded container cards.
-• light: fast download size under 5 mb, zero heavy third-party tracking sdk dependencies.
-• open: generous 24dp margins, clear typographic contrast, and thoughtful whitespace.
-• fast: instant app launching, smooth turnstile screen transitions, and fluid touch interactions.
+news
+- the feeds you choose, with pictures and a clean reader view
 
-privacy & data safety:
-meena is built upon a strict on-device processing model. your notifications, calendar appointments, fitness statistics, and financial entries stay on your phone. meena connects to zero advertising networks, collects zero background telemetry, and disables cloud backups (allowbackup=false) to keep your personal data strictly yours.
+money
+- gold, silver, bitcoin and ether over the past year on one chart, from free daily prices. search and add other coins and metals
+- kijang emas coin prices from bank negara malaysia
+- exchange rates in a table, with the day's change. add any currency you need
+- prices from your own google sheet
+- spending picked up from your bank alerts, kept on your phone
+
+apps
+- every app from a to z, with a letter index and search
+- sort by category or by last used
+- icon packs
+
+your phone, your data
+- notes, portfolio and keys are stored encrypted on your phone
+- no ads, no accounts, no tracking
+- weather and the map get your location rounded to about 1 km, and only when those widgets are on
+- every widget shows real information or tells you what it needs. nothing is made up.
+
+meena is in early testing. tell us what feels wrong at harussani@outlook.my.

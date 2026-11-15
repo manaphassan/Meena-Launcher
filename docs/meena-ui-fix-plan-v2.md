@@ -7,6 +7,8 @@
 
 **v2 changes:** adds a scoring rubric with a measurable gate per area; adds Phase 0 (automated gates), Phase 6 (theme and type), Phase 7 (other pages), Phase 8 (content-first layer), Phase 9 (data honesty, speed, accessibility), Phase 10 (sign-off). Phases 1–5 keep their numbers.
 
+> **Status, 16 Nov 2026:** phases 0 to 9 done. Phase 10 sign-off scored **9.7 / 10** (`meena-ui-score.md`); the 3-line rule is built (widget length setting, 3 or 5 lines), and the task test for area 4 is still to run (`task-test-plan.md`). See [`roadmap.md`](roadmap.md).
+
 ---
 
 ## 0. Conclusion

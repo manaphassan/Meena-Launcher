@@ -1,7 +1,7 @@
-welcome to meena 1.0!
-• 5 panoramic hubs: today, inbox, news, money, apps.
-• authentic metro-inspired turnstile transitions and typography.
-• live jakim prayer timetable, local weather, and calendar agenda.
-• health connect daily step and fitness summaries.
-• private on-device spending ledger and local portfolio tracker.
-• zero cloud tracking, zero ads, and ultra-lightweight under 5 mb.
+meena 0.1.0, the first test build.
+- five pages: today, inbox, news, money and apps
+- weather, prayer times from jakim, your week and a nearby map on today
+- chats, email and alerts in one quiet inbox
+- markets, kijang emas and exchange rates on money, with tickers you pick
+- shake to hide private things, and double tap to lock if you turn it on
+- no ads, no accounts, no tracking

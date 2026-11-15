@@ -5,6 +5,8 @@
 
 Labels: **[F]** fact from the code or a cited source · **[I]** inference · **[S]** speculation / verify before relying on it.
 
+> **Status, 16 Nov 2026:** version 0.1.0 is built and published as a GitHub release. M1, M2 and the Health Connect part of M3 are done in code; the Gmail API part of M3 is dropped. Play testing waits for the developer account. Current milestones, next steps and open decisions: [`roadmap.md`](roadmap.md). What shipped: [`CHANGELOG.md`](../CHANGELOG.md).
+
 ---
 
 ## 0. Conclusion
@@ -13,11 +15,11 @@ The current app has the right skeleton (pager, jump list, accent palette) but fa
 
 Scope grew a lot versus the earlier plan. **Estimate: ~55–70 focused working days solo (≈11–14 weeks)** [I], shipped in three milestones so a Play-ready build lands early:
 
-| Milestone | Contains | Gate |
-|---|---|---|
-| **M1: closed-test build** | Foundation, widget framework, full Settings shell, Meena UI skin, solat, weather, calendar, news, apps, alerts, phone, copy, compliance | Play closed test |
-| **M2: money** | Finance (portfolio, rates, quotes, Sheets bridge). Gemini brief dropped (D13) | Production rollout |
-| **M3: health + mail API** | Health Connect, AQI, Gmail API unread count | Staged update |
+| Milestone | Contains | Gate | Status (16 Nov 2026) |
+|---|---|---|---|
+| **M1: closed-test build** | Foundation, widget framework, full Settings shell, Meena UI skin, solat, weather, calendar, news, apps, alerts, phone, copy, compliance | Play closed test | Done in code; closed test waits for the Play account |
+| **M2: money** | Finance (portfolio, rates, quotes, Sheets bridge). Gemini brief dropped (D13) | Production rollout | Done; adds markets chart, ticker search, rates table and kijang emas (D15, D16) |
+| **M3: health + mail API** | Health Connect, AQI, Gmail API unread count | Staged update | Health Connect and AQI done; Gmail API dropped (D17) |
 
 Three things you asked for **cannot be built literally**; the plan substitutes (details in §1):
 1. **Google Fit** is deprecated. Use **Health Connect**.
@@ -253,9 +255,10 @@ settings (pivot, link lists only; no switches here)
 
 ### 5.3 Finance (free-only)
 - **Quotes, primary:** the **Sheets bridge**. The user's own sheet runs `GOOGLEFINANCE()`, which supports Bursa Malaysia tickers [I: verify], and the app reads the picked file. Free, no key, may be delayed up to ~20 min [S].
-- **Quotes, optional second source:** a free-tier API with the user's own key. Free tiers usually lack Bursa coverage or have tight daily caps (Alpha Vantage, Finnhub, Twelve Data are candidates; **coverage test first**) [S].
-- **Remove** the unofficial Yahoo endpoint.
-- **FX (free, no key):** Frankfurter (ECB reference rates, daily) is the default candidate; Bank Negara Malaysia OpenAPI is the alternative. Verify MYR coverage and terms [S].
+- **Quotes, optional second source:** a free-tier API with the user's own key. Free tiers usually lack Bursa coverage or have tight daily caps (Alpha Vantage, Finnhub, Twelve Data are candidates; **coverage test first**) [S]. **Checked 15 Nov 2026:** none of Alpha Vantage, Twelve Data, Finnhub, Marketstack, FMP or Stooq allows showing Bursa prices in a public app on its free tier, so no second source is used.
+- **Remove** the unofficial Yahoo endpoint. (Done. Yahoo's developer site lists no finance API, checked 16 Nov 2026.)
+- **Sheet template (16 Nov 2026):** `docs/finance-sheet.csv`, using Google Finance's `KLSE:NAME` codes (`KLSE:FFB`, not the stock number 5306). `GOOGLEFINANCE` has no name attribute, so names are typed in.
+- **FX (free, no key):** Frankfurter (ECB reference rates, daily) is the default candidate; Bank Negara Malaysia OpenAPI is the alternative. Verify MYR coverage and terms [S]. **Built (16 Nov 2026):** Frankfurter v2 blended rates for any of 161 currencies, plus metals and 35 coins for the markets chart; its FAQ allows commercial use and caching. Bank Negara supplies Kijang Emas prices (terms unread, [S]).
 - **Portfolio:** pure local data entry; prices and totals computed live. Seed with nothing. The old hardcoded portfolio values and watchlist are deleted.
 - **Candles:** fix the cache to emit via `StateFlow`; drop the synthetic fallback. If the free source has no history, hide the chart rather than fake it.
 
@@ -368,16 +371,16 @@ Confirm D1–D12 (§1), search Play and MyIPO for "Meena" collisions, and regist
 ### Phase 3: Integrations (can run in parallel with Phase 4)
 | Item | Days | Milestone |
 |---|---|---|
-| Solat (JAKIM, zones, cache, hijri) (Done) | 2 | M1 |
-| Weather + AQI | 2–3 | M1 (AQI M3) |
-| Calendar (CalendarContract + manager) | 2 | M1 |
+| Solat (JAKIM, zones, cache, hijri) (Done; zone picked from location, 15 Nov) | 2 | M1 |
+| Weather + AQI (Done) | 2–3 | M1 (AQI M3) |
+| Calendar (CalendarContract + manager) (Done) | 2 | M1 |
 | News manager (add/validate/OPML, parser hardening) (Done) | 2–3 | M1 |
-| Notifications: alerts/chats/mail(notif), spending opt-in + allowlist | 3 | M1 |
-| Quick panel live state (wi-fi, bluetooth, torch) | 1 | M1 |
-| Finance: provider, portfolio CRUD, FX, Sheets bridge | 6–8 | M2 |
+| Notifications: alerts/chats/mail(notif), spending opt-in + allowlist (Done) | 3 | M1 |
+| Quick panel live state (wi-fi, bluetooth, torch) (Done) | 1 | M1 |
+| Finance: provider, portfolio CRUD, FX, Sheets bridge (Done; plus Frankfurter markets, ticker search, BNM kijang emas) | 6–8 | M2 |
 | Gemini brief (dropped, D13) | 0 | n/a |
-| Health Connect | 3 | M3 |
-| Gmail API unread count (if scope check passes) | 3–4 + review wait | M3 |
+| Health Connect (Done) | 3 | M3 |
+| Gmail API unread count (dropped, D17) | 0 | n/a |
 
 ### Phase 4: Meena UI skin (8–10 days, parallel from Phase 2)
 1. Tokens + Selawik + thin icon set; delete emoji and filled icons.
@@ -401,6 +404,8 @@ Unit tests (parsers, formatters, migration, state machines), Compose UI tests (g
 
 ### Phase 8: Release
 Internal → closed test (personal account: 12 testers opted in for 14 continuous days if the account was created after 13 Nov 2023) → apply for production → staged rollout 10–20%, watch ANR/crash before widening.
+
+**Status (16 Nov 2026):** phases 0 to 7 done. Phase 8: release signing done (upload key), 0.1.0 published as a GitHub release; Play tracks wait for the developer account.
 
 ---
 
@@ -454,6 +459,12 @@ Internal → closed test (personal account: 12 testers opted in for 14 continuou
 | Play account | Personal |
 | Gemini brief (12 Nov 2026) | Dropped; target audience 13+ (D13) |
 | AIO Launcher (12 Nov 2026) | Copy AIO's **content** (what each widget shows), never its layout. Layout, type, spacing and every rule in §2 stay Metro/Zune (D14) |
+| Free price sources (15 Nov 2026) | **Frankfurter v2** (keyless, free for commercial use) for exchange rates, metals and coins; ticker search uses its own list (D15) |
+| Kijang Emas (15 Nov 2026) | **Bank Negara Malaysia Open API**, keyless; terms still to be read by the owner (D16) |
+| Gmail API (15 Nov 2026) | Skipped; email comes from notifications (D17) |
+| Double tap to lock (15 Nov 2026) | Device admin with force-lock only, off by default |
+| Bursa stocks (16 Nov 2026) | Stay on the owner's Google Sheet (`docs/finance-sheet.csv`). Yahoo Finance has no official finance API and is not used |
+| Version (14 Nov 2026) | `versionName` 0.1.0; first GitHub release 16 Nov 2026 |
 
 ## 11. Sources to verify before building
 

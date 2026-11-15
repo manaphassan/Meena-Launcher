@@ -1,1 +1,1 @@
-clean, light, open, fast personal launcher inspired by metro ui.
+a calm home screen with five pages: today, inbox, news, money and apps

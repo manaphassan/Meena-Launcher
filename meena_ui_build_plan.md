@@ -1,5 +1,7 @@
 # Meena UI: Fix & Build Plan
 
+> **Superseded.** This is the original 2 Oct 2026 copy, kept for history. The maintained plan is [`docs/meena-ui-fix-plan.md`](docs/meena-ui-fix-plan.md); status and next steps are in [`docs/roadmap.md`](docs/roadmap.md).
+
 **Project:** Meena (`D:\HaNa_Innovation\meena_launcher`) · **App name:** Meena · **Design language:** Meena UI · **Plan date:** 2 Oct 2026
 **Inspired by:** Metro UI (Windows Phone) + AIO Launcher · **Goal:** Play Store release, every widget live and configurable.
 
