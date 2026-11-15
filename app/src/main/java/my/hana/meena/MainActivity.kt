@@ -181,6 +181,7 @@ class MainActivity : ComponentActivity() {
                             settingsRepository = settingsRepository,
                             initialHubIndex = initialHub,
                             targetHubIndex = currentHubIntentIndex.value,
+                            homePresses = homePresses.value,
                             onLaunchApp = { packageName -> launchPackage(packageName) },
                             onOpenDialer = { openDialerIntent() },
                             onOpenMessages = { openMessagesIntent() },
@@ -196,13 +197,21 @@ class MainActivity : ComponentActivity() {
 
     private var currentHubIntentIndex = mutableStateOf<Int?>(null)
 
+    /** Counts home presses while Meena is already in front; each one goes back to today. */
+    private var homePresses = mutableStateOf(0)
+
     override fun onNewIntent(intent: Intent) {
+        // Read focus before the new intent is handled: true when the person is already on Meena.
+        val alreadyOnHome = hasWindowFocus() &&
+            (intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) == 0
         super.onNewIntent(intent)
         setIntent(intent)
         showPrivacyPolicyIfAsked(intent)
         val hubExtra = intent.getIntExtra("target_hub", -1)
         if (hubExtra in 0..4) {
             currentHubIntentIndex.value = hubExtra
+        } else if (alreadyOnHome && intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
+            homePresses.value += 1
         }
     }
 
@@ -289,6 +298,7 @@ fun MeenaHomeScreen(
     settingsRepository: SettingsRepository,
     initialHubIndex: Int = 0,
     targetHubIndex: Int? = null,
+    homePresses: Int = 0,
     onLaunchApp: (String) -> Unit,
     onOpenDialer: () -> Unit,
     onOpenMessages: () -> Unit,
@@ -413,6 +423,17 @@ fun MeenaHomeScreen(
     var isWeatherDetailOpen by remember { mutableStateOf(false) }
     var isNearbyMapOpen by remember { mutableStateOf(false) }
     var focusAppsSearch by remember { mutableStateOf(false) }
+
+    // Home pressed while already on Meena: close what's open and go back to today.
+    LaunchedEffect(homePresses) {
+        if (homePresses > 0) {
+            isNearbyMapOpen = false
+            isWeatherDetailOpen = false
+            isSettingsOpen = false
+            isActionCenterOpen = false
+            pagerState.animateScrollToPage(0)
+        }
+    }
 
     // Intercept hardware/gesture Back button (return to today hub)
     BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || isNearbyMapOpen || pagerState.currentPage != 0) {
