@@ -16,6 +16,12 @@
 
 ![Meena feature graphic](store/graphics/feature-graphic-1024x500.png)
 
+<p align="center">
+  <img src="store/screenshots/01-today.png" width="30%" alt="Today page with clock, weather, favourite tiles and forecast">
+  <img src="store/screenshots/03-nearby-map.png" width="30%" alt="Nearby map with 3 km and 5 km rings, compass and qibla line">
+  <img src="store/screenshots/06-apps.png" width="30%" alt="Apps page sorted by category">
+</p>
+
 Meena is an Android launcher in the **Meena UI** style, inspired by Windows Phone Metro and AIO Launcher. Big type, plenty of space, flat colour and square corners. No cards, no boxes, no made-up numbers. It is written in Kotlin with Jetpack Compose.
 
 **Status:** 0.1.0, getting ready for a Google Play closed test. It is not on the Play Store yet.

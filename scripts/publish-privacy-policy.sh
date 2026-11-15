@@ -43,6 +43,8 @@ cat <<EOF
   img.wide { width: 100%; height: auto; display: block; margin: 24px 0; }
   ul.links { list-style: none; padding: 0; }
   ul.links li { margin: 6px 0; }
+  .shots { display: flex; gap: 12px; margin: 24px 0; }
+  .shots img { width: calc((100% - 24px) / 3); height: auto; display: block; }
   @media (prefers-color-scheme: dark) {
     body { color: #eee; background: #000; } a { color: #4fb3ff; }
     code { background: #1a1a1a; } th, td, hr { border-color: #333; }
@@ -61,6 +63,8 @@ page "Privacy Policy for Meena" "$body" > "$site/privacy-policy/index.html"
 page "Meena tester guide" "$guide" > "$site/tester-guide/index.html"
 cp store/logo/meena-logo.svg "$site/meena-logo.svg"
 cp store/graphics/feature-graphic-1024x500.png "$site/feature-graphic.png"
+mkdir -p "$site/screenshots"
+cp store/screenshots/01-today.png store/screenshots/03-nearby-map.png store/screenshots/06-apps.png "$site/screenshots/"
 repo=https://github.com/manaphassan/Meena-Launcher
 page "Meena: a home screen for Android" "$(cat <<EOF
 <div class="hero">
@@ -77,6 +81,11 @@ page "Meena: a home screen for Android" "$(cat <<EOF
   <li><strong>apps</strong>: search, a letter index, and sorting by category or last used</li>
 </ul>
 <p>Every widget shows real information or says what it needs. No ads, no accounts, no tracking.</p>
+<div class="shots">
+  <img src="screenshots/01-today.png" width="1080" height="1920" alt="Today page with clock, weather, favourite tiles and forecast">
+  <img src="screenshots/03-nearby-map.png" width="1080" height="1920" alt="Nearby map with 3 km and 5 km rings, compass and qibla line">
+  <img src="screenshots/06-apps.png" width="1080" height="1920" alt="Apps page sorted by category">
+</div>
 <p>Version 0.1.0 is getting ready for a Google Play closed test. It is not on the Play Store yet.</p>
 <h2>Links</h2>
 <ul class="links">
