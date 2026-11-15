@@ -5,7 +5,7 @@ Status on 16 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 ## Where we are
 
 **Version 0.1.0**, published as a GitHub release. Built and tested on the emulator and a TECNO KL8 (Android 14); starts on a Sony SO-02J (Android 8.0).
-**Blocked on:** a personal Google Play developer account (owner).
+**Blocked on:** a personal Google Play developer account (owner; on hold for now, 16 Nov 2026).
 
 | Check | Result (16 Nov 2026) |
 |---|---|
@@ -24,9 +24,9 @@ Status on 16 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 ## Next (in order)
 
-1. **Play developer account** (owner). Then Play App Signing with the existing upload key (`D:\HaNa_Innovation\keys\meena-upload.jks`).
+1. **Play developer account** (owner; on hold for now). Then Play App Signing with the existing upload key (`D:\HaNa_Innovation\keys\meena-upload.jks`).
 2. **Internal test**, then **closed test**: 12 testers opted in for 14 continuous days (personal account rule). Tester guide: https://manaphassan.github.io/Meena-Launcher/tester-guide/
-3. **Task test** (`task-test-plan.md`) with 5 people, to measure UI area 4. Waiting on the owner's choice of what to compare against.
+3. **Task test** (`task-test-plan.md`) with 5 people, to measure UI area 4. Proposed: AIO Launcher against Meena on the Sony; waiting for the owner's yes.
 4. **Play Console forms:** Data safety (answers in `play-store-compliance.md`), financial features declaration (check how the crypto and gold prices are answered), Health Connect declaration, content rating, target audience 13+.
 5. **Production**, staged rollout 10 to 20%.
 
@@ -34,15 +34,14 @@ Status on 16 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 | # | Question | Notes |
 |---|---|---|
-| 1 | "Malaysia top 5" on the money page: biggest 5 companies, today's movers, or the KLCI index? | Movers aren't possible from a sheet; the KLCI code on Google Finance isn't found yet |
-| 2 | Bank Negara API terms | The portal blocks automated reading; read it in a browser before release |
-| 3 | Task test comparison: stock launcher (proposed), 3 vs 5 lines, or Meena alone | `task-test-plan.md` |
-| 4 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
+| 1 | Bank Negara API terms | Owner said yes to reading them in a browser (16 Nov); the agent still can't open the portal. Tell the agent if they ask for attribution or set limits, so the widget can follow them |
+| 2 | Task test comparison | Proposed: AIO Launcher (A) against Meena (B) on the Sony SO-02J; fallback: the Sony's own home screen. See `task-test-plan.md` |
+| 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
+
+Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 
 ## Backlog (not scheduled)
 
-- "malaysia top 5" once decided.
-- KLCI index on the money page, if a code that works in the sheet is found.
 - Compose UI tests (only unit tests today).
 - Lint warning clean-up (136, mostly unused resources).
 - Sparklines for stocks. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].

@@ -9,11 +9,12 @@ The plan compares layout A with layout B through a debug-only switch. Layout A w
 
 | Option | A | B | Notes |
 |---|---|---|---|
-| **1 (proposed)** | The phone's own home screen (for the TECNO, its stock launcher) | Meena | Compares Meena with what people already use. No code needed. |
-| 2 | Meena with the 3-line rule off (`maxLinesOrItems` 5) | Meena with the 3-line rule on (3) | Needs a debug-only switch and the 3-line rule to be built first. |
+| **4 (proposed, 16 Nov)** | AIO Launcher, set up with the same widgets | Meena | The fairest test of rubric area 4 ("content focus, AIO goal"): same content, different layout. Run on the Sony SO-02J, so no one sees the owner's messages. Needs AIO installed there from Play (free). |
+| 1 (fallback) | The phone's own home screen (Xperia Home on the Sony, HiOS on the TECNO) | Meena | What people already use. Likely weak on T3 and T5: I don't expect either stock screen to show prayer times or a 5-day forecast without another app [S: not checked]. |
+| 2 | Meena at 5 lines | Meena at 3 lines | No code needed now (settings, pages, widget length). Only tells which length is better, not whether Meena beats anything. Good as a short extra round. |
 | 3 | none | Meena | Checks Meena against fixed targets only (below). Weakest evidence. |
 
-Until you choose, the rest of this plan uses **option 1**.
+Until the owner says yes to option 4, the rest of this plan reads "A" as option 1. With option 4, read "stock launcher" below as "AIO Launcher".
 
 ## People and phone
 
