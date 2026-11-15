@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Meena logo glyph: a solid lowercase m on a 5-unit pixel grid with one bite out of the
+     top-right corner. Master copy: store/logo/meena-glyph.svg. Inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M29,36H49V41H59V36H74V41H79V71H69V46H59V71H49V46H39V71H29Z" />
+</vector>

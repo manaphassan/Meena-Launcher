@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <!-- Meena logo: a solid lowercase m on a 5-unit pixel grid, with one bite out of the
+       top-right corner (the "byte"). Same 108-unit canvas as the Android adaptive icon;
+       the glyph stays inside the 66-unit safe zone. -->
+  <rect width="108" height="108" fill="#014596"/>
+  <path fill="#FFFFFF" d="M29,36H49V41H59V36H74V41H79V71H69V46H59V71H49V46H39V71H29Z"/>
+</svg>
