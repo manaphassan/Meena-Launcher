@@ -324,6 +324,7 @@ private fun PortfolioSection(
                     val syncedAt = data.sheetSyncedAt
                     Text(
                         text = when {
+                            !data.sheetConnected && !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_needs_prices)
                             !data.sheetConnected -> stringResource(R.string.finance_source_local)
                             syncedAt == null -> stringResource(R.string.finance_sheet_not_loaded)
                             state is WidgetState.Stale -> stringResource(R.string.finance_source_sheet_saved, updatedAgoText(syncedAt))

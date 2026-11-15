@@ -338,6 +338,7 @@
     <string name="finance_source_sheet_saved">%1$s · google sheets · saved copy</string>
     <string name="finance_sheet_not_loaded">sheet not loaded yet · showing prices you entered</string>
     <string name="finance_source_local">prices you entered</string>
+    <string name="finance_needs_prices">no prices yet. link your google sheet in settings, connections, money.</string>
     <string name="rates_source_live">%1$s · daily rates via frankfurter</string>
     <string name="rates_source_saved">%1$s · daily rates via frankfurter · saved copy</string>
     <string name="finance_delay_notice">prices from google sheets can be up to 20 minutes late</string>
