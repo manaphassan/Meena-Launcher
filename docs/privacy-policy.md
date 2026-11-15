@@ -1,7 +1,7 @@
 # Privacy Policy for Meena
 
 **Effective Date:** 14 November 2026  
-**Last Updated:** 15 November 2026 (new contact email)  
+**Last Updated:** 15 November 2026 (new contact email, shake to hide, email section)  
 **Application:** Meena (Package: `my.hana.meena`)  
 **Developer:** HaNa Innovation  
 **Contact:** harussani@outlook.my  
@@ -74,6 +74,14 @@ Meena requests only the minimal set of Android permissions necessary to provide 
 - **Purpose:** Core launcher functionality to discover and display installed applications on the Apps hub, and allow launching, pinning, or uninstalling apps.
 - **Handling:** Applications are queried locally via the Android system `LauncherApps` API. The broad `QUERY_ALL_PACKAGES` permission has been completely eliminated in favor of targeted intent filters. Your app list is never shared or profiled.
 - **Icon packs:** If you choose an icon pack, Meena finds installed icon packs through the same kind of targeted filters and reads the pack's own icon list from it on your phone. Nothing about your apps or the pack leaves the device.
+
+### 2.8 Motion Sensor (shake to hide)
+- **Purpose:** Shaking the phone blurs chats, email, alerts, notes and money on the home pages, and shaking again shows them.
+- **Handling:** While Meena is on screen and **shake to hide** is on, it reads the accelerometer to notice a shake. The readings are used straight away and never stored or sent. This sensor needs no Android permission. Turn it off in **settings, system, shake to hide**.
+
+### 2.9 Email Notifications
+- **Purpose:** The inbox's email section lists new mail from email apps on your phone, such as Gmail.
+- **Handling:** It uses the same notification access as alerts and chats (section 2.3): Meena shows the sender and subject that the email app put in its notification. It does not sign in to your email account or read your mailbox.
 
 ---
 
