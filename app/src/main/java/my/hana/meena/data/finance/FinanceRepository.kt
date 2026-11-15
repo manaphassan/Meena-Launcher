@@ -100,6 +100,16 @@ data class FinanceData(
     val sheetSyncedAt: Long? = null
 )
 
+/** "KLSE:FFB", "ffb" and "FFB.KL" all mean FFB, so a holding matches its sheet row however it was typed. */
+fun plainTicker(symbol: String): String = symbol.trim().uppercase()
+    .removePrefix("KLSE:").removeSuffix(".KL").removePrefix("NASDAQ:").removePrefix("NYSE:")
+
+/** Sheet rows the person doesn't own; owned ones already show as holdings, so they aren't listed twice. */
+fun FinanceData.unheldWatchlist(): List<FinanceTicker> {
+    val held = holdings.map { plainTicker(it.symbol) }.toSet()
+    return watchlist.filter { plainTicker(it.symbol) !in held }
+}
+
 /**
  * Compliance-ready Finance Repository.
  * Primary live quote source: Google Sheets bridge (user's sheet with GOOGLEFINANCE formulas).

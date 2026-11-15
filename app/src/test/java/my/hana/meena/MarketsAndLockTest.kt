@@ -1,6 +1,7 @@
 package my.hana.meena
 
 import my.hana.meena.data.finance.Markets
+import my.hana.meena.data.finance.unheldWatchlist
 import my.hana.meena.data.finance.PricePoint
 import my.hana.meena.data.model.MeenaUserSettings
 import my.hana.meena.data.model.WidgetConfig
@@ -242,6 +243,23 @@ class MarketsAndLockTest {
     fun tickers_defaultToTheBuiltInLists() {
         assertEquals(Markets.DEFAULT_TICKERS, MeenaUserSettings().marketTickers)
         assertEquals(Markets.DEFAULT_RATES, MeenaUserSettings().rateCurrencies)
+    }
+
+    // Stocks from the sheet
+
+    @Test
+    fun watchlist_leavesOutWhatYouOwn_howeverItWasTyped() {
+        val data = my.hana.meena.data.finance.FinanceData(
+            holdings = listOf(
+                my.hana.meena.data.finance.FinanceHolding(symbol = "ffb", name = "", shares = 1.0, averageCost = 1.0, currentPrice = 1.0),
+                my.hana.meena.data.finance.FinanceHolding(symbol = "HLAL", name = "", shares = 1.0, averageCost = 1.0, currentPrice = 1.0)
+            ),
+            watchlist = listOf("KLSE:BURSA", "KLSE:FFB", "NASDAQ:HLAL", "KLSE:AXIATA").map {
+                my.hana.meena.data.finance.FinanceTicker(symbol = it, tickerDisplay = it.substringAfter(':'), name = it)
+            }
+        )
+        assertEquals(listOf("KLSE:BURSA", "KLSE:AXIATA"), data.unheldWatchlist().map { it.symbol })
+        assertEquals("FFB", my.hana.meena.data.finance.plainTicker("ffb.kl"))
     }
 
     // Double tap to lock

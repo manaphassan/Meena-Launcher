@@ -1,0 +1,6 @@
+symbol,price,change,changePercent,name
+KLSE:BURSA,"=GOOGLEFINANCE(A2,""price"")","=GOOGLEFINANCE(A2,""change"")","=GOOGLEFINANCE(A2,""changepct"")",bursa malaysia berhad
+KLSE:AXIATA,"=GOOGLEFINANCE(A3,""price"")","=GOOGLEFINANCE(A3,""change"")","=GOOGLEFINANCE(A3,""changepct"")",axiata group berhad
+KLSE:FFB,"=GOOGLEFINANCE(A4,""price"")","=GOOGLEFINANCE(A4,""change"")","=GOOGLEFINANCE(A4,""changepct"")",farm fresh berhad
+KLSE:SENHENG,"=GOOGLEFINANCE(A5,""price"")","=GOOGLEFINANCE(A5,""change"")","=GOOGLEFINANCE(A5,""changepct"")",senheng new retail berhad
+NASDAQ:HLAL,"=GOOGLEFINANCE(A6,""price"")*GOOGLEFINANCE(""CURRENCY:USDMYR"")","=GOOGLEFINANCE(A6,""change"")*GOOGLEFINANCE(""CURRENCY:USDMYR"")","=GOOGLEFINANCE(A6,""changepct"")",wahed ftse usa shariah etf (in ringgit)

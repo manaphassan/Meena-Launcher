@@ -521,11 +521,11 @@
     <string name="finance_guide_status">5 columns and a share link</string>
     <string name="finance_guide_page">sheet setup</string>
     <string name="finance_guide_step_1">1. make a sheet with these five columns</string>
-    <string name="finance_guide_col_a">a · symbol, like klse:bursa, btc or aapl</string>
+    <string name="finance_guide_col_a">a · symbol, like klse:bursa or nasdaq:hlal</string>
     <string name="finance_guide_col_b">b · price: =googlefinance(a2, \"price\")</string>
     <string name="finance_guide_col_c">c · change: =googlefinance(a2, \"change\")</string>
     <string name="finance_guide_col_d">d · change in percent: =googlefinance(a2, \"changepct\")</string>
-    <string name="finance_guide_col_e">e · name</string>
+    <string name="finance_guide_col_e">e · name, typed in yourself (the sheet can\'t look names up)</string>
     <string name="finance_guide_step_2">2. share it so anyone with the link can view</string>
     <string name="finance_guide_step_3">3. copy the link and paste it on the money page</string>
     <string name="home_title_title">home title</string>

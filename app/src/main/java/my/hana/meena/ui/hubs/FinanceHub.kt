@@ -42,6 +42,7 @@ import my.hana.meena.R
 import my.hana.meena.data.finance.ExchangeRateRepository
 import my.hana.meena.data.finance.FinanceHolding
 import my.hana.meena.data.finance.FinanceRepository
+import my.hana.meena.data.finance.unheldWatchlist
 import my.hana.meena.data.finance.KijangEmas
 import my.hana.meena.data.finance.KijangEmasData
 import my.hana.meena.data.finance.KijangEmasRepository
@@ -396,8 +397,9 @@ private fun PortfolioSection(
                     }
                 }
 
-                // Watchlist Items
-                if (data.watchlist.isNotEmpty()) {
+                // Watchlist Items: sheet rows you don't own. Owned ones already show above as holdings.
+                val watchlist = data.unheldWatchlist()
+                if (watchlist.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.finance_watchlist_title),
@@ -405,7 +407,7 @@ private fun PortfolioSection(
                         color = MeenaTextMuted
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-                        data.watchlist.forEach { item ->
+                        watchlist.forEach { item ->
                             val isBull = item.change >= 0
                             val hasPrice = item.price > 0.0
                             val ticker = item.tickerDisplay.lowercase()
