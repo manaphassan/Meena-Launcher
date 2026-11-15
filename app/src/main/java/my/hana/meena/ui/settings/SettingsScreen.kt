@@ -623,6 +623,109 @@ private fun LazyListScope.systemTab(settingsState: MeenaUserSettings, context: a
     }
 }
 
+/**
+ * AIO-style ticker list: "add ticker" opens a full-screen search over Frankfurter's list, and each
+ * added ticker is a row; tapping one asks before taking it off.
+ */
+@Composable
+private fun TickerListEditor(
+    tickers: List<String>,
+    types: Set<String>,
+    max: Int,
+    addHint: String,
+    onChange: (List<String>) -> Unit
+) {
+    val context = LocalContext.current
+    val catalogueState by my.hana.meena.data.finance.TickerCatalogueRepository.state.collectAsState()
+    var showPicker by remember { mutableStateOf(false) }
+    var toRemove by remember { mutableStateOf<String?>(null) }
+    val fullMessage = stringResource(R.string.ticker_full)
+    val loadingMessage = stringResource(R.string.ticker_loading)
+    val failedMessage = stringResource(R.string.ticker_failed)
+    LaunchedEffect(Unit) { my.hana.meena.data.finance.TickerCatalogueRepository.load(context) }
+
+    val catalogue = (catalogueState as? my.hana.meena.data.finance.TickerCatalogueRepository.State.Ready)
+        ?.tickers.orEmpty().filter { it.type in types }
+    val nameOf = { code: String ->
+        catalogue.firstOrNull { it.code == code }?.let { my.hana.meena.data.finance.Markets.displayName(it) } ?: code.lowercase()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+        SettingLinkRow(
+            title = stringResource(R.string.ticker_add),
+            status = addHint,
+            onClick = {
+                when {
+                    tickers.size >= max -> my.hana.meena.ui.components.MetroMessage.show(fullMessage)
+                    catalogueState is my.hana.meena.data.finance.TickerCatalogueRepository.State.Ready -> showPicker = true
+                    catalogueState is my.hana.meena.data.finance.TickerCatalogueRepository.State.Failed -> {
+                        my.hana.meena.ui.components.MetroMessage.show(failedMessage)
+                        my.hana.meena.data.finance.TickerCatalogueRepository.load(context)
+                    }
+                    else -> my.hana.meena.ui.components.MetroMessage.show(loadingMessage)
+                }
+            }
+        )
+        Text(
+            text = stringResource(R.string.ticker_list_title),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m)
+        )
+        if (tickers.isEmpty()) {
+            Text(stringResource(R.string.ticker_list_empty), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
+        }
+        tickers.forEach { code ->
+            SettingsPivotRow(
+                title = code.lowercase(),
+                status = stringResource(R.string.ticker_tap_to_remove, nameOf(code)),
+                onClick = { toRemove = code }
+            )
+        }
+    }
+
+    if (showPicker) {
+        val typeLabel = mapOf(
+            "crypto" to stringResource(R.string.ticker_type_crypto),
+            "metal" to stringResource(R.string.ticker_type_metal),
+            "currency" to stringResource(R.string.ticker_type_currency)
+        )
+        val items = remember(catalogue, tickers) {
+            catalogue.filter { it.code !in tickers }.map { ticker ->
+                MetroPickerItem(
+                    key = ticker.code,
+                    title = ticker.code,
+                    subtitle = listOfNotNull(my.hana.meena.data.finance.Markets.displayName(ticker), typeLabel[ticker.type]).joinToString(" · ")
+                )
+            }
+        }
+        MetroListPicker(
+            title = stringResource(R.string.ticker_add),
+            items = items,
+            selectedKey = "",
+            onSelect = { code ->
+                my.hana.meena.data.finance.Markets.addTicker(tickers, code, max)?.let(onChange)
+            },
+            onDismiss = { showPicker = false },
+            enableSearch = true
+        )
+    }
+
+    toRemove?.let { code ->
+        MetroDialog(
+            title = stringResource(R.string.ticker_remove_title),
+            message = stringResource(R.string.ticker_remove_question, code.lowercase()),
+            confirmText = stringResource(R.string.action_yes),
+            dismissText = stringResource(R.string.action_no),
+            onConfirm = {
+                onChange(tickers - code)
+                toRemove = null
+            },
+            onDismiss = { toRemove = null }
+        )
+    }
+}
+
 /** Zune HD style list row: large light title, small grey status underneath, nothing boxed. */
 @Composable
 private fun SettingsPivotRow(
@@ -865,6 +968,37 @@ private fun SubPageContainer(
                             title = stringResource(R.string.frequent_apps_clear),
                             status = stringResource(R.string.frequent_apps_clear_hint),
                             onClick = { confirmClear = true }
+                        )
+                    }
+                }
+
+                "widget-markets" -> {
+                    item {
+                        TickerListEditor(
+                            tickers = settingsState.marketTickers,
+                            types = setOf("crypto", "metal"),
+                            max = my.hana.meena.data.finance.Markets.MAX_MARKET_TICKERS,
+                            addHint = stringResource(R.string.ticker_add_hint),
+                            onChange = { list -> onUpdate { it.copy(marketTickers = list) } }
+                        )
+                    }
+                    item {
+                        Text(
+                            text = stringResource(R.string.ticker_stocks_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MeenaTextMuted
+                        )
+                    }
+                }
+
+                "widget-exchange-rates" -> {
+                    item {
+                        TickerListEditor(
+                            tickers = settingsState.rateCurrencies,
+                            types = setOf("currency"),
+                            max = my.hana.meena.data.finance.Markets.MAX_RATE_CURRENCIES,
+                            addHint = stringResource(R.string.ticker_add_currency_hint),
+                            onChange = { list -> onUpdate { it.copy(rateCurrencies = list) } }
                         )
                     }
                 }

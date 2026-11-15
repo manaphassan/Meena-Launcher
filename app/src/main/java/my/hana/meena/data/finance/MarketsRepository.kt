@@ -19,7 +19,7 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 /**
- * Daily gold, silver, bitcoin and ether prices in ringgit, with a year of history for the chart.
+ * Daily prices in ringgit for the metals and coins the person follows, with a year of history.
  * Source: Frankfurter v2 blended rates (https://frankfurter.dev), keyless; its FAQ says blended
  * rates are free for commercial use and may be cached. These are reference prices published once
  * or a few times a day, not live quotes, and the widget says so.
@@ -50,13 +50,22 @@ object MarketsRepository : WidgetSpec<MarketsData> {
 
     private var initialized = false
 
-    fun initialize(context: Context) {
+    @Volatile
+    private var codes: List<String> = Markets.DEFAULT_TICKERS
+
+    fun initialize(context: Context, tickers: List<String> = Markets.DEFAULT_TICKERS) {
         val appContext = context.applicationContext
+        val changed = tickers != codes
+        codes = tickers
         if (!initialized) {
             initialized = true
             loadCachedData(appContext)
         }
-        refresh(appContext, force = false)
+        if (tickers.isEmpty()) return
+        // A ticker the saved copy doesn't have yet needs a fresh load.
+        val have = (_state.value as? WidgetState.Ready)?.data?.quotes?.map { it.code }.orEmpty() +
+            (_state.value as? WidgetState.Stale)?.data?.quotes?.map { it.code }.orEmpty()
+        refresh(appContext, force = changed && !have.containsAll(tickers))
     }
 
     override fun fetchInitialState(): WidgetState<MarketsData> = _state.value
@@ -88,14 +97,16 @@ object MarketsRepository : WidgetSpec<MarketsData> {
         }
 
         try {
-            val request = Request.Builder().url(Markets.url(Markets.oneYearAgo(now))).build()
+            val wanted = codes
+            if (wanted.isEmpty()) return@withLock
+            val request = Request.Builder().url(Markets.url(Markets.oneYearAgo(now), wanted)).build()
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     handleFailure("couldn't load prices (${response.code}). tap to try again.")
                     return@withLock
                 }
                 val body = response.body?.string().orEmpty()
-                val quotes = Markets.toQuotes(Markets.parse(body))
+                val quotes = Markets.toQuotes(Markets.parse(body), wanted)
                 if (quotes.isEmpty()) {
                     handleFailure("no prices came back. tap to try again.")
                     return@withLock

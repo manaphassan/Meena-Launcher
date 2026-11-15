@@ -71,6 +71,10 @@ data class MeenaUserSettings(
     val shakeToHide: Boolean = true,
     /** Double tap an empty spot on a home page to lock the phone. Needs Android's device admin okay. */
     val doubleTapToLock: Boolean = false,
+    /** Metals and coins on the markets widget, as Frankfurter codes (XAU, BTC), in the person's order. */
+    val marketTickers: List<String> = my.hana.meena.data.finance.Markets.DEFAULT_TICKERS,
+    /** Currencies in the exchange rates table, as ISO codes, in the person's order. */
+    val rateCurrencies: List<String> = my.hana.meena.data.finance.Markets.DEFAULT_RATES,
     /** Bumped when a one-time Today layout change is applied, so it never runs twice. */
     val layoutRevision: Int = 0
 ) {

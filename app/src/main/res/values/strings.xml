@@ -338,8 +338,8 @@
     <string name="finance_source_sheet_saved">%1$s · google sheets · saved copy</string>
     <string name="finance_sheet_not_loaded">sheet not loaded yet · showing prices you entered</string>
     <string name="finance_source_local">prices you entered</string>
-    <string name="rates_source_live">%1$s · european central bank</string>
-    <string name="rates_source_saved">%1$s · european central bank · saved copy</string>
+    <string name="rates_source_live">%1$s · daily rates via frankfurter</string>
+    <string name="rates_source_saved">%1$s · daily rates via frankfurter · saved copy</string>
     <string name="finance_delay_notice">prices from google sheets can be up to 20 minutes late</string>
     <string name="finance_hide_amounts">hide amounts</string>
 
@@ -657,9 +657,32 @@
     <string name="rates_setup">pick your currencies. tap to set up.</string>
     <string name="rates_loading">loading exchange rates</string>
     <string name="rates_empty">no exchange rates right now</string>
-    <!-- 1 usd = 4.08 myr, kept on one line with no-break spaces -->
-    <string name="rates_pair">%1$d %2$s = %3$s %4$s</string>
+    <string name="rates_col_currency">currency</string>
+    <string name="rates_col_ringgit">in ringgit</string>
+    <string name="rates_col_change">change</string>
+    <!-- "100 jpy": how many units the ringgit price is for -->
+    <string name="rates_unit">%1$s %2$s</string>
     <string name="finance_no_price">-</string>
+    <string name="finance_show_fewer">show fewer</string>
+
+    <!-- Add ticker (settings, pages, markets or exchange rates) -->
+    <string name="ticker_add">add ticker</string>
+    <string name="ticker_add_hint">find a coin or metal and add it</string>
+    <string name="ticker_add_currency_hint">find a currency and add it</string>
+    <string name="ticker_list_title">tickers</string>
+    <string name="ticker_list_empty">nothing added yet</string>
+    <string name="ticker_tap_to_remove">%1$s · tap to remove</string>
+    <string name="ticker_loading">loading the list. try again in a moment.</string>
+    <string name="ticker_failed">couldn\'t load the list. check your connection and try again.</string>
+    <string name="ticker_full">that\'s the most this widget can follow. remove one first.</string>
+    <string name="ticker_remove_title">remove ticker</string>
+    <string name="ticker_remove_question">take %1$s off the list?</string>
+    <string name="ticker_stocks_note">stocks such as bursa shares come from your google sheet. see settings, connections, money.</string>
+    <string name="ticker_type_crypto">coin</string>
+    <string name="ticker_type_metal">metal, per oz</string>
+    <string name="ticker_type_currency">currency</string>
+    <string name="markets_none">not following anything</string>
+    <string name="markets_none_hint">tap to add a coin or metal</string>
 
     <!-- Markets (money page) -->
     <string name="widget_name_markets">markets</string>

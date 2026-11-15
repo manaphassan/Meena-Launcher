@@ -113,7 +113,7 @@ class MarketsAndLockTest {
     fun chartColours_readOnEveryPage() {
         for (palette in listOf(MeenaDarkPalette, MeenaLightPalette, MeenaPaperPalette)) {
             val colours = chartSeriesColours(palette)
-            assertEquals(Markets.ASSETS.size, colours.size)
+            assertTrue(colours.size >= Markets.MAX_MARKET_TICKERS)
             for (colour in colours) for (page in pageColours(palette)) {
                 assertTrue("${palette.id} colour too faint", calculateContrastRatio(colour, page) >= 4.5f)
             }
@@ -184,6 +184,64 @@ class MarketsAndLockTest {
         assertEquals(days, my.hana.meena.data.finance.KijangEmas.decode(my.hana.meena.data.finance.KijangEmas.encode(days)))
         assertEquals("12 nov", my.hana.meena.data.finance.KijangEmas.dayLabel("2026-11-12"))
         assertEquals("https://api.bnm.gov.my/public/kijang-emas/year/2026/month/11", my.hana.meena.data.finance.KijangEmas.monthUrl(2026, 11))
+    }
+
+    // Add ticker and the rates table
+
+    @Test
+    fun catalogue_readsFrankfurtersList_withoutRinggit() {
+        val body = """[{"iso_code":"SOL","name":"Solana","type":"crypto"},
+            {"iso_code":"MYR","name":"Malaysian Ringgit","type":"currency"},
+            {"iso_code":"XPT","name":"Platinum","type":"metal"},
+            {"iso_code":"XAU","name":"Gold (Troy Ounce)","type":"metal"},
+            {"name":"no code"}]"""
+        val list = Markets.parseCatalogue(body)
+        assertEquals(listOf("SOL", "XAU", "XPT"), list.map { it.code })
+        assertEquals("gold", Markets.displayName(list[1]))
+        assertEquals("solana", Markets.displayName(list[0]))
+        assertTrue(Markets.parseCatalogue("oops").isEmpty())
+    }
+
+    @Test
+    fun addTicker_onceAndWithinTheLimit() {
+        assertEquals(listOf("BTC", "SOL"), Markets.addTicker(listOf("BTC"), "sol", 8))
+        assertNull(Markets.addTicker(listOf("BTC"), "BTC", 8))
+        assertNull(Markets.addTicker(listOf("A", "B"), "C", 2))
+    }
+
+    @Test
+    fun unitFor_keepsEveryRateAtLeastOneRinggit() {
+        assertEquals(1, Markets.unitFor(4.09))
+        assertEquals(1, Markets.unitFor(1.0))
+        assertEquals(10, Markets.unitFor(0.12))
+        assertEquals(100, Markets.unitFor(0.0255))
+        assertEquals(10_000, Markets.unitFor(0.00026))
+    }
+
+    @Test
+    fun rateItems_followTheChosenOrder_withChangeSinceTheDayBefore() {
+        val series = Markets.parse(
+            """[{"date":"2026-11-13","base":"MYR","quote":"USD","rate":0.25},
+                {"date":"2026-11-14","base":"MYR","quote":"USD","rate":0.20},
+                {"date":"2026-11-14","base":"MYR","quote":"JPY","rate":40}]"""
+        )
+        val items = Markets.rateItems(series, listOf("JPY", "USD", "XXX"))
+        assertEquals(listOf("JPY", "USD"), items.map { it.currency })
+        assertEquals(5.0, items[1].rateToBase, 1e-9)
+        assertEquals(25.0, items[1].changePercent!!, 1e-9)
+        assertNull(items[0].changePercent)
+    }
+
+    @Test
+    fun tinyPrices_keepThreeFigures() {
+        assertEquals("0.0000523", Markets.formatPrice(0.00005234))
+        assertEquals("0.712", Markets.formatPrice(0.7123))
+    }
+
+    @Test
+    fun tickers_defaultToTheBuiltInLists() {
+        assertEquals(Markets.DEFAULT_TICKERS, MeenaUserSettings().marketTickers)
+        assertEquals(Markets.DEFAULT_RATES, MeenaUserSettings().rateCurrencies)
     }
 
     // Double tap to lock

@@ -2,25 +2,31 @@ package my.hana.meena.data.finance
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import my.hana.meena.ui.widgets.RefreshPolicy
 import my.hana.meena.ui.widgets.WidgetSpec
 import my.hana.meena.ui.widgets.WidgetState
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 data class ExchangeRateItem(
     val currency: String,
     val rateToBase: Double,      // e.g. 1 USD = 4.08 MYR
-    val baseToCurrency: Double   // e.g. 1 MYR = 0.2448 USD
+    val baseToCurrency: Double,  // e.g. 1 MYR = 0.2448 USD
+    /** Change of [rateToBase] since the previous published day, in percent; null with one day only. */
+    val changePercent: Double? = null
 )
 
 data class ExchangeRatesData(
@@ -30,19 +36,23 @@ data class ExchangeRatesData(
 )
 
 /**
- * Live Foreign Exchange Rates Repository backed by Frankfurter (European Central Bank reference rates).
- * Free tier, no API key required, reliable daily reference rates.
- * Follows Meena UI Hard Rule 1: No fake rates, cache-backed offline resilience.
+ * Ringgit exchange rates for the currencies the person picked, from Frankfurter v2 blended rates
+ * (https://frankfurter.dev, keyless, free for commercial use). Asks for the last ten days, so each
+ * rate has a previous day to compare with even after a weekend or holiday.
+ * Follows Meena UI Hard Rule 1: no fake rates, cache-backed offline resilience.
  */
 object ExchangeRateRepository : WidgetSpec<ExchangeRatesData> {
     private const val TAG = "ExchangeRateRepository"
     private const val PREFS_NAME = "meena_exchange_rates_cache"
-    private const val KEY_CACHED_JSON = "cached_rates_json"
-    private const val KEY_CACHED_TIME = "cached_rates_timestamp"
+    // v2 replies are kept under new keys; the old v1 copy is simply ignored.
+    private const val KEY_CACHED_JSON = "cached_rates_v2_json"
+    private const val KEY_CACHED_TIME = "cached_rates_v2_timestamp"
+    private const val MIN_REFRESH_MS = 60 * 60 * 1000L
+    private const val DAYS_BACK = 10
 
     override val id = "widget-exchange-rates"
     override val title = "exchange rates"
-    override val source = "European Central Bank via Frankfurter"
+    override val source = "Frankfurter (blended central bank reference rates)"
     override val refreshPolicy = RefreshPolicy.PERIODIC_MINUTES
     override val defaultRefreshMinutes = 60
 
@@ -50,38 +60,47 @@ object ExchangeRateRepository : WidgetSpec<ExchangeRatesData> {
     val state: StateFlow<WidgetState<ExchangeRatesData>> = _state.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val mutex = Mutex()
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // Default target currencies of interest to display
-    private val defaultTargetCurrencies = listOf(
-        "USD", "SGD", "EUR", "GBP", "JPY", "CNY", "AUD", "THB", "IDR"
-    )
+    @Volatile
+    private var codes: List<String> = Markets.DEFAULT_RATES
 
-    fun initialize(context: Context, baseCurrency: String = "MYR") {
-        // Load cache if available
-        loadCachedData(context, baseCurrency)
-        // Refresh live data
-        refresh(context, baseCurrency)
+    /** Shows the saved copy for [currencies], then refreshes if it is old or the list changed. */
+    fun initialize(context: Context, currencies: List<String>) {
+        val appContext = context.applicationContext
+        val changed = currencies != codes
+        codes = currencies
+        if (currencies.isEmpty()) {
+            _state.value = WidgetState.Empty
+            return
+        }
+        if (_state.value !is WidgetState.Ready || changed) loadCachedData(appContext)
+        refresh(appContext, force = changed)
     }
 
     override fun fetchInitialState(): WidgetState<ExchangeRatesData> = _state.value
 
     override suspend fun refresh(): WidgetState<ExchangeRatesData> {
-        refreshInternal("MYR")
+        refreshInternal(null, force = true)
         return _state.value
     }
 
-    fun refresh(context: Context, baseCurrency: String = "MYR", force: Boolean = false) {
-        scope.launch {
-            refreshInternal(baseCurrency, context)
-        }
+    fun refresh(context: Context, force: Boolean = true) {
+        val appContext = context.applicationContext
+        scope.launch { refreshInternal(appContext, force) }
     }
 
-    private suspend fun refreshInternal(baseCurrency: String, context: Context? = null) {
+    private suspend fun refreshInternal(context: Context?, force: Boolean) = mutex.withLock {
+        val wanted = codes
+        if (wanted.isEmpty()) return@withLock
         val current = _state.value
+        val now = System.currentTimeMillis()
+        if (!force && current is WidgetState.Ready && now - current.updatedAt < MIN_REFRESH_MS) return@withLock
+
         if (current is WidgetState.Ready) {
             _state.value = WidgetState.Stale(current.data, current.updatedAt)
         } else if (current !is WidgetState.Stale) {
@@ -89,105 +108,57 @@ object ExchangeRateRepository : WidgetSpec<ExchangeRatesData> {
         }
 
         try {
-            val url = "https://api.frankfurter.dev/v1/latest?base=${baseCurrency.uppercase()}"
-            val request = Request.Builder().url(url).build()
-            val response = httpClient.newCall(request).execute()
-
-            if (!response.isSuccessful) {
-                handleFailure("couldn't fetch exchange rates (${response.code})")
-                return
+            val from = Calendar.getInstance().apply {
+                timeInMillis = now
+                add(Calendar.DAY_OF_YEAR, -DAYS_BACK)
             }
-
-            val body = response.body?.string()
-            if (body.isNullOrBlank()) {
-                handleFailure("empty response from exchange rate service")
-                return
-            }
-
-            val parsedData = parseRatesJson(body, baseCurrency.uppercase())
-            if (parsedData != null) {
-                val now = System.currentTimeMillis()
-                _state.value = WidgetState.Ready(parsedData, now)
-
-                context?.let { ctx ->
-                    saveCachedData(ctx, body, now)
+            val url = Markets.url(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(from.time), wanted)
+            httpClient.newCall(Request.Builder().url(url).build()).execute().use { response ->
+                if (!response.isSuccessful) {
+                    handleFailure("couldn't load exchange rates (${response.code}). tap to try again.")
+                    return@withLock
                 }
-            } else {
-                handleFailure("unable to parse exchange rate data")
+                val body = response.body?.string().orEmpty()
+                val data = toData(body, wanted)
+                if (data == null) {
+                    handleFailure("no exchange rates came back. tap to try again.")
+                    return@withLock
+                }
+                _state.value = WidgetState.Ready(data, now)
+                context?.let { saveCachedData(it, body, now) }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to fetch live exchange rates", e)
-            handleFailure("network error. tap to retry.")
+            Log.w(TAG, "Failed to fetch exchange rates", e)
+            handleFailure("no connection. tap to try again.")
         }
     }
 
+    private fun toData(body: String, wanted: List<String>): ExchangeRatesData? {
+        val series = Markets.parse(body)
+        val items = Markets.rateItems(series, wanted)
+        if (items.isEmpty()) return null
+        val date = series.values.mapNotNull { it.lastOrNull()?.date }.maxOrNull().orEmpty()
+        return ExchangeRatesData(baseCurrency = "MYR", dateString = date, rates = items)
+    }
+
     private fun handleFailure(message: String) {
-        val current = _state.value
-        if (current is WidgetState.Stale) {
-            // Keep showing stale data with freshness warning
-            Log.d(TAG, "Retaining stale exchange rates on failure")
-        } else {
+        if (_state.value !is WidgetState.Stale) {
             _state.value = WidgetState.Error(message)
         }
     }
 
-    private fun parseRatesJson(jsonString: String, baseCurrency: String): ExchangeRatesData? {
-        return try {
-            val root = JSONObject(jsonString)
-            val dateStr = root.optString("date", "")
-            val ratesObj = root.optJSONObject("rates") ?: return null
-
-            val items = mutableListOf<ExchangeRateItem>()
-            for (target in defaultTargetCurrencies) {
-                if (target.equals(baseCurrency, ignoreCase = true)) continue
-                if (ratesObj.has(target)) {
-                    val rate = ratesObj.getDouble(target)
-                    if (rate > 0.0) {
-                        // rate is 1 baseCurrency = X targetCurrency
-                        // reciprocal is 1 targetCurrency = (1 / rate) baseCurrency
-                        val reciprocal = 1.0 / rate
-                        items.add(
-                            ExchangeRateItem(
-                                currency = target,
-                                rateToBase = reciprocal,
-                                baseToCurrency = rate
-                            )
-                        )
-                    }
-                }
-            }
-
-            ExchangeRatesData(
-                baseCurrency = baseCurrency,
-                dateString = dateStr,
-                rates = items
-            )
-        } catch (e: Exception) {
-            Log.w(TAG, "Error parsing rates json", e)
-            null
-        }
-    }
-
-    private fun loadCachedData(context: Context, baseCurrency: String) {
+    private fun loadCachedData(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val cachedJson = prefs.getString(KEY_CACHED_JSON, null) ?: return
+        val cached = prefs.getString(KEY_CACHED_JSON, null) ?: return
         val timestamp = prefs.getLong(KEY_CACHED_TIME, 0L)
-
-        val parsed = parseRatesJson(cachedJson, baseCurrency)
-        if (parsed != null) {
-            _state.value = WidgetState.Stale(parsed, timestamp)
-        }
+        val data = toData(cached, codes) ?: return
+        _state.value = WidgetState.Stale(data, timestamp)
     }
 
-    private fun saveCachedData(context: Context, jsonString: String, timestamp: Long) {
-        try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit()
-                .putString(KEY_CACHED_JSON, jsonString)
-                .putLong(KEY_CACHED_TIME, timestamp)
-                .apply()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to save exchange rates cache", e)
+    private fun saveCachedData(context: Context, body: String, timestamp: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            putString(KEY_CACHED_JSON, body)
+            putLong(KEY_CACHED_TIME, timestamp)
         }
     }
 }

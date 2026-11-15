@@ -36,19 +36,78 @@ data class MarketQuote(
 
 data class MarketsData(val quotes: List<MarketQuote>)
 
+/** One entry in Frankfurter's list of everything it prices. [type] is "currency", "crypto" or "metal". */
+data class Ticker(val code: String, val name: String, val type: String)
+
 /** Pure helpers behind [MarketsRepository], kept apart so they can be unit tested. */
 object Markets {
-    /** Shown in this order; with short widgets the first three show. */
-    val ASSETS = listOf("XAU", "BTC", "ETH", "XAG")
+    /** What the markets widget follows until the person picks their own. */
+    val DEFAULT_TICKERS = listOf("XAU", "BTC", "ETH", "XAG")
+    /** What the rates table shows until the person picks their own. */
+    val DEFAULT_RATES = listOf("USD", "SGD", "EUR", "GBP", "JPY", "CNY", "AUD", "THB", "IDR")
+    const val MAX_MARKET_TICKERS = 8
+    const val MAX_RATE_CURRENCIES = 16
+
+    /** Kept for the chart colours: one colour per default ticker, in this order. */
+    val ASSETS = DEFAULT_TICKERS
 
     /** About a point a week keeps the chart smooth and the cache small. */
     const val CHART_POINTS = 60
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun url(fromDate: String): String =
+    const val CATALOGUE_URL = "https://api.frankfurter.dev/v2/currencies"
+
+    fun url(fromDate: String, codes: List<String> = DEFAULT_TICKERS): String =
         "https://api.frankfurter.dev/v2/rates?from=$fromDate&base=myr&quotes=" +
-            ASSETS.joinToString(",") { it.lowercase(Locale.ROOT) }
+            codes.joinToString(",") { it.lowercase(Locale.ROOT) }
+
+    /** Frankfurter's list ([{"iso_code","name","type"}]) without ringgit itself, sorted by code. */
+    fun parseCatalogue(body: String): List<Ticker> {
+        val rows = runCatching { json.parseToJsonElement(body).jsonArray }.getOrNull() ?: return emptyList()
+        return rows.mapNotNull { row ->
+            val obj = row as? JsonObject ?: return@mapNotNull null
+            val code = obj["iso_code"]?.jsonPrimitive?.contentOrNull?.uppercase(Locale.ROOT) ?: return@mapNotNull null
+            val name = obj["name"]?.jsonPrimitive?.contentOrNull ?: code
+            val type = obj["type"]?.jsonPrimitive?.contentOrNull ?: "currency"
+            if (code == "MYR") null else Ticker(code, name, type)
+        }.distinctBy { it.code }.sortedBy { it.code }
+    }
+
+    /** "gold" from "Gold (Troy Ounce)", "solana" from "Solana": the plain name, lowercase. */
+    fun displayName(ticker: Ticker): String =
+        ticker.name.substringBefore(" (").trim().ifEmpty { ticker.code }.lowercase(Locale.ROOT)
+
+    /** Adds [code] once, at the end, up to [max]; null when the list is full or it's already there. */
+    fun addTicker(list: List<String>, code: String, max: Int): List<String>? {
+        val clean = code.uppercase(Locale.ROOT)
+        if (clean in list || list.size >= max) return null
+        return list + clean
+    }
+
+    /**
+     * How many units to quote so the ringgit price is at least 1: 1 usd, 100 jpy, 10,000 idr.
+     * Keeps every row readable at two decimals.
+     */
+    fun unitFor(price: Double): Int {
+        var unit = 1
+        while (price * unit < 1.0 && unit < 1_000_000) unit *= 10
+        return unit
+    }
+
+    /** Ringgit price and change since the previous published day, for each of [codes] that came back. */
+    fun rateItems(series: Map<String, List<PricePoint>>, codes: List<String>): List<ExchangeRateItem> =
+        codes.mapNotNull { code ->
+            val points = series[code.uppercase(Locale.ROOT)].orEmpty()
+            val last = points.lastOrNull() ?: return@mapNotNull null
+            val previous = points.getOrNull(points.size - 2)
+            ExchangeRateItem(
+                currency = code.uppercase(Locale.ROOT),
+                rateToBase = last.price,
+                baseToCurrency = 1.0 / last.price,
+                changePercent = previous?.let { (last.price / it.price - 1.0) * 100.0 }
+            )
+        }
 
     fun oneYearAgo(nowMillis: Long): String {
         val calendar = Calendar.getInstance().apply {
@@ -76,8 +135,12 @@ object Markets {
         return series.mapValues { (_, points) -> points.sortedBy { it.date }.distinctBy { it.date } }
     }
 
-    fun toQuotes(series: Map<String, List<PricePoint>>, maxPoints: Int = CHART_POINTS): List<MarketQuote> =
-        ASSETS.mapNotNull { code ->
+    fun toQuotes(
+        series: Map<String, List<PricePoint>>,
+        codes: List<String> = DEFAULT_TICKERS,
+        maxPoints: Int = CHART_POINTS
+    ): List<MarketQuote> =
+        codes.mapNotNull { code ->
             val points = series[code].orEmpty()
             val last = points.lastOrNull() ?: return@mapNotNull null
             val previous = points.getOrNull(points.size - 2)
@@ -123,9 +186,12 @@ object Markets {
         return era * 146097L + doe - 719468L
     }
 
-    /** "16,018" for big prices, "207.48" for small ones. */
-    fun formatPrice(price: Double): String =
-        if (price >= 1000) String.format(Locale.US, "%,.0f", price) else String.format(Locale.US, "%,.2f", price)
+    /** "16,018" for big prices, "207.48" for small ones, three significant figures below 1 ("0.0000523"). */
+    fun formatPrice(price: Double): String = when {
+        price >= 1000 -> String.format(Locale.US, "%,.0f", price)
+        price >= 1 || price <= 0.0 -> String.format(Locale.US, "%,.2f", price)
+        else -> java.math.BigDecimal(price).round(java.math.MathContext(3)).stripTrailingZeros().toPlainString()
+    }
 
     /** "nov 2025" from "2025-11-12"; empty if the date can't be read. */
     fun monthLabel(date: String): String {

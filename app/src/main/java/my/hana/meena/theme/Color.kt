@@ -215,9 +215,10 @@ fun readableAccent(accent: Color, pages: List<Color>, minRatio: Float = 4.5f): C
  * at 4.5:1 on the page, since the names under the chart are written in them. Paper uses its text colour.
  */
 fun chartSeriesColours(p: MeenaPalette): List<Color> {
-    if (p.monochrome) return List(4) { p.text }
+    if (p.monochrome) return List(8) { p.text }
     val pages = pageColours(p)
-    return listOf(MeenaMango, MeenaMagenta, MeenaBlue, p.textSecondary).map { readableAccent(it, pages) }
+    return listOf(MeenaMango, MeenaMagenta, MeenaBlue, p.textSecondary, MeenaTeal, MeenaLime, MeenaCrimson, MeenaPurple)
+        .map { readableAccent(it, pages) }
 }
 
 /** The page colours text sits on in [p]; the accent shade must read on all of them. */

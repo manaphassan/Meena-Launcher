@@ -81,10 +81,18 @@ fun FinanceHub(
 
     // Initialize repositories on entry
     LaunchedEffect(Unit) {
-        ExchangeRateRepository.initialize(context, baseCurrency = "MYR")
         FinanceRepository.initialize(context)
-        MarketsRepository.initialize(context)
         KijangEmasRepository.initialize(context)
+    }
+    LaunchedEffect(settings.rateCurrencies) {
+        ExchangeRateRepository.initialize(context, settings.rateCurrencies)
+    }
+    LaunchedEffect(settings.marketTickers) {
+        MarketsRepository.initialize(context, settings.marketTickers)
+        // Names for tickers beyond the four built-in ones come from the saved ticker list.
+        if (!Markets.DEFAULT_TICKERS.containsAll(settings.marketTickers)) {
+            my.hana.meena.data.finance.TickerCatalogueRepository.load(context)
+        }
     }
 
     LaunchedEffect(settings) {
@@ -154,8 +162,10 @@ fun FinanceHub(
                     "widget-markets" -> {
                         MarketsSection(
                             state = marketsState,
+                            tickers = settings.marketTickers,
                             maxItems = settings.widgetLines,
-                            onRefresh = { MarketsRepository.refresh(context, force = true) }
+                            onRefresh = { MarketsRepository.refresh(context, force = true) },
+                            onOpenSettings = onOpenSettings
                         )
                     }
 
@@ -188,8 +198,8 @@ fun FinanceHub(
                     "widget-exchange-rates" -> {
                         ExchangeRatesSection(
                             state = exchangeRateState,
-                            maxPairs = settings.widgetLines * 2,
-                            onRefresh = { ExchangeRateRepository.refresh(context, "MYR", force = true) },
+                            maxRows = settings.widgetLines,
+                            onRefresh = { ExchangeRateRepository.refresh(context, force = true) },
                             onOpenSettings = onOpenSettings
                         )
                     }
@@ -490,7 +500,7 @@ private fun PortfolioSection(
 @Composable
 private fun ExchangeRatesSection(
     state: WidgetState<my.hana.meena.data.finance.ExchangeRatesData>,
-    maxPairs: Int,
+    maxRows: Int,
     onRefresh: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -532,7 +542,6 @@ private fun ExchangeRatesSection(
 
             is WidgetState.Ready, is WidgetState.Stale -> {
                 val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
-                val base = data.baseCurrency.lowercase()
                 val isStale = state is WidgetState.Stale
                 val updatedAt = if (state is WidgetState.Ready) state.updatedAt else (state as WidgetState.Stale).updatedAt
 
@@ -546,23 +555,31 @@ private fun ExchangeRatesSection(
                     color = MeenaTextMuted
                 )
 
-                // AIO's one-line strip: "1 usd = 4.08 myr   1 sgd = 3.17 myr". Each pair is held together
-                // with no-break spaces, so a line only breaks between pairs. Tap to update.
-                val strip = data.rates.take(maxPairs).map { item ->
-                    val target = item.currency.lowercase()
-                    val unit = if (target == "jpy" || target == "thb" || target == "idr") 100 else 1
-                    val price = if (unit == 100) item.rateToBase * 100 else item.rateToBase
-                    stringResource(R.string.rates_pair, unit, target, "%.2f".format(price), base)
-                }.joinToString("   ")
-                Text(
-                    text = strip,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MeenaTextWhite,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .metroClickable { onRefresh() }
+                // A table, aligned in three columns with no lines: "1 usd   rm 4.09   +0.1%".
+                // Small currencies are quoted per 100 or 10,000 so every price reads at two decimals.
+                var expanded by remember { mutableStateOf(false) }
+                val shown = if (expanded) data.rates else data.rates.take(maxRows)
+                RateTableRow(
+                    currency = stringResource(R.string.rates_col_currency),
+                    price = stringResource(R.string.rates_col_ringgit),
+                    change = stringResource(R.string.rates_col_change),
+                    changeValue = null,
+                    isHeader = true
                 )
+                shown.forEach { item ->
+                    val unit = Markets.unitFor(item.rateToBase)
+                    RateTableRow(
+                        currency = stringResource(R.string.rates_unit, java.text.NumberFormat.getIntegerInstance(java.util.Locale.US).format(unit), item.currency.lowercase()),
+                        price = stringResource(R.string.finance_amount, "%,.2f".format(java.util.Locale.US, item.rateToBase * unit)),
+                        change = item.changePercent?.let { signedPercent(it, decimals = 2) } ?: stringResource(R.string.finance_no_price),
+                        changeValue = item.changePercent,
+                        isHeader = false,
+                        onClick = onRefresh
+                    )
+                }
+                if (data.rates.size > maxRows) {
+                    ShowMoreRow(hidden = data.rates.size - maxRows, expanded = expanded) { expanded = !expanded }
+                }
             }
 
             is WidgetState.Error -> {
@@ -716,8 +733,10 @@ private fun SpendingSection(
 @Composable
 private fun MarketsSection(
     state: WidgetState<MarketsData>,
+    tickers: List<String>,
     maxItems: Int,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Text(
@@ -726,8 +745,20 @@ private fun MarketsSection(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        when (state) {
-            is WidgetState.NeedsSetup, is WidgetState.Loading -> {
+        when {
+            tickers.isEmpty() -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { onOpenSettings() }
+                ) {
+                    Text(stringResource(R.string.markets_none), style = MaterialTheme.typography.bodyLarge, color = MeenaTextWhite)
+                    Text(stringResource(R.string.markets_none_hint), style = MaterialTheme.typography.bodySmall, color = MeenaTextMuted)
+                }
+            }
+
+            state is WidgetState.NeedsSetup || state is WidgetState.Loading -> {
                 Text(
                     text = stringResource(R.string.markets_loading),
                     style = MaterialTheme.typography.bodySmall,
@@ -735,17 +766,21 @@ private fun MarketsSection(
                 )
             }
 
-            is WidgetState.Ready, is WidgetState.Stale -> {
+            state is WidgetState.Ready || state is WidgetState.Stale -> {
                 val data = if (state is WidgetState.Ready) state.data else (state as WidgetState.Stale).data
                 val updatedAt = if (state is WidgetState.Ready) state.updatedAt else (state as WidgetState.Stale).updatedAt
                 val palette = my.hana.meena.theme.LocalMeenaPalette.current
                 val colours = my.hana.meena.theme.chartSeriesColours(palette)
-                val quotes = data.quotes.take(maxItems)
-                val colourOf = { quote: MarketQuote -> colours[Markets.ASSETS.indexOf(quote.code).coerceIn(0, colours.lastIndex)] }
-                val names = quotes.map { marketName(it.code) }
+                val catalogue by my.hana.meena.data.finance.TickerCatalogueRepository.state.collectAsState()
+                var expanded by remember { mutableStateOf(false) }
+                val shownTickers = if (expanded) tickers else tickers.take(maxItems)
+                val byCode = data.quotes.associateBy { it.code }
+                val colourOf = { code: String -> colours[tickers.indexOf(code).coerceIn(0, colours.lastIndex)] }
+                val names = shownTickers.map { marketName(it, catalogue) }
+                val quotes = shownTickers.mapNotNull { byCode[it] }
 
                 my.hana.meena.ui.components.MarketChart(
-                    series = quotes.map { my.hana.meena.ui.components.ChartSeries(it.history, colourOf(it)) },
+                    series = quotes.map { my.hana.meena.ui.components.ChartSeries(it.history, colourOf(it.code)) },
                     zeroLineColor = MeenaTextMuted,
                     monochrome = palette.monochrome,
                     description = stringResource(R.string.markets_chart_description, names.joinToString(", ")),
@@ -763,9 +798,11 @@ private fun MarketsSection(
                     }
                 }
 
-                quotes.forEachIndexed { index, quote ->
-                    val change = quote.dayChangePercent
-                    val perOunce = quote.code == "XAU" || quote.code == "XAG"
+                // AIO's finance list: "name   price   change", or "name   -" when there is no price yet.
+                shownTickers.forEachIndexed { index, code ->
+                    val quote = byCode[code]
+                    val change = quote?.dayChangePercent
+                    val perOunce = code == "XAU" || code == "XAG" || code == "XPT" || code == "XPD"
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
@@ -774,14 +811,19 @@ private fun MarketsSection(
                         Text(
                             text = names[index],
                             style = MaterialTheme.typography.bodyLarge,
-                            color = colourOf(quote),
+                            color = colourOf(code),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            text = if (perOunce) stringResource(R.string.markets_price_ounce, Markets.formatPrice(quote.price))
-                            else stringResource(R.string.finance_amount, Markets.formatPrice(quote.price)),
+                            text = when {
+                                quote == null -> stringResource(R.string.finance_no_price)
+                                perOunce -> stringResource(R.string.markets_price_ounce, Markets.formatPrice(quote.price))
+                                else -> stringResource(R.string.finance_amount, Markets.formatPrice(quote.price))
+                            },
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MeenaTextWhite
+                            color = if (quote == null) MeenaTextMuted else MeenaTextWhite
                         )
                         Text(
                             text = if (change == null) stringResource(R.string.finance_no_price) else signedPercent(change),
@@ -795,6 +837,9 @@ private fun MarketsSection(
                             modifier = Modifier.widthIn(min = 48.dp)
                         )
                     }
+                }
+                if (tickers.size > maxItems) {
+                    ShowMoreRow(hidden = tickers.size - maxItems, expanded = expanded) { expanded = !expanded }
                 }
 
                 Text(
@@ -810,7 +855,7 @@ private fun MarketsSection(
                 )
             }
 
-            is WidgetState.Error -> {
+            state is WidgetState.Error -> {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -825,7 +870,7 @@ private fun MarketsSection(
                 }
             }
 
-            is WidgetState.Empty -> {
+            else -> {
                 Text(
                     text = stringResource(R.string.markets_empty),
                     style = MaterialTheme.typography.bodySmall,
@@ -834,6 +879,66 @@ private fun MarketsSection(
             }
         }
     }
+}
+
+/** One line of the rates table; the header row uses the same columns in small grey type. */
+@Composable
+private fun RateTableRow(
+    currency: String,
+    price: String,
+    change: String,
+    changeValue: Double?,
+    isHeader: Boolean,
+    onClick: (() -> Unit)? = null
+) {
+    val small = MaterialTheme.typography.labelSmall
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.metroClickable { onClick() } else Modifier),
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = currency,
+            style = if (isHeader) small else MaterialTheme.typography.bodyLarge,
+            color = if (isHeader) MeenaTextMuted else MeenaTextWhite,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = price,
+            style = if (isHeader) small else MaterialTheme.typography.bodyMedium,
+            color = if (isHeader) MeenaTextMuted else MeenaTextWhite,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            modifier = Modifier.widthIn(min = 96.dp)
+        )
+        Text(
+            text = change,
+            style = small,
+            color = when {
+                isHeader || changeValue == null || kotlin.math.abs(changeValue) < 0.005 -> MeenaTextMuted
+                changeValue >= 0 -> MeenaProfitGreen
+                else -> MaterialTheme.colorScheme.error
+            },
+            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            modifier = Modifier.widthIn(min = 56.dp)
+        )
+    }
+}
+
+/** "show 4 more" under a list cut to the widget length, and "show fewer" once opened. */
+@Composable
+private fun ShowMoreRow(hidden: Int, expanded: Boolean, onToggle: () -> Unit) {
+    Text(
+        text = if (expanded) stringResource(R.string.finance_show_fewer) else stringResource(R.string.notes_show_more, hidden),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .metroClickable { onToggle() }
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+    )
 }
 
 /**
@@ -966,22 +1071,31 @@ private fun KijangEmasRow(label: String, pay: String, get: String, isHeader: Boo
     }
 }
 
+/** Built-in names for the four default tickers; others use the ticker list's name, or the code. */
 @Composable
-private fun marketName(code: String): String = stringResource(
-    when (code) {
-        "XAU" -> R.string.markets_gold
-        "BTC" -> R.string.markets_bitcoin
-        "ETH" -> R.string.markets_ether
-        else -> R.string.markets_silver
-    }
-)
+private fun marketName(code: String, catalogue: my.hana.meena.data.finance.TickerCatalogueRepository.State): String = when (code) {
+    "XAU" -> stringResource(R.string.markets_gold)
+    "BTC" -> stringResource(R.string.markets_bitcoin)
+    "ETH" -> stringResource(R.string.markets_ether)
+    "XAG" -> stringResource(R.string.markets_silver)
+    else -> ((catalogue as? my.hana.meena.data.finance.TickerCatalogueRepository.State.Ready)
+        ?.tickers?.firstOrNull { it.code == code }?.let { Markets.displayName(it) } ?: code).lowercase()
+}
 
 /** "+rm 1.20" or "-rm 1.20". */
 @androidx.compose.runtime.Composable
 private fun signedRm(value: Double): String =
     stringResource(R.string.finance_signed_amount, if (value < 0) "-" else "+", "%.2f".format(kotlin.math.abs(value)))
 
-/** "+1.5%" or "-1.5%". */
+/** "+1.5%" or "-1.5%"; a change that rounds to zero shows as "0.0%", never "-0.0%". */
 @androidx.compose.runtime.Composable
-private fun signedPercent(value: Double): String =
-    stringResource(R.string.finance_signed_percent, "%+.1f".format(value))
+private fun signedPercent(value: Double, decimals: Int = 1): String {
+    val rounded = "%.${decimals}f".format(java.util.Locale.US, kotlin.math.abs(value))
+    val isZero = rounded.all { it == '0' || it == '.' }
+    val sign = when {
+        isZero -> ""
+        value < 0 -> "-"
+        else -> "+"
+    }
+    return stringResource(R.string.finance_signed_percent, sign + rounded)
+}
