@@ -44,7 +44,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.data.model.MeenaUserSettings
+import my.hana.meena.data.system.InboxSort
+import my.hana.meena.data.system.MalaysianEnglish
 import my.hana.meena.data.system.NotificationRepository
+import my.hana.meena.ui.components.sensitive
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextSecondary
 import my.hana.meena.theme.MeenaProfitGreen
@@ -61,11 +64,15 @@ fun InboxHub(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val notifications by NotificationRepository.notificationsFlow.collectAsState()
-    // When chats are on, messages live there; alerts keep everything else so nothing shows twice.
+    // Chats and email have their own sections when they're on; alerts keep the rest, grouped by app,
+    // so nothing shows twice.
     val chatsOn = settings.widgetConfigs["widget-conversations"]?.isEnabled != false
-    val alerts = remember(notifications, chatsOn) {
-        if (chatsOn) notifications.filterNot { it.isConversation } else notifications
+    val emailOn = settings.widgetConfigs["widget-email"]?.isEnabled != false
+    val emails = remember(notifications) { InboxSort.email(notifications) }
+    val alertGroups = remember(notifications, chatsOn, emailOn) {
+        InboxSort.byApp(InboxSort.alerts(notifications, chatsOn, emailOn))
     }
+    val lines = settings.widgetLines
     val isListenerConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
     var isNotificationAccessGranted by remember {
         mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
@@ -108,7 +115,64 @@ fun InboxHub(
             when (widgetId) {
                 "widget-conversations" -> {
                     // Chats and messaging threads
-                    ConversationsWidget(is24Hour = settings.is24HourFormat)
+                    ConversationsWidget(is24Hour = settings.is24HourFormat, maxItems = lines)
+                }
+
+                "widget-email" -> {
+                    // Email from the phone's mail apps (Gmail and others), newest first
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_name_email),
+                        collapsedSummary = {
+                            Text(
+                                text = when {
+                                    !isNotificationAccessGranted -> stringResource(R.string.state_needs_quick_okay)
+                                    emails.isNotEmpty() -> stringResource(R.string.state_new_count, emails.size)
+                                    else -> stringResource(R.string.state_all_quiet)
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (!isNotificationAccessGranted) MeenaTextMuted else MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                        ) {
+                            when {
+                                !isNotificationAccessGranted -> AccessPrompt(
+                                    text = stringResource(R.string.inbox_email_prompt),
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        showNotificationDisclosure = true
+                                    }
+                                )
+                                emails.isEmpty() -> QuietLine()
+                                else -> {
+                                    emails.take(lines).forEachIndexed { idx, mail ->
+                                        InboxNotificationRow(
+                                            modifier = Modifier
+                                                .metroFeatherIn(index = idx, reducedMotion = settings.reducedMotion)
+                                                .sensitive(),
+                                            badgeColor = MaterialTheme.colorScheme.primary,
+                                            app = mail.appName,
+                                            title = mail.title,
+                                            text = mail.text,
+                                            time = MalaysianEnglish.clockTime(mail.timestamp, settings.is24HourFormat),
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                NotificationRepository.openNotification(context, mail)
+                                            },
+                                            onDismiss = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                NotificationRepository.dismissNotification(mail.key)
+                                            }
+                                        )
+                                    }
+                                    MoreLine(hidden = emails.size - lines)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 "widget-notifications" -> {
@@ -119,7 +183,7 @@ fun InboxHub(
                             Text(
                                 text = when {
                                     !isNotificationAccessGranted -> stringResource(R.string.state_needs_quick_okay)
-                                    alerts.isNotEmpty() -> stringResource(R.string.state_new_count, alerts.size)
+                                    alertGroups.isNotEmpty() -> stringResource(R.string.state_new_count, alertGroups.sumOf { it.items.size })
                                     else -> stringResource(R.string.state_all_quiet)
                                 },
                                 style = MaterialTheme.typography.labelSmall,
@@ -145,29 +209,30 @@ fun InboxHub(
                                         }
                                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                 )
-                            } else if (alerts.isNotEmpty()) {
-                                alerts.take(8).forEachIndexed { idx, notif ->
-                                    val notifColor = MeenaTextWhite
+                            } else if (alertGroups.isNotEmpty()) {
+                                // One row per app: its newest alert, with how many it has waiting.
+                                alertGroups.take(lines).forEachIndexed { idx, group ->
+                                    val notif = group.latest
                                     InboxNotificationRow(
-                                        modifier = Modifier.metroFeatherIn(
-                                            index = idx,
-                                            reducedMotion = settings.reducedMotion
-                                        ),
-                                        badgeColor = notifColor,
-                                        app = notif.appName,
+                                        modifier = Modifier
+                                            .metroFeatherIn(index = idx, reducedMotion = settings.reducedMotion)
+                                            .sensitive(),
+                                        badgeColor = MeenaTextWhite,
+                                        app = if (group.items.size > 1) stringResource(R.string.inbox_app_count, group.appName, group.items.size) else group.appName,
                                         title = notif.title,
                                         text = notif.text,
-                                        time = my.hana.meena.data.system.MalaysianEnglish.clockTime(notif.timestamp, settings.is24HourFormat),
+                                        time = MalaysianEnglish.clockTime(notif.timestamp, settings.is24HourFormat),
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             NotificationRepository.openNotification(context, notif)
                                         },
                                         onDismiss = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            NotificationRepository.dismissNotification(notif.key)
+                                            group.items.forEach { NotificationRepository.dismissNotification(it.key) }
                                         }
                                     )
                                 }
+                                MoreLine(hidden = alertGroups.size - lines)
 
                                 // Clear All Row
                                 Row(
@@ -190,12 +255,7 @@ fun InboxHub(
                                     )
                                 }
                             } else {
-                                Text(
-                                    text = stringResource(R.string.state_all_quiet),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MeenaTextMuted,
-                                    modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
-                                )
+                                QuietLine()
                             }
                         }
                     }
@@ -205,6 +265,42 @@ fun InboxHub(
 
         item { Spacer(modifier = Modifier.height(64.dp)) }
     }
+}
+
+@Composable
+private fun QuietLine() {
+    Text(
+        text = stringResource(R.string.state_all_quiet),
+        style = MaterialTheme.typography.bodySmall,
+        color = MeenaTextMuted,
+        modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+    )
+}
+
+/** "2 more" under a shortened list; nothing when everything fits. */
+@Composable
+private fun MoreLine(hidden: Int) {
+    if (hidden <= 0) return
+    Text(
+        text = stringResource(R.string.inbox_more, hidden),
+        style = MaterialTheme.typography.labelSmall,
+        color = MeenaTextMuted,
+        modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+    )
+}
+
+@Composable
+private fun AccessPrompt(text: String, onClick: () -> Unit) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MeenaTextMuted,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .metroClickable(onClick = onClick)
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+    )
 }
 
 @Composable

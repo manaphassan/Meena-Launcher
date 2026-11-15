@@ -63,11 +63,20 @@ data class MeenaUserSettings(
     val healthCompanionName: String = "",
     // First-run permission onboarding
     val hasCompletedFirstRunSetup: Boolean = false,
+    /** True once the person answered "make meena your home app?", so it is asked only once. */
+    val homePromptAnswered: Boolean = false,
+    /** Widgets show up to 3 lines (or items) when on, up to 5 when off. See [widgetLines]. */
+    val shortWidgets: Boolean = true,
+    /** Shaking the phone hides chats, email, alerts, notes and money until shaken again. */
+    val shakeToHide: Boolean = true,
     /** Bumped when a one-time Today layout change is applied, so it never runs twice. */
     val layoutRevision: Int = 0
 ) {
     /** Paper is for e-ink screens, where animation smears, so it always moves calmly. */
     val reducedMotion: Boolean get() = isReducedMotion || baseTheme == "paper"
+
+    /** How many lines or items a widget shows before its title is tapped. */
+    val widgetLines: Int get() = if (shortWidgets) SHORT_LINES else LONG_LINES
 
     fun migrate(): MeenaUserSettings {
         val updatedConfigs = widgetConfigs.toMutableMap()
@@ -127,6 +136,12 @@ data class MeenaUserSettings(
             revision = FAVOURITES_FIRST_REVISION
             changed = true
         }
+        // Revision 2 (Nov 2026): the inbox gets an email section between chats and alerts.
+        if (revision < EMAIL_SECTION_REVISION) {
+            placeEmailBetweenChatsAndAlerts(updatedConfigs)
+            revision = EMAIL_SECTION_REVISION
+            changed = true
+        }
 
         return if (changed) {
             copy(
@@ -153,6 +168,17 @@ data class MeenaUserSettings(
         order.forEachIndexed { index, id -> configs[id] = configs.getValue(id).copy(position = index) }
     }
 
+    private fun placeEmailBetweenChatsAndAlerts(configs: MutableMap<String, WidgetConfig>) {
+        val email = configs[EMAIL_ID] ?: return
+        val alerts = configs[ALERTS_ID] ?: return
+        if (email.hubId != alerts.hubId) return
+        val order = configs.filterValues { it.hubId == alerts.hubId }
+            .entries.sortedBy { it.value.position }.map { it.key }
+            .filter { it != EMAIL_ID }.toMutableList()
+        order.add(order.indexOf(ALERTS_ID), EMAIL_ID)
+        order.forEachIndexed { index, id -> configs[id] = configs.getValue(id).copy(position = index) }
+    }
+
     /**
      * Puts every widget back in the story order of [defaultWidgetMap], keeping which ones are on,
      * which page each is on and its own settings. Only runs when the user asks for it.
@@ -166,8 +192,13 @@ data class MeenaUserSettings(
 
     companion object {
         const val FAVOURITES_FIRST_REVISION = 1
+        const val EMAIL_SECTION_REVISION = 2
+        const val SHORT_LINES = 3
+        const val LONG_LINES = 5
         private const val FAVOURITES_ID = "widget-favourites"
         private const val CLOCK_ID = "widget-clock-weather"
+        private const val EMAIL_ID = "widget-email"
+        private const val ALERTS_ID = "widget-notifications"
         /** The US-style date the app used to default to; moved to Malaysian English (day before month). */
         const val OLD_DEFAULT_DATE_PATTERN = "EEEE, MMMM d"
         const val DEFAULT_DATE_PATTERN = "EEEE, d MMMM"
@@ -205,9 +236,10 @@ data class MeenaUserSettings(
             "widget-map-radar" to WidgetConfig("today", 12, isEnabled = false),
             "widget-wikipedia" to WidgetConfig("today", 13, isEnabled = false),
 
-            // Inbox Hub (conversations, alerts / notification stream)
+            // Inbox Hub (chats, email, alerts / notification stream)
             "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),
-            "widget-notifications" to WidgetConfig("inbox", 1, isEnabled = true),
+            "widget-email" to WidgetConfig("inbox", 1, isEnabled = true),
+            "widget-notifications" to WidgetConfig("inbox", 2, isEnabled = true),
 
             // News Hub
             "widget-news-feed" to WidgetConfig("news", 0, isEnabled = true),

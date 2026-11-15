@@ -715,4 +715,36 @@
     <string name="news_nsfw_on">pictures blurred</string>
     <string name="news_nsfw_off">pictures shown</string>
     <string name="news_nsfw_tap_to_show">nsfw · tap to show</string>
+
+    <!-- Widget length (3-line rule) -->
+    <string name="widget_lines_title">widget length</string>
+    <string name="widget_lines_status">up to %1$d lines each</string>
+    <string name="widget_lines_toggle">keep widgets short</string>
+    <string name="widget_lines_toggle_hint">on shows up to 3 lines in each widget. off shows up to 5.</string>
+    <string name="notes_show_more">show %1$d more</string>
+
+    <!-- Inbox: email and grouped alerts -->
+    <string name="widget_name_email">email</string>
+    <string name="inbox_email_prompt">want your email here? turn on notification access. meena reads it on your phone only.</string>
+    <string name="inbox_more">%1$d more</string>
+    <string name="inbox_app_count">%1$s · %2$d</string>
+
+    <!-- Home app -->
+    <string name="home_app_title">home app</string>
+    <string name="home_app_status_on">meena is your home app</string>
+    <string name="home_app_status_off">tap to make meena your home app</string>
+    <string name="home_app_page_on">meena is your home app. to switch back, choose another one below.</string>
+    <string name="home_app_page_off">meena isn\'t your home app yet, so the home button opens another one.</string>
+    <string name="home_app_pick">choose home app</string>
+    <string name="home_app_pick_hint">opens android settings</string>
+    <string name="home_app_question">make meena your home app, so the home button always brings you here?</string>
+
+    <!-- Shake to hide -->
+    <string name="shake_hide_title">shake to hide</string>
+    <string name="shake_hide_status">blur chats, email, notes and money</string>
+    <string name="shake_hide_intro">shake your phone to blur chats, email, alerts, notes and money on your home pages. shake again to show them.</string>
+    <string name="shake_hide_toggle">shake to hide</string>
+    <string name="shake_hide_toggle_hint">two firm shakes. walking or setting the phone down won\'t do it.</string>
+    <string name="shake_hidden_message">hidden. shake again to show.</string>
+    <string name="shake_shown_message">showing again.</string>
 </resources>

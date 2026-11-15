@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.components.metroFeatherIn
+import my.hana.meena.ui.components.sensitive
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
@@ -138,7 +139,7 @@ fun FinanceHub(
                     .metroFeatherIn(index = index, reducedMotion = settings.reducedMotion)
             ) {
                 when (widgetId) {
-                    "widget-finance-charts" -> {
+                    "widget-finance-charts" -> androidx.compose.foundation.layout.Box(Modifier.sensitive()) {
                         PortfolioSection(
                             state = financeState,
                             showAmounts = localShowAmounts,
@@ -164,11 +165,12 @@ fun FinanceHub(
                         )
                     }
 
-                    "widget-spending-summary" -> {
+                    "widget-spending-summary" -> androidx.compose.foundation.layout.Box(Modifier.sensitive()) {
                         SpendingSection(
                             state = spendingState,
                             transactions = liveTransactions,
                             totalSpentToday = totalSpentToday,
+                            maxItems = settings.widgetLines,
                             onOpenSettings = onOpenSettings
                         )
                     }
@@ -582,6 +584,7 @@ private fun SpendingSection(
     state: WidgetState<List<my.hana.meena.data.system.SpendingTransaction>>,
     transactions: List<my.hana.meena.data.system.SpendingTransaction>,
     totalSpentToday: Double,
+    maxItems: Int,
     onOpenSettings: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
@@ -647,7 +650,7 @@ private fun SpendingSection(
             }
             else -> {
             Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                transactions.take(6).forEach { tx ->
+                transactions.take(maxItems).forEach { tx ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -331,6 +331,11 @@ fun MeenaHomeScreen(
         my.hana.meena.data.system.BluetoothDevicesRepository.refresh(context)
     }
 
+    // The home role prompt. A "no" there is respected; settings, system, home app stays available.
+    val homeRoleLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { }
+
     val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -423,6 +428,41 @@ fun MeenaHomeScreen(
     var isWeatherDetailOpen by remember { mutableStateOf(false) }
     var isNearbyMapOpen by remember { mutableStateOf(false) }
     var focusAppsSearch by remember { mutableStateOf(false) }
+
+    // Shake to hide private content. The accelerometer needs no permission and is only read while
+    // Meena is in front. Hidden stays hidden until the next shake (or Meena restarts).
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val hiddenMessage = stringResource(R.string.shake_hidden_message)
+    val shownMessage = stringResource(R.string.shake_shown_message)
+    androidx.compose.runtime.DisposableEffect(userSettings.shakeToHide, lifecycleOwner) {
+        if (!userSettings.shakeToHide) my.hana.meena.data.system.PrivacyVeil.show()
+        val sensors = context.getSystemService(android.content.Context.SENSOR_SERVICE) as? android.hardware.SensorManager
+        val accelerometer = sensors?.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
+        val detector = my.hana.meena.data.system.ShakeDetector {
+            val hidden = my.hana.meena.data.system.PrivacyVeil.toggle()
+            my.hana.meena.ui.components.MetroMessage.show(if (hidden) hiddenMessage else shownMessage)
+        }
+        val listener = object : android.hardware.SensorEventListener {
+            override fun onSensorChanged(event: android.hardware.SensorEvent) {
+                detector.onReading(event.values[0], event.values[1], event.values[2], android.os.SystemClock.elapsedRealtime())
+            }
+            override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
+        }
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> if (userSettings.shakeToHide && accelerometer != null) {
+                    sensors.registerListener(listener, accelerometer, android.hardware.SensorManager.SENSOR_DELAY_UI)
+                }
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> sensors?.unregisterListener(listener)
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            sensors?.unregisterListener(listener)
+        }
+    }
 
     // Home pressed while already on Meena: close what's open and go back to today.
     LaunchedEffect(homePresses) {
@@ -716,6 +756,8 @@ fun MeenaHomeScreen(
                             pinnedAppIds = userSettings.pinnedAppIds,
                             focusSearch = focusAppsSearch,
                             reducedMotion = userSettings.reducedMotion,
+                            isMonochrome = userSettings.isMonochromeFavourites,
+                            is24Hour = userSettings.is24HourFormat,
                             sortMode = userSettings.appsSortMode,
                             onSortModeChange = { mode ->
                                 coroutineScope.launch { settingsRepository.saveSettings(userSettings.copy(appsSortMode = mode)) }
@@ -951,6 +993,32 @@ fun MeenaHomeScreen(
                         settingsRepository.saveSettings(userSettings.copy(hasCompletedFirstRunSetup = true))
                     }
                 }
+            )
+        }
+
+        // After the welcome, ask once to become the home app (if Meena isn't already).
+        val needsHomePrompt = remember(userSettings.hasCompletedFirstRunSetup, userSettings.homePromptAnswered) {
+            userSettings.hasCompletedFirstRunSetup && !userSettings.homePromptAnswered &&
+                !my.hana.meena.data.system.HomeRole.isDefault(context)
+        }
+        if (needsHomePrompt && !showFirstRunPermissionDialog) {
+            val answer = {
+                coroutineScope.launch {
+                    settingsRepository.saveSettings(userSettings.copy(homePromptAnswered = true))
+                }
+            }
+            MetroDialog(
+                title = stringResource(R.string.home_app_title),
+                message = stringResource(R.string.home_app_question),
+                confirmText = stringResource(R.string.action_yes),
+                dismissText = stringResource(R.string.action_no),
+                onConfirm = {
+                    answer()
+                    val request = my.hana.meena.data.system.HomeRole.requestIntent(context)
+                    if (request != null) homeRoleLauncher.launch(request)
+                    else my.hana.meena.data.system.HomeRole.openPicker(context)
+                },
+                onDismiss = { answer() }
             )
         }
     }

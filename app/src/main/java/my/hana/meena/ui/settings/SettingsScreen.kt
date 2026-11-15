@@ -351,6 +351,7 @@ internal val SETTINGS_WIDGET_TITLES = linkedMapOf<String, Int>(
     "widget-map-radar" to R.string.widget_name_nearby,
     "widget-wikipedia" to R.string.widget_name_wikipedia,
     "widget-conversations" to R.string.widget_name_chats,
+    "widget-email" to R.string.widget_name_email,
     "widget-notifications" to R.string.widget_name_alerts,
     "widget-news-feed" to R.string.widget_name_news,
     "widget-finance-charts" to R.string.widget_name_portfolio,
@@ -400,6 +401,13 @@ private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onSortStory
             title = stringResource(R.string.settings_story_title),
             status = stringResource(R.string.settings_story_status),
             onClick = onSortStory
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.widget_lines_title),
+            status = stringResource(R.string.widget_lines_status, settingsState.widgetLines),
+            onClick = { open("look:widgetlines") }
         )
     }
     groupWidgetsByPage(settingsState.widgetConfigs).forEach { (hub, ids) ->
@@ -570,12 +578,28 @@ private fun LazyListScope.systemTab(context: android.content.Context, open: (Str
     }
     item {
         SettingsPivotRow(
+            title = stringResource(R.string.shake_hide_title),
+            status = stringResource(R.string.shake_hide_status),
+            onClick = { open("look:shake") }
+        )
+    }
+    item {
+        SettingsPivotRow(
             title = stringResource(R.string.settings_backup_title),
             status = stringResource(R.string.settings_backup_status),
             onClick = { open("look:backup") }
         )
     }
     settingsGroupLabel(R.string.settings_group_meena)
+    item {
+        // Read each time the tab shows, since the choice is made outside Meena.
+        val isHome = my.hana.meena.data.system.HomeRole.isDefault(context)
+        SettingsPivotRow(
+            title = stringResource(R.string.home_app_title),
+            status = stringResource(if (isHome) R.string.home_app_status_on else R.string.home_app_status_off),
+            onClick = { open("look:homeapp") }
+        )
+    }
     item {
         val version = remember {
             runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "1.0"
@@ -1333,6 +1357,78 @@ private fun SubPageContainer(
                         onClick = { onUpdate { it.copy(homeTitle = my.hana.meena.data.model.HomeTitle.DEFAULT) } }
                     )
                 }
+            }
+        }
+
+        subPageId == "look:widgetlines" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_pages),
+                    pageTitle = stringResource(R.string.widget_lines_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                SettingToggleRow(
+                    title = stringResource(R.string.widget_lines_toggle),
+                    subtitle = stringResource(R.string.widget_lines_toggle_hint),
+                    checked = settingsState.shortWidgets,
+                    onCheckedChange = { on -> onUpdate { it.copy(shortWidgets = on) } }
+                )
+            }
+        }
+
+        subPageId == "look:shake" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_system),
+                    pageTitle = stringResource(R.string.shake_hide_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.shake_hide_intro),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
+                )
+            }
+            item {
+                SettingToggleRow(
+                    title = stringResource(R.string.shake_hide_toggle),
+                    subtitle = stringResource(R.string.shake_hide_toggle_hint),
+                    checked = settingsState.shakeToHide,
+                    onCheckedChange = { on -> onUpdate { it.copy(shakeToHide = on) } }
+                )
+            }
+        }
+
+        subPageId == "look:homeapp" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_system),
+                    pageTitle = stringResource(R.string.home_app_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                val homeContext = LocalContext.current
+                val isHome = my.hana.meena.data.system.HomeRole.isDefault(homeContext)
+                Text(
+                    text = stringResource(if (isHome) R.string.home_app_page_on else R.string.home_app_page_off),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted,
+                    modifier = Modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.m)
+                )
+            }
+            item {
+                val homeContext = LocalContext.current
+                SettingLinkRow(
+                    title = stringResource(R.string.home_app_pick),
+                    status = stringResource(R.string.home_app_pick_hint),
+                    onClick = { my.hana.meena.data.system.HomeRole.openPicker(homeContext) }
+                )
             }
         }
 

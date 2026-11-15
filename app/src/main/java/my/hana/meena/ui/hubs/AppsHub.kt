@@ -62,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.ui.components.metroFeatherIn
+import my.hana.meena.ui.components.sensitive
 import my.hana.meena.ui.components.MetroDialog
 
 import androidx.compose.ui.window.Dialog
@@ -82,6 +83,9 @@ fun AppsHub(
     pinnedAppIds: List<String> = emptyList(),
     focusSearch: Boolean = false,
     reducedMotion: Boolean = false,
+    /** Same as favourites on today: each app's own single-colour glyph on the accent tile. */
+    isMonochrome: Boolean = true,
+    is24Hour: Boolean = true,
     sortMode: String = my.hana.meena.data.model.AppsSort.AZ,
     onSortModeChange: (String) -> Unit = {},
     onSearchFocused: () -> Unit = {},
@@ -337,9 +341,10 @@ fun AppsHub(
                             ),
                             name = app.label,
                             iconBitmap = app.iconBitmap,
+                            glyphBitmap = if (isMonochrome) app.glyphBitmap else null,
                             notificationSnippet = appNotif?.text?.ifBlank { appNotif.title },
                             badge = notifCount,
-                            time = appNotif?.formattedTime,
+                            time = appNotif?.let { my.hana.meena.data.system.MalaysianEnglish.clockTime(it.timestamp, is24Hour) },
                             onClick = { onLaunchApp(app.packageName) },
                             onLongClick = {
                                 selectedTargetForProperties = app
@@ -550,7 +555,15 @@ fun AppsHub(
                                         .background(my.hana.meena.theme.MeenaAccentFill),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (target.iconBitmap != null) {
+                                    val targetGlyph = if (isMonochrome) target.glyphBitmap else null
+                                    if (targetGlyph != null) {
+                                        Image(
+                                            bitmap = targetGlyph,
+                                            contentDescription = target.label,
+                                            modifier = Modifier.size(32.dp),
+                                            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent)
+                                        )
+                                    } else if (target.iconBitmap != null) {
                                         Image(bitmap = target.iconBitmap, contentDescription = target.label, modifier = Modifier.size(32.dp))
                                     } else {
                                         Text(target.firstLetter.toString().lowercase(), fontSize = 24.sp, fontWeight = FontWeight.Medium, color = my.hana.meena.theme.MeenaOnAccent)
@@ -675,6 +688,7 @@ private fun AppRow(
     name: String,
     icon: ImageVector? = null,
     iconBitmap: ImageBitmap? = null,
+    glyphBitmap: ImageBitmap? = null,
     iconBg: Color = my.hana.meena.theme.MeenaAccentFill,
     notificationSnippet: String? = null,
     badge: Int = 0,
@@ -699,7 +713,15 @@ private fun AppRow(
                 .background(iconBg, RoundedCornerShape(0.dp)),
             contentAlignment = Alignment.Center
         ) {
-            if (iconBitmap != null) {
+            // Like a favourite tile: the app's glyph in white; without one, its normal icon.
+            if (glyphBitmap != null) {
+                Image(
+                    bitmap = glyphBitmap,
+                    contentDescription = name,
+                    modifier = Modifier.size(30.dp),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent)
+                )
+            } else if (iconBitmap != null) {
                 Image(
                     bitmap = iconBitmap,
                     contentDescription = name,
@@ -758,7 +780,7 @@ private fun AppRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
-                    modifier = Modifier.padding(top = 0.dp)
+                    modifier = Modifier.padding(top = 0.dp).sensitive()
                 )
             }
         }

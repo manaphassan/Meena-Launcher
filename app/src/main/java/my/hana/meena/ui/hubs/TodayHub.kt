@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.widthIn
 import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.MetroLineProgress
 import my.hana.meena.ui.components.metroClickable
+import my.hana.meena.ui.components.sensitive
 import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -225,7 +226,7 @@ fun TodayHub(
         val todayWidgets = settings.widgetConfigs.entries
             .filter {
                 val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
-                val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications"
+                val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications" && it.key != "widget-email"
                 val isNotRemovedWidget = it.key != "widget-health-device"
                 isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled
             }
@@ -807,7 +808,7 @@ fun TodayHub(
                                         text = article.extract,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MeenaTextWhite,
-                                        maxLines = 4,
+                                        maxLines = settings.widgetLines,
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                     Text(
@@ -947,7 +948,7 @@ fun TodayHub(
                     val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
                     val agendaItems = calEvents.sortedBy { it.startTime }
                     val agendaConfig = settings.widgetConfigs[widgetId]
-                    val maxItems = agendaConfig?.maxLinesOrItems ?: 5
+                    val maxItems = settings.widgetLines
                     val showStrip = agendaConfig?.customSettings?.get("show_week_strip") != "false"
                     val stripDays = remember(currentDate, calEvents, settings.calendarDaysAhead) {
                         my.hana.meena.data.system.WeekStripBuilder.build(
@@ -1181,7 +1182,9 @@ fun TodayHub(
                                 )
                             }
                             // One line each, so a glance at the home screen doesn't show it all; tap for the rest.
-                            quickNotes.forEachIndexed { index, note ->
+                            var showAllNotes by remember { mutableStateOf(false) }
+                            val visibleNotes = if (showAllNotes) quickNotes.size else settings.widgetLines
+                            quickNotes.take(visibleNotes).forEachIndexed { index, note ->
                                 my.hana.meena.ui.components.NoteText(
                                     note = note,
                                     color = MeenaTextWhite,
@@ -1190,7 +1193,19 @@ fun TodayHub(
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .metroClickable { openNote = index }
+                                        .sensitive()
                                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                                )
+                            }
+                            if (quickNotes.size > visibleNotes) {
+                                Text(
+                                    text = stringResource(R.string.notes_show_more, quickNotes.size - visibleNotes),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { showAllNotes = true }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
                                 )
                             }
                             if (!notesUnreadable) {

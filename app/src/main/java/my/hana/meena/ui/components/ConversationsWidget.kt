@@ -52,7 +52,8 @@ import my.hana.meena.theme.MeenaBlack
 @Composable
 fun ConversationsWidget(
     modifier: Modifier = Modifier,
-    is24Hour: Boolean = true
+    is24Hour: Boolean = true,
+    maxItems: Int = 5
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -135,7 +136,7 @@ fun ConversationsWidget(
                     modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                 )
             } else {
-                conversations.take(6).forEach { item ->
+                conversations.take(maxItems).forEach { item ->
                     ConversationRow(
                         item = item,
                         is24Hour = is24Hour,
@@ -163,6 +164,7 @@ private fun ConversationRow(
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .metroClickable(onClick = onClick)
+            .sensitive()
             .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
     ) {
         // Line 1: Contact name + time + unread count

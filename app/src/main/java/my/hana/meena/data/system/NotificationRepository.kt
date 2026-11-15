@@ -31,6 +31,8 @@ data class LiveNotificationItem(
     val timestamp: Long,
     val formattedTime: String,
     val isConversation: Boolean = false,
+    /** From an email app (Gmail, Outlook and so on): title is the sender, text the subject. */
+    val isEmail: Boolean = false,
     val contentIntent: PendingIntent? = null
 )
 
@@ -73,6 +75,19 @@ object NotificationRepository {
         "jp.naver.line.android",
         "com.tencent.mm",
         "com.instagram.android"
+    )
+
+    // Email apps: their notifications go to the email section of the inbox.
+    internal val EMAIL_PACKAGES = setOf(
+        "com.google.android.gm",
+        "com.google.android.gm.lite",
+        "com.microsoft.office.outlook",
+        "com.yahoo.mobile.client.android.mail",
+        "ch.protonmail.android",
+        "com.samsung.android.email.provider",
+        "com.android.email",
+        "me.bluemail.mail",
+        "com.easilydo.mail"
     )
 
     private val _notificationsFlow = MutableStateFlow<List<LiveNotificationItem>>(emptyList())
@@ -222,10 +237,13 @@ object NotificationRepository {
             packageName
         }
 
-        val isMsg = notif.category == Notification.CATEGORY_MESSAGE ||
+        val isMsg = packageName !in EMAIL_PACKAGES && (
+            notif.category == Notification.CATEGORY_MESSAGE ||
                 notif.category == Notification.CATEGORY_SOCIAL ||
                 packageName in MESSAGING_PACKAGES ||
                 !rawConvTitle.isNullOrBlank()
+            )
+        val isEmail = packageName in EMAIL_PACKAGES || notif.category == Notification.CATEGORY_EMAIL
 
         val postTime = if (sbn.postTime > 0) sbn.postTime else System.currentTimeMillis()
 
@@ -238,6 +256,7 @@ object NotificationRepository {
             timestamp = postTime,
             formattedTime = timeFormat.format(Date(postTime)),
             isConversation = isMsg,
+            isEmail = isEmail,
             contentIntent = notif.contentIntent
         )
     }
