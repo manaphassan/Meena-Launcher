@@ -16,13 +16,30 @@ sealed interface FavouriteSlot<T> {
  * settings and backups read as before.
  */
 object FavouriteRules {
-    const val MAX = 6
+    const val MAX = 8
     const val PER_ROW = 3
+    const val PER_ROW_SMALL = 4
     const val GROUP_MAX = 4
     private const val GROUP_PREFIX = "group:"
     private const val SEPARATOR = "|"
+    /** Shortcut entries are stored as "shortcut:packageName:shortcutId". */
+    private const val SHORTCUT_PREFIX = "shortcut:"
 
     fun isGroup(id: String): Boolean = id.startsWith(GROUP_PREFIX)
+    fun isShortcut(id: String): Boolean = id.startsWith(SHORTCUT_PREFIX)
+
+    /** Builds a shortcut key for storage in pinnedAppIds. */
+    fun shortcutKey(packageName: String, shortcutId: String): String =
+        "$SHORTCUT_PREFIX$packageName:$shortcutId"
+
+    /** Returns (packageName, shortcutId) or null when [id] is not a shortcut key. */
+    fun parseShortcut(id: String): Pair<String, String>? {
+        if (!isShortcut(id)) return null
+        val rest = id.removePrefix(SHORTCUT_PREFIX)
+        val colon = rest.indexOf(':')
+        if (colon <= 0 || colon == rest.lastIndex) return null
+        return rest.substring(0, colon) to rest.substring(colon + 1)
+    }
 
     fun members(id: String): List<String> =
         if (!isGroup(id)) listOf(id) else id.removePrefix(GROUP_PREFIX).split(SEPARATOR).filter { it.isNotBlank() }

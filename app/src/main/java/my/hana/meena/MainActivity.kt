@@ -224,21 +224,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun launchPackage(packageName: String) {
+    private fun launchPackage(idOrPackage: String) {
+        val shortcut = my.hana.meena.data.system.FavouriteRules.parseShortcut(idOrPackage)
+        if (shortcut != null) {
+            val (pkg, shortcutId) = shortcut
+            try {
+                val launcherApps = getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE) as android.content.pm.LauncherApps
+                launcherApps.startShortcut(pkg, shortcutId, null, null, android.os.Process.myUserHandle())
+            } catch (_: Exception) {
+                my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_generic))
+            }
+            return
+        }
         lifecycleScope.launch {
             val app = my.hana.meena.data.system.InstalledAppsRepository.loadInstalledApps(this@MainActivity)
-                .find { it.packageName == packageName }
+                .find { it.packageName == idOrPackage }
             if (app?.componentName != null && app.userHandle != null) {
                 val launcherApps = getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE) as android.content.pm.LauncherApps
                 launcherApps.startMainActivity(app.componentName, app.userHandle, null, null)
-                my.hana.meena.data.system.AppLaunchStats.record(this@MainActivity, packageName)
+                my.hana.meena.data.system.AppLaunchStats.record(this@MainActivity, idOrPackage)
             } else {
-                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                val launchIntent = packageManager.getLaunchIntentForPackage(idOrPackage)
                 if (launchIntent != null) {
                     startActivity(launchIntent)
-                    my.hana.meena.data.system.AppLaunchStats.record(this@MainActivity, packageName)
+                    my.hana.meena.data.system.AppLaunchStats.record(this@MainActivity, idOrPackage)
                 } else {
-                    my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_app_not_installed, packageName))
+                    my.hana.meena.ui.components.MetroMessage.show(getString(R.string.error_app_not_installed, idOrPackage))
                 }
             }
         }
@@ -775,6 +786,7 @@ fun MeenaHomeScreen(
                             focusSearch = focusAppsSearch,
                             reducedMotion = userSettings.reducedMotion,
                             isMonochrome = userSettings.isMonochromeFavourites,
+                            colorful = userSettings.colorfulTiles,
                             is24Hour = userSettings.is24HourFormat,
                             sortMode = userSettings.appsSortMode,
                             onSortModeChange = { mode ->

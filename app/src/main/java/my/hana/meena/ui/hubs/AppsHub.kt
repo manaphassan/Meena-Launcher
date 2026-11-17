@@ -85,6 +85,7 @@ fun AppsHub(
     reducedMotion: Boolean = false,
     /** Same as favourites on today: each app's own single-colour glyph on the accent tile. */
     isMonochrome: Boolean = true,
+    colorful: Boolean = false,
     is24Hour: Boolean = true,
     sortMode: String = my.hana.meena.data.model.AppsSort.AZ,
     onSortModeChange: (String) -> Unit = {},

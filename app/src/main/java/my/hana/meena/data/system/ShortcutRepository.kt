@@ -1,0 +1,136 @@
+package my.hana.meena.data.system
+
+import android.content.Context
+import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.os.Build
+import android.os.Process
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+
+/**
+ * Queries and caches app shortcuts (conversation shortcuts from WhatsApp, etc.)
+ * so they can live in the favourite tiles alongside regular apps.
+ *
+ * Requires API 25+; on API 24 every call returns empty / null gracefully.
+ */
+object ShortcutRepository {
+
+    /** Cached shortcut tiles keyed by their favourite-rules key ("shortcut:pkg:id"). */
+    @Volatile
+    private var cache: Map<String, DeviceAppInfo> = emptyMap()
+
+    /** Returns the cached [DeviceAppInfo] for a shortcut key, or null when not loaded. */
+    fun getCachedShortcut(key: String): DeviceAppInfo? = cache[key]
+
+    /**
+     * Loads the [DeviceAppInfo] for a single shortcut key that is already pinned.
+     * Called once per pinned shortcut at startup so tiles show immediately.
+     */
+    fun loadPinnedShortcut(context: Context, key: String): DeviceAppInfo? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return null
+        val (pkg, shortcutId) = FavouriteRules.parseShortcut(key) ?: return null
+        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val query = LauncherApps.ShortcutQuery()
+            .setPackage(pkg)
+            .setShortcutIds(listOf(shortcutId))
+            .setQueryFlags(
+                LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER
+            )
+        val info = runCatching { launcherApps.getShortcuts(query, Process.myUserHandle()) }
+            .getOrNull()?.firstOrNull() ?: return null
+        val entry = toDeviceAppInfo(context, launcherApps, info, key)
+        cache = cache + (key to entry)
+        return entry
+    }
+
+    /**
+     * Returns every launchable shortcut published by [packageName], suitable for a picker.
+     * Each entry's [DeviceAppInfo.packageName] is the full shortcut key.
+     */
+    fun queryShortcuts(context: Context, packageName: String): List<DeviceAppInfo> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return emptyList()
+        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val query = LauncherApps.ShortcutQuery()
+            .setPackage(packageName)
+            .setQueryFlags(
+                LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST
+            )
+        val shortcuts = runCatching { launcherApps.getShortcuts(query, Process.myUserHandle()) }
+            .getOrNull().orEmpty()
+        return shortcuts.mapNotNull { info ->
+            val key = FavouriteRules.shortcutKey(packageName, info.id)
+            val entry = toDeviceAppInfo(context, launcherApps, info, key)
+            cache = cache + (key to entry)
+            entry
+        }
+    }
+
+    /** Returns apps that publish at least one shortcut, sorted by label. */
+    fun appsWithShortcuts(context: Context): List<DeviceAppInfo> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return emptyList()
+        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val query = LauncherApps.ShortcutQuery()
+            .setQueryFlags(
+                LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST
+            )
+        val shortcuts = runCatching { launcherApps.getShortcuts(query, Process.myUserHandle()) }
+            .getOrNull().orEmpty()
+        val packages = shortcuts.map { it.`package` }.distinct()
+        return packages.mapNotNull { InstalledAppsRepository.getCachedApp(it) }
+            .sortedBy { it.label.lowercase() }
+    }
+
+    // ---- Internal ----
+
+    private fun toDeviceAppInfo(
+        context: Context,
+        launcherApps: LauncherApps,
+        info: ShortcutInfo,
+        key: String
+    ): DeviceAppInfo {
+        val icon = runCatching {
+            launcherApps.getShortcutIconDrawable(info, context.resources.displayMetrics.densityDpi)
+        }.getOrNull()
+        val bitmap = icon?.let { drawableToBitmap(it) }?.asImageBitmap()
+        val label = info.shortLabel?.toString()
+            ?: info.longLabel?.toString()
+            ?: info.id
+        return DeviceAppInfo(
+            packageName = key,
+            label = label,
+            firstLetter = label.firstOrNull()?.uppercaseChar()?.let { if (it in 'A'..'Z') it else '#' } ?: '#',
+            version = "",
+            iconBitmap = bitmap,
+            glyphBitmap = null,
+            isRealApp = false,
+            componentName = info.activity,
+            userHandle = Process.myUserHandle(),
+            shortcutId = info.id,
+            shortcutPackage = info.`package`
+        )
+    }
+
+    private fun drawableToBitmap(drawable: Drawable): Bitmap {
+        val size = 144
+        if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            val bmp = drawable.bitmap
+            return if (bmp.width <= size && bmp.height <= size) bmp
+            else Bitmap.createScaledBitmap(bmp, size, size, true)
+        }
+        val w = if (drawable.intrinsicWidth in 1..size) drawable.intrinsicWidth else size
+        val h = if (drawable.intrinsicHeight in 1..size) drawable.intrinsicHeight else size
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        drawable.setBounds(0, 0, w, h)
+        drawable.draw(Canvas(bmp))
+        return bmp
+    }
+}

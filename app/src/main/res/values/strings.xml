@@ -227,6 +227,13 @@
     <string name="settings_icon_pack_intro">pick a set of icons for your apps. apps the pack doesn\'t cover keep their usual icon.</string>
     <string name="settings_icon_pack_loading">looking for icon packs</string>
     <string name="settings_icon_pack_none">no icon packs installed yet. get one from the play store, then come back.</string>
+    <string name="settings_colorful_tiles">colorful tiles</string>
+    <string name="settings_colorful_tiles_hint">tile backgrounds use each app\u2019s own colour</string>
+    <string name="settings_small_tiles">small tiles</string>
+    <string name="settings_small_tiles_hint">4 per row, icon only, room for 8 favourites</string>
+    <string name="settings_business_card">digital card</string>
+    <string name="settings_business_card_hint">show your personal card on today</string>
+    <string name="settings_group_quick">quick toggles</string>
     <string name="settings_group_your_data">your data</string>
     <string name="settings_group_meena">meena</string>
     <string name="settings_privacy_title">privacy</string>
@@ -754,7 +761,7 @@
     <string name="favourites_add">add a favourite</string>
     <string name="favourites_move_left">move left</string>
     <string name="favourites_move_right">move right</string>
-    <string name="favourites_full">today has room for 6 favourites. remove one first.</string>
+    <string name="favourites_full">today has room for 8 favourites. remove one first.</string>
     <string name="favourites_make_group">make a group of 4 small tiles</string>
     <string name="favourites_group_title">group</string>
     <string name="favourites_group_add">add an app</string>
@@ -765,6 +772,11 @@
     <string name="favourites_group_remove_title">remove group</string>
     <string name="favourites_group_remove_question">take this group and its apps off today? the apps stay on your phone.</string>
     <string name="favourites_group_full">a group holds 4 apps. take one out first.</string>
+    <string name="favourites_add_shortcut">pin a shortcut</string>
+    <string name="favourites_pick_app">pick an app</string>
+    <string name="favourites_pick_shortcut">pick a shortcut</string>
+    <string name="favourites_no_shortcuts">this app has no shortcuts right now</string>
+    <string name="favourites_shortcuts_unavailable">shortcuts need android 7.1 or later</string>
     <string name="inbox_alerts_prompt">want your alerts here? turn on notification access. meena reads them on your phone only.</string>
     <string name="inbox_chats_prompt">want your chats here? turn on notification access. meena reads them on your phone only.</string>
     <string name="weather_near_you">near you</string>

@@ -50,6 +50,8 @@ fun FavouriteTiles(
     pinnedAppIds: List<String>,
     notificationCounts: Map<String, Int>,
     isMonochrome: Boolean,
+    colorful: Boolean = false,
+    isSmall: Boolean = false,
     onLaunchApp: (String) -> Unit,
     onOpenApps: () -> Unit,
     onTogglePin: (String) -> Unit,
@@ -64,10 +66,19 @@ fun FavouriteTiles(
     var addingTo by remember { mutableStateOf<String?>(null) }
     var removingFrom by remember { mutableStateOf<String?>(null) }
     var confirmRemoveGroup by remember { mutableStateOf<String?>(null) }
+    var shortcutPickApp by remember { mutableStateOf(false) }
+    var shortcutPickFrom by remember { mutableStateOf<String?>(null) }
     val groupFullMsg = stringResource(R.string.favourites_group_full)
+    val fullMsg = stringResource(R.string.favourites_full)
 
-    val slots = FavouriteRules.visible(pinnedAppIds) { pkg -> InstalledAppsRepository.getCachedApp(pkg) }
-    val perRow = FavouriteRules.PER_ROW
+    val slots = FavouriteRules.visible(pinnedAppIds) { id ->
+        if (FavouriteRules.isShortcut(id)) {
+            my.hana.meena.data.system.ShortcutRepository.getCachedShortcut(id)
+        } else {
+            InstalledAppsRepository.getCachedApp(id)
+        }
+    }
+    val perRow = if (isSmall) FavouriteRules.PER_ROW_SMALL else FavouriteRules.PER_ROW
 
     val tileColor = my.hana.meena.theme.MeenaAccentFill
 
@@ -128,8 +139,14 @@ fun FavouriteTiles(
 
                 is FavouriteSlot.App -> {
                     val app = slot.app
-                    val unreadCount = notificationCounts[app.packageName] ?: 0
-                    val faces = liveFaces[app.packageName].orEmpty()
+                    val appTileColor = if (colorful && app.dominantColor != 0) {
+                        androidx.compose.ui.graphics.Color(app.dominantColor)
+                    } else {
+                        tileColor
+                    }
+                    val realPkg = app.shortcutPackage ?: app.packageName
+                    val unreadCount = notificationCounts[realPkg] ?: 0
+                    val faces = liveFaces[realPkg].orEmpty()
                     val tileDescription = buildString {
                         append(app.label.lowercase())
                         faces.forEach { append(", ").append(it.primary).append(' ').append(it.secondary) }
@@ -140,7 +157,7 @@ fun FavouriteTiles(
                         faces = faces,
                         animate = animateLive,
                         index = index,
-                        color = tileColor,
+                        color = appTileColor,
                         interactionSource = pressSource,
                         modifier = Modifier
                             .weight(1f)
@@ -149,37 +166,46 @@ fun FavouriteTiles(
                             .combinedClickable(
                                 interactionSource = pressSource,
                                 indication = null, // no ripple (Meena UI)
-                                onClick = { onLaunchApp(app.packageName) },
+                                onClick = { onLaunchApp(slot.id) },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     selectedForMenu = slot.id
                                 }
                             )
                     ) {
-                        // App Icon: in monochrome, the app's glyph in white; without one, its normal icon (never a white blob).
-                        val glyph = if (isMonochrome) app.glyphBitmap else null
+                        // Shortcut tiles always show their full icon (contact photo); app tiles use glyph in monochrome.
+                        val isShortcutTile = app.shortcutId != null
+                        val glyph = if (isMonochrome && !isShortcutTile && !colorful) app.glyphBitmap else null
                         val bitmap = glyph ?: app.iconBitmap
                         if (bitmap != null) {
+                            val iconSize = when {
+                                isSmall && glyph != null -> 32.dp
+                                isSmall -> 28.dp
+                                glyph != null -> 40.dp
+                                else -> 32.dp
+                            }
                             Image(
                                 bitmap = bitmap,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .align(Alignment.Center)
-                                    .size(if (glyph != null) 40.dp else 32.dp),
+                                    .size(iconSize),
                                 colorFilter = if (glyph != null) ColorFilter.tint(my.hana.meena.theme.MeenaOnAccent) else null
                             )
                         }
 
-                        // App Label
-                        Text(
-                            text = app.label.lowercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = my.hana.meena.theme.MeenaOnAccent,
-                            maxLines = 1,
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(my.hana.meena.theme.MeenaSpacing.s)
-                        )
+                        // App Label — hidden in small tile mode
+                        if (!isSmall) {
+                            Text(
+                                text = app.label.lowercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = my.hana.meena.theme.MeenaOnAccent,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(my.hana.meena.theme.MeenaSpacing.s)
+                            )
+                        }
 
                         // Unread count, Metro style: a plain number in the corner, no badge box.
                         if (unreadCount > 0) {
@@ -232,12 +258,18 @@ fun FavouriteTiles(
         }
     }
 
-    // Long press menu, for an app or a group
+    // Long press menu, for an app, shortcut, or group
     val menuId = selectedForMenu
     if (menuId != null) {
         val index = pinnedAppIds.indexOf(menuId)
         val isGroup = FavouriteRules.isGroup(menuId)
-        val members = FavouriteRules.members(menuId).mapNotNull { InstalledAppsRepository.getCachedApp(it) }
+        val members = FavouriteRules.members(menuId).mapNotNull { id ->
+            if (FavouriteRules.isShortcut(id)) {
+                my.hana.meena.data.system.ShortcutRepository.getCachedShortcut(id)
+            } else {
+                InstalledAppsRepository.getCachedApp(id)
+            }
+        }
         if (index >= 0 && members.isNotEmpty()) {
             Dialog(onDismissRequest = { selectedForMenu = null }) {
                 Box(
@@ -292,6 +324,11 @@ fun FavouriteTiles(
                             if (index < pinnedAppIds.size - 1) {
                                 MenuItem(stringResource(R.string.favourites_move_right)) { onMoveApp(index, index + 1) }
                             }
+                            if (pinnedAppIds.size < FavouriteRules.MAX) {
+                                MenuItem(stringResource(R.string.favourites_add_shortcut)) {
+                                    shortcutPickApp = true
+                                }
+                            }
                             if (isGroup) {
                                 MenuItem(stringResource(R.string.favourites_group_take_out)) { removingFrom = menuId }
                                 MenuItem(stringResource(R.string.favourites_group_remove), MaterialTheme.colorScheme.error) {
@@ -299,7 +336,11 @@ fun FavouriteTiles(
                                 }
                             } else {
                                 MenuItem(stringResource(R.string.action_remove), MaterialTheme.colorScheme.error) {
-                                    onTogglePin(members.first().packageName)
+                                    if (FavouriteRules.isShortcut(menuId)) {
+                                        onSetPinned(pinnedAppIds - menuId)
+                                    } else {
+                                        onTogglePin(members.first().packageName)
+                                    }
                                 }
                             }
                         }
@@ -359,6 +400,66 @@ fun FavouriteTiles(
             },
             onDismiss = { confirmRemoveGroup = null }
         )
+    }
+
+    // Step 1: pick an app that publishes shortcuts
+    if (shortcutPickApp) {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val apps = remember {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {
+                my.hana.meena.data.system.ShortcutRepository.appsWithShortcuts(context)
+            } else emptyList()
+        }
+        if (apps.isEmpty()) {
+            shortcutPickApp = false
+            val msg = stringResource(
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N_MR1)
+                    R.string.favourites_shortcuts_unavailable
+                else R.string.favourites_no_shortcuts
+            )
+            MetroMessage.show(msg)
+        } else {
+            MetroListPicker(
+                title = stringResource(R.string.favourites_pick_app),
+                items = apps.map { MetroPickerItem(key = it.packageName, title = it.label.lowercase()) },
+                selectedKey = "",
+                onSelect = { pkg ->
+                    shortcutPickApp = false
+                    shortcutPickFrom = pkg
+                },
+                onDismiss = { shortcutPickApp = false },
+                enableSearch = true
+            )
+        }
+    }
+
+    // Step 2: pick a shortcut from the chosen app
+    val scPkg = shortcutPickFrom
+    if (scPkg != null) {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val shortcuts = remember(scPkg) {
+            my.hana.meena.data.system.ShortcutRepository.queryShortcuts(context, scPkg)
+        }
+        if (shortcuts.isEmpty()) {
+            shortcutPickFrom = null
+            MetroMessage.show(stringResource(R.string.favourites_no_shortcuts))
+        } else {
+            MetroListPicker(
+                title = stringResource(R.string.favourites_pick_shortcut),
+                items = shortcuts.map { MetroPickerItem(key = it.packageName, title = it.label.lowercase()) },
+                selectedKey = "",
+                onSelect = { key ->
+                    if (pinnedAppIds.size >= FavouriteRules.MAX) {
+                        MetroMessage.show(fullMsg)
+                    } else if (key !in pinnedAppIds) {
+                        onSetPinned(pinnedAppIds + key)
+                    }
+                    shortcutPickFrom = null
+                },
+                onDismiss = { shortcutPickFrom = null },
+                enableSearch = true
+            )
+        }
     }
 }
 

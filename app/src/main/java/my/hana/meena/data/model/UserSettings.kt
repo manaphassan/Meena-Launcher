@@ -30,6 +30,12 @@ data class MeenaUserSettings(
     val wallpaperDimPercent: Int = 40,
     
     val isMonochromeFavourites: Boolean = true,
+    /** Tile backgrounds use each app's dominant colour instead of the accent. */
+    val colorfulTiles: Boolean = false,
+    /** Smaller favourite tiles: 4 per row instead of 3, icon only. */
+    val smallFavouriteTiles: Boolean = false,
+    /** Show the maker's digital business card on the today page. */
+    val showBusinessCard: Boolean = false,
     val iconPack: String = "", // icon pack app id; empty = system icons
     /** Favourite tiles flip to show counts, the next event or alarm. */
     val liveTiles: Boolean = true,

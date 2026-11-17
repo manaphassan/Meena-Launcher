@@ -148,6 +148,10 @@ fun TodayHub(
 
     LaunchedEffect(Unit) {
         InstalledAppsRepository.loadInstalledApps(context)
+        // Pre-load any pinned shortcuts so tiles appear immediately.
+        settings.pinnedAppIds.filter { my.hana.meena.data.system.FavouriteRules.isShortcut(it) }.forEach {
+            my.hana.meena.data.system.ShortcutRepository.loadPinnedShortcut(context, it)
+        }
         appsVersion++
     }
 
@@ -603,6 +607,8 @@ fun TodayHub(
                         pinnedAppIds = settings.pinnedAppIds,
                         notificationCounts = notificationCounts,
                         isMonochrome = settings.isMonochromeFavourites,
+                        colorful = settings.colorfulTiles,
+                        isSmall = settings.smallFavouriteTiles,
                         onLaunchApp = onLaunchPackage,
                         onOpenApps = onOpenApps,
                         onTogglePin = onTogglePin,

@@ -30,7 +30,13 @@ data class DeviceAppInfo(
     val componentName: android.content.ComponentName? = null,
     val userHandle: android.os.UserHandle? = null,
     /** ApplicationInfo.category (Android 8+); -1 when the app doesn't say. */
-    val category: Int = -1
+    val category: Int = -1,
+    /** Non-null for shortcut entries (e.g. a WhatsApp conversation). */
+    val shortcutId: String? = null,
+    /** The package that owns the shortcut; null for regular apps. */
+    val shortcutPackage: String? = null,
+    /** Dominant colour extracted from the icon, ARGB int; 0 when not available. */
+    val dominantColor: Int = 0
 )
 
 object InstalledAppsRepository {
@@ -118,6 +124,7 @@ object InstalledAppsRepository {
 
                 var imageBitmap: ImageBitmap? = null
                 var glyph: ImageBitmap? = null
+                var dominant = 0
                 try {
                     val packIcon = if (pack.isEmpty()) null else runCatching {
                         IconPackRepository.iconFor(context, pack, info.componentName.packageName, info.componentName.className)
@@ -126,6 +133,7 @@ object InstalledAppsRepository {
                     }.getOrNull()
                     val bmp = packIcon ?: drawableToBitmap(info.getBadgedIcon(0))
                     imageBitmap = bmp.asImageBitmap()
+                    dominant = DominantColor.extract(bmp)
                     // A chosen icon pack keeps its own look; otherwise find a glyph for white tiles.
                     if (packIcon == null) {
                         glyph = runCatching { glyphOf(info.getIcon(0)) }.getOrNull()?.asImageBitmap()
@@ -145,7 +153,8 @@ object InstalledAppsRepository {
                         isRealApp = true,
                         componentName = info.componentName,
                         userHandle = profile,
-                        category = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) info.applicationInfo.category else -1
+                        category = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) info.applicationInfo.category else -1,
+                        dominantColor = dominant
                     )
                 )
             }
