@@ -744,6 +744,8 @@
     <string name="apps_sort_category_hint">games, social, photos and so on, as each app describes itself</string>
     <string name="apps_sort_recent">last used</string>
     <string name="apps_sort_recent_hint">newest first. only counts apps you open from meena.</string>
+    <string name="apps_sort_grid">a to z filter</string>
+    <string name="apps_sort_grid_hint">tap a letter to see only those apps.</string>
     <string name="apps_category_other">other</string>
     <string name="apps_recent_today">today</string>
     <string name="apps_recent_week">this week</string>

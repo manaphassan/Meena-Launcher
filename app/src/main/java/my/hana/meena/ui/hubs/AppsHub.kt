@@ -77,6 +77,7 @@ import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.metroClickable
 import kotlinx.coroutines.launch
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun AppsHub(
     listState: LazyListState,
@@ -137,6 +138,16 @@ fun AppsHub(
 
     // A to z keeps the letter tiles and scrubber; the other layouts use plain section titles.
     val mode = my.hana.meena.data.model.AppsSort.of(sortMode)
+    var filterLetter by remember { mutableStateOf<Char?>(null) }
+    LaunchedEffect(mode) { filterLetter = null }
+
+    // In grid/filter mode, narrow by tapped letter; in other modes, show all.
+    val filteredApps = remember(displayApps, filterLetter, mode) {
+        if (mode == my.hana.meena.data.model.AppsSort.GRID && filterLetter != null) {
+            displayApps.filter { it.firstLetter == filterLetter }
+        } else displayApps
+    }
+
     var isSortPickerOpen by remember { mutableStateOf(false) }
     val launchVersion by my.hana.meena.data.system.AppLaunchStats.version.collectAsState()
     val otherTitle = stringResource(R.string.apps_category_other)
@@ -146,10 +157,10 @@ fun AppsHub(
         my.hana.meena.data.system.AppGrouping.BUCKET_EARLIER to stringResource(R.string.apps_recent_earlier),
         my.hana.meena.data.system.AppGrouping.BUCKET_NEVER to stringResource(R.string.apps_recent_never)
     )
-    val sections = remember(displayApps, mode, launchVersion, otherTitle, recentTitles) {
+    val sections = remember(filteredApps, mode, launchVersion, otherTitle, recentTitles) {
         when (mode) {
             my.hana.meena.data.model.AppsSort.CATEGORY -> my.hana.meena.data.system.AppGrouping.byCategory(
-                displayApps,
+                filteredApps,
                 titleOf = { category ->
                     if (category < 0 || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) null
                     else runCatching { android.content.pm.ApplicationInfo.getCategoryTitle(context, category)?.toString() }.getOrNull()
@@ -166,7 +177,7 @@ fun AppsHub(
                     set(java.util.Calendar.MILLISECOND, 0)
                 }.timeInMillis
                 my.hana.meena.data.system.AppGrouping.byRecent(
-                    displayApps,
+                    filteredApps,
                     lastUsed = my.hana.meena.data.system.AppLaunchStats.load(context).mapValues { it.value.lastUsed },
                     nowMillis = now,
                     startOfTodayMillis = startOfToday,
@@ -174,13 +185,14 @@ fun AppsHub(
                 )
             }
 
-            else -> my.hana.meena.data.system.AppGrouping.byLetter(displayApps)
+            else -> my.hana.meena.data.system.AppGrouping.byLetter(filteredApps)
         }
     }
     val sortTitles = mapOf(
         my.hana.meena.data.model.AppsSort.AZ to stringResource(R.string.apps_sort_az),
         my.hana.meena.data.model.AppsSort.CATEGORY to stringResource(R.string.apps_sort_category),
-        my.hana.meena.data.model.AppsSort.RECENT to stringResource(R.string.apps_sort_recent)
+        my.hana.meena.data.model.AppsSort.RECENT to stringResource(R.string.apps_sort_recent),
+        my.hana.meena.data.model.AppsSort.GRID to stringResource(R.string.apps_sort_grid)
     )
 
     val activeLetters = remember(realInstalledApps) {
@@ -259,6 +271,48 @@ fun AppsHub(
                         style = MaterialTheme.typography.bodyMedium,
                         color = primaryColor
                     )
+                }
+            }
+
+            // Alphabet filter bar for grid mode
+            if (mode == my.hana.meena.data.model.AppsSort.GRID) {
+                item(key = "alpha-filter") {
+                    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                    androidx.compose.foundation.layout.FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
+                        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                    ) {
+                        alphabet.forEach { ch ->
+                            val hasApps = ch in activeLetters
+                            val isActive = filterLetter == ch
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(
+                                        if (isActive) my.hana.meena.theme.MeenaAccentFill
+                                        else if (hasApps) my.hana.meena.theme.MeenaDarkSlate
+                                        else Color.Transparent
+                                    )
+                                    .then(
+                                        if (hasApps) Modifier.metroClickable {
+                                            filterLetter = if (isActive) null else ch
+                                        } else Modifier
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = ch.lowercase(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = when {
+                                        isActive -> my.hana.meena.theme.MeenaOnAccent
+                                        hasApps -> MeenaTextWhite
+                                        else -> MeenaTextMuted.copy(alpha = 0.3f)
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
