@@ -6,6 +6,7 @@ import my.hana.meena.ui.settings.SETTINGS_TAB_CONNECTIONS
 import my.hana.meena.ui.settings.SETTINGS_TAB_PAGES
 import my.hana.meena.ui.settings.SETTINGS_TAB_PERSONALIZE
 import my.hana.meena.ui.settings.SETTINGS_TAB_SYSTEM
+import my.hana.meena.ui.settings.SETTINGS_TAB_ABOUT
 import my.hana.meena.ui.settings.SETTINGS_WIDGET_TITLES
 import my.hana.meena.ui.settings.groupWidgetsByPage
 import my.hana.meena.ui.settings.normalizeSettingsTab
@@ -20,8 +21,8 @@ class SettingsLayoutTest {
         assertEquals(SETTINGS_TAB_PAGES, normalizeSettingsTab("widgets"))
         assertEquals(SETTINGS_TAB_CONNECTIONS, normalizeSettingsTab("accounts"))
         assertEquals(SETTINGS_TAB_PERSONALIZE, normalizeSettingsTab("look & feel"))
-        assertEquals(SETTINGS_TAB_SYSTEM, normalizeSettingsTab("system"))
-        assertEquals(SETTINGS_TAB_PAGES, normalizeSettingsTab("something else"))
+        assertEquals(SETTINGS_TAB_ABOUT, normalizeSettingsTab("system"))
+        assertEquals(SETTINGS_TAB_PERSONALIZE, normalizeSettingsTab("something else"))
     }
 
     @Test

@@ -145,10 +145,10 @@ fun SettingsScreen(
 
     val tabs = SETTINGS_TABS
     val tabLabels = listOf(
+        stringResource(R.string.settings_tab_personalize),
         stringResource(R.string.settings_tab_pages),
         stringResource(R.string.settings_tab_connections),
-        stringResource(R.string.settings_tab_personalize),
-        stringResource(R.string.settings_tab_system)
+        stringResource(R.string.settings_tab_about)
     )
     val pagerState = rememberPagerState(initialPage = tabs.indexOf(normalizeSettingsTab(initialTab)).coerceAtLeast(0)) { tabs.size }
     val scope = rememberCoroutineScope()
@@ -299,10 +299,10 @@ fun SettingsScreen(
                             verticalArrangement = Arrangement.spacedBy(0.dp)
                         ) {
                             when (tabs[page]) {
-                                SETTINGS_TAB_PAGES -> pagesTab(settingsState, onSortStory = { confirmStoryOrder = true }) { openSubPage(it) }
+                                SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState, onUpdate = { transform -> update(transform) }) { openSubPage(it) }
+                                SETTINGS_TAB_PAGES -> pagesTab(settingsState, onUpdate = { transform -> update(transform) }, onSortStory = { confirmStoryOrder = true }) { openSubPage(it) }
                                 SETTINGS_TAB_CONNECTIONS -> connectionsTab(settingsState, context) { openSubPage(it) }
-                                SETTINGS_TAB_PERSONALIZE -> personalizeTab(settingsState) { openSubPage(it) }
-                                SETTINGS_TAB_SYSTEM -> systemTab(settingsState, context) { openSubPage(it) }
+                                SETTINGS_TAB_ABOUT -> aboutTab(settingsState, context) { openSubPage(it) }
                             }
                             item { Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.l)) }
                         }
@@ -317,15 +317,17 @@ const val SETTINGS_TAB_PAGES = "pages"
 const val SETTINGS_TAB_CONNECTIONS = "connections"
 const val SETTINGS_TAB_PERSONALIZE = "personalize"
 const val SETTINGS_TAB_SYSTEM = "system"
-private val SETTINGS_TABS = listOf(SETTINGS_TAB_PAGES, SETTINGS_TAB_CONNECTIONS, SETTINGS_TAB_PERSONALIZE, SETTINGS_TAB_SYSTEM)
+const val SETTINGS_TAB_ABOUT = "about"
+private val SETTINGS_TABS = listOf(SETTINGS_TAB_PERSONALIZE, SETTINGS_TAB_PAGES, SETTINGS_TAB_CONNECTIONS, SETTINGS_TAB_ABOUT)
 
 /** Old callers still pass "widgets", "accounts" or "look & feel"; map them to the new pivots. */
 fun normalizeSettingsTab(tab: String): String = when (tab) {
     "widgets" -> SETTINGS_TAB_PAGES
     "accounts" -> SETTINGS_TAB_CONNECTIONS
     "look & feel" -> SETTINGS_TAB_PERSONALIZE
+    "system" -> SETTINGS_TAB_ABOUT
     in SETTINGS_TABS -> tab
-    else -> SETTINGS_TAB_PAGES
+    else -> SETTINGS_TAB_PERSONALIZE
 }
 
 /** Name shown for a base theme id. */
@@ -392,7 +394,7 @@ private fun LazyListScope.settingsGroupLabel(labelRes: Int) {
     }
 }
 
-private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onSortStory: () -> Unit, open: (String) -> Unit) {
+private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit, onSortStory: () -> Unit, open: (String) -> Unit) {
     item {
         Text(
             text = stringResource(R.string.settings_pages_intro),
@@ -413,6 +415,13 @@ private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onSortStory
             title = stringResource(R.string.widget_lines_title),
             status = stringResource(R.string.widget_lines_status, settingsState.widgetLines),
             onClick = { open("look:widgetlines") }
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_reorder_title),
+            status = stringResource(R.string.settings_reorder_status),
+            onClick = { open("look:reorder") }
         )
     }
     groupWidgetsByPage(settingsState.widgetConfigs).forEach { (hub, ids) ->
@@ -437,12 +446,35 @@ private fun LazyListScope.pagesTab(settingsState: MeenaUserSettings, onSortStory
         ids.forEach { id ->
             item(key = id) {
                 val isOn = settingsState.widgetConfigs[id]?.isEnabled != false
-                SettingsPivotRow(
-                    title = stringResource(SETTINGS_WIDGET_TITLES.getValue(id)),
-                    status = stringResource(if (isOn) R.string.settings_widget_on else R.string.settings_widget_off),
-                    isDimmed = !isOn,
-                    onClick = { open("widget:$id") }
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .metroClickable { open("widget:$id") }
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(SETTINGS_WIDGET_TITLES.getValue(id)),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (isOn) MeenaTextWhite else MeenaTextMuted
+                        )
+                    }
+                    MetroToggle(
+                        checked = isOn,
+                        onCheckedChange = { nowOn ->
+                            onUpdate { settings ->
+                                val map = settings.widgetConfigs.toMutableMap()
+                                val cfg = map[id] ?: MeenaUserSettings.defaultWidgetMap()[id] ?: return@onUpdate settings
+                                map[id] = cfg.copy(isEnabled = nowOn)
+                                settings.copy(widgetConfigs = map)
+                            }
+                        },
+                        modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m),
+                        showLabel = false
+                    )
+                }
             }
         }
     }
@@ -499,7 +531,58 @@ private fun LazyListScope.connectionsTab(settingsState: MeenaUserSettings, conte
     }
 }
 
-private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open: (String) -> Unit) {
+private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, onUpdate: ((MeenaUserSettings) -> MeenaUserSettings) -> Unit, open: (String) -> Unit) {
+    // Quick toggles: the most-changed settings, immediately tappable
+    settingsGroupLabel(R.string.settings_group_quick)
+    item {
+        SettingToggleRow(
+            title = stringResource(R.string.settings_colorful_tiles),
+            subtitle = stringResource(R.string.settings_colorful_tiles_hint),
+            checked = settingsState.colorfulTiles,
+            onCheckedChange = { onUpdate { it.copy(colorfulTiles = !it.colorfulTiles) } }
+        )
+    }
+    item {
+        SettingToggleRow(
+            title = stringResource(R.string.settings_small_tiles),
+            subtitle = stringResource(R.string.settings_small_tiles_hint),
+            checked = settingsState.smallFavouriteTiles,
+            onCheckedChange = { onUpdate { it.copy(smallFavouriteTiles = !it.smallFavouriteTiles) } }
+        )
+    }
+    item {
+        SettingToggleRow(
+            title = stringResource(R.string.widget_lines_toggle),
+            subtitle = stringResource(R.string.widget_lines_toggle_hint),
+            checked = settingsState.shortWidgets,
+            onCheckedChange = { onUpdate { it.copy(shortWidgets = !it.shortWidgets) } }
+        )
+    }
+    item {
+        SettingToggleRow(
+            title = stringResource(R.string.live_tiles_title),
+            subtitle = stringResource(if (settingsState.liveTiles) R.string.live_tiles_status_on else R.string.live_tiles_status_off),
+            checked = settingsState.liveTiles,
+            onCheckedChange = { onUpdate { it.copy(liveTiles = !it.liveTiles) } }
+        )
+    }
+    item {
+        SettingToggleRow(
+            title = stringResource(R.string.shake_hide_title),
+            subtitle = stringResource(R.string.shake_hide_status),
+            checked = settingsState.shakeToHide,
+            onCheckedChange = { onUpdate { it.copy(shakeToHide = !it.shakeToHide) } }
+        )
+    }
+    item {
+        SettingToggleRow(
+            title = stringResource(R.string.settings_business_card),
+            subtitle = stringResource(R.string.settings_business_card_hint),
+            checked = settingsState.showBusinessCard,
+            onCheckedChange = { onUpdate { it.copy(showBusinessCard = !it.showBusinessCard) } }
+        )
+    }
+    // Look
     settingsGroupLabel(R.string.settings_group_look)
     item {
         SettingsPivotRow(
@@ -512,6 +595,15 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
                     ?: settingsState.accentHex.lowercase()
             ),
             onClick = { open("look:theme") }
+        )
+    }
+    item {
+        SettingsPivotRow(
+            title = stringResource(R.string.settings_wallpaper_title),
+            status = if (settingsState.wallpaperUri != null)
+                stringResource(R.string.settings_wallpaper_status_set, settingsState.wallpaperDimPercent)
+            else stringResource(R.string.settings_wallpaper_status_none),
+            onClick = { open("look:wallpaper") }
         )
     }
     item {
@@ -530,14 +622,6 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
             title = stringResource(R.string.settings_icon_pack_title),
             status = packLabel ?: stringResource(R.string.settings_icon_pack_system),
             onClick = { open("look:iconpack") }
-        )
-    }
-    item {
-        SettingsPivotRow(
-            title = stringResource(R.string.live_tiles_title),
-            status = stringResource(if (settingsState.liveTiles) R.string.live_tiles_status_on else R.string.live_tiles_status_off),
-            isDimmed = !settingsState.liveTiles,
-            onClick = { open("look:livetiles") }
         )
     }
     item {
@@ -566,13 +650,11 @@ private fun LazyListScope.personalizeTab(settingsState: MeenaUserSettings, open:
         }
         SettingsPivotRow(
             title = stringResource(R.string.settings_hand_title),
-            status = parts.joinToString(" · "),
+            status = parts.joinToString(" \u00b7 "),
             onClick = { open("look:ergonomics") }
         )
     }
-}
-
-private fun LazyListScope.systemTab(settingsState: MeenaUserSettings, context: android.content.Context, open: (String) -> Unit) {
+    // Data section
     settingsGroupLabel(R.string.settings_group_your_data)
     item {
         SettingsPivotRow(
@@ -583,21 +665,55 @@ private fun LazyListScope.systemTab(settingsState: MeenaUserSettings, context: a
     }
     item {
         SettingsPivotRow(
-            title = stringResource(R.string.shake_hide_title),
-            status = stringResource(R.string.shake_hide_status),
-            onClick = { open("look:shake") }
-        )
-    }
-    item {
-        SettingsPivotRow(
             title = stringResource(R.string.settings_backup_title),
             status = stringResource(R.string.settings_backup_status),
             onClick = { open("look:backup") }
         )
     }
+}
+
+private fun LazyListScope.aboutTab(settingsState: MeenaUserSettings, context: android.content.Context, open: (String) -> Unit) {
+    item {
+        Text(
+            text = stringResource(R.string.about_intro),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MeenaTextWhite,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.m)
+        )
+    }
+    item {
+        Text(
+            text = stringResource(R.string.about_charter),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+    // Maker
     settingsGroupLabel(R.string.settings_group_meena)
     item {
-        // Read each time the tab shows, since the choice is made outside Meena.
+        Text(
+            text = stringResource(R.string.about_made_by),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MeenaTextWhite
+        )
+    }
+    item {
+        val cardContext = LocalContext.current
+        SettingLinkRow(
+            title = stringResource(R.string.about_visit_card),
+            status = "manaphassan.github.io/cv",
+            onClick = {
+                runCatching {
+                    cardContext.startActivity(
+                        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://manaphassan.github.io/cv"))
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+        )
+    }
+    // System
+    item {
         val isHome = my.hana.meena.data.system.HomeRole.isDefault(context)
         SettingsPivotRow(
             title = stringResource(R.string.home_app_title),
@@ -618,10 +734,11 @@ private fun LazyListScope.systemTab(settingsState: MeenaUserSettings, context: a
         val version = remember {
             runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "1.0"
         }
-        SettingsPivotRow(
-            title = stringResource(R.string.settings_about_title),
-            status = stringResource(R.string.settings_about_status, version),
-            onClick = { open("look:about") }
+        Text(
+            text = stringResource(R.string.about_version, version),
+            style = MaterialTheme.typography.labelSmall,
+            color = MeenaTextMuted,
+            modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.l)
         )
     }
 }
@@ -1368,6 +1485,65 @@ private fun SubPageContainer(
 
         }
 
+        subPageId == "look:wallpaper" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
+                    pageTitle = stringResource(R.string.settings_wallpaper_title),
+                    onBack = onBack
+                )
+            }
+
+            item {
+                val wallpaperContext = LocalContext.current
+                val pickFailedMsg = stringResource(R.string.settings_wallpaper_pick_failed)
+                val wallpaperPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+                ) { uri: Uri? ->
+                    if (uri == null) return@rememberLauncherForActivityResult
+                    try {
+                        wallpaperContext.contentResolver.takePersistableUriPermission(
+                            uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    } catch (_: SecurityException) { /* some providers don't support persistable */ }
+                    onUpdate { it.copy(wallpaperUri = uri.toString()) }
+                }
+                SettingLinkRow(
+                    title = stringResource(R.string.settings_wallpaper_pick),
+                    status = stringResource(R.string.settings_wallpaper_pick_hint),
+                    onClick = {
+                        try {
+                            wallpaperPickerLauncher.launch("image/*")
+                        } catch (_: Exception) {
+                            my.hana.meena.ui.components.MetroMessage.show(pickFailedMsg)
+                        }
+                    }
+                )
+            }
+
+            if (settingsState.wallpaperUri != null) {
+                item {
+                    SettingSegmentedRow(
+                        title = stringResource(R.string.settings_wallpaper_dim_title),
+                        subtitle = stringResource(R.string.settings_wallpaper_dim_hint),
+                        options = (40..90 step 10).map { it.toString() to stringResource(R.string.settings_wallpaper_dim_status, it) },
+                        selectedKey = settingsState.wallpaperDimPercent.toString(),
+                        onSelectKey = { key ->
+                            val percent = (key.toIntOrNull() ?: 60).coerceIn(40, 90)
+                            onUpdate { it.copy(wallpaperDimPercent = percent) }
+                        }
+                    )
+                }
+                item {
+                    SettingLinkRow(
+                        title = stringResource(R.string.settings_wallpaper_remove),
+                        status = stringResource(R.string.settings_wallpaper_remove_hint),
+                        onClick = { onUpdate { it.copy(wallpaperUri = null, wallpaperDimPercent = 60) } }
+                    )
+                }
+            }
+        }
+
         subPageId == "look:typography" -> {
             item {
                 MetroSubPageHeader(
@@ -1526,10 +1702,81 @@ private fun SubPageContainer(
             }
         }
 
+        subPageId == "look:reorder" -> {
+            item {
+                MetroSubPageHeader(
+                    parentTitle = stringResource(R.string.settings_tab_pages),
+                    pageTitle = stringResource(R.string.settings_reorder_title),
+                    onBack = onBack
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.settings_reorder_intro),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MeenaTextMuted
+                )
+            }
+            // Show enabled today widgets in current order, with move up/down
+            val todayWidgets = settingsState.widgetConfigs.entries
+                .filter { it.value.hubId == "today" && it.value.isEnabled }
+                .sortedBy { it.value.position }
+                .map { it.key }
+            todayWidgets.forEachIndexed { index, widgetId ->
+                item(key = "reorder-$widgetId") {
+                    val title = SETTINGS_WIDGET_TITLES[widgetId]?.let { stringResource(it) } ?: widgetId
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MeenaTextWhite,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (index > 0) {
+                            Text(
+                                text = stringResource(R.string.settings_reorder_up),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable {
+                                        onUpdate { settings ->
+                                            reorderWidget(settings, widgetId, -1)
+                                        }
+                                    }
+                                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                        }
+                        if (index < todayWidgets.size - 1) {
+                            Text(
+                                text = stringResource(R.string.settings_reorder_down),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable {
+                                        onUpdate { settings ->
+                                            reorderWidget(settings, widgetId, 1)
+                                        }
+                                    }
+                                    .padding(horizontal = my.hana.meena.theme.MeenaSpacing.m, vertical = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         subPageId == "look:shake" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = stringResource(R.string.settings_tab_system),
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
                     pageTitle = stringResource(R.string.shake_hide_title),
                     onBack = onBack
                 )
@@ -1555,7 +1802,7 @@ private fun SubPageContainer(
         subPageId == "look:lock" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = stringResource(R.string.settings_tab_system),
+                    parentTitle = stringResource(R.string.settings_tab_about),
                     pageTitle = stringResource(R.string.lock_title),
                     onBack = onBack
                 )
@@ -1615,7 +1862,7 @@ private fun SubPageContainer(
         subPageId == "look:homeapp" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = stringResource(R.string.settings_tab_system),
+                    parentTitle = stringResource(R.string.settings_tab_about),
                     pageTitle = stringResource(R.string.home_app_title),
                     onBack = onBack
                 )
@@ -1687,7 +1934,7 @@ private fun SubPageContainer(
         subPageId == "look:backup" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = stringResource(R.string.settings_tab_system),
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
                     pageTitle = stringResource(R.string.settings_backup_title),
                     onBack = onBack
                 )
@@ -1729,7 +1976,7 @@ private fun SubPageContainer(
                 .getOrNull() ?: "1.0"
             item {
                 MetroSubPageHeader(
-                    parentTitle = stringResource(R.string.settings_tab_system),
+                    parentTitle = stringResource(R.string.settings_tab_about),
                     pageTitle = stringResource(R.string.settings_about_title),
                     onBack = onBack
                 )
@@ -1828,7 +2075,7 @@ private fun SubPageContainer(
         subPageId == "look:privacy" -> {
             item {
                 MetroSubPageHeader(
-                    parentTitle = stringResource(R.string.settings_tab_system),
+                    parentTitle = stringResource(R.string.settings_tab_personalize),
                     pageTitle = stringResource(R.string.settings_privacy_title),
                     onBack = onBack
                 )
@@ -2800,6 +3047,23 @@ private fun NewsFeedManager(
             }
         }
     }
+}
+
+private fun reorderWidget(settings: MeenaUserSettings, widgetId: String, direction: Int): MeenaUserSettings {
+    val configs = settings.widgetConfigs.toMutableMap()
+    val todayIds = configs.entries
+        .filter { it.value.hubId == "today" && it.value.isEnabled }
+        .sortedBy { it.value.position }
+        .map { it.key }
+        .toMutableList()
+    val idx = todayIds.indexOf(widgetId)
+    if (idx < 0) return settings
+    val newIdx = (idx + direction).coerceIn(0, todayIds.size - 1)
+    if (newIdx == idx) return settings
+    todayIds.removeAt(idx)
+    todayIds.add(newIdx, widgetId)
+    todayIds.forEachIndexed { i, id -> configs[id] = configs.getValue(id).copy(position = i) }
+    return settings.copy(widgetConfigs = configs)
 }
 
 @Composable

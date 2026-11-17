@@ -14,12 +14,15 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
@@ -58,6 +61,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
@@ -69,6 +73,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
@@ -329,6 +334,35 @@ fun MeenaHomeScreen(
         return
     }
 
+    var wallpaperBitmap by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    LaunchedEffect(userSettings.wallpaperUri) {
+        wallpaperBitmap = if (userSettings.wallpaperUri != null) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching {
+                    val uri = android.net.Uri.parse(userSettings.wallpaperUri)
+                    // First pass: decode bounds only
+                    val opts = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    context.contentResolver.openInputStream(uri)?.use { s ->
+                        android.graphics.BitmapFactory.decodeStream(s, null, opts)
+                    }
+                    // Subsample to screen resolution to avoid OOM on 4K photos
+                    val dm = context.resources.displayMetrics
+                    val targetW = dm.widthPixels
+                    val targetH = dm.heightPixels
+                    val sampleSize = maxOf(1,
+                        minOf(opts.outWidth / targetW, opts.outHeight / targetH)
+                    )
+                    val decodeOpts = android.graphics.BitmapFactory.Options().apply {
+                        inSampleSize = sampleSize
+                    }
+                    context.contentResolver.openInputStream(uri)?.use { s ->
+                        android.graphics.BitmapFactory.decodeStream(s, null, decodeOpts)?.asImageBitmap()
+                    }
+                }.getOrNull()
+            }
+        } else null
+    }
+
     var showFirstRunPermissionDialog by remember {
         mutableStateOf(!userSettings.hasCompletedFirstRunSetup)
     }
@@ -366,6 +400,30 @@ fun MeenaHomeScreen(
     ) { isGranted ->
         if (isGranted) {
             my.hana.meena.data.system.DeviceCalendarRepository.refresh(context)
+        }
+    }
+
+    val importBackupLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        coroutineScope.launch {
+            try {
+                val jsonText = context.contentResolver.openInputStream(uri)
+                    ?.bufferedReader()?.use { it.readText() }
+                if (jsonText.isNullOrBlank()) {
+                    my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_import_failed))
+                    return@launch
+                }
+                val success = settingsRepository.importFromJson(jsonText)
+                if (success) {
+                    my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_restored))
+                } else {
+                    my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_parse_failed))
+                }
+            } catch (e: Exception) {
+                my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_import_failed))
+            }
         }
     }
 
@@ -504,7 +562,21 @@ fun MeenaHomeScreen(
         }
     }
 
+    val currentWallpaper = wallpaperBitmap
     Box(modifier = Modifier.fillMaxSize()) {
+        if (currentWallpaper != null) {
+            Image(
+                bitmap = currentWallpaper,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MeenaBlack.copy(alpha = userSettings.wallpaperDimPercent.coerceIn(40, 90) / 100f))
+            )
+        }
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Panoramic Hub Pivot Header (WP7 / WP8.1 style - multi-speed parallax with right-edge peek)
@@ -678,11 +750,52 @@ fun MeenaHomeScreen(
             } else {
                 Modifier
             }
+            // Swipe down from top of pager to open action center.
+            // Uses Initial pass so events still reach child LazyColumns.
+            val swipeDownToActionCenter = Modifier.pointerInput(Unit) {
+                val topThresholdPx = 100.dp.toPx()
+                val triggerPx = 80.dp.toPx()
+                awaitEachGesture {
+                    val down = awaitPointerEvent(PointerEventPass.Initial)
+                    val firstDown = down.changes.firstOrNull() ?: return@awaitEachGesture
+                    if (!firstDown.pressed) return@awaitEachGesture
+                    if (firstDown.position.y > topThresholdPx) return@awaitEachGesture
+
+                    // Only trigger when the current page's list is at the very top
+                    val listAtTop = when (pagerState.currentPage) {
+                        0 -> hubTodayListState
+                        1 -> hubInboxListState
+                        2 -> hubNewsListState
+                        3 -> hubMoneyListState
+                        4 -> hubAppsListState
+                        else -> null
+                    }?.let { it.firstVisibleItemIndex == 0 && it.firstVisibleItemScrollOffset == 0 } ?: true
+                    if (!listAtTop) return@awaitEachGesture
+
+                    var totalDrag = 0f
+                    var triggered = false
+                    do {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        event.changes.forEach { change ->
+                            if (change.pressed) {
+                                val dy = (change.position - change.previousPosition).y
+                                if (dy > 0f) totalDrag += dy
+                            }
+                        }
+                        if (totalDrag > triggerPx && !triggered) {
+                            triggered = true
+                            isActionCenterOpen = true
+                        }
+                    } while (event.changes.any { it.pressed })
+                }
+            }
+
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .then(swipeDownToActionCenter)
             ) { page ->
                 Box(
                     modifier = Modifier
@@ -891,10 +1004,6 @@ fun MeenaHomeScreen(
         ) {
             val backupSharedMsg = stringResource(R.string.backup_shared)
             val backupShareFailedMsg = stringResource(R.string.backup_share_failed)
-            val backupRestoredMsg = stringResource(R.string.backup_restored)
-            val backupParseFailedMsg = stringResource(R.string.backup_parse_failed)
-            val backupClipboardHintMsg = stringResource(R.string.backup_clipboard_hint)
-            val backupImportFailedMsg = stringResource(R.string.backup_import_failed)
 
             SettingsScreen(
                 currentSettings = userSettings,
@@ -918,24 +1027,7 @@ fun MeenaHomeScreen(
                     }
                 },
                 onImportBackup = {
-                    try {
-                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                        val clip = clipboard?.primaryClip?.getItemAt(0)?.text?.toString()
-                        if (!clip.isNullOrBlank() && clip.startsWith("{") && clip.contains("widgetConfigs")) {
-                            coroutineScope.launch {
-                                val success = settingsRepository.importFromJson(clip)
-                                if (success) {
-                                    my.hana.meena.ui.components.MetroMessage.show(backupRestoredMsg)
-                                } else {
-                                    my.hana.meena.ui.components.MetroMessage.show(backupParseFailedMsg)
-                                }
-                            }
-                        } else {
-                            my.hana.meena.ui.components.MetroMessage.show(backupClipboardHintMsg)
-                        }
-                    } catch (e: Exception) {
-                        my.hana.meena.ui.components.MetroMessage.show(backupImportFailedMsg)
-                    }
+                    importBackupLauncher.launch("application/json")
                 },
                 onResetDefaults = {
                     coroutineScope.launch { settingsRepository.resetToFactoryDefaults() }

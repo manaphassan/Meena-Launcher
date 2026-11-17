@@ -27,7 +27,7 @@ data class MeenaUserSettings(
     val fontScalePercent: Int = 100,
     
     val wallpaperUri: String? = null,
-    val wallpaperDimPercent: Int = 40,
+    val wallpaperDimPercent: Int = 60,
     
     val isMonochromeFavourites: Boolean = true,
     /** Tile backgrounds use each app's dominant colour instead of the accent. */

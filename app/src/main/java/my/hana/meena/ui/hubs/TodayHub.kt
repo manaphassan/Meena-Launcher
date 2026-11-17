@@ -550,6 +550,40 @@ fun TodayHub(
                 }
                 
                 "widget-favourites" -> {
+                    // Business card: a tappable link to the owner's digital card
+                    if (settings.showBusinessCard) {
+                        val cardContext = androidx.compose.ui.platform.LocalContext.current
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .metroClickable {
+                                    runCatching {
+                                        cardContext.startActivity(
+                                            android.content.Intent(
+                                                android.content.Intent.ACTION_VIEW,
+                                                android.net.Uri.parse("https://manaphassan.github.io/cv")
+                                            ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }
+                                }
+                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.settings_business_card),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "manaphassan.github.io/cv",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted
+                                )
+                            }
+                        }
+                    }
                     val liveOn = settings.liveTiles
                     val andMorePattern = stringResource(R.string.live_tile_and_more)
                     val alarmPattern = stringResource(R.string.live_tile_alarm)

@@ -164,6 +164,7 @@
     <string name="settings_tab_connections">connections</string>
     <string name="settings_tab_personalize">personalize</string>
     <string name="settings_tab_system">system</string>
+    <string name="settings_tab_about">about</string>
     <string name="settings_pages_intro">what shows on each page. tap a widget to turn it on, move it or change it.</string>
     <string name="settings_story_title">sort as a story</string>
     <string name="settings_story_status">now, weather, your week, prayer times, then apps</string>
@@ -388,6 +389,8 @@
     <!-- About -->
     <string name="about_motto">meena · built on meena ui: clean, light, open, fast</string>
     <string name="about_version">version %1$s · my.hana.meena</string>
+    <string name="about_made_by">made by manap hassan</string>
+    <string name="about_visit_card">visit digital card</string>
     <string name="about_charter">meena ui: clean, light, open, fast</string>
     <!-- settings sub-pages -->
     <string name="widget_name_clock">clock</string>
@@ -793,6 +796,14 @@
     <string name="widget_lines_status">up to %1$d lines each</string>
     <string name="widget_lines_toggle">keep widgets short</string>
     <string name="widget_lines_toggle_hint">on shows up to 3 lines in each widget. off shows up to 5.</string>
+
+    <!-- Reorder widgets -->
+    <string name="settings_reorder_title">reorder widgets</string>
+    <string name="settings_reorder_status">move widgets up or down on today</string>
+    <string name="settings_reorder_intro">tap up or down to move a widget. the order changes on the today page right away.</string>
+    <string name="settings_reorder_up">up</string>
+    <string name="settings_reorder_down">down</string>
+
     <string name="notes_show_more">show %1$d more</string>
 
     <!-- Scanner -->
@@ -872,5 +883,18 @@
     <string name="lock_after_note">the next unlock needs your pin, pattern or password, not your fingerprint or face.</string>
     <string name="lock_uninstall_note">to uninstall meena, turn this off first.</string>
     <string name="lock_admin_description">lets meena lock the screen when you double tap an empty spot on your home pages. it can\'t do anything else.</string>
-    <string name="lock_not_allowed">meena can\'t lock the phone now. turn double tap to lock on again in settings.</string>
+    <string name="lock_not_allowed">meena can\u2019t lock the phone now. turn double tap to lock on again in settings.</string>
+
+    <!-- Wallpaper picker -->
+    <string name="settings_wallpaper_title">wallpaper</string>
+    <string name="settings_wallpaper_status_none">none</string>
+    <string name="settings_wallpaper_status_set">custom image · %1$d%% dim</string>
+    <string name="settings_wallpaper_pick">choose image</string>
+    <string name="settings_wallpaper_pick_hint">pick a photo from your gallery</string>
+    <string name="settings_wallpaper_remove">remove wallpaper</string>
+    <string name="settings_wallpaper_remove_hint">go back to a plain background</string>
+    <string name="settings_wallpaper_dim_title">dim level</string>
+    <string name="settings_wallpaper_dim_status">%1$d%%</string>
+    <string name="settings_wallpaper_dim_hint">darkens the image so text stays readable</string>
+    <string name="settings_wallpaper_pick_failed">couldn\u2019t use that image. try another one.</string>
 </resources>
