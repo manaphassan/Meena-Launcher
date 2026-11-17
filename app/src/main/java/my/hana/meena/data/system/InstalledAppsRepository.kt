@@ -174,14 +174,14 @@ object InstalledAppsRepository {
         callbackRegistered = true
     }
 
-    /** When the chosen icon pack is updated or removed, re-read it now (falling back to system icons if it is gone). */
+    /** When apps change, refresh the cache in the background. The old cache stays visible until
+     * the reload finishes so favourite tiles never flash empty between changes. */
     private fun onAppsChanged(context: Context, vararg packageNames: String) {
-        invalidateCache()
         val pack = iconPack
         if (pack.isNotEmpty() && pack in packageNames) {
             IconPackRepository.forget(pack)
-            reloadScope.launch { runCatching { loadInstalledApps(context, forceRefresh = true) } }
         }
+        reloadScope.launch { runCatching { loadInstalledApps(context, forceRefresh = true) } }
     }
 
     /**
