@@ -35,6 +35,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +76,9 @@ fun InboxHub(
         InboxSort.byApp(InboxSort.alerts(notifications, chatsOn, emailOn))
     }
     val lines = settings.widgetLines
+    val chatMax = (settings.widgetConfigs["widget-conversations"]?.maxLinesOrItems ?: lines).coerceIn(1, 12)
+    val emailMax = (settings.widgetConfigs["widget-email"]?.maxLinesOrItems ?: lines).coerceIn(1, 12)
+    val alertMax = (settings.widgetConfigs["widget-notifications"]?.maxLinesOrItems ?: lines).coerceIn(1, 12)
     val isListenerConnected by NotificationRepository.isListenerConnectedFlow.collectAsState()
     var isNotificationAccessGranted by remember {
         mutableStateOf(NotificationRepository.isNotificationAccessGranted(context))
@@ -113,9 +119,75 @@ fun InboxHub(
         items(inboxWidgets.size, key = { inboxWidgets[it].key }) { index ->
             val widgetId = inboxWidgets[index].key
             when (widgetId) {
+                "widget-music-player" -> {
+                    val nowPlaying by my.hana.meena.data.system.MediaPlayerRepository.nowPlaying.collectAsState()
+                    val track = nowPlaying
+                    if (track != null) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                        ) {
+                            Text(
+                                text = track.title.lowercase(),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MeenaTextWhite,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            if (track.artist.isNotBlank()) {
+                                Text(
+                                    text = track.artist.lowercase(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MeenaTextMuted,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = my.hana.meena.theme.MeenaSpacing.s),
+                                horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_thin_skip_prev),
+                                    contentDescription = null,
+                                    tint = MeenaTextWhite,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .metroClickable { my.hana.meena.data.system.MediaPlayerRepository.previous() }
+                                        .padding(my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                                Icon(
+                                    painter = painterResource(
+                                        if (track.isPlaying) R.drawable.ic_thin_pause else R.drawable.ic_thin_play
+                                    ),
+                                    contentDescription = null,
+                                    tint = MeenaTextWhite,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .metroClickable { my.hana.meena.data.system.MediaPlayerRepository.playPause() }
+                                        .padding(my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_thin_skip_next),
+                                    contentDescription = null,
+                                    tint = MeenaTextWhite,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .metroClickable { my.hana.meena.data.system.MediaPlayerRepository.next() }
+                                        .padding(my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 "widget-conversations" -> {
                     // Chats and messaging threads
-                    ConversationsWidget(is24Hour = settings.is24HourFormat, maxItems = lines)
+                    ConversationsWidget(is24Hour = settings.is24HourFormat, maxItems = chatMax)
                 }
 
                 "widget-email" -> {
@@ -148,7 +220,7 @@ fun InboxHub(
                                 )
                                 emails.isEmpty() -> QuietLine()
                                 else -> {
-                                    emails.take(lines).forEachIndexed { idx, mail ->
+                                    emails.take(emailMax).forEachIndexed { idx, mail ->
                                         InboxNotificationRow(
                                             modifier = Modifier
                                                 .metroFeatherIn(index = idx, reducedMotion = settings.reducedMotion)
@@ -158,6 +230,7 @@ fun InboxHub(
                                             title = mail.title,
                                             text = mail.text,
                                             time = MalaysianEnglish.clockTime(mail.timestamp, settings.is24HourFormat),
+                                            picture = mail.picture,
                                             onClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                                 NotificationRepository.openNotification(context, mail)
@@ -168,7 +241,7 @@ fun InboxHub(
                                             }
                                         )
                                     }
-                                    MoreLine(hidden = emails.size - lines)
+                                    MoreLine(hidden = emails.size - emailMax)
                                 }
                             }
                         }
@@ -210,29 +283,52 @@ fun InboxHub(
                                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                                 )
                             } else if (alertGroups.isNotEmpty()) {
-                                // One row per app: its newest alert, with how many it has waiting.
-                                alertGroups.take(lines).forEachIndexed { idx, group ->
-                                    val notif = group.latest
-                                    InboxNotificationRow(
-                                        modifier = Modifier
-                                            .metroFeatherIn(index = idx, reducedMotion = settings.reducedMotion)
-                                            .sensitive(),
-                                        badgeColor = MeenaTextWhite,
-                                        app = if (group.items.size > 1) stringResource(R.string.inbox_app_count, group.appName, group.items.size) else group.appName,
-                                        title = notif.title,
-                                        text = notif.text,
-                                        time = MalaysianEnglish.clockTime(notif.timestamp, settings.is24HourFormat),
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            NotificationRepository.openNotification(context, notif)
-                                        },
-                                        onDismiss = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            group.items.forEach { NotificationRepository.dismissNotification(it.key) }
-                                        }
-                                    )
+                                var expandedApps by remember { mutableStateOf(emptySet<String>()) }
+                                alertGroups.take(alertMax).forEachIndexed { idx, group ->
+                                    val isExpanded = group.packageName in expandedApps
+                                    val items = if (isExpanded) group.items else listOf(group.latest)
+                                    // App header with count - tappable to expand/collapse if multiple
+                                    if (group.items.size > 1) {
+                                        Text(
+                                            text = stringResource(R.string.inbox_app_count, group.appName, group.items.size),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (isExpanded) MaterialTheme.colorScheme.primary else MeenaTextMuted,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 48.dp)
+                                                .metroClickable {
+                                                    expandedApps = if (isExpanded) expandedApps - group.packageName
+                                                    else expandedApps + group.packageName
+                                                }
+                                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                                        )
+                                    }
+                                    items.forEachIndexed { itemIdx, notif ->
+                                        InboxNotificationRow(
+                                            modifier = Modifier
+                                                .metroFeatherIn(index = idx + itemIdx, reducedMotion = settings.reducedMotion)
+                                                .sensitive(),
+                                            badgeColor = MeenaTextWhite,
+                                            app = if (group.items.size == 1) group.appName else "",
+                                            title = notif.title,
+                                            text = notif.text,
+                                            time = MalaysianEnglish.clockTime(notif.timestamp, settings.is24HourFormat),
+                                            picture = notif.picture,
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                NotificationRepository.openNotification(context, notif)
+                                            },
+                                            onDismiss = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                NotificationRepository.dismissNotification(notif.key)
+                                            },
+                                            onReply = if (notif.replyAction != null) { text ->
+                                                NotificationRepository.sendReply(context, notif, text)
+                                            } else null
+                                        )
+                                    }
                                 }
-                                MoreLine(hidden = alertGroups.size - lines)
+                                MoreLine(hidden = alertGroups.size - alertMax)
 
                                 // Clear All Row
                                 Row(
@@ -311,74 +407,182 @@ private fun InboxNotificationRow(
     title: String,
     text: String,
     time: String,
+    picture: androidx.compose.ui.graphics.ImageBitmap? = null,
     onClick: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onReply: ((String) -> Unit)? = null
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .metroClickable(onClick = onClick)
-            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
-    ) {
-        Box(
+    var showReplyField by remember { mutableStateOf(false) }
+    var replyText by remember { mutableStateOf("") }
+    var replySent by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
-                .padding(top = my.hana.meena.theme.MeenaSpacing.s)
-                .size(my.hana.meena.theme.MeenaSpacing.s)
-                .background(badgeColor)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .metroClickable(onClick = onClick)
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                    .size(my.hana.meena.theme.MeenaSpacing.s)
+                    .background(badgeColor)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = app.lowercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = badgeColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = time.lowercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextMuted
+                    )
+                }
                 Text(
-                    text = app.lowercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = badgeColor,
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Normal,
+                    color = MeenaTextWhite,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = time.lowercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextMuted
-                )
+                if (text.isNotBlank()) {
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MeenaTextSecondary,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 16.sp
+                    )
+                }
+                // Photo sneak peek
+                if (picture != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = picture,
+                        contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier
+                            .padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                            .fillMaxWidth()
+                            .heightIn(max = 120.dp)
+                    )
+                }
+                // Reply link and sent confirmation
+                if (onReply != null && !showReplyField) {
+                    Text(
+                        text = if (replySent) stringResource(R.string.inbox_reply_sent)
+                               else stringResource(R.string.inbox_reply),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (replySent) MeenaProfitGreen else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .heightIn(min = 32.dp)
+                            .metroClickable {
+                                replySent = false
+                                showReplyField = true
+                            }
+                            .padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                    )
+                }
             }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Normal,
-                color = MeenaTextWhite,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (text.isNotBlank()) {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MeenaTextSecondary,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 16.sp
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .metroClickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_thin_close),
+                    contentDescription = stringResource(R.string.inbox_dismiss),
+                    tint = MeenaTextMuted,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .metroClickable(onClick = onDismiss),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(id = my.hana.meena.R.drawable.ic_thin_close),
-                contentDescription = stringResource(my.hana.meena.R.string.inbox_dismiss),
-                tint = MeenaTextMuted,
-                modifier = Modifier.size(16.dp)
-            )
+
+        // Inline reply field
+        if (onReply != null && showReplyField) {
+            val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+            val underline = MaterialTheme.colorScheme.primary
+            LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = my.hana.meena.theme.MeenaSpacing.m),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = replyText,
+                    onValueChange = { replyText = it.take(500) },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = MeenaTextWhite),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(underline),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Send
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onSend = {
+                            if (replyText.isNotBlank()) {
+                                onReply(replyText.trim())
+                                replyText = ""
+                                showReplyField = false
+                                replySent = true
+                            }
+                        }
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .focusRequester(focusRequester)
+                        .drawBehind {
+                            val y = size.height - 1.dp.toPx()
+                            drawLine(underline, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                        }
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
+                    decorationBox = { field ->
+                        if (replyText.isEmpty()) {
+                            Text(
+                                stringResource(R.string.inbox_reply_hint),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MeenaTextMuted
+                            )
+                        }
+                        field()
+                    }
+                )
+                Text(
+                    text = stringResource(R.string.inbox_reply),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (replyText.isBlank()) MeenaTextMuted else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable {
+                            if (replyText.isNotBlank()) {
+                                onReply(replyText.trim())
+                                replyText = ""
+                                showReplyField = false
+                                replySent = true
+                            }
+                        }
+                        .padding(
+                            start = my.hana.meena.theme.MeenaSpacing.m,
+                            top = my.hana.meena.theme.MeenaSpacing.m,
+                            bottom = my.hana.meena.theme.MeenaSpacing.m
+                        )
+                )
+            }
         }
     }
 }

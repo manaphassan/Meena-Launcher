@@ -355,6 +355,7 @@ internal val SETTINGS_WIDGET_TITLES = linkedMapOf<String, Int>(
     "widget-conversations" to R.string.widget_name_chats,
     "widget-email" to R.string.widget_name_email,
     "widget-notifications" to R.string.widget_name_alerts,
+    "widget-music-player" to R.string.widget_name_music,
     "widget-news-feed" to R.string.widget_name_news,
     "widget-markets" to R.string.widget_name_markets,
     "widget-kijang-emas" to R.string.widget_name_kijang,

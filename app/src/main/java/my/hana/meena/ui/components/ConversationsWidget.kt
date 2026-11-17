@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -143,7 +145,10 @@ fun ConversationsWidget(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             NotificationRepository.openConversation(context, item)
-                        }
+                        },
+                        onReply = if (item.replyAction != null) { text ->
+                            NotificationRepository.sendReply(context, item, text)
+                        } else null
                     )
                 }
             }
@@ -155,9 +160,13 @@ fun ConversationsWidget(
 private fun ConversationRow(
     item: LiveConversationItem,
     is24Hour: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onReply: ((String) -> Unit)? = null
 ) {
     val appColor = MeenaTextWhite
+    var showReplyField by remember { mutableStateOf(false) }
+    var replyText by remember { mutableStateOf("") }
+    var replySent by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -238,6 +247,108 @@ private fun ConversationRow(
                 lineHeight = 18.sp,
                 modifier = Modifier.padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.s)
             )
+        }
+
+        // Photo sneak peek
+        if (item.picture != null) {
+            androidx.compose.foundation.Image(
+                bitmap = item.picture,
+                contentDescription = null,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.s)
+                    .fillMaxWidth()
+                    .heightIn(max = 120.dp)
+            )
+        }
+
+        // Reply link
+        if (onReply != null && !showReplyField) {
+            Text(
+                text = if (replySent) stringResource(my.hana.meena.R.string.inbox_reply_sent)
+                       else stringResource(my.hana.meena.R.string.inbox_reply),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (replySent) MeenaProfitGreen else androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .heightIn(min = 32.dp)
+                    .metroClickable {
+                        replySent = false
+                        showReplyField = true
+                    }
+                    .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.s)
+            )
+        }
+
+        // Inline reply field
+        if (onReply != null && showReplyField) {
+            val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+            val underline = MaterialTheme.colorScheme.primary
+            androidx.compose.runtime.LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = my.hana.meena.theme.MeenaSpacing.m),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = replyText,
+                    onValueChange = { replyText = it.take(500) },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = MeenaTextWhite),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(underline),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Send
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onSend = {
+                            if (replyText.isNotBlank()) {
+                                onReply(replyText.trim())
+                                replyText = ""
+                                showReplyField = false
+                                replySent = true
+                            }
+                        }
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .focusRequester(focusRequester)
+                        .drawBehind {
+                            val y = size.height - 1.dp.toPx()
+                            drawLine(underline, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                        }
+                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m),
+                    decorationBox = { field ->
+                        if (replyText.isEmpty()) {
+                            Text(
+                                stringResource(my.hana.meena.R.string.inbox_reply_hint),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MeenaTextMuted
+                            )
+                        }
+                        field()
+                    }
+                )
+                Text(
+                    text = stringResource(my.hana.meena.R.string.inbox_reply),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (replyText.isBlank()) MeenaTextMuted else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable {
+                            if (replyText.isNotBlank()) {
+                                onReply(replyText.trim())
+                                replyText = ""
+                                showReplyField = false
+                                replySent = true
+                            }
+                        }
+                        .padding(
+                            start = my.hana.meena.theme.MeenaSpacing.m,
+                            top = my.hana.meena.theme.MeenaSpacing.m,
+                            bottom = my.hana.meena.theme.MeenaSpacing.m
+                        )
+                )
+            }
         }
     }
 }

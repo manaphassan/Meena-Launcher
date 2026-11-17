@@ -66,6 +66,7 @@ class InboxAndShakeTest {
         )
         val inbox = old.migrate().widgetConfigs.filterValues { it.hubId == "inbox" }
             .entries.sortedBy { it.value.position }.map { it.key }
+            .filter { it != "widget-music-player" }
         assertEquals(listOf("widget-conversations", "widget-email", "widget-notifications"), inbox)
     }
 

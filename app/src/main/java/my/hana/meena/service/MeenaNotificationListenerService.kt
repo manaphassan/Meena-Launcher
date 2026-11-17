@@ -18,6 +18,7 @@ class MeenaNotificationListenerService : NotificationListenerService() {
         super.onListenerConnected()
         instance = this
         NotificationRepository.setListenerConnected(true)
+        my.hana.meena.data.system.MediaPlayerRepository.start(applicationContext)
         Log.d(TAG, "Notification listener connected! Syncing active notifications...")
 
         try {
@@ -34,6 +35,7 @@ class MeenaNotificationListenerService : NotificationListenerService() {
             instance = null
         }
         NotificationRepository.setListenerConnected(false)
+        my.hana.meena.data.system.MediaPlayerRepository.stop(applicationContext)
         Log.d(TAG, "Notification listener disconnected.")
     }
 

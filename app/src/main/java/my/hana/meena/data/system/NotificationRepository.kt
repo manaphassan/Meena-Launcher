@@ -5,11 +5,15 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.provider.Settings
 import android.service.notification.StatusBarNotification
 import android.text.TextUtils
 import android.util.Log
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.app.NotificationManagerCompat
 import my.hana.meena.service.MeenaNotificationListenerService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,7 +37,10 @@ data class LiveNotificationItem(
     val isConversation: Boolean = false,
     /** From an email app (Gmail, Outlook and so on): title is the sender, text the subject. */
     val isEmail: Boolean = false,
-    val contentIntent: PendingIntent? = null
+    val contentIntent: PendingIntent? = null,
+    val replyAction: Notification.Action? = null,
+    /** Sneak peek: big picture, large icon or message image from the notification. */
+    val picture: ImageBitmap? = null
 )
 
 /**
@@ -49,7 +56,10 @@ data class LiveConversationItem(
     val timestamp: Long,
     val formattedTime: String,
     val unreadCount: Int = 1,
-    val contentIntent: PendingIntent? = null
+    val contentIntent: PendingIntent? = null,
+    val replyAction: Notification.Action? = null,
+    /** Sneak peek: shared image from the conversation. */
+    val picture: ImageBitmap? = null
 )
 
 object NotificationRepository {
@@ -163,7 +173,7 @@ object NotificationRepository {
                 latest.copy(unreadCount = items.size)
             }
             .sortedByDescending { it.timestamp }
-            .take(6)
+            .take(12)
 
         _notificationsFlow.value = notifList.sortedByDescending { it.timestamp }.take(20)
         _conversationsFlow.value = dedupedConversations
@@ -189,7 +199,7 @@ object NotificationRepository {
             // Deduplicate by package and sender/chat title
             currentConvs.removeAll { it.packageName == conv.packageName && it.senderOrContact == conv.senderOrContact }
             currentConvs.add(0, conv)
-            _conversationsFlow.value = currentConvs.sortedByDescending { it.timestamp }.take(6)
+            _conversationsFlow.value = currentConvs.sortedByDescending { it.timestamp }.take(12)
         }
     }
 
@@ -245,6 +255,13 @@ object NotificationRepository {
             )
         val isEmail = packageName in EMAIL_PACKAGES || notif.category == Notification.CATEGORY_EMAIL
 
+        val replyAction = notif.actions?.firstOrNull { action ->
+            action.remoteInputs?.any { it.resultKey.isNotBlank() } == true
+        }
+
+        // Sneak peek image: BigPictureStyle picture → large icon → MessagingStyle image
+        val picture = extractPicture(extras, context)
+
         val postTime = if (sbn.postTime > 0) sbn.postTime else System.currentTimeMillis()
 
         return LiveNotificationItem(
@@ -257,8 +274,61 @@ object NotificationRepository {
             formattedTime = timeFormat.format(Date(postTime)),
             isConversation = isMsg,
             isEmail = isEmail,
-            contentIntent = notif.contentIntent
+            contentIntent = notif.contentIntent,
+            replyAction = replyAction,
+            picture = picture
         )
+    }
+
+    /** Tries to pull an image from the notification extras, scaled down for a thumbnail. */
+    private fun extractPicture(extras: android.os.Bundle, context: Context): ImageBitmap? {
+        return runCatching {
+            // 1. EXTRA_PICTURE (BigPictureStyle — Instagram, gallery shares, etc.)
+            val bigPic = extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE)
+            if (bigPic != null) return@runCatching scaleTo(bigPic, 160).asImageBitmap()
+
+            // 2. EXTRA_LARGE_ICON_BIG (expanded big-picture icon)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val iconObj = extras.getParcelable<Icon>(Notification.EXTRA_LARGE_ICON_BIG)
+                val bmp = iconObj?.loadDrawable(context)?.let { drawableToBitmap(it) }
+                if (bmp != null && bmp.width > 48) return@runCatching scaleTo(bmp, 160).asImageBitmap()
+            }
+
+            // 3. EXTRA_LARGE_ICON (contact photo or app icon — skip small ones)
+            val largeIcon = extras.getParcelable<Bitmap>(Notification.EXTRA_LARGE_ICON)
+            if (largeIcon != null && largeIcon.width > 48) return@runCatching scaleTo(largeIcon, 160).asImageBitmap()
+
+            // 4. MessagingStyle images (Android 9+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val messages = Notification.MessagingStyle.Message.getMessagesFromBundleArray(
+                    extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+                )
+                val imageMsg = messages?.lastOrNull { it.dataUri != null && it.dataMimeType?.startsWith("image/") == true }
+                if (imageMsg != null) {
+                    val stream = context.contentResolver.openInputStream(imageMsg.dataUri!!)
+                    val bmp = android.graphics.BitmapFactory.decodeStream(stream)
+                    stream?.close()
+                    if (bmp != null) return@runCatching scaleTo(bmp, 160).asImageBitmap()
+                }
+            }
+
+            null
+        }.getOrNull()
+    }
+
+    private fun scaleTo(bmp: Bitmap, maxSide: Int): Bitmap {
+        if (bmp.width <= maxSide && bmp.height <= maxSide) return bmp
+        val scale = maxSide.toFloat() / maxOf(bmp.width, bmp.height)
+        return Bitmap.createScaledBitmap(bmp, (bmp.width * scale).toInt(), (bmp.height * scale).toInt(), true)
+    }
+
+    private fun drawableToBitmap(drawable: android.graphics.drawable.Drawable): Bitmap {
+        val w = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 160
+        val h = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 160
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        drawable.setBounds(0, 0, w, h)
+        drawable.draw(android.graphics.Canvas(bmp))
+        return bmp
     }
 
     /**
@@ -288,7 +358,9 @@ object NotificationRepository {
             timestamp = parsedNotif.timestamp,
             formattedTime = parsedNotif.formattedTime,
             unreadCount = 1,
-            contentIntent = parsedNotif.contentIntent
+            contentIntent = parsedNotif.contentIntent,
+            replyAction = parsedNotif.replyAction,
+            picture = parsedNotif.picture
         )
     }
 
@@ -346,6 +418,44 @@ object NotificationRepository {
             }
         }
         launchApp(context, item.packageName)
+    }
+
+    /**
+     * Send an inline reply via the notification's RemoteInput action.
+     */
+    fun sendReply(context: Context, item: LiveNotificationItem, text: String): Boolean {
+        val action = item.replyAction ?: return false
+        val remoteInput = action.remoteInputs?.firstOrNull { it.resultKey.isNotBlank() } ?: return false
+        return try {
+            val intent = Intent()
+            val bundle = android.os.Bundle()
+            bundle.putCharSequence(remoteInput.resultKey, text)
+            android.app.RemoteInput.addResultsToIntent(arrayOf(remoteInput), intent, bundle)
+            action.actionIntent.send(context, 0, intent)
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "Quick reply failed", e)
+            false
+        }
+    }
+
+    /**
+     * Send an inline reply via a conversation's RemoteInput action.
+     */
+    fun sendReply(context: Context, item: LiveConversationItem, text: String): Boolean {
+        val action = item.replyAction ?: return false
+        val remoteInput = action.remoteInputs?.firstOrNull { it.resultKey.isNotBlank() } ?: return false
+        return try {
+            val intent = Intent()
+            val bundle = android.os.Bundle()
+            bundle.putCharSequence(remoteInput.resultKey, text)
+            android.app.RemoteInput.addResultsToIntent(arrayOf(remoteInput), intent, bundle)
+            action.actionIntent.send(context, 0, intent)
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "Quick reply failed", e)
+            false
+        }
     }
 
     private fun launchApp(context: Context, packageName: String) {

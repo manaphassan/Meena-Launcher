@@ -398,6 +398,8 @@
     <string name="widget_name_wikipedia">wikipedia</string>
     <string name="widget_name_chats">chats</string>
     <string name="widget_name_alerts">alerts</string>
+    <string name="widget_name_music">now playing</string>
+    <string name="music_nothing">nothing playing right now</string>
     <string name="widget_name_news">news feed</string>
     <string name="widget_name_portfolio">portfolio</string>
     <string name="widget_name_rates">rates</string>
@@ -821,6 +823,11 @@
     <string name="inbox_email_prompt">want your email here? turn on notification access. meena reads it on your phone only.</string>
     <string name="inbox_more">%1$d more</string>
     <string name="inbox_app_count">%1$s · %2$d</string>
+    <string name="inbox_thread_collapse">collapse</string>
+    <string name="inbox_reply">reply</string>
+    <string name="inbox_reply_hint">type a reply</string>
+    <string name="inbox_reply_sent">sent</string>
+    <string name="inbox_reply_failed">couldn\'t send the reply</string>
 
     <!-- Home app -->
     <string name="home_app_title">home app</string>

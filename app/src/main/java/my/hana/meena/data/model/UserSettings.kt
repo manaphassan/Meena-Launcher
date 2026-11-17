@@ -281,9 +281,10 @@ data class MeenaUserSettings(
             "widget-scanner" to WidgetConfig("today", 15, isEnabled = false),
 
             // Inbox Hub (chats, email, alerts / notification stream)
-            "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),
-            "widget-email" to WidgetConfig("inbox", 1, isEnabled = true),
-            "widget-notifications" to WidgetConfig("inbox", 2, isEnabled = true),
+            "widget-music-player" to WidgetConfig("inbox", 0, isEnabled = true),
+            "widget-conversations" to WidgetConfig("inbox", 1, maxLinesOrItems = 5, isEnabled = true),
+            "widget-email" to WidgetConfig("inbox", 2, maxLinesOrItems = 5, isEnabled = true),
+            "widget-notifications" to WidgetConfig("inbox", 3, maxLinesOrItems = 5, isEnabled = true),
 
             // News Hub
             "widget-news-feed" to WidgetConfig("news", 0, isEnabled = true),
