@@ -631,7 +631,7 @@
     <string name="notes_note_title">note</string>
     <string name="notes_edit">edit</string>
     <string name="notes_edit_title">edit note</string>
-    <string name="notes_edit_hint">lines that start with a dash and a space show as a list.</string>
+    <string name="notes_edit_hint">start a line with - for a note, * for a task, or x when it\u2019s done.</string>
     <string name="notes_make_list">make it a list</string>
     <string name="notes_make_list_hint">each line, or each comma, becomes its own item</string>
     <string name="notes_make_text">make it plain text</string>

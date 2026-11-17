@@ -33,13 +33,23 @@ object NoteRules {
         return notes.toMutableList().also { it[index] = note }
     }
 
+    /** Bullet-journal line types: a prefix decides how the line looks. */
+    enum class LineType { Plain, Bullet, Task, Done }
+
     /** List lines are stored as plain text starting with this, so saved notes keep their format. */
     const val BULLET = "- "
+    /** Task lines start with this; tap to mark done. */
+    const val TASK = "* "
+    /** Done lines start with this; tap to undo. */
+    const val DONE = "x "
 
-    /** True when every line of [note] is a list line. */
+    /** True when every line of [note] has a marker (bullet, task or done). */
     fun isList(note: String): Boolean {
         val lines = note.lines().filter { it.isNotBlank() }
-        return lines.isNotEmpty() && lines.all { it.trimStart().startsWith(BULLET) }
+        return lines.isNotEmpty() && lines.all {
+            val t = it.trimStart()
+            t.startsWith(BULLET) || t.startsWith(TASK) || t.startsWith(DONE)
+        }
     }
 
     /**
@@ -50,22 +60,55 @@ object NoteRules {
         val lines = note.lines().map { it.trim() }.filter { it.isNotEmpty() }
         val items =
             if (lines.size == 1) lines.single().split(',', ';').map { it.trim() }.filter { it.isNotEmpty() } else lines
-        return items.joinToString("\n") { BULLET + it.removePrefix(BULLET).trim() }
+        return items.joinToString("\n") { BULLET + stripMarker(it) }
     }
 
     /** Plain lines again, one per list line. */
     fun toText(note: String): String =
-        note.lines().joinToString("\n") { line ->
-            val trimmed = line.trimStart()
-            if (trimmed.startsWith(BULLET)) trimmed.removePrefix(BULLET).trim() else line
-        }
+        note.lines().joinToString("\n") { line -> stripMarker(line.trimStart()).ifEmpty { line } }
 
-    /** Lines to draw: the text and whether it is a list line. */
-    fun lines(note: String): List<Pair<String, Boolean>> =
+    /** Strips any leading marker and trims. Returns the bare text, or empty when there was nothing. */
+    private fun stripMarker(line: String): String {
+        val t = line.trimStart()
+        return when {
+            t.startsWith(BULLET) -> t.removePrefix(BULLET).trim()
+            t.startsWith(TASK) -> t.removePrefix(TASK).trim()
+            t.startsWith(DONE) -> t.removePrefix(DONE).trim()
+            else -> t
+        }
+    }
+
+    /** Lines to draw: the text and its bullet-journal type. */
+    fun lines(note: String): List<Pair<String, LineType>> =
         note.lines().filter { it.isNotBlank() }.map { line ->
             val trimmed = line.trimStart()
-            if (trimmed.startsWith(BULLET)) trimmed.removePrefix(BULLET).trim() to true else line to false
+            when {
+                trimmed.startsWith(DONE) -> trimmed.removePrefix(DONE).trim() to LineType.Done
+                trimmed.startsWith(TASK) -> trimmed.removePrefix(TASK).trim() to LineType.Task
+                trimmed.startsWith(BULLET) -> trimmed.removePrefix(BULLET).trim() to LineType.Bullet
+                else -> line to LineType.Plain
+            }
         }
+
+    /** Flips a task line to done or vice-versa; bullet and plain lines are left alone. */
+    fun toggleLine(note: String, lineIndex: Int): String {
+        var index = 0
+        return note.lines().joinToString("\n") { line ->
+            if (line.isBlank()) line
+            else {
+                val current = index++
+                if (current != lineIndex) line
+                else {
+                    val trimmed = line.trimStart()
+                    when {
+                        trimmed.startsWith(TASK) -> DONE + trimmed.removePrefix(TASK)
+                        trimmed.startsWith(DONE) -> TASK + trimmed.removePrefix(DONE)
+                        else -> line
+                    }
+                }
+            }
+        }
+    }
 
     /** A short title for a calendar reminder: the first line, without the list mark. */
     fun title(note: String, max: Int = 60): String =

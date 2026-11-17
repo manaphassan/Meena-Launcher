@@ -1144,7 +1144,11 @@ fun TodayHub(
                                     noteToRemove = openNote
                                     openNote = -1
                                 },
-                                onDismiss = { openNote = -1 }
+                                onDismiss = { openNote = -1 },
+                                onToggleLine = { lineIndex ->
+                                    val toggled = my.hana.meena.data.system.NoteRules.toggleLine(note, lineIndex)
+                                    my.hana.meena.data.system.NotesRepository.update(context, openNote, toggled)
+                                }
                             )
                         }
                         if (editNote in quickNotes.indices) {

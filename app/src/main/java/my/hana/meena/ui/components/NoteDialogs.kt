@@ -28,9 +28,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,29 +45,77 @@ import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
 
 /**
- * A note as written: list lines get a small square mark (drawn, not a text symbol), other lines
- * show as they are. [maxLines] limits how many lines show; the rest are counted, not shown.
+ * A note as written with bullet-journal style indicators:
+ * - bullet lines (`- `) get a filled square
+ * - task lines (`* `) get an open square outline
+ * - done lines (`x `) get a muted filled square and strikethrough text
+ * - plain lines have no marker
+ *
+ * [maxLines] limits how many lines show; the rest are counted, not shown.
+ * When [onToggleLine] is provided, task and done lines are tappable to flip between the two.
  */
 @Composable
-fun NoteText(note: String, color: Color, modifier: Modifier = Modifier, maxLines: Int = Int.MAX_VALUE) {
+fun NoteText(
+    note: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    maxLines: Int = Int.MAX_VALUE,
+    onToggleLine: ((Int) -> Unit)? = null
+) {
     val lines = remember(note) { NoteRules.lines(note) }
     val shown = lines.take(maxLines)
     val markColor = MaterialTheme.colorScheme.primary
+    val doneColor = MeenaTextMuted
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(MeenaSpacing.s)) {
-        shown.forEach { (text, isListLine) ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isListLine) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = MeenaSpacing.m)
-                            .size(6.dp)
-                            .background(markColor)
-                    )
+        shown.forEachIndexed { index, (text, type) ->
+            val toggle = onToggleLine?.takeIf {
+                type == NoteRules.LineType.Task || type == NoteRules.LineType.Done
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = if (toggle != null) {
+                    Modifier
+                        .heightIn(min = 48.dp)
+                        .metroClickable { toggle(index) }
+                } else Modifier
+            ) {
+                when (type) {
+                    NoteRules.LineType.Bullet -> {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = MeenaSpacing.m)
+                                .size(6.dp)
+                                .background(markColor)
+                        )
+                    }
+                    NoteRules.LineType.Task -> {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = MeenaSpacing.m)
+                                .size(6.dp)
+                                .drawBehind {
+                                    drawRect(color = markColor, style = Stroke(width = 1.dp.toPx()))
+                                }
+                        )
+                    }
+                    NoteRules.LineType.Done -> {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = MeenaSpacing.m)
+                                .size(6.dp)
+                                .background(doneColor)
+                        )
+                    }
+                    NoteRules.LineType.Plain -> { /* no marker */ }
                 }
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = color,
+                    style = if (type == NoteRules.LineType.Done) {
+                        MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.LineThrough)
+                    } else {
+                        MaterialTheme.typography.bodyMedium
+                    },
+                    color = if (type == NoteRules.LineType.Done) doneColor else color,
                     maxLines = if (maxLines == Int.MAX_VALUE) Int.MAX_VALUE else 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -90,7 +140,8 @@ fun NoteActionsDialog(
     onToggleList: () -> Unit,
     onRemind: () -> Unit,
     onRemove: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onToggleLine: ((Int) -> Unit)? = null
 ) {
     val isList = remember(note) { NoteRules.isList(note) }
     Dialog(onDismissRequest = onDismiss) {
@@ -113,7 +164,8 @@ fun NoteActionsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = 240.dp)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState()),
+                    onToggleLine = onToggleLine
                 )
                 Column(modifier = Modifier.padding(top = MeenaSpacing.s)) {
                     NoteAction(stringResource(R.string.notes_edit), null, MeenaTextWhite, onEdit)

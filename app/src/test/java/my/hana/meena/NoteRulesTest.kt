@@ -1,6 +1,7 @@
 package my.hana.meena
 
 import my.hana.meena.data.system.NoteRules
+import my.hana.meena.data.system.NoteRules.LineType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -57,8 +58,59 @@ class NoteRulesTest {
 
     @Test
     fun lines_andTitle_dropTheListMark() {
-        assertEquals(listOf("milk" to true, "plain" to false), NoteRules.lines("- milk\n\nplain"))
+        assertEquals(
+            listOf("milk" to LineType.Bullet, "plain" to LineType.Plain),
+            NoteRules.lines("- milk\n\nplain")
+        )
         assertEquals("milk", NoteRules.title("- milk\n- eggs"))
         assertEquals("", NoteRules.title("   "))
+    }
+
+    @Test
+    fun lines_parsesTaskAndDone() {
+        assertEquals(
+            listOf(
+                "buy milk" to LineType.Task,
+                "clean house" to LineType.Done,
+                "remember" to LineType.Bullet,
+                "plain" to LineType.Plain
+            ),
+            NoteRules.lines("* buy milk\nx clean house\n- remember\nplain")
+        )
+    }
+
+    @Test
+    fun isList_recognisesAllMarkerTypes() {
+        assertTrue(NoteRules.isList("- a\n- b"))
+        assertTrue(NoteRules.isList("* a\n* b"))
+        assertTrue(NoteRules.isList("x a\nx b"))
+        assertTrue(NoteRules.isList("- a\n* b\nx c"))
+        assertFalse(NoteRules.isList("plain\n- b"))
+        assertFalse(NoteRules.isList("  "))
+    }
+
+    @Test
+    fun toList_stripsTaskAndDoneMarkers() {
+        assertEquals("- buy milk\n- done thing", NoteRules.toList("* buy milk\nx done thing"))
+    }
+
+    @Test
+    fun toText_stripsAllMarkers() {
+        assertEquals("task\ndone\nbullet\nplain", NoteRules.toText("* task\nx done\n- bullet\nplain"))
+    }
+
+    @Test
+    fun toggleLine_flipsTaskAndDone() {
+        assertEquals("x buy milk", NoteRules.toggleLine("* buy milk", 0))
+        assertEquals("* buy milk", NoteRules.toggleLine("x buy milk", 0))
+        assertEquals("* first\nx second", NoteRules.toggleLine("* first\n* second", 1))
+        // Blank lines are skipped in index counting but preserved.
+        assertEquals("x first\n\n* second", NoteRules.toggleLine("* first\n\n* second", 0))
+    }
+
+    @Test
+    fun toggleLine_leavesBulletAndPlainAlone() {
+        assertEquals("- bullet", NoteRules.toggleLine("- bullet", 0))
+        assertEquals("plain text", NoteRules.toggleLine("plain text", 0))
     }
 }
