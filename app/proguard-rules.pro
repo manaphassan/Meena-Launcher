@@ -13,9 +13,6 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
 
-# ML Kit Barcode
--keep class com.google.mlkit.** { *; }
--dontwarn com.google.mlkit.**
 
 # CameraX
 -keep class androidx.camera.** { *; }

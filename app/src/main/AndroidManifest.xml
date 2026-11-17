@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- QR / barcode scanner camera, approved by the owner. -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- The scanner is optional: without these, Play would hide Meena from phones with no back camera or autofocus. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <!-- Health Connect Read Permissions -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />

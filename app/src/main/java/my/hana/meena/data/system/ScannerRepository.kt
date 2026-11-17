@@ -84,21 +84,21 @@ object ScannerRepository {
     private fun decode(saved: String): List<ScanEntry>? =
         runCatching { json.decodeFromString(ListSerializer(ScanEntry.serializer()), saved) }.getOrNull()
 
-    /** Human-readable format name from ML Kit format constant. */
-    fun formatName(mlKitFormat: Int): String = when (mlKitFormat) {
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE -> "qr"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_EAN_13 -> "ean-13"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_EAN_8 -> "ean-8"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_UPC_A -> "upc-a"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_UPC_E -> "upc-e"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODE_128 -> "code-128"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODE_39 -> "code-39"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODE_93 -> "code-93"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_ITF -> "itf"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_PDF417 -> "pdf417"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_AZTEC -> "aztec"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_DATA_MATRIX -> "data matrix"
-        com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODABAR -> "codabar"
+    /** Short, lowercase name for a ZXing format, shown under each scan. */
+    fun formatName(format: com.google.zxing.BarcodeFormat): String = when (format) {
+        com.google.zxing.BarcodeFormat.QR_CODE -> "qr"
+        com.google.zxing.BarcodeFormat.EAN_13 -> "ean-13"
+        com.google.zxing.BarcodeFormat.EAN_8 -> "ean-8"
+        com.google.zxing.BarcodeFormat.UPC_A -> "upc-a"
+        com.google.zxing.BarcodeFormat.UPC_E -> "upc-e"
+        com.google.zxing.BarcodeFormat.CODE_128 -> "code-128"
+        com.google.zxing.BarcodeFormat.CODE_39 -> "code-39"
+        com.google.zxing.BarcodeFormat.CODE_93 -> "code-93"
+        com.google.zxing.BarcodeFormat.ITF -> "itf"
+        com.google.zxing.BarcodeFormat.PDF_417 -> "pdf417"
+        com.google.zxing.BarcodeFormat.AZTEC -> "aztec"
+        com.google.zxing.BarcodeFormat.DATA_MATRIX -> "data matrix"
+        com.google.zxing.BarcodeFormat.CODABAR -> "codabar"
         else -> "barcode"
     }
 }

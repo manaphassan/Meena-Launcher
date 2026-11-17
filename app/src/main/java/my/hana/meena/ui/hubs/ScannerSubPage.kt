@@ -59,9 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.common.InputImage
 import my.hana.meena.R
+import my.hana.meena.data.system.BarcodeDecoder
 import my.hana.meena.data.system.ScanEntry
 import my.hana.meena.data.system.ScannerRepository
 import my.hana.meena.theme.MeenaScrimDim
@@ -135,7 +134,7 @@ private fun ScannerCamera(onNavigateBack: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val haptic = LocalHapticFeedback.current
 
-    var scanResult by remember { mutableStateOf<Triple<String, String, Int>?>(null) }
+    var scanResult by remember { mutableStateOf<Pair<String, String>?>(null) }
     // A stable ref the analyzer callback can read from any thread.
     val paused = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     LaunchedEffect(scanResult) { paused.set(scanResult != null) }
@@ -161,20 +160,11 @@ private fun ScannerCamera(onNavigateBack: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Camera preview
         val executor = remember { Executors.newSingleThreadExecutor() }
-        val scanner = remember {
-            val opts = com.google.mlkit.vision.barcode.BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(
-                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE,
-                    com.google.mlkit.vision.barcode.common.Barcode.FORMAT_ALL_FORMATS
-                )
-                .enableAllPotentialBarcodes()
-                .build()
-            BarcodeScanning.getClient(opts)
-        }
+        // Only ever used on the executor's one thread.
+        val decoder = remember { BarcodeDecoder() }
 
         DisposableEffect(Unit) {
             onDispose {
-                scanner.close()
                 executor.shutdown()
             }
         }
@@ -198,32 +188,25 @@ private fun ScannerCamera(onNavigateBack: () -> Unit) {
                             .build()
 
                         imageAnalysis.setAnalyzer(executor) { imageProxy ->
-                            if (paused.get()) {
-                                imageProxy.close()
-                                return@setAnalyzer
-                            }
-                            @Suppress("UnsafeOptInUsageError")
-                            val mediaImage = imageProxy.image
-                            if (mediaImage != null) {
-                                val image = InputImage.fromMediaImage(
-                                    mediaImage, imageProxy.imageInfo.rotationDegrees
-                                )
-                                scanner.process(image)
-                                    .addOnSuccessListener { barcodes ->
-                                        if (barcodes.isNotEmpty() && !paused.get()) {
-                                            val barcode = barcodes.first()
-                                            val content = barcode.rawValue ?: barcode.displayValue ?: ""
-                                            if (content.isNotBlank()) {
-                                                scanResult = Triple(
-                                                    content,
-                                                    ScannerRepository.formatName(barcode.format),
-                                                    barcode.format
-                                                )
-                                            }
-                                        }
+                            try {
+                                if (paused.get()) return@setAnalyzer
+                                val luma = imageProxy.planes.firstOrNull() ?: return@setAnalyzer
+                                val found = decoder.decode(
+                                    luma.buffer,
+                                    imageProxy.width,
+                                    imageProxy.height,
+                                    luma.rowStride,
+                                    imageProxy.imageInfo.rotationDegrees
+                                ) ?: return@setAnalyzer
+                                ContextCompat.getMainExecutor(ctx).execute {
+                                    if (!paused.get()) {
+                                        paused.set(true)
+                                        scanResult = found.content to ScannerRepository.formatName(found.format)
                                     }
-                                    .addOnCompleteListener { imageProxy.close() }
-                            } else {
+                                }
+                            } catch (_: Exception) {
+                                // A bad frame is skipped; the next one is tried.
+                            } finally {
                                 imageProxy.close()
                             }
                         }
@@ -331,7 +314,7 @@ private fun ScannerCamera(onNavigateBack: () -> Unit) {
             }
         } else {
             // Result panel
-            val (content, format, _) = result
+            val (content, format) = result
             val isUrl = content.startsWith("http://", true) || content.startsWith("https://", true)
 
             Column(
