@@ -221,6 +221,17 @@ fun TodayHub(
         }
     }
 
+    val todayWidgets = remember(settings.widgetConfigs) {
+        settings.widgetConfigs.entries
+            .filter {
+                val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
+                val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications" && it.key != "widget-email"
+                val isNotRemovedWidget = it.key != "widget-health-device"
+                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled
+            }
+            .sortedBy { it.value.position }
+    }
+
     LazyColumn(
         state = listState,
         modifier = Modifier
@@ -229,15 +240,6 @@ fun TodayHub(
         verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
-
-        val todayWidgets = settings.widgetConfigs.entries
-            .filter {
-                val isTodayHub = it.value.hubId == "today" || it.value.hubId == "start" || it.value.hubId == "agenda" || it.value.hubId == "health"
-                val isNotInboxWidget = it.key != "widget-conversations" && it.key != "widget-notifications" && it.key != "widget-email"
-                val isNotRemovedWidget = it.key != "widget-health-device"
-                isTodayHub && isNotInboxWidget && isNotRemovedWidget && it.value.isEnabled
-            }
-            .sortedBy { it.value.position }
 
         items(todayWidgets.size, key = { todayWidgets[it].key }) { index ->
             val widgetId = todayWidgets[index].key

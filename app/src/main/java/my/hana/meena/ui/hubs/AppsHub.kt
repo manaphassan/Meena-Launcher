@@ -118,6 +118,9 @@ fun AppsHub(
 
     // Live notifications stream to flag active notifications
     val liveNotifications by NotificationRepository.notificationsFlow.collectAsState()
+    val notifByPackage = remember(liveNotifications) {
+        liveNotifications.groupBy { it.packageName }
+    }
 
     // Keyed on the revision so a new icon pack (or a re-scan) redraws the list.
     LaunchedEffect(InstalledAppsRepository.revision) {
@@ -380,34 +383,40 @@ fun AppsHub(
                         }
                     }
 
-                    // One app can have several launcher entries (a dialer's phone and contacts), so key by activity and user.
+                    // Normal list rendering (shared by all modes including grid with letter filter)
                     items(appsInLetter.size, key = { i ->
-                        val a = appsInLetter[i]
-                        "app-${a.componentName?.flattenToShortString() ?: a.packageName}-${a.userHandle?.hashCode() ?: 0}"
-                    }) { idx ->
-                        val app = appsInLetter[idx]
-                        val appNotif = liveNotifications.firstOrNull { it.packageName == app.packageName }
-                        val notifCount = liveNotifications.count { it.packageName == app.packageName }
+                            val a = appsInLetter[i]
+                            "app-${a.componentName?.flattenToShortString() ?: a.packageName}-${a.userHandle?.hashCode() ?: 0}"
+                        }) { idx ->
+                            val app = appsInLetter[idx]
+                            val appNotifs = notifByPackage[app.packageName]
+                            val appNotif = appNotifs?.firstOrNull()
+                            val notifCount = appNotifs?.size ?: 0
 
-                        AppRow(
-                            modifier = Modifier.metroFeatherIn(
-                                index = idx,
-                                reducedMotion = reducedMotion
-                            ),
-                            name = app.label,
-                            iconBitmap = app.iconBitmap,
-                            glyphBitmap = if (isMonochrome) app.glyphBitmap else null,
-                            notificationSnippet = appNotif?.text?.ifBlank { appNotif.title },
-                            badge = notifCount,
-                            time = appNotif?.let { my.hana.meena.data.system.MalaysianEnglish.clockTime(it.timestamp, is24Hour) },
-                            onClick = { onLaunchApp(app.packageName) },
-                            onLongClick = {
-                                selectedTargetForProperties = app
-                            }
-                        )
+                            AppRow(
+                                modifier = Modifier.metroFeatherIn(
+                                    index = idx,
+                                    reducedMotion = reducedMotion
+                                ),
+                                name = app.label,
+                                iconBitmap = app.iconBitmap,
+                                glyphBitmap = if (isMonochrome && !colorful) app.glyphBitmap else null,
+                                iconBg = if (colorful && app.dominantColor != 0) {
+                                    Color(app.dominantColor)
+                                } else {
+                                    my.hana.meena.theme.MeenaAccentFill
+                                },
+                                notificationSnippet = appNotif?.text?.ifBlank { appNotif.title },
+                                badge = notifCount,
+                                time = appNotif?.let { my.hana.meena.data.system.MalaysianEnglish.clockTime(it.timestamp, is24Hour) },
+                                onClick = { onLaunchApp(app.packageName) },
+                                onLongClick = {
+                                    selectedTargetForProperties = app
+                                }
+                            )
+                        }
                     }
                 }
-            }
 
             item { Spacer(modifier = Modifier.height(72.dp)) }
         }
