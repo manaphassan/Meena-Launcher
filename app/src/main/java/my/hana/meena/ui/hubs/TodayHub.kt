@@ -101,6 +101,7 @@ fun TodayHub(
     onOpenSettings: () -> Unit = {},
     onOpenWeatherDetail: () -> Unit = {},
     onOpenNearbyMap: () -> Unit = {},
+    onOpenScanner: () -> Unit = {},
     onOpenApps: () -> Unit = {},
     onTogglePin: (String) -> Unit = {},
     onReorderPin: (Int, Int) -> Unit = { _, _ -> },
@@ -141,6 +142,8 @@ fun TodayHub(
     val quickNotes by my.hana.meena.data.system.NotesRepository.notes.collectAsState()
     val notesUnreadable by my.hana.meena.data.system.NotesRepository.unreadable.collectAsState()
     LaunchedEffect(Unit) { my.hana.meena.data.system.NotesRepository.load(context) }
+    val scanHistory by my.hana.meena.data.system.ScannerRepository.scans.collectAsState()
+    LaunchedEffect(Unit) { my.hana.meena.data.system.ScannerRepository.load(context) }
     var appsVersion by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
@@ -845,6 +848,136 @@ fun TodayHub(
                     }
                 }
 
+                "widget-scanner" -> {
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_name_scanner),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) },
+                        collapsedSummary = {
+                            Text(
+                                text = if (scanHistory.isEmpty()) stringResource(R.string.scanner_empty_short) else pluralStringResource(R.plurals.scanner_count, scanHistory.size, scanHistory.size),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                    ) {
+                        var scanToRemove by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+                        var showClearConfirm by remember { mutableStateOf(false) }
+
+                        if (scanToRemove in scanHistory.indices) {
+                            my.hana.meena.ui.components.MetroDialog(
+                                title = stringResource(R.string.scanner_remove_title),
+                                message = stringResource(R.string.scanner_remove_question),
+                                confirmText = stringResource(R.string.action_yes),
+                                dismissText = stringResource(R.string.action_no),
+                                onConfirm = {
+                                    my.hana.meena.data.system.ScannerRepository.remove(context, scanToRemove)
+                                    scanToRemove = -1
+                                },
+                                onDismiss = { scanToRemove = -1 }
+                            )
+                        }
+                        if (showClearConfirm) {
+                            my.hana.meena.ui.components.MetroDialog(
+                                title = stringResource(R.string.scanner_clear_title),
+                                message = stringResource(R.string.scanner_clear_question),
+                                confirmText = stringResource(R.string.action_yes),
+                                dismissText = stringResource(R.string.action_no),
+                                onConfirm = {
+                                    my.hana.meena.data.system.ScannerRepository.clear(context)
+                                    showClearConfirm = false
+                                },
+                                onDismiss = { showClearConfirm = false }
+                            )
+                        }
+
+                        if (scanHistory.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.scanner_empty),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                        var showAllScans by remember { mutableStateOf(false) }
+                        val visibleScans = if (showAllScans) scanHistory.size else settings.widgetLines
+                        scanHistory.take(visibleScans).forEachIndexed { index, entry ->
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val copiedMsg = stringResource(R.string.scanner_copy)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable {
+                                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("scan", entry.content))
+                                        my.hana.meena.ui.components.MetroMessage.show(copiedMsg)
+                                    }
+                                    .sensitive()
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = entry.content,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MeenaTextWhite,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = entry.format,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.action_remove),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier
+                                        .metroClickable { scanToRemove = index }
+                                        .padding(start = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                        }
+                        if (scanHistory.size > visibleScans) {
+                            Text(
+                                text = stringResource(R.string.scanner_show_more, scanHistory.size - visibleScans),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { showAllScans = true }
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.l)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.scanner_open),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable(onClick = onOpenScanner)
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                            if (scanHistory.isNotEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.scanner_clear),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MeenaTextMuted,
+                                    modifier = Modifier
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { showClearConfirm = true }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 "widget-solat" -> {
                     val solatConfig = settings.widgetConfigs[widgetId]
                     CollapsibleWidget(
@@ -1379,6 +1512,71 @@ fun TodayHub(
                         is24Hour = settings.is24HourFormat,
                         onOpen = onOpenNearbyMap
                     )
+                }
+
+                "widget-screen-time" -> {
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_name_screen_time),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) }
+                    ) {
+                        val stContext = androidx.compose.ui.platform.LocalContext.current
+                        val hasPerm = remember { my.hana.meena.data.system.ScreenTimeRepository.hasPermission(stContext) }
+                        if (!hasPerm) {
+                            Text(
+                                text = stringResource(R.string.screen_time_needs_access),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
+                            Text(
+                                text = stringResource(R.string.screen_time_grant),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable { my.hana.meena.data.system.ScreenTimeRepository.openPermissionSettings(stContext) }
+                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                            )
+                        } else {
+                            val (totalMinutes, topApps) = remember(currentTime) {
+                                my.hana.meena.data.system.ScreenTimeRepository.todayUsage(stContext)
+                            }
+                            val hours = totalMinutes / 60
+                            val mins = totalMinutes % 60
+                            Text(
+                                text = if (hours > 0) stringResource(R.string.screen_time_total_hm, hours, mins)
+                                       else stringResource(R.string.screen_time_total_m, mins),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MeenaTextWhite
+                            )
+                            topApps.forEach { app ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .metroClickable { onLaunchPackage(app.packageName) }
+                                        .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = app.label.lowercase(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MeenaTextWhite,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    val h = app.minutes / 60
+                                    val m = app.minutes % 60
+                                    Text(
+                                        text = if (h > 0) stringResource(R.string.screen_time_app_hm, h, m)
+                                               else stringResource(R.string.screen_time_app_m, m),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 "widget-device-telemetry" -> {

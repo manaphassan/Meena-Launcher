@@ -133,6 +133,11 @@ val MeenaTextMuted: Color @Composable @ReadOnlyComposable get() = LocalMeenaPale
 val MeenaTextDisabled: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.textDisabled
 val MeenaOnAccent: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.onAccent
 
+// Scanner overlays: not theme-dependent because the camera background is always live video.
+val MeenaScrimDim = Color(0x99000000)
+val MeenaScrimHeavy = Color(0xCC000000)
+val MeenaScrimSolid = Color(0xEE000000)
+
 // Status colours follow the theme (see MeenaPalette): bright on black, darker on white, black on paper.
 val MeenaProfitGreen: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.positive
 val MeenaLossRed: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.negative

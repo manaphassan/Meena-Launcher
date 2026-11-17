@@ -13,6 +13,8 @@
     <!-- Connected devices widget: BLUETOOTH_CONNECT on Android 12+, the install-time BLUETOOTH permission before that. -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- QR / barcode scanner camera, approved by the owner. -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- Health Connect Read Permissions -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />

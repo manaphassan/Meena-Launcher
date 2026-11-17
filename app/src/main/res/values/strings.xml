@@ -779,6 +779,43 @@
     <string name="widget_lines_toggle_hint">on shows up to 3 lines in each widget. off shows up to 5.</string>
     <string name="notes_show_more">show %1$d more</string>
 
+    <!-- Scanner -->
+    <string name="widget_name_scanner">scanner</string>
+    <string name="scanner_title">scan</string>
+    <string name="scanner_empty">no scans yet. tap to open the scanner.</string>
+    <string name="scanner_empty_short">empty</string>
+    <string name="scanner_open">open scanner</string>
+    <string name="scanner_needs_camera">meena needs camera access to scan</string>
+    <string name="scanner_grant_camera">allow camera</string>
+    <string name="scanner_scanning">point at a code</string>
+    <string name="scanner_torch_on">turn on light</string>
+    <string name="scanner_torch_off">turn off light</string>
+    <string name="scanner_found">found</string>
+    <string name="scanner_copy">copy</string>
+    <string name="scanner_open_link">open link</string>
+    <string name="scanner_save">save to history</string>
+    <string name="scanner_saved">saved</string>
+    <string name="scanner_scan_again">scan again</string>
+    <string name="scanner_remove_title">remove scan</string>
+    <string name="scanner_remove_question">remove this scan from history?</string>
+    <string name="scanner_clear_title">clear history</string>
+    <string name="scanner_clear_question">remove all scans? this can\'t be undone.</string>
+    <string name="scanner_clear">clear history</string>
+    <plurals name="scanner_count">
+        <item quantity="one">%1$d scan</item>
+        <item quantity="other">%1$d scans</item>
+    </plurals>
+    <string name="scanner_show_more">show %1$d more</string>
+
+    <!-- Screen Time -->
+    <string name="widget_name_screen_time">screen time</string>
+    <string name="screen_time_needs_access">meena needs usage access to show screen time</string>
+    <string name="screen_time_grant">allow usage access</string>
+    <string name="screen_time_total_hm">%1$dh %2$dm today</string>
+    <string name="screen_time_total_m">%1$dm today</string>
+    <string name="screen_time_app_hm">%1$dh %2$dm</string>
+    <string name="screen_time_app_m">%1$dm</string>
+
     <!-- Inbox: email and grouped alerts -->
     <string name="widget_name_email">email</string>
     <string name="inbox_email_prompt">want your email here? turn on notification access. meena reads it on your phone only.</string>

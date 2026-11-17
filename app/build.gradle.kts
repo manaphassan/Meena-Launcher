@@ -115,6 +115,12 @@ dependencies {
   // Health Connect
   implementation(libs.androidx.health.connect)
   
+  // Camera & Scanner
+  implementation(libs.androidx.camera.camera2)
+  implementation(libs.androidx.camera.lifecycle)
+  implementation(libs.androidx.camera.view)
+  implementation(libs.mlkit.barcode.scanning)
+
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests

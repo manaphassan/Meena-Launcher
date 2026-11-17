@@ -275,8 +275,10 @@ data class MeenaUserSettings(
             "widget-health-device" to WidgetConfig("today", 9, isEnabled = false),
             "widget-bluetooth-devices" to WidgetConfig("today", 10, isEnabled = false),
             "widget-device-telemetry" to WidgetConfig("today", 11, isEnabled = false),
-            "widget-map-radar" to WidgetConfig("today", 12, isEnabled = false),
-            "widget-wikipedia" to WidgetConfig("today", 13, isEnabled = false),
+            "widget-screen-time" to WidgetConfig("today", 12, isEnabled = false),
+            "widget-map-radar" to WidgetConfig("today", 13, isEnabled = false),
+            "widget-wikipedia" to WidgetConfig("today", 14, isEnabled = false),
+            "widget-scanner" to WidgetConfig("today", 15, isEnabled = false),
 
             // Inbox Hub (chats, email, alerts / notification stream)
             "widget-conversations" to WidgetConfig("inbox", 0, isEnabled = true),

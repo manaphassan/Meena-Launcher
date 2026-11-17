@@ -427,6 +427,7 @@ fun MeenaHomeScreen(
     var isActionCenterOpen by remember { mutableStateOf(false) }
     var isWeatherDetailOpen by remember { mutableStateOf(false) }
     var isNearbyMapOpen by remember { mutableStateOf(false) }
+    var isScannerOpen by remember { mutableStateOf(false) }
     var focusAppsSearch by remember { mutableStateOf(false) }
 
     // Shake to hide private content. The accelerometer needs no permission and is only read while
@@ -468,6 +469,7 @@ fun MeenaHomeScreen(
     LaunchedEffect(homePresses) {
         if (homePresses > 0) {
             isNearbyMapOpen = false
+            isScannerOpen = false
             isWeatherDetailOpen = false
             isSettingsOpen = false
             isActionCenterOpen = false
@@ -476,8 +478,9 @@ fun MeenaHomeScreen(
     }
 
     // Intercept hardware/gesture Back button (return to today hub)
-    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || isNearbyMapOpen || pagerState.currentPage != 0) {
+    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || isNearbyMapOpen || isScannerOpen || pagerState.currentPage != 0) {
         when {
+            isScannerOpen -> isScannerOpen = false
             isNearbyMapOpen -> isNearbyMapOpen = false
             isWeatherDetailOpen -> isWeatherDetailOpen = false
             isSettingsOpen -> isSettingsOpen = false
@@ -721,6 +724,7 @@ fun MeenaHomeScreen(
                             },
                             onOpenWeatherDetail = { isWeatherDetailOpen = true },
                             onOpenNearbyMap = { isNearbyMapOpen = true },
+                            onOpenScanner = { isScannerOpen = true },
                             onOpenApps = {
                                 coroutineScope.launch { pagerState.animateScrollToPage(4) }
                             },
@@ -853,6 +857,17 @@ fun MeenaHomeScreen(
                     }
                 },
                 onNavigateBack = { isNearbyMapOpen = false }
+            )
+        }
+
+        // Scanner sub-page
+        AnimatedVisibility(
+            visible = isScannerOpen,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it })
+        ) {
+            my.hana.meena.ui.hubs.ScannerSubPage(
+                onNavigateBack = { isScannerOpen = false }
             )
         }
 

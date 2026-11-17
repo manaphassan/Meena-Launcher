@@ -911,7 +911,9 @@ class MeenaLauncherLogicTest {
             "android.permission.health.READ_DISTANCE",
             "android.permission.health.READ_TOTAL_CALORIES_BURNED",
             "android.permission.health.READ_SLEEP",
-            "android.permission.health.READ_HEART_RATE"
+            "android.permission.health.READ_HEART_RATE",
+            // QR / barcode scanner, approved by the owner.
+            "android.permission.CAMERA"
         )
         val unauthorized = mutableListOf<String>()
 
