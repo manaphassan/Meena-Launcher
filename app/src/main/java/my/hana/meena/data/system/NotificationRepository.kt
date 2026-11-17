@@ -298,8 +298,8 @@ object NotificationRepository {
             val largeIcon = extras.getParcelable<Bitmap>(Notification.EXTRA_LARGE_ICON)
             if (largeIcon != null && largeIcon.width > 48) return@runCatching scaleTo(largeIcon, 160).asImageBitmap()
 
-            // 4. MessagingStyle images (Android 9+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // 4. MessagingStyle images (getMessagesFromBundleArray is Android 11+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val messages = Notification.MessagingStyle.Message.getMessagesFromBundleArray(
                     extras.getParcelableArray(Notification.EXTRA_MESSAGES)
                 )

@@ -234,6 +234,7 @@ class MainActivity : ComponentActivity() {
         if (shortcut != null) {
             val (pkg, shortcutId) = shortcut
             try {
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N_MR1) throw UnsupportedOperationException()
                 val launcherApps = getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE) as android.content.pm.LauncherApps
                 launcherApps.startShortcut(pkg, shortcutId, null, null, android.os.Process.myUserHandle())
             } catch (_: Exception) {
@@ -403,6 +404,9 @@ fun MeenaHomeScreen(
         }
     }
 
+    val backupImportFailedMsg = stringResource(R.string.backup_import_failed)
+    val backupRestoredMsg = stringResource(R.string.backup_restored)
+    val backupParseFailedMsg = stringResource(R.string.backup_parse_failed)
     val importBackupLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -412,17 +416,17 @@ fun MeenaHomeScreen(
                 val jsonText = context.contentResolver.openInputStream(uri)
                     ?.bufferedReader()?.use { it.readText() }
                 if (jsonText.isNullOrBlank()) {
-                    my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_import_failed))
+                    my.hana.meena.ui.components.MetroMessage.show(backupImportFailedMsg)
                     return@launch
                 }
                 val success = settingsRepository.importFromJson(jsonText)
                 if (success) {
-                    my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_restored))
+                    my.hana.meena.ui.components.MetroMessage.show(backupRestoredMsg)
                 } else {
-                    my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_parse_failed))
+                    my.hana.meena.ui.components.MetroMessage.show(backupParseFailedMsg)
                 }
             } catch (e: Exception) {
-                my.hana.meena.ui.components.MetroMessage.show(context.getString(R.string.backup_import_failed))
+                my.hana.meena.ui.components.MetroMessage.show(backupImportFailedMsg)
             }
         }
     }

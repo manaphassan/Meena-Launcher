@@ -91,6 +91,7 @@ object ShortcutRepository {
 
     // ---- Internal ----
 
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.N_MR1)
     private fun toDeviceAppInfo(
         context: Context,
         launcherApps: LauncherApps,
