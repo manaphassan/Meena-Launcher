@@ -2368,7 +2368,8 @@ private fun FinanceAccountSettings(
                 unfocusedTextColor = MeenaTextWhite,
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 unfocusedIndicatorColor = MeenaBorder
-            )
+            ),
+            shape = RoundedCornerShape(0.dp)
         )
 
         Row(
@@ -2503,7 +2504,8 @@ private fun FinanceAccountSettings(
                 unfocusedContainerColor = MeenaSurface,
                 focusedTextColor = MeenaTextWhite,
                 unfocusedTextColor = MeenaTextWhite
-            )
+            ),
+            shape = RoundedCornerShape(0.dp)
         )
 
         Row(
@@ -2521,7 +2523,8 @@ private fun FinanceAccountSettings(
                     unfocusedContainerColor = MeenaSurface,
                     focusedTextColor = MeenaTextWhite,
                     unfocusedTextColor = MeenaTextWhite
-                )
+                ),
+                shape = RoundedCornerShape(0.dp)
             )
 
             OutlinedTextField(
@@ -2535,7 +2538,8 @@ private fun FinanceAccountSettings(
                     unfocusedContainerColor = MeenaSurface,
                     focusedTextColor = MeenaTextWhite,
                     unfocusedTextColor = MeenaTextWhite
-                )
+                ),
+                shape = RoundedCornerShape(0.dp)
             )
         }
 
@@ -2554,7 +2558,8 @@ private fun FinanceAccountSettings(
                     unfocusedContainerColor = MeenaSurface,
                     focusedTextColor = MeenaTextWhite,
                     unfocusedTextColor = MeenaTextWhite
-                )
+                ),
+                shape = RoundedCornerShape(0.dp)
             )
 
             OutlinedTextField(
@@ -2568,7 +2573,8 @@ private fun FinanceAccountSettings(
                     unfocusedContainerColor = MeenaSurface,
                     focusedTextColor = MeenaTextWhite,
                     unfocusedTextColor = MeenaTextWhite
-                )
+                ),
+                shape = RoundedCornerShape(0.dp)
             )
         }
 

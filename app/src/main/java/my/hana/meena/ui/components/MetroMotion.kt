@@ -6,35 +6,39 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 /**
  * Windows Phone Metro UI authentic motion system (Charter §2, §7 Phase 4.5):
- * 1. Turnstile: Navigation transition with 3D Y-axis rotation around the left edge and horizontal slide.
+ * 1. Turnstile: Navigation transition with 3D Y-axis rotation around the left edge.
+ *    - Enter: rotationY from +30 to 0 degrees with fade-in (page swings in like a door)
+ *    - Exit: fade-out only for now
  * 2. Staggered Feather-In: List items cascade in with progressive delays and subtle perspective rise.
  * 3. Reduced Motion: Strict override when settings.reducedMotion == true, snapping with zero lag.
  */
 
 /**
  * AnimatedContent ContentTransform that provides the authentic Windows Phone Turnstile transition.
+ * Uses fade only — the actual 3D rotation is applied by [MetroTurnstileContainer]'s graphicsLayer.
  */
 fun metroTurnstileTransition(
     forward: Boolean = true,
@@ -44,28 +48,27 @@ fun metroTurnstileTransition(
         return fadeIn(animationSpec = snap()) togetherWith fadeOut(animationSpec = snap())
     }
 
-    val enterTween = tween<Float>(durationMillis = 280, easing = FastOutSlowInEasing)
-    val exitTween = tween<Float>(durationMillis = 220, easing = FastOutSlowInEasing)
-    val enterSlideTween = tween<IntOffset>(durationMillis = 280, easing = FastOutSlowInEasing)
-    val exitSlideTween = tween<IntOffset>(durationMillis = 220, easing = FastOutSlowInEasing)
+    val enterDuration = 300
+    val exitDuration = 240
 
     return if (forward) {
-        (slideInHorizontally(animationSpec = enterSlideTween, initialOffsetX = { it / 3 }) +
-         fadeIn(animationSpec = enterTween)).togetherWith(
-            slideOutHorizontally(animationSpec = exitSlideTween, targetOffsetX = { -it / 4 }) +
-            fadeOut(animationSpec = exitTween)
+        fadeIn(
+            animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)
+        ) togetherWith fadeOut(
+            animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)
         )
     } else {
-        (slideInHorizontally(animationSpec = enterSlideTween, initialOffsetX = { -it / 4 }) +
-         fadeIn(animationSpec = enterTween)).togetherWith(
-            slideOutHorizontally(animationSpec = exitSlideTween, targetOffsetX = { it / 3 }) +
-            fadeOut(animationSpec = exitTween)
+        fadeIn(
+            animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)
+        ) togetherWith fadeOut(
+            animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)
         )
     }
 }
 
 /**
  * Turnstile container that wraps sub-page or view transitions with authentic 3D Y-axis pivot.
+ * The entering page rotates from 30 degrees (or -30 going back) to 0; the exiting page only fades.
  */
 @Composable
 fun <T> MetroTurnstileContainer(
@@ -86,11 +89,28 @@ fun <T> MetroTurnstileContainer(
         },
         label = "metroTurnstileContainer"
     ) { state ->
+        // Animate rotationY for the 3D turnstile effect
+        val rotationAnim = remember { Animatable(if (reducedMotion) 0f else if (isForward) 30f else -30f) }
+
+        LaunchedEffect(state) {
+            if (!reducedMotion) {
+                rotationAnim.snapTo(if (isForward) 30f else -30f)
+                rotationAnim.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = LinearOutSlowInEasing
+                    )
+                )
+            }
+        }
+
         Box(
             modifier = Modifier.graphicsLayer {
                 if (!reducedMotion) {
                     transformOrigin = TransformOrigin(0f, 0.5f)
                     cameraDistance = 24f * density
+                    rotationY = rotationAnim.value
                 }
             }
         ) {

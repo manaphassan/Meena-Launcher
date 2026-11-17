@@ -41,6 +41,7 @@ import my.hana.meena.data.system.InstalledAppsRepository
 import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaTextWhite
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 
@@ -494,6 +495,8 @@ private fun GroupTile(
                         else -> app.label.lowercase()
                     }
                     val fill = if (app == null) color.copy(alpha = 0.2f) else color
+                    val miniInteraction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    val miniPressed by miniInteraction.collectIsPressedAsState()
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -508,8 +511,9 @@ private fun GroupTile(
                                 drawRect(fill, Offset(left, top), Size(size.width - left - right, size.height - top - bottom))
                             }
                             .semantics { contentDescription = description }
+                            .metroPressEffect(isPressed = miniPressed)
                             .combinedClickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                interactionSource = miniInteraction,
                                 indication = null,
                                 onClick = { if (app != null) onLaunchApp(app.packageName) else onAdd() },
                                 onLongClick = onLongPress
