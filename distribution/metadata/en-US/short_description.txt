@@ -1,1 +1,1 @@
-a calm home screen with five pages: today, inbox, news, money and apps
+clean, light launcher inspired by windows phone. your phone, simplified.

@@ -1,40 +1,39 @@
-meena is a home screen built around big type, open space and plain colour. no cards, no clutter. swipe sideways through five pages and see what matters at a glance.
+meena is a free, personal-use android launcher that puts what matters first.
 
-today
-- the time, the date and the hijri date
-- weather with a moving icon, the day's high and low, and the next few days
-- up to six favourite app tiles, plus one tile that holds four small ones
-- your week from your calendar, with what is coming up next
-- prayer times for your zone from jakim
-- a nearby map with 3 km and 5 km rings, a compass, the qibla line and the sun's path
-- notes you can edit, turn into a list, or add to your calendar as a reminder
-- battery: how fast it is charging, time to full, time left, and when to plug in
-- bluetooth devices you have connected, with their battery when the device shares it
-- steps, distance, calories, heart rate and sleep from health connect, if you allow it
-- double tap an empty spot to lock the phone, if you turn it on
+inspired by the clean lines of windows phone and the information density of aio launcher, meena shows your day at a glance: weather, calendar, chats, email, health, finance, notes and your favourite apps — all on one scrollable today page.
 
-inbox
-- your alerts and chats in one quiet place, ready to open or clear
+what makes meena different:
 
-news
-- the feeds you choose, with pictures and a clean reader view
+• meena ui — a design language built on four words: clean, light, open, fast. no cards, no rounded corners, no clutter. just text, space and colour.
 
-money
-- gold, silver, bitcoin and ether over the past year on one chart, from free daily prices. search and add other coins and metals
-- kijang emas coin prices from bank negara malaysia
-- exchange rates in a table, with the day's change. add any currency you need
-- prices from your own google sheet
-- spending picked up from your bank alerts, kept on your phone
+• five pages — today, inbox, news, money, apps. swipe between them. each one does its job.
 
-apps
-- every app from a to z, with a letter index and search
-- sort by category or by last used
-- icon packs
+• favourite tiles — pin up to 8 apps as metro-style tiles. colourful or monochrome, small or regular. add whatsapp contact shortcuts for one-tap chats.
 
-your phone, your data
-- notes, portfolio and keys are stored encrypted on your phone
-- no ads, no accounts, no tracking
-- weather and the map get your location rounded to about 1 km, and only when those widgets are on
-- every widget shows real information or tells you what it needs. nothing is made up.
+• live tiles — tiles flip to show unread counts, the next calendar event or alarm, without opening the app.
 
-meena is in early testing. tell us what feels wrong at harussani@outlook.my.
+• inbox — chats, email and alerts from every app, grouped into threads. music player controls when something is playing.
+
+• notes — quick notes with bullet journal markers: dashes for notes, stars for tasks, x for done. tap to toggle.
+
+• scanner — built-in qr and barcode scanner with history. no extra app needed.
+
+• colourful tiles — each app's tile uses its own dominant colour. or keep the classic monochrome metro look.
+
+• screen time — see how long you've used each app today.
+
+• privacy first — no account, no cloud, no tracking. api keys and personal data are encrypted on your phone with android keystore. nothing leaves the device.
+
+• open and fast — r8-optimised, no background services beyond the notification listener you choose to enable.
+
+meena is free, with no ads and no in-app purchases. built for personal use by one person who missed windows phone.
+
+permissions explained:
+- camera: qr/barcode scanner
+- location: weather and nearby map
+- calendar: agenda widget
+- notification access: inbox, spending tracker, live tiles
+- bluetooth: connected devices widget
+- health connect: steps, sleep, heart rate
+
+meena is not affiliated with microsoft, windows phone, or aio launcher.
