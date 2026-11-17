@@ -89,8 +89,8 @@
     <!-- Backups -->
     <string name="backup_shared">backup shared</string>
     <string name="backup_share_failed">couldn\'t share backup</string>
-    <string name="backup_restored">settings restored from clipboard</string>
-    <string name="backup_parse_failed">couldn\'t parse backup json</string>
+    <string name="backup_restored">settings restored from your backup</string>
+    <string name="backup_parse_failed">couldn\'t read that file. pick a backup you shared from meena.</string>
     <string name="backup_clipboard_hint">copy your backup to the clipboard first, then tap import from clipboard</string>
     <string name="backup_import_failed">couldn\'t import backup</string>
 
@@ -457,7 +457,7 @@
     <string name="start_page_hint">the page meena opens on</string>
     <string name="settings_page_apps">apps</string>
     <string name="backup_share">share a backup</string>
-    <string name="backup_import">import from clipboard</string>
+    <string name="backup_import">import a backup</string>
     <string name="backup_reset">reset all settings</string>
     <string name="backup_reset_question">reset every setting, including favourites and widget order? your holdings and notes stay.</string>
     <string name="about_intro">meena is a free home screen for android. clean type, lots of space and quick to use.</string>
