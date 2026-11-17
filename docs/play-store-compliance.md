@@ -3,7 +3,7 @@
 **Application:** Meena (`my.hana.meena`)  
 **Target SDK:** 36 (Android 16 / 15)  
 **Track:** Closed Test (Personal Developer Account)  
-**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded; 15 November 2026: markets prices, double tap to lock through device admin)  
+**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded; 15 November 2026: markets prices, double tap to lock through device admin; 18 November 2026: 0.2.0 scanner with camera and ZXing, music controls, quick replies, notification pictures, app shortcuts, wallpaper)  
 
 ---
 
@@ -37,7 +37,7 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 
 [I] "Shared: No": Open-Meteo and OpenFreeMap get coordinates or tiles only to answer the request, and the user turned the feature on. Play's help lists two exceptions to "sharing": service providers, and transfers based on a user-initiated action. Both fit, but that reading is mine, not Google's.
 
-**On the phone only, not declared** (per the help page above): parsed bank alerts, Health Connect readings, calendar events, notification and chat text, installed apps, app-open counts, Bluetooth device names and battery levels, notes and holdings. None of these is sent anywhere. The privacy policy still lists them, so users can see what Meena reads.
+**On the phone only, not declared** (per the help page above): parsed bank alerts, Health Connect readings, calendar events, notification and chat text, notification pictures, replies typed in the inbox, what's playing, installed apps and their shortcuts, app-open counts, Bluetooth device names and battery levels, camera frames and saved scans, the chosen wallpaper, notes and holdings. None of these is sent anywhere. The privacy policy still lists them, so users can see what Meena reads.
 
 | Data | Where it stays |
 |---|---|
@@ -45,6 +45,9 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 | Fitness and health info (Health Connect) | Phone only; shown on Today |
 | Calendar events | Phone only |
 | Notification and chat text | Phone only; chat names on live tiles are emoji-stripped and never sent |
+| Notification pictures, inbox replies, what's playing | Phone only; a reply is handed to the posting app's own reply action, which sends it |
+| Camera frames, saved scans | Phone only; frames are decoded in memory by ZXing and dropped; saved scans (max 50) are Keystore-encrypted |
+| Chosen wallpaper | Phone only; read through Android's picker, not copied |
 | Installed apps, app-open counts | Phone only |
 | Bluetooth device names and battery | Phone only; widget off by default |
 | Personal identifiers, device IDs | Not collected at all |
@@ -75,7 +78,7 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 
 - **URL for Play Console (and the in-app link):** https://manaphassan.github.io/Meena-Launcher/privacy-policy/
 - **Hosting:** GitHub Pages from the `gh-pages` branch (static HTML rendered from `docs/privacy-policy.md` by GitHub's Markdown API). Checked live on 14 Nov 2026: HTTP 200, public, not a PDF. After editing the policy, rebuild and push `gh-pages` so the page matches: `bash scripts/publish-privacy-policy.sh`, then `git -C build/tmp/ghpages push`.
-- **Shown in the app:** settings, then system, then about, then **privacy policy**; and from Health Connect's "privacy policy" link.
+- **Shown in the app:** settings, then personalize, then privacy, then **privacy policy**; and from Health Connect's "privacy policy" link.
 - **Play's requirement:** an active, public, non-geofenced, non-PDF page ([User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)). The Pages URL above meets it; the old `github.com/.../blob/main/...` link returned 404 and is no longer used.
 
 ### 2.4 Nearby Devices (`BLUETOOTH_CONNECT`, plus `BLUETOOTH` with `maxSdkVersion=30`)
@@ -96,6 +99,11 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 - **Source:** Bank Negara Malaysia Open API, keyless: `https://api.bnm.gov.my/public/kijang-emas/year/{y}/month/{m}` with `Accept: application/vnd.BNM.API.v1+json` (without it the API answers 404). One call per refresh, two at the start of a month; at most every 3 hours. An empty month answers 404 "No records found.", read as "no prices yet".
 - **Terms:** the API portal (apikijangportal.bnm.gov.my) blocks automated readers, so its terms of use and rate limits are [S] unverified by the agent. The owner approved building it on 15 Nov 2026; read the terms in a browser before release.
 - **Labels:** BNM's "selling" is shown as "you pay" and "buying" as "you get back". It is the coin's price, not spot gold, and the widget says so.
+
+### 2.9 Camera (scanner)
+- **Use:** `android.permission.CAMERA`, approved by the owner, asked with Android's runtime prompt the first time the scanner opens. CameraX 1.4.1 previews and analyses frames; ZXing core 3.5.4 decodes the brightness plane in memory. No frame is saved or sent. `android.hardware.camera` and `android.hardware.camera.autofocus` are declared `required="false"`, because Play otherwise treats them as required and hides the app from phones without them ([uses-feature](https://developer.android.com/guide/topics/manifest/uses-feature-element), "Permissions that imply feature requirements").
+- **Libraries:** ZXing core is Apache 2.0 ([POM](https://repo1.maven.org/maven2/com/google/zxing/zxing-parent/3.5.4/zxing-parent-3.5.4.pom)) and has no network code. ML Kit was tried first and removed before release: Google's [ML Kit data disclosure](https://developers.google.com/ml-kit/android-data-disclosure) says its SDKs collect device and app information, per-installation identifiers and performance metrics "for diagnostics and usage analytics", which Meena's no-analytics rule does not allow. The 0.2.0 release has no `com.google.mlkit`, `datatransport` or Firebase classes (checked in `mapping.txt` and the dex files).
+- **Data safety:** nothing leaves the phone; no row needed.
 
 ---
 

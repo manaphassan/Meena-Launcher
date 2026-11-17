@@ -1,9 +1,9 @@
 # Google Play Store Release & Rollout Guide
 
 **Application:** Meena (`my.hana.meena`)  
-**Release Version:** 0.1.0 (versionCode: 1)
+**Release Version:** 0.2.0 (versionCode: 2)
 **Track Schedule:** Internal Test → Closed Test (14 days) → Production Staged Rollout
-**Document Date:** October 2026 (checklist rerun 13 November 2026; updated 16 November 2026 for 0.1.0)  
+**Document Date:** October 2026 (checklist rerun 13 November 2026; updated 16 November 2026 for 0.1.0; 18 November 2026 for 0.2.0)  
 
 ---
 
@@ -13,16 +13,17 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 
 - [x] Package Name: `my.hana.meena` (Permanent unique identifier)
 - [x] Compilation: Target SDK 36, Min SDK 24, Compose 2026 BOM
-- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew bundleLiveRelease`, rerun 16 Nov 2026 at commit `78e60c5`)
-- [x] Bundle Size: **5.72 MiB** (5,998,847 bytes; within the 15 MB charter limit). Release APK 2.96 MB (2,955,481 bytes)
+- [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew clean bundleLiveRelease assembleLiveRelease --no-build-cache`, 18 Nov 2026, tag `v0.2.0`)
+- [x] Bundle Size: **7.28 MiB** (7,629,067 bytes; within the 15 MB charter limit). Release APK 3.95 MB (3,951,762 bytes). ARM only (`abiFilters` arm64-v8a, armeabi-v7a; owner, 18 Nov 2026)
 - [x] Baseline profile: `baseline.prof` packaged in the bundle
-- [x] Release signing: bundle and APK signed with the upload key (`CN=HaNa Innovation, O=HaNa Innovation, C=MY`, SHA-256 `b9e59f8c…696d`, checked with `apksigner verify` and `keytool -printcert`, 16 Nov 2026). Turn on Play App Signing at the first upload
-- [x] Privacy policy URL live: https://manaphassan.github.io/Meena-Launcher/privacy-policy/ (GitHub Pages, `gh-pages` branch; HTTP 200 on 14 Nov 2026)
-- [x] R8 & ProGuard: Minification enabled, resource shrinking enabled
-- [x] 16 KB Page Alignment: `zipalign -c -P 16` passes and every `LOAD` segment is 16 KB aligned for `libandroidx.graphics.path.so` and `libdatastore_shared_counter.so` (checked 12 Nov on the live debug APK; the 13 Nov bundle still ships only these two libraries)
-- [x] Automated Tests: `testLiveDebugUnitTest` 238 and `testDemoDebugUnitTest` 163, 0 failed (16 Nov 2026)
-- [x] Android Lint (`lint`): 0 errors, 136 warnings (mostly `UnusedResources`) (16 Nov 2026)
-- [x] Release smoke test: R8 release APK installed on the emulator; today, money (markets, kijang emas, rates), add ticker and the device admin prompt all work, no crashes (16 Nov 2026)
+- [x] Release signing: bundle and APK signed with the upload key (`CN=HaNa Innovation, O=HaNa Innovation, C=MY`, SHA-256 `b9e59f8c…696d`, checked with `apksigner verify` and `keytool -printcert`, 18 Nov 2026). Same key as 0.1.0, so 0.2.0 installs over it. Turn on Play App Signing at the first upload
+- [x] Privacy policy URL live: https://manaphassan.github.io/Meena-Launcher/privacy-policy/ (GitHub Pages, `gh-pages` branch; republished for 0.2.0)
+- [x] R8 & ProGuard: Minification enabled, resource shrinking enabled. No `com.google.mlkit`, `datatransport` or Firebase classes in the release (checked in `mapping.txt` and the dex files)
+- [x] 16 KB Page Alignment: `zipalign -c -P 16` passes on the 0.2.0 release APK, and every `LOAD` segment is 16 KB aligned in all eight native libraries (`libandroidx.graphics.path.so`, `libdatastore_shared_counter.so`, and CameraX's `libimage_processing_util_jni.so` and `libsurface_util_jni.so`, for both ABIs) (18 Nov 2026)
+- [x] Automated Tests: `testLiveDebugUnitTest` 251 and `testDemoDebugUnitTest` 251, 0 failed (18 Nov 2026)
+- [x] Android Lint (`lintLiveDebug`): 0 errors, 162 warnings, 4 hints (18 Nov 2026). Fixed for 0.2.0: shortcut calls guarded for Android 7.0, notification message pictures limited to Android 11+, backup messages read before the file picker opens
+- [x] Camera features: `android.hardware.camera` and `.autofocus` are `uses-feature-not-required` in `aapt2 dump badging`, so Play won't hide Meena from phones without them
+- [ ] Release smoke test: an earlier 0.2.0 build (with ML Kit) ran on a TECNO KL8 (Android 14): cold start 606 ms, no crashes, installed over the earlier release build and kept its data. The final ZXing build still needs a device run and the owner's scanner check. Sony SO-02J (Android 8.0): installs, but Family Link blocked it from opening
 
 ---
 
@@ -33,7 +34,7 @@ The Internal Testing track provides instant distribution (bypassing Google Play 
 1. **Navigate:** Google Play Console $\to$ **Testing** $\to$ **Internal testing**.
 2. **Create Release:**
    - Upload `app-live-release.aab`.
-   - Release name: `0.1.0 (1) - Internal Pre-Release`.
+   - Release name: `0.2.0 (2) - Internal Pre-Release`.
    - Release notes: Copy from `distribution/metadata/en-US/release_notes.txt`.
 3. **Tester List:** Add developer Google accounts to the internal tester email list.
 4. **Accept & Install:** Open the internal opt-in link on your Android test devices and install.

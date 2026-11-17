@@ -1,7 +1,9 @@
-meena 0.1.0, the first test build.
-- five pages: today, inbox, news, money and apps
-- weather, prayer times from jakim, your week and a nearby map on today
-- chats, email and alerts in one quiet inbox
-- markets, kijang emas and exchange rates on money, with tickers you pick
-- shake to hide private things, and double tap to lock if you turn it on
+meena 0.2.0
+- a scanner for qr codes and barcodes, read on your phone
+- up to 8 favourites: small, colourful, or a shortcut like a chat
+- notes with tasks you can tick off
+- reply, see pictures and control music from the inbox
+- an a to z letter filter on apps
+- your own wallpaper, and today's widgets in your order
+- settings in four tabs: personalize, pages, connections, about
 - no ads, no accounts, no tracking

@@ -1,18 +1,18 @@
 # Meena roadmap and milestones
 
-Status on 16 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fix-plan.md) (milestones, phases, decisions) and [`meena-ui-fix-plan-v2.md`](meena-ui-fix-plan-v2.md) (UI score phases). What shipped: [`CHANGELOG.md`](../CHANGELOG.md).
+Status on 18 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fix-plan.md) (milestones, phases, decisions) and [`meena-ui-fix-plan-v2.md`](meena-ui-fix-plan-v2.md) (UI score phases). What shipped: [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Where we are
 
-**Version 0.1.0**, published as a GitHub release. Built and tested on the emulator and a TECNO KL8 (Android 14); starts on a Sony SO-02J (Android 8.0).
+**Version 0.2.0**, published as a GitHub release. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
 **Blocked on:** a personal Google Play developer account (owner; on hold for now, 16 Nov 2026).
 
-| Check | Result (16 Nov 2026) |
+| Check | Result (18 Nov 2026) |
 |---|---|
-| Unit tests | 238 live, 163 demo, 0 failed |
-| Lint | 0 errors, 136 warnings |
+| Unit tests | 251 live, 251 demo, 0 failed |
+| Lint | 0 errors, 162 warnings |
 | UI score (`meena-ui-score.md`) | 9.7 of 10; area 4 waits for the task test |
-| Release build | APK 2.96 MB, AAB 6.0 MB, signed with the upload key |
+| Release build | APK 3.95 MB, AAB 7.6 MB, ARM only, signed with the upload key |
 
 ## Milestones
 
@@ -37,16 +37,20 @@ Status on 16 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 1 | Bank Negara API terms | Owner said yes to reading them in a browser (16 Nov); the agent still can't open the portal. Tell the agent if they ask for attribution or set limits, so the widget can follow them |
 | 2 | Task test comparison | Proposed: AIO Launcher (A) against Meena (B) on the Sony SO-02J; fallback: the Sony's own home screen. See `task-test-plan.md` |
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
+| 4 | Screen time widget | Needs Android's usage access (`PACKAGE_USAGE_STATS`), a new permission. Approve it, or hide the widget |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 
 ## Backlog (not scheduled)
 
 - Compose UI tests (only unit tests today).
-- Lint warning clean-up (136, mostly unused resources).
+- Lint warning clean-up (162, mostly unused resources).
+- Material buttons in settings still bring their own press effect; swap them for a Meena button with the scale and tilt press.
+- The outgoing sub-page only fades; it could turn away too.
 - Sparklines for stocks. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].
 
 ## Won't do
 
 - Yahoo Finance: no official finance API on developer.yahoo.com, and its terms bar this use; scraping is against the plan.
 - Gmail API, paid quote APIs, `QUERY_ALL_PACKAGES`, background location.
+- Google ML Kit for the scanner: it sends usage data to Google ([data disclosure](https://developers.google.com/ml-kit/android-data-disclosure)). ZXing is used instead.

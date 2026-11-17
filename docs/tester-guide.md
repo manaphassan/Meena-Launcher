@@ -1,4 +1,4 @@
-# Meena tester guide (v0.1.0)
+# Meena tester guide (v0.2.0)
 
 Thanks for helping test Meena. It's a home screen for Android: five pages you swipe through sideways (today, inbox, news, money and apps), with big type and no clutter.
 
@@ -35,6 +35,7 @@ Meena asks for a few things. Each one is optional, and anything you say no to ju
 | Notification access | Alerts and chats on inbox, and spending from bank alerts. The text stays on your phone. |
 | Nearby devices | Connected Bluetooth devices and their battery. |
 | Health Connect | Steps, distance, calories, heart rate and sleep. |
+| Camera | Only when you open the scanner. Pictures are read on your phone and never saved or sent. |
 
 The full privacy policy is at https://manaphassan.github.io/Meena-Launcher/privacy-policy/
 
@@ -44,15 +45,18 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 
 **Today**
 - Does the weather match your area? Tap it for the detail page.
-- Add favourites: on the apps page, long-press an app and choose **add to favourites**. Try the tile that holds four small apps.
+- Add favourites: on the apps page, long-press an app and choose **add to favourites**. Try the tile that holds four small apps, and **pin a shortcut** from a tile's long-press menu (for example a chat). Then try **small tiles** and **colourful tiles** in settings, personalize.
 - Are the prayer times right for your zone?
+- Turn on the **scanner** (settings, pages) and scan a few QR codes and barcodes, including a small one. Does it read them? Try tap to focus, pinch to zoom and the light.
 - Open the nearby map. Do the 3 km and 5 km rings, the compass and the qibla line look right?
-- Write a note, edit it, make it a list and set a reminder.
+- Write a note, edit it and set a reminder. Start lines with `-`, `*` and `x`, then tap a task to tick it.
 - Watch the battery line while charging and unplugged. Do the times seem sensible?
 - Connect Bluetooth earphones. Do they show up, with their battery?
 
 **Inbox**
 - Do new alerts and chats appear? Can you open and clear them?
+- Tap an app's alerts to see them all. Reply to a chat from the inbox: does the other person get it?
+- Do pictures in notifications show? Play some music: do play, pause and skip work?
 
 **News**
 - Add a feed you read. Do the pictures load? Is the reader view easy to read?
@@ -67,11 +71,14 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 
 **Apps**
 - Search for an app. Use the letter index on the right.
-- Switch between **a to z**, **by category** and **last used**.
-- Install and uninstall an app. Does the list update?
+- Switch between **a to z**, **by category**, **last used** and **a to z filter**.
+- Install and uninstall an app. Does the list update, and do your favourite tiles stay?
 
 **Everywhere**
-- Try **double tap to lock** (settings, system). Does a double tap on an empty spot lock the phone? Does a double tap on a tile or link ever lock it by mistake?
+- Pick a wallpaper (settings, personalize, wallpaper). Is text still easy to read? Try a few dim levels.
+- Move today's widgets around (settings, pages, reorder widgets).
+- Swipe down from the top of a page. Does the quick panel open?
+- Try **double tap to lock** (settings, about). Does a double tap on an empty spot lock the phone? Does a double tap on a tile or link ever lock it by mistake?
 - Anything slow, stuck, cut off, hard to read or hard to tap?
 - Anything that shows made-up looking numbers? Meena should only ever show real information, or say what it needs.
 - Any words that feel confusing?

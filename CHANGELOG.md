@@ -3,6 +3,44 @@
 All notable changes to Meena. Dates are when the work landed on `main`.
 Versions follow `versionName` in `app/build.gradle.kts`.
 
+## 0.2.0 (18 November 2026)
+
+Installs over 0.1.0: same signing key, version code 2.
+
+### New
+- **Scanner** for QR codes and barcodes, read on the phone with ZXing. Tap to focus, pinch to zoom, and a light for dark places. Keeps up to 50 scans you save, encrypted. Off by default (settings, pages); asks for the camera when you first open it.
+- **Favourite tiles:** up to 8 (was 6). Small tiles fit four to a row, icon only. Colourful tiles use each app's own icon colour. A tile can be an app shortcut, such as a chat with one person.
+- **Notes:** start a line with `-` for a note, `*` for a task or `x` when it's done. Tap a task in an open note to tick it.
+- **Inbox:** what's playing, with play, pause and skip. Alerts grouped by app; tap to see them all. Reply from the inbox when the app allows it. Pictures from notifications show as small previews. Each inbox widget shows its own number of items, up to 12.
+- **Apps:** an a to z filter that shows one letter at a time.
+- **Wallpaper** from your gallery, dimmed 40 to 90% so text stays easy to read.
+- **Widget order:** move today's widgets up or down.
+- Swipe down from the top of a page to open the quick panel.
+- An optional link to the maker's digital card on today, and in about.
+
+### Changed
+- Settings has four tabs: personalize (now first, with quick switches), pages (with an on/off switch per widget), connections and about. Shake to hide moved to personalize; double tap to lock moved to about.
+- Backups are restored from a file you pick, not from the clipboard.
+- Sub-pages now turn in from the left edge like a door. Group tiles tilt when pressed. The money text fields and the widget switches are square.
+- Meena is described by its own brand, Meena UI, in the app and the store listing.
+- Release builds are for ARM phones only (arm64-v8a and armeabi-v7a); x86 emulators can't install them. APK 3.95 MB, AAB 7.6 MB.
+
+### Fixed
+- Favourite tiles no longer disappear after an app is installed or removed.
+- A large wallpaper photo no longer stalls the home screen: it is read in the background, at screen size.
+- Today and apps do less work on each redraw.
+- Shortcut tiles and notification pictures no longer call Android features that older versions don't have (found by lint).
+
+### Privacy and build
+- New: camera access, for the scanner only. Camera pictures are read in memory and never saved or sent. The camera is marked optional, so phones without one can still install Meena from Play.
+- New libraries: CameraX 1.4.1 and ZXing core 3.5.4 (both Apache 2.0). Neither sends anything. An earlier draft used Google's ML Kit, which sends usage data to Google; it was replaced before release.
+- R8 keep rules rewritten for kotlinx.serialization, OkHttp, CameraX and Health Connect.
+
+### Known gaps
+- The screen time widget can't be used yet: this version doesn't ask Android for usage access.
+- Not yet seen running on the Sony SO-02J (Android 8.0): it installs, but Family Link blocked it during testing.
+- Bursa stock prices still need your own Google Sheet, Bank Negara's API terms still haven't been read, and Meena is not on Google Play yet.
+
 ## 0.1.0 (16 November 2026): first public build
 
 The first build published as a GitHub release, ahead of the Google Play closed test.
