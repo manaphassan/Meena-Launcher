@@ -1,6 +1,6 @@
 meena is a free, personal-use android launcher that puts what matters first.
 
-inspired by the clean lines of windows phone and the information density of aio launcher, meena shows your day at a glance: weather, calendar, chats, email, health, finance, notes and your favourite apps — all on one scrollable today page.
+built on meena ui, its own design language, meena shows your day at a glance: weather, calendar, chats, email, health, finance, notes and your favourite apps — all on one scrollable today page.
 
 what makes meena different:
 
@@ -8,7 +8,7 @@ what makes meena different:
 
 • five pages — today, inbox, news, money, apps. swipe between them. each one does its job.
 
-• favourite tiles — pin up to 8 apps as metro-style tiles. colourful or monochrome, small or regular. add whatsapp contact shortcuts for one-tap chats.
+• favourite tiles — pin up to 8 apps as square meena tiles. colourful or monochrome, small or regular. add whatsapp contact shortcuts for one-tap chats.
 
 • live tiles — tiles flip to show unread counts, the next calendar event or alarm, without opening the app.
 
@@ -18,7 +18,7 @@ what makes meena different:
 
 • scanner — built-in qr and barcode scanner with history. no extra app needed.
 
-• colourful tiles — each app's tile uses its own dominant colour. or keep the classic monochrome metro look.
+• colourful tiles — each app's tile uses its own dominant colour. or keep the classic monochrome meena look.
 
 • screen time — see how long you've used each app today.
 
@@ -26,7 +26,7 @@ what makes meena different:
 
 • open and fast — r8-optimised, no background services beyond the notification listener you choose to enable.
 
-meena is free, with no ads and no in-app purchases. built for personal use by one person who missed windows phone.
+meena is free, with no ads and no in-app purchases. made by one person, for everyday use.
 
 permissions explained:
 - camera: qr/barcode scanner
@@ -35,5 +35,3 @@ permissions explained:
 - notification access: inbox, spending tracker, live tiles
 - bluetooth: connected devices widget
 - health connect: steps, sleep, heart rate
-
-meena is not affiliated with microsoft, windows phone, or aio launcher.

@@ -1,1 +1,1 @@
-clean, light launcher inspired by windows phone. your phone, simplified.
+meena ui: clean, light, open and fast. your phone, simplified.

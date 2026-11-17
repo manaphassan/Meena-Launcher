@@ -12,4 +12,4 @@
 - Internal test for quick iteration
 
 ## Keywords
-launcher, home screen, metro, windows phone, minimal, clean, tiles, wallpaper, weather, calendar, notes, scanner
+launcher, home screen, meena ui, minimal, clean, tiles, wallpaper, weather, calendar, notes, scanner

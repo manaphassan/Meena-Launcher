@@ -461,7 +461,7 @@
     <string name="backup_reset">reset all settings</string>
     <string name="backup_reset_question">reset every setting, including favourites and widget order? your holdings and notes stay.</string>
     <string name="about_intro">meena is a free home screen for android. clean type, lots of space and quick to use.</string>
-    <string name="about_inspired">inspired by windows phone and aio launcher. no boxes or cards, just type and space.</string>
+    <string name="about_inspired">designed in meena ui: clean, light, open and fast. no boxes or cards, just type and space.</string>
     <string name="privacy_portfolio_line">portfolio and notes: your holdings, sheet link and notes are stored encrypted on your phone.</string>
     <string name="about_open_source_title">open source</string>
     <string name="about_open_source_body">built with kotlin, jetpack compose, androidx, kotlinx serialization and okhttp, all under the apache 2.0 licence.</string>
