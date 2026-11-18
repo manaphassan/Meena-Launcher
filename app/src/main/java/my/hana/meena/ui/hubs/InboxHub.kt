@@ -62,7 +62,8 @@ import my.hana.meena.ui.components.MetroDialog
 @Composable
 fun InboxHub(
     settings: MeenaUserSettings,
-    listState: LazyListState
+    listState: LazyListState,
+    onOpenNowPlaying: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -128,6 +129,15 @@ fun InboxHub(
                                 .fillMaxWidth()
                                 .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                         ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .metroClickable(
+                                        onClickLabel = stringResource(R.string.now_playing_show),
+                                        onClick = onOpenNowPlaying
+                                    )
+                            ) {
                             Text(
                                 text = track.title.lowercase(),
                                 style = MaterialTheme.typography.titleMedium,
@@ -144,6 +154,7 @@ fun InboxHub(
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
+                            }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -153,7 +164,7 @@ fun InboxHub(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_thin_skip_prev),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.now_playing_previous),
                                     tint = MeenaTextWhite,
                                     modifier = Modifier
                                         .size(48.dp)
@@ -164,7 +175,7 @@ fun InboxHub(
                                     painter = painterResource(
                                         if (track.isPlaying) R.drawable.ic_thin_pause else R.drawable.ic_thin_play
                                     ),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(if (track.isPlaying) R.string.now_playing_pause else R.string.now_playing_play),
                                     tint = MeenaTextWhite,
                                     modifier = Modifier
                                         .size(48.dp)
@@ -173,7 +184,7 @@ fun InboxHub(
                                 )
                                 Icon(
                                     painter = painterResource(R.drawable.ic_thin_skip_next),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.now_playing_next),
                                     tint = MeenaTextWhite,
                                     modifier = Modifier
                                         .size(48.dp)

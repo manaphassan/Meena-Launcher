@@ -410,6 +410,13 @@
     <string name="widget_name_alerts">alerts</string>
     <string name="widget_name_music">now playing</string>
     <string name="music_nothing">nothing playing right now</string>
+    <string name="now_playing_open">open %1$s</string>
+    <string name="now_playing_play">play</string>
+    <string name="now_playing_pause">pause</string>
+    <string name="now_playing_next">next track</string>
+    <string name="now_playing_previous">previous track</string>
+    <string name="now_playing_position">%1$s of %2$s</string>
+    <string name="now_playing_show">show now playing</string>
     <string name="widget_name_news">news feed</string>
     <string name="widget_name_portfolio">portfolio</string>
     <string name="widget_name_rates">rates</string>

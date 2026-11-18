@@ -99,6 +99,7 @@ import my.hana.meena.ui.hubs.TodayHub
 import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.settings.SettingsScreen
+import my.hana.meena.ui.components.turnstile
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 
@@ -606,6 +607,7 @@ fun MeenaHomeScreen(
     var isWeatherDetailOpen by remember { mutableStateOf(false) }
     var isNearbyMapOpen by remember { mutableStateOf(false) }
     var isScannerOpen by remember { mutableStateOf(false) }
+    var isNowPlayingOpen by remember { mutableStateOf(false) }
     var focusAppsSearch by remember { mutableStateOf(false) }
 
     // Shake to hide private content. The accelerometer needs no permission and is only read while
@@ -656,8 +658,9 @@ fun MeenaHomeScreen(
     }
 
     // Intercept hardware/gesture Back button (return to today hub)
-    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || isNearbyMapOpen || isScannerOpen || pagerState.currentPage != 0) {
+    BackHandler(enabled = isSettingsOpen || isActionCenterOpen || isWeatherDetailOpen || isNearbyMapOpen || isScannerOpen || isNowPlayingOpen || pagerState.currentPage != 0) {
         when {
+            isNowPlayingOpen -> isNowPlayingOpen = false
             isScannerOpen -> isScannerOpen = false
             isNearbyMapOpen -> isNearbyMapOpen = false
             isWeatherDetailOpen -> isWeatherDetailOpen = false
@@ -997,7 +1000,8 @@ fun MeenaHomeScreen(
                         )
                         1 -> InboxHub(
                             settings = userSettings,
-                            listState = hubInboxListState
+                            listState = hubInboxListState,
+                            onOpenNowPlaying = { isNowPlayingOpen = true }
                         )
                         2 -> NewsHub(
                             settings = userSettings,
@@ -1101,6 +1105,25 @@ fun MeenaHomeScreen(
                 },
                 onNavigateBack = { isNearbyMapOpen = false }
             )
+        }
+
+        // Now playing page, turning in like a door
+        AnimatedVisibility(
+            visible = isNowPlayingOpen,
+            enter = my.hana.meena.ui.components.metroTurnstileEnter(userSettings.reducedMotion),
+            exit = my.hana.meena.ui.components.metroTurnstileExit(userSettings.reducedMotion)
+        ) {
+            val turn = turnstile(reducedMotion = userSettings.reducedMotion)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(turn)
+            ) {
+                my.hana.meena.ui.hubs.NowPlayingPage(
+                    reducedMotion = userSettings.reducedMotion,
+                    onNavigateBack = { isNowPlayingOpen = false }
+                )
+            }
         }
 
         // Scanner sub-page
