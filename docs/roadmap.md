@@ -46,7 +46,8 @@ Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 - Lint warning clean-up (161, mostly unused resources).
 - App widgets: let people resize a widget; today each one gets the height it asks for.
 - Material buttons in settings still bring their own press effect; swap them for a Meena button with the scale and tilt press.
-- The outgoing sub-page only fades; it could turn away too.
+- Continuum: the tapped title flies to the next page's title.
+- A wide (2-wide) favourite tile for live faces.
 - Sparklines for stocks. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].
 
 ## Won't do

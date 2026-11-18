@@ -23,7 +23,7 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 - [x] Automated Tests: `testLiveDebugUnitTest` 258 and `testDemoDebugUnitTest` 258, 0 failed (18 Nov 2026)
 - [x] Android Lint (`lintLiveDebug`): 0 errors, 161 warnings, 4 hints (18 Nov 2026). Fixed for 0.2.0: shortcut calls guarded for Android 7.0, notification message pictures limited to Android 11+, backup messages read before the file picker opens
 - [x] Camera features: `android.hardware.camera` and `.autofocus` are `uses-feature-not-required` in `aapt2 dump badging`, so Play won't hide Meena from phones without them
-- [ ] Release smoke test: an earlier 0.2.0 build (with ML Kit) ran on a TECNO KL8 (Android 14): cold start 606 ms, no crashes, installed over the earlier release build and kept its data. The final ZXing build still needs a device run and the owner's checks: scanner, WhatsApp "add shortcut", screen time and an app widget. Sony SO-02J (Android 8.0): installs, but Family Link blocked it from opening
+- [x] Release smoke test (18 Nov 2026), 0.2.0 release APK on a TECNO KL8 (Android 14): installs over the earlier release build and keeps its data, no crashes. The owner checked the ZXing scanner, a WhatsApp "add shortcut" tile, adding an app widget and the widget previews. Screen time checked on the device by the agent (8h 44m at 11:10 pm, hourly chart). Not seen on screen: the now playing page (nothing was playing). Sony SO-02J (Android 8.0): installs, but Family Link blocked it from opening
 
 ---
 

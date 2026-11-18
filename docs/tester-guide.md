@@ -60,7 +60,7 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 **Inbox**
 - Do new alerts and chats appear? Can you open and clear them?
 - Tap an app's alerts to see them all. Reply to a chat from the inbox: does the other person get it?
-- Do pictures in notifications show? Play some music: do play, pause and skip work?
+- Do pictures in notifications show? Play some music: do play, pause and skip work? Tap the song name: does the now playing page open, and can you jump along the line under it?
 
 **News**
 - Add a feed you read. Do the pictures load? Is the reader view easy to read?
