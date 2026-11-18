@@ -1769,7 +1769,8 @@ fun TodayHub(
                                         my.hana.meena.ui.components.MetroPickerItem(
                                             key = it.provider.flattenToString(),
                                             title = it.loadLabel(awContext.packageManager).lowercase(),
-                                            subtitle = widgetRepo.appLabel(awContext, it).lowercase()
+                                            subtitle = widgetRepo.appLabel(awContext, it).lowercase(),
+                                            preview = { my.hana.meena.ui.components.AppWidgetPreview(it) }
                                         )
                                     },
                                     selectedKey = "",

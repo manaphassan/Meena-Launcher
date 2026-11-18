@@ -53,7 +53,9 @@ import my.hana.meena.theme.MeenaTextWhite
 data class MetroPickerItem(
     val key: String,
     val title: String,
-    val subtitle: String? = null
+    val subtitle: String? = null,
+    /** Optional picture shown under the title, such as a widget's preview. */
+    val preview: (@Composable () -> Unit)? = null
 )
 
 /**
@@ -254,6 +256,10 @@ fun MetroListPicker(
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MeenaTextMuted
                                     )
+                                }
+                                if (item.preview != null) {
+                                    Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.s))
+                                    item.preview.invoke()
                                 }
                             }
                         }
