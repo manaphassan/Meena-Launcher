@@ -32,7 +32,7 @@
 <body>
 <h1 dir="auto">Privacy Policy for Meena</h1>
 <p dir="auto"><strong>Effective Date:</strong> 14 November 2026<br>
-<strong>Last Updated:</strong> 15 November 2026 (new contact email, shake to hide, email section, markets prices, kijang emas, double tap to lock)<br>
+<strong>Last Updated:</strong> 18 November 2026 (version 0.2.0: scanner and camera, music controls, quick replies, notification pictures, app shortcuts, wallpaper, screen time, widgets from other apps, new settings layout)<br>
 <strong>Application:</strong> Meena (Package: <code class="notranslate">my.hana.meena</code>)<br>
 <strong>Developer:</strong> HaNa Innovation<br>
 <strong>Contact:</strong> <a href="mailto:harussani@outlook.my">harussani@outlook.my</a></p>
@@ -98,7 +98,8 @@
 </tr>
 </tbody>
 </table></markdown-accessiblity-table>
-<p dir="auto">Some links open outside Meena, in your browser or another app, only when you tap them: a news article's "open on" link and links inside articles, and "open in maps". Meena sends those sites nothing; what they see is your own visit.</p>
+<p dir="auto">Some links open outside Meena, in your browser or another app, only when you tap them: a news article's "open on" link and links inside articles, "open in maps", "open link" on a code you scanned, and the maker's digital card. Meena sends those sites nothing; what they see is your own visit.</p>
+<p dir="auto">No library inside Meena sends usage data, crash reports or identifiers anywhere.</p>
 <hr>
 <h2 dir="auto">2. Information Handled &amp; Permissions</h2>
 <p dir="auto">Meena requests only the minimal set of Android permissions necessary to provide core launcher features. Each permission is described below, along with its exact purpose and handling guarantees:</p>
@@ -121,6 +122,9 @@
 <li>Live tiles show only how many notifications an app has and, for chats, who they are from (the sender or group name), never the message itself. Showing names can be turned off in settings.</li>
 <li>The opt-in spending tracker only reads notifications from an allowlist of banking and e-wallet apps; amounts and merchant names are parsed locally in memory. Notifications from other apps are never parsed for spending.</li>
 <li>No notification text, personal messages, or payment details are ever saved to plain logs or uploaded anywhere.</li>
+<li><strong>Pictures:</strong> when a notification carries a picture (a photo in a chat, an image in an alert), the inbox shows a small copy of it. The picture is held in memory while the notification exists and is never saved or sent.</li>
+<li><strong>Replies:</strong> when an app's notification has a reply box, you can answer from the inbox. Meena hands your words to that app's own reply button on your phone; the app sends the message as it normally would. Meena does not send, store or log what you type.</li>
+<li><strong>What's playing:</strong> the same access lets Meena see the media session of the app that is playing music or video, to show its title and artist and the play, pause and skip buttons. Nothing about it is stored or sent.</li>
 </ul>
 </li>
 </ul>
@@ -144,18 +148,36 @@
 <h3 dir="auto">2.6 Apps You Open</h3>
 <ul dir="auto">
 <li><strong>Purpose:</strong> The optional frequent apps widget shows the apps you open most from Meena.</li>
-<li><strong>Handling:</strong> Meena counts launches it makes itself, on your phone only. It does not read Android's usage history. You can wipe the counts at any time with <strong>clear app history</strong> in the widget's settings.</li>
+<li><strong>Handling:</strong> Meena counts launches it makes itself, on your phone only. The frequent apps widget does not read Android's usage history. You can wipe the counts at any time with <strong>clear app history</strong> in the widget's settings.</li>
+<li><strong>Screen time widget (<code class="notranslate">android.permission.PACKAGE_USAGE_STATS</code>, usage access):</strong> if you turn the widget on and allow usage access in Android's settings, Meena reads Android's record of which apps were on screen today, adds it up on your phone and shows the total and the apps you used most. The record is read again about once a minute while today is on screen. It is never stored, logged or sent. Turn it off any time in Android's <strong>usage access</strong> settings.</li>
 </ul>
 <h3 dir="auto">2.7 Installed Applications (<code class="notranslate">LauncherApps</code> &amp; Queries)</h3>
 <ul dir="auto">
 <li><strong>Purpose:</strong> Core launcher functionality to discover and display installed applications on the Apps hub, and allow launching, pinning, or uninstalling apps.</li>
 <li><strong>Handling:</strong> Applications are queried locally via the Android system <code class="notranslate">LauncherApps</code> API. The broad <code class="notranslate">QUERY_ALL_PACKAGES</code> permission has been completely eliminated in favor of targeted intent filters. Your app list is never shared or profiled.</li>
 <li><strong>Icon packs:</strong> If you choose an icon pack, Meena finds installed icon packs through the same kind of targeted filters and reads the pack's own icon list from it on your phone. Nothing about your apps or the pack leaves the device.</li>
+<li><strong>App shortcuts:</strong> When you pin a shortcut (for example a chat with one person), Meena lists the shortcuts that app offers through <code class="notranslate">LauncherApps</code>, and saves only the app and shortcut ID in its settings to show the tile. An app can also ask to add one (WhatsApp's "add shortcut"); Meena asks you first and adds nothing unless you say yes. Meena keeps those shortcuts pinned with Android while their tiles are on today.</li>
+<li><strong>Colourful tiles:</strong> the tile colour is worked out from each app's icon on your phone.</li>
+</ul>
+<h3 dir="auto">2.11 Camera (<code class="notranslate">android.permission.CAMERA</code>, scanner)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> The optional scanner reads QR codes and barcodes.</li>
+<li><strong>Handling:</strong> Android asks you the first time you open the scanner. While the scanner is open, camera frames are read in memory by ZXing, an open-source library that runs on the phone and has no network code. Frames are never saved, uploaded or kept after the scanner closes. A code's text is only stored if you tap <strong>save to history</strong>: up to 50 scans, encrypted with the same Android Keystore key as your notes. Remove one scan or clear the history from the scanner widget. "Copy" puts the text on your clipboard, and "open link" opens it in your browser, only when you tap them.</li>
+</ul>
+<h3 dir="auto">2.12 Wallpaper</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> Use a photo of your own as the home screen background.</li>
+<li><strong>Handling:</strong> You pick one image with Android's picker. Meena keeps Android's permission to read that one image, and reads it on the phone at screen size. The image is not copied, uploaded or shared. Choosing <strong>remove wallpaper</strong> stops Meena using it; Android drops the read permission when Meena is uninstalled.</li>
+</ul>
+<h3 dir="auto">2.13 Widgets from other apps (<code class="notranslate">android.permission.BIND_APPWIDGET</code>)</h3>
+<ul dir="auto">
+<li><strong>Purpose:</strong> Put another app's Android widget, such as a calendar or music widget, on the today page.</li>
+<li><strong>Handling:</strong> Android asks you before Meena can add each new widget (unless you chose "always allow"), and an app's own widget setup screen may follow. Each widget is drawn by its own app and shows that app's information under that app's privacy policy. Meena only gives it a place on the screen and keeps its widget number in settings; it does not read, store or send what the widget shows. Remove a widget from the widget's <strong>remove</strong> link.</li>
 </ul>
 <h3 dir="auto">2.8 Motion Sensor (shake to hide)</h3>
 <ul dir="auto">
 <li><strong>Purpose:</strong> Shaking the phone blurs chats, email, alerts, notes and money on the home pages, and shaking again shows them.</li>
-<li><strong>Handling:</strong> While Meena is on screen and <strong>shake to hide</strong> is on, it reads the accelerometer to notice a shake. The readings are used straight away and never stored or sent. This sensor needs no Android permission. Turn it off in <strong>settings, system, shake to hide</strong>.</li>
+<li><strong>Handling:</strong> While Meena is on screen and <strong>shake to hide</strong> is on, it reads the accelerometer to notice a shake. The readings are used straight away and never stored or sent. This sensor needs no Android permission. Turn it off in <strong>settings, personalize, shake to hide</strong>.</li>
 </ul>
 <h3 dir="auto">2.9 Email Notifications</h3>
 <ul dir="auto">
@@ -165,15 +187,16 @@
 <h3 dir="auto">2.10 Screen Lock (device admin, double tap to lock)</h3>
 <ul dir="auto">
 <li><strong>Purpose:</strong> If you turn on <strong>double tap to lock</strong>, double tapping an empty spot on a home page turns the screen off and locks the phone.</li>
-<li><strong>Handling:</strong> Android asks you first, on its own "activate device admin app" page. Meena asks for one device admin ability only: locking the screen (<code class="notranslate">force-lock</code>). It cannot wipe the phone, change your password, see your PIN, or do anything else. Nothing is read, stored or sent. After a double tap lock, Android asks for your PIN, pattern or password (not your fingerprint) for the next unlock. It is off by default. While it is on, Android won't let you uninstall Meena, so turn it off first in <strong>settings, system, double tap to lock</strong>; that hands the ability back straight away.</li>
+<li><strong>Handling:</strong> Android asks you first, on its own "activate device admin app" page. Meena asks for one device admin ability only: locking the screen (<code class="notranslate">force-lock</code>). It cannot wipe the phone, change your password, see your PIN, or do anything else. Nothing is read, stored or sent. After a double tap lock, Android asks for your PIN, pattern or password (not your fingerprint) for the next unlock. It is off by default. While it is on, Android won't let you uninstall Meena, so turn it off first in <strong>settings, about, double tap to lock</strong>; that hands the ability back straight away.</li>
 </ul>
 <hr>
 <h2 dir="auto">3. Data Storage &amp; Security</h2>
 <ul dir="auto">
-<li><strong>Android Keystore Encryption:</strong> Your portfolio holdings, Google Sheet link and notes are encrypted with an AES-256-GCM key held in the Android Keystore. Holdings saved by earlier versions are encrypted automatically the next time you open the money page. Earlier versions offered an optional Gemini brief; any Gemini API key they saved is deleted when you update.</li>
+<li><strong>Android Keystore Encryption:</strong> Your portfolio holdings, Google Sheet link, notes and saved scans are encrypted with an AES-256-GCM key held in the Android Keystore. Holdings saved by earlier versions are encrypted automatically the next time you open the money page. Earlier versions offered an optional Gemini brief; any Gemini API key they saved is deleted when you update.</li>
 <li><strong>App-Private Storage:</strong> Other settings and cached weather, rates, news and news pictures are stored in Meena's private app storage, which other apps cannot read.</li>
 <li><strong>No System Cloud Backup (<code class="notranslate">allowBackup="false"</code>):</strong> Android Auto Backup is explicitly disabled to prevent sensitive settings, tokens, or locally parsed balances from syncing to cloud drive backups. On Android 12 and later, backup rules also exclude all app data from cloud backup and from device-to-device transfer, so nothing is copied to a new phone.</li>
-<li><strong>Data Deletion:</strong> You can delete all locally stored settings, custom feeds, and cached data at any time by selecting <strong>Clear Storage / Clear Data</strong> in Android App Info or tapping <strong>reset to defaults</strong> in Meena Settings.</li>
+<li><strong>Data Deletion:</strong> You can delete all locally stored settings, custom feeds, and cached data at any time by selecting <strong>Clear Storage / Clear Data</strong> in Android App Info, or tapping <strong>reset all settings</strong> in <strong>settings, personalize, backup</strong>.</li>
+<li><strong>Backups:</strong> "share a backup" makes a file of your settings and hands it to the app you choose, such as a file manager or email; Meena does not upload it anywhere itself. "import a backup" reads the file you pick.</li>
 </ul>
 <hr>
 <h2 dir="auto">4. Financial Features Policy Compliance</h2>
