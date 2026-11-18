@@ -13,7 +13,7 @@ Installs over 0.1.0: same signing key, version code 2.
 - **Screen time** on today: time on screen since midnight as an hour-by-hour bar chart, and the apps you used most, each with a bar for its share. Read from Android's own usage records, counting one app at a time so the total can't run past the clock. Turn on usage access for Meena when the widget asks.
 - **App widgets** on today: put widgets from your other apps (a calendar, music, notes) on the today page. Apps that offer "add to home screen" for a widget can add it straight to Meena.
 - **Notes:** start a line with `-` for a note, `*` for a task or `x` when it's done. Tap a task in an open note to tick it.
-- **Inbox:** what's playing, with play, pause and skip. Alerts grouped by app; tap to see them all. Reply from the inbox when the app allows it. Pictures from notifications show as small previews. Each inbox widget shows its own number of items, up to 12.
+- **Inbox:** what's playing, with play, pause and skip; tap the track for a full now playing page with the album art, a huge title, a line to seek along and big controls. Alerts grouped by app; tap to see them all. Reply from the inbox when the app allows it. Pictures from notifications show as small previews. Each inbox widget shows its own number of items, up to 12.
 - **Apps:** an a to z filter that shows one letter at a time.
 - **Wallpaper** from your gallery, dimmed 40 to 90% so text stays easy to read.
 - **Widget order:** move today's widgets up or down.
@@ -23,7 +23,7 @@ Installs over 0.1.0: same signing key, version code 2.
 ### Changed
 - Settings has four tabs: personalize (now first, with quick switches), pages (with an on/off switch per widget), connections and about. Shake to hide moved to personalize; double tap to lock moved to about.
 - Backups are restored from a file you pick, not from the clipboard.
-- Sub-pages now turn in from the left edge like a door. Group tiles tilt when pressed. The money text fields and the widget switches are square.
+- Sub-pages now turn like a door around the left edge: the old page turns away as the new one turns in, mirrored when going back. Group tiles tilt when pressed. The money text fields and the widget switches are square.
 - Meena is described by its own brand, Meena UI, in the app and the store listing.
 - Release builds are for ARM phones only (arm64-v8a and armeabi-v7a); x86 emulators can't install them. APK 3.98 MB, AAB 7.7 MB.
 
