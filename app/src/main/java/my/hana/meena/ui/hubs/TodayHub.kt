@@ -36,6 +36,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,6 +112,7 @@ fun TodayHub(
     onSetWide: (List<String>) -> Unit = {},
     onAddAppWidget: (android.appwidget.AppWidgetProviderInfo) -> Unit = {},
     onRemoveAppWidget: (Int) -> Unit = {},
+    onResizeAppWidget: (Int, Int) -> Unit = { _, _ -> },
     onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
@@ -1707,26 +1711,69 @@ fun TodayHub(
                                 val name = remember(info) {
                                     info?.loadLabel(awContext.packageManager)?.lowercase()
                                 }
+                                val savedHeight = settings.hostedWidgetHeights[hostedId.toString()]
+                                var liveHeight by remember(hostedId, savedHeight, info) {
+                                    androidx.compose.runtime.mutableIntStateOf(
+                                        savedHeight ?: info?.let { widgetRepo.heightDp(it, density) } ?: widgetRepo.MIN_HEIGHT_DP
+                                    )
+                                }
                                 if (info != null) {
-                                    val heightDp = remember(info) { widgetRepo.heightDp(info, density) }
+                                    val reported = savedHeight ?: liveHeight
                                     androidx.compose.foundation.layout.BoxWithConstraints(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(heightDp.dp)
+                                            .height(liveHeight.dp)
                                     ) {
                                         val widthDp = maxWidth.value.toInt()
                                         androidx.compose.ui.viewinterop.AndroidView(
                                             factory = { ctx ->
                                                 widgetRepo.createView(ctx, hostedId, info).also {
-                                                    widgetRepo.reportSize(it, widthDp, heightDp)
+                                                    widgetRepo.reportSize(it, widthDp, reported)
                                                 }
                                             },
+                                            // Tell the widget its new size once the drag ends, not on every frame.
+                                            update = { widgetRepo.reportSize(it, widthDp, reported) },
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
                                 }
+                                val accentLine = MaterialTheme.colorScheme.primary
+                                val tallerLabel = stringResource(R.string.app_widgets_taller)
+                                val shorterLabel = stringResource(R.string.app_widgets_shorter)
+                                fun resizeTo(heightDp: Int) {
+                                    val clamped = heightDp.coerceIn(widgetRepo.MIN_HEIGHT_DP, widgetRepo.RESIZE_MAX_DP)
+                                    liveHeight = clamped
+                                    onResizeAppWidget(hostedId, clamped)
+                                }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .then(
+                                            if (info == null) Modifier else Modifier
+                                                .pointerInput(hostedId) {
+                                                    detectVerticalDragGestures(
+                                                        onDragEnd = { resizeTo(liveHeight) },
+                                                        onDragCancel = { resizeTo(liveHeight) }
+                                                    ) { change, dragAmount ->
+                                                        change.consume()
+                                                        liveHeight = (liveHeight + (dragAmount / density).toInt())
+                                                            .coerceIn(widgetRepo.MIN_HEIGHT_DP, widgetRepo.RESIZE_MAX_DP)
+                                                    }
+                                                }
+                                                .semantics {
+                                                    customActions = listOf(
+                                                        androidx.compose.ui.semantics.CustomAccessibilityAction(tallerLabel) { resizeTo(liveHeight + 48); true },
+                                                        androidx.compose.ui.semantics.CustomAccessibilityAction(shorterLabel) { resizeTo(liveHeight - 48); true }
+                                                    )
+                                                }
+                                        )
+                                        .drawBehind {
+                                            // Grip: a short accent line across the top of the row says "drag me".
+                                            if (info != null) {
+                                                val w = 32.dp.toPx()
+                                                drawRect(accentLine, Offset((size.width - w) / 2f, 0f), androidx.compose.ui.geometry.Size(w, 2.dp.toPx()))
+                                            }
+                                        },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
@@ -1749,6 +1796,13 @@ fun TodayHub(
                                     )
                                 }
                             }
+                        }
+                        if (settings.hostedWidgetIds.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.app_widgets_resize_hint),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MeenaTextMuted
+                            )
                         }
                         Text(
                             text = stringResource(R.string.app_widgets_add),
@@ -1949,27 +2003,29 @@ fun TodayHub(
                     horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
                 ) {
                     val quickActions = listOf(
-                        Triple(stringResource(R.string.quick_action_phone), my.hana.meena.theme.MeenaAccentFill, onOpenDialer),
-                        Triple(stringResource(R.string.quick_action_messages), my.hana.meena.theme.MeenaAccentFill, onOpenMessages),
-                        Triple(stringResource(R.string.quick_action_email), my.hana.meena.theme.MeenaAccentFill, onOpenEmail),
-                        Triple(stringResource(R.string.quick_action_camera), my.hana.meena.theme.MeenaAccentFill, onOpenCamera),
-                        Triple(stringResource(R.string.quick_action_calculator), my.hana.meena.theme.MeenaAccentFill, onOpenCalculator)
+                        Triple(stringResource(R.string.quick_action_phone), my.hana.meena.ui.components.QuickActionKind.PHONE, onOpenDialer),
+                        Triple(stringResource(R.string.quick_action_messages), my.hana.meena.ui.components.QuickActionKind.MESSAGES, onOpenMessages),
+                        Triple(stringResource(R.string.quick_action_email), my.hana.meena.ui.components.QuickActionKind.EMAIL, onOpenEmail),
+                        Triple(stringResource(R.string.quick_action_camera), my.hana.meena.ui.components.QuickActionKind.CAMERA, onOpenCamera),
+                        Triple(stringResource(R.string.quick_action_calculator), my.hana.meena.ui.components.QuickActionKind.CALCULATOR, onOpenCalculator)
                     )
-                    quickActions.forEach { (label, bg, action) ->
+                    quickActions.forEachIndexed { qaIndex, (label, kind, action) ->
+                        val qaSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp)
-                                .background(bg, RoundedCornerShape(0.dp))
-                                .metroClickable(onClick = action),
+                                .background(my.hana.meena.theme.MeenaAccentFill, RoundedCornerShape(0.dp))
+                                .metroClickable(onClickLabel = label, interactionSource = qaSource, onClick = action)
+                                .semantics { contentDescription = label },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = label,
+                            my.hana.meena.ui.components.QuickActionIcon(
+                                kind = kind,
                                 color = my.hana.meena.theme.MeenaOnAccent,
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                interactionSource = qaSource,
+                                index = qaIndex,
+                                reducedMotion = settings.reducedMotion
                             )
                         }
                     }

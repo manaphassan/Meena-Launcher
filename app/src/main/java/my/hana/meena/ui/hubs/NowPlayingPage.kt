@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -177,14 +179,15 @@ fun NowPlayingPage(reducedMotion: Boolean, onNavigateBack: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(MeenaSpacing.l),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ControlButton(R.drawable.ic_thin_skip_prev, stringResource(R.string.now_playing_previous)) {
+                ControlButton(R.drawable.ic_thin_skip_prev, stringResource(R.string.now_playing_previous), nudge = -1f) {
                     MediaPlayerRepository.previous()
                 }
-                ControlButton(
-                    if (track.isPlaying) R.drawable.ic_thin_pause else R.drawable.ic_thin_play,
-                    stringResource(if (track.isPlaying) R.string.now_playing_pause else R.string.now_playing_play)
+                PlayPauseButton(
+                    isPlaying = track.isPlaying,
+                    description = stringResource(if (track.isPlaying) R.string.now_playing_pause else R.string.now_playing_play),
+                    animate = !reducedMotion
                 ) { MediaPlayerRepository.playPause() }
-                ControlButton(R.drawable.ic_thin_skip_next, stringResource(R.string.now_playing_next)) {
+                ControlButton(R.drawable.ic_thin_skip_next, stringResource(R.string.now_playing_next), nudge = 1f) {
                     MediaPlayerRepository.next()
                 }
             }
@@ -211,8 +214,32 @@ fun NowPlayingPage(reducedMotion: Boolean, onNavigateBack: () -> Unit) {
     }
 }
 
+/** Skip buttons lean the way they skip while pressed. */
 @Composable
-private fun ControlButton(icon: Int, description: String, onClick: () -> Unit) {
+private fun ControlButton(icon: Int, description: String, nudge: Float, onClick: () -> Unit) {
+    val source = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val shift by androidx.compose.animation.core.animateFloatAsState(if (pressed) nudge else 0f, label = "skipNudge")
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(72.dp)
+            .metroClickable(onClickLabel = description, interactionSource = source, onClick = onClick)
+            .semantics { contentDescription = description }
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = MeenaTextWhite,
+            modifier = Modifier
+                .size(36.dp)
+                .graphicsLayer { translationX = shift * 6.dp.toPx() }
+        )
+    }
+}
+
+@Composable
+private fun PlayPauseButton(isPlaying: Boolean, description: String, animate: Boolean, onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -220,12 +247,7 @@ private fun ControlButton(icon: Int, description: String, onClick: () -> Unit) {
             .metroClickable(onClickLabel = description, onClick = onClick)
             .semantics { contentDescription = description }
     ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = MeenaTextWhite,
-            modifier = Modifier.size(36.dp)
-        )
+        my.hana.meena.ui.components.AnimatedPlayPause(isPlaying = isPlaying, color = MeenaTextWhite, size = 36.dp, animate = animate)
     }
 }
 

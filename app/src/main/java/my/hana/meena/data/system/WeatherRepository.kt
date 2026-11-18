@@ -28,7 +28,13 @@ data class CurrentWeather(
     val condition: String,
     val windSpeed: Float,
     val isDay: Boolean,
-    val locationName: String
+    val locationName: String,
+    /** Rain or snow in the last 15 minutes, mm. */
+    val precipitationMm: Float = 0f,
+    /** Where the wind comes from, degrees clockwise from north. */
+    val windDirection: Int = 0,
+    /** Share of the sky covered by cloud, 0 to 100. */
+    val cloudCover: Int = 0
 )
 
 data class DailyForecast(
@@ -157,7 +163,7 @@ object WeatherRepository {
         return withContext(Dispatchers.IO) {
             val url = String.format(
                 Locale.US,
-                "https://api.open-meteo.com/v1/forecast?latitude=%.2f&longitude=%.2f&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=precipitation_probability,precipitation&forecast_hours=5&timezone=auto",
+                "https://api.open-meteo.com/v1/forecast?latitude=%.2f&longitude=%.2f&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=precipitation_probability,precipitation&forecast_hours=5&timezone=auto",
                 lat,
                 lng
             )
@@ -189,7 +195,10 @@ object WeatherRepository {
                 condition = weatherCodeToCondition(currentCode),
                 windSpeed = currentWind,
                 isDay = isDay,
-                locationName = locationName
+                locationName = locationName,
+                precipitationMm = currentObj.optDouble("precipitation", 0.0).toFloat(),
+                windDirection = currentObj.optInt("wind_direction_10m", 0),
+                cloudCover = currentObj.optInt("cloud_cover", 0)
             )
 
             val dailyObj = root.optJSONObject("daily")

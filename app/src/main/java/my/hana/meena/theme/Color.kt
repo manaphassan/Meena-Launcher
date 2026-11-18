@@ -138,6 +138,21 @@ val MeenaScrimDim = Color(0x99000000)
 val MeenaScrimHeavy = Color(0xCC000000)
 val MeenaScrimSolid = Color(0xEE000000)
 
+// Weather sky tints, laid over the page background at low strength so text stays readable.
+val MeenaSkyClearDay = Color(0xFF1E88E5)
+val MeenaSkyClearNight = Color(0xFF1A237E)
+val MeenaSkyCloud = Color(0xFF607D8B)
+val MeenaSkyRain = Color(0xFF37474F)
+val MeenaSkyStorm = Color(0xFF311B92)
+val MeenaSkySnow = Color(0xFFB0BEC5)
+// Air quality bands (US AQI): good, moderate, sensitive groups, unhealthy, very unhealthy, hazardous.
+val MeenaAirGood = Color(0xFF00C853)
+val MeenaAirModerate = Color(0xFFFFD600)
+val MeenaAirSensitive = Color(0xFFFF6D00)
+val MeenaAirUnhealthy = Color(0xFFD50000)
+val MeenaAirVeryUnhealthy = Color(0xFF8E24AA)
+val MeenaAirHazardous = Color(0xFF6D1B1B)
+
 // Status colours follow the theme (see MeenaPalette): bright on black, darker on white, black on paper.
 val MeenaProfitGreen: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.positive
 val MeenaLossRed: Color @Composable @ReadOnlyComposable get() = LocalMeenaPalette.current.negative

@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -171,17 +173,21 @@ fun InboxHub(
                                         .metroClickable { my.hana.meena.data.system.MediaPlayerRepository.previous() }
                                         .padding(my.hana.meena.theme.MeenaSpacing.m)
                                 )
-                                Icon(
-                                    painter = painterResource(
-                                        if (track.isPlaying) R.drawable.ic_thin_pause else R.drawable.ic_thin_play
-                                    ),
-                                    contentDescription = stringResource(if (track.isPlaying) R.string.now_playing_pause else R.string.now_playing_play),
-                                    tint = MeenaTextWhite,
+                                val playPauseLabel = stringResource(if (track.isPlaying) R.string.now_playing_pause else R.string.now_playing_play)
+                                Box(
+                                    contentAlignment = Alignment.Center,
                                     modifier = Modifier
                                         .size(48.dp)
-                                        .metroClickable { my.hana.meena.data.system.MediaPlayerRepository.playPause() }
-                                        .padding(my.hana.meena.theme.MeenaSpacing.m)
-                                )
+                                        .metroClickable(onClickLabel = playPauseLabel) { my.hana.meena.data.system.MediaPlayerRepository.playPause() }
+                                        .semantics { contentDescription = playPauseLabel }
+                                ) {
+                                    my.hana.meena.ui.components.AnimatedPlayPause(
+                                        isPlaying = track.isPlaying,
+                                        color = MeenaTextWhite,
+                                        size = 24.dp,
+                                        animate = !settings.reducedMotion
+                                    )
+                                }
                                 Icon(
                                     painter = painterResource(R.drawable.ic_thin_skip_next),
                                     contentDescription = stringResource(R.string.now_playing_next),

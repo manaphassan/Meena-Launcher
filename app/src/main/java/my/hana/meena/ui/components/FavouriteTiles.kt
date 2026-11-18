@@ -43,6 +43,7 @@ import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaTextWhite
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 
@@ -469,18 +470,23 @@ private fun FavouriteGrid(
                                 tile(i, slots[i], wide, Modifier.size(width, cell))
                             }
                         } else {
+                            val addSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                            val addPressed by addSource.collectIsPressedAsState()
+                            val addTurn by androidx.compose.animation.core.animateFloatAsState(if (addPressed) 90f else 0f, label = "addTurn")
                             Box(
                                 modifier = Modifier
                                     .size(cell)
                                     .background(addColor.copy(alpha = 0.2f))
-                                    .metroClickable(onClick = onAdd),
+                                    .metroClickable(interactionSource = addSource, onClick = onAdd),
                                 contentAlignment = Alignment.Center
                             ) {
                                 androidx.compose.material3.Icon(
                                     painter = androidx.compose.ui.res.painterResource(R.drawable.ic_thin_add),
                                     contentDescription = stringResource(R.string.favourites_add),
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .graphicsLayer { rotationZ = addTurn }
                                 )
                             }
                         }

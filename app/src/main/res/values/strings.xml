@@ -767,8 +767,32 @@
     <string name="weather_wind">wind</string>
     <string name="weather_wind_kmh">%1$d km/h</string>
     <string name="weather_aqi">%1$d aqi</string>
+    <string name="weather_aqi_band">%1$d aqi, %2$s</string>
     <string name="weather_source">%1$s · open-meteo</string>
     <string name="weather_none">no weather yet. check your connection, then come back.</string>
+    <string name="weather_feels_like">feels like</string>
+    <string name="weather_clouds">cloud</string>
+    <string name="weather_rain_now">rain now</string>
+    <string name="weather_rain_mm">%1$s mm</string>
+    <string name="weather_wind_from">%1$d km/h from the %2$s</string>
+    <string name="weather_switch_units">switch between celsius and fahrenheit</string>
+    <string name="weather_sky_hint">touch the sky</string>
+    <string name="weather_air_good">good</string>
+    <string name="weather_air_moderate">moderate</string>
+    <string name="weather_air_sensitive">unhealthy for sensitive groups</string>
+    <string name="weather_air_unhealthy">unhealthy</string>
+    <string name="weather_air_very_unhealthy">very unhealthy</string>
+    <string name="weather_air_hazardous">hazardous</string>
+    <string-array name="wind_directions">
+        <item>north</item>
+        <item>north-east</item>
+        <item>east</item>
+        <item>south-east</item>
+        <item>south</item>
+        <item>south-west</item>
+        <item>west</item>
+        <item>north-west</item>
+    </string-array>
     <string name="weather_load_failed">couldn\'t reach the weather. tap to retry.</string>
     <string name="favourites_add">add a favourite</string>
     <string name="favourites_move_left">move left</string>
@@ -868,6 +892,9 @@
     <string name="app_widgets_gone">this widget’s app is gone</string>
     <string name="app_widgets_remove_title">remove widget</string>
     <string name="app_widgets_remove_question">take %1$s off today?</string>
+    <string name="app_widgets_taller">make taller</string>
+    <string name="app_widgets_shorter">make shorter</string>
+    <string name="app_widgets_resize_hint">drag the line under a widget up or down to change its height.</string>
 
     <!-- Another app asks to pin something -->
     <string name="pin_shortcut_title">add to favourites</string>

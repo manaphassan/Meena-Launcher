@@ -97,4 +97,6 @@ object AppWidgetRepository {
 
     const val MIN_HEIGHT_DP = 72
     const val MAX_HEIGHT_DP = 480
+    /** How tall a widget can be dragged. */
+    const val RESIZE_MAX_DP = 640
 }

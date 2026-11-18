@@ -986,7 +986,17 @@ fun MeenaHomeScreen(
                                 my.hana.meena.data.system.AppWidgetRepository.delete(context, widgetId)
                                 coroutineScope.launch {
                                     settingsRepository.saveSettings(
-                                        userSettings.copy(hostedWidgetIds = userSettings.hostedWidgetIds - widgetId)
+                                        userSettings.copy(
+                                            hostedWidgetIds = userSettings.hostedWidgetIds - widgetId,
+                                            hostedWidgetHeights = userSettings.hostedWidgetHeights - widgetId.toString()
+                                        )
+                                    )
+                                }
+                            },
+                            onResizeAppWidget = { widgetId, heightDp ->
+                                coroutineScope.launch {
+                                    settingsRepository.saveSettings(
+                                        userSettings.copy(hostedWidgetHeights = userSettings.hostedWidgetHeights + (widgetId.toString() to heightDp))
                                     )
                                 }
                             },

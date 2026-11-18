@@ -31,9 +31,12 @@ fun Modifier.metroClickable(
     enabled: Boolean = true,
     onClickLabel: String? = null,
     tiltDegrees: Float = 6f,
+    /** Pass one in to read the press elsewhere, e.g. to animate an icon while held. */
+    interactionSource: MutableInteractionSource? = null,
     onClick: () -> Unit
 ): Modifier = composed {
-    val interactionSource = remember { MutableInteractionSource() }
+    val ownSource = remember { MutableInteractionSource() }
+    val interactionSource = interactionSource ?: ownSource
     val isPressed by interactionSource.collectIsPressedAsState()
     var size by remember { mutableStateOf(IntSize.Zero) }
     // Normalised press point in -1..1 on each axis; the element tilts toward the finger.

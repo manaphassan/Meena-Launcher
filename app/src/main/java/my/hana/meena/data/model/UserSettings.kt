@@ -48,6 +48,8 @@ data class MeenaUserSettings(
     val wideFavouriteIds: List<String> = emptyList(),
     /** Android widget IDs Meena hosts on today, in order. See [my.hana.meena.data.system.AppWidgetRepository]. */
     val hostedWidgetIds: List<Int> = emptyList(),
+    /** Height in dp the person dragged each hosted widget to, by widget ID. */
+    val hostedWidgetHeights: Map<String, Int> = emptyMap(),
     /** How the apps page is laid out: see [AppsSort]. */
     val appsSortMode: String = AppsSort.AZ,
     val solatZone: String = "",
