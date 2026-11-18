@@ -1631,13 +1631,27 @@ fun TodayHub(
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MeenaTextWhite
                             )
+                            val currentHour = remember(today) {
+                                java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+                            }
+                            my.hana.meena.ui.components.ScreenTimeHourChart(
+                                minutesByHour = today.minutesByHour,
+                                currentHour = currentHour,
+                                is24Hour = settings.is24HourFormat,
+                                modifier = Modifier.padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
+                            )
+                            val mostMinutes = topApps.maxOfOrNull { it.minutes }?.coerceAtLeast(1L) ?: 1L
                             topApps.forEach { app ->
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .metroClickable { onLaunchPackage(app.packageName) }
                                         .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+                                    verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+                                ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -1655,6 +1669,10 @@ fun TodayHub(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MeenaTextMuted
                                     )
+                                }
+                                my.hana.meena.ui.components.ScreenTimeShareBar(
+                                    fraction = app.minutes.toFloat() / mostMinutes
+                                )
                                 }
                             }
                         }

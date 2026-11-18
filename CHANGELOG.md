@@ -10,7 +10,7 @@ Installs over 0.1.0: same signing key, version code 2.
 ### New
 - **Scanner** for QR codes and barcodes, read on the phone with ZXing. Tap to focus, pinch to zoom, and a light for dark places. Keeps up to 50 scans you save, encrypted. Off by default (settings, pages); asks for the camera when you first open it.
 - **Favourite tiles:** up to 8 (was 6). Small tiles fit four to a row, icon only. Colourful tiles use each app's own icon colour. A tile can be an app shortcut, such as a chat with one person: pick one from the tile menu, or use "add shortcut" inside an app such as WhatsApp and say yes when Meena asks.
-- **Screen time** on today: time on screen since midnight and the apps you used most, from Android's own usage records. Turn on usage access for Meena when the widget asks.
+- **Screen time** on today: time on screen since midnight as an hour-by-hour bar chart, and the apps you used most, each with a bar for its share. Read from Android's own usage records, counting one app at a time so the total can't run past the clock. Turn on usage access for Meena when the widget asks.
 - **App widgets** on today: put widgets from your other apps (a calendar, music, notes) on the today page. Apps that offer "add to home screen" for a widget can add it straight to Meena.
 - **Notes:** start a line with `-` for a note, `*` for a task or `x` when it's done. Tap a task in an open note to tick it.
 - **Inbox:** what's playing, with play, pause and skip. Alerts grouped by app; tap to see them all. Reply from the inbox when the app allows it. Pictures from notifications show as small previews. Each inbox widget shows its own number of items, up to 12.

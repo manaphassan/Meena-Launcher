@@ -845,6 +845,9 @@
     <string name="screen_time_loading">counting today’s screen time</string>
     <string name="screen_time_empty">no screen time yet today</string>
     <string name="screen_time_failed">couldn’t read screen time. unlock the phone and try again.</string>
+    <string name="screen_time_hour_am">%1$dam</string>
+    <string name="screen_time_hour_pm">%1$dpm</string>
+    <string name="screen_time_chart_description">screen time by hour. busiest hour: %1$s, %2$d minutes.</string>
 
     <!-- App widgets from other apps -->
     <string name="widget_name_app_widgets">app widgets</string>

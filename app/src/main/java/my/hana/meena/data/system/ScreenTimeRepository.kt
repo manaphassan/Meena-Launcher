@@ -13,8 +13,12 @@ import java.util.Calendar
 
 data class AppUsage(val packageName: String, val label: String, val minutes: Long)
 
-/** Today's screen time: the total, and the apps used most. */
-data class ScreenTimeToday(val totalMinutes: Long, val topApps: List<AppUsage>)
+/** Today's screen time: the total, the apps used most, and minutes in each hour since midnight (24 slots). */
+data class ScreenTimeToday(
+    val totalMinutes: Long,
+    val topApps: List<AppUsage>,
+    val minutesByHour: List<Int> = List(24) { 0 }
+)
 
 /**
  * Works out how long each app was on screen from Android's usage events, so the numbers match
@@ -26,52 +30,92 @@ object ScreenTimeCalc {
 
     data class Event(val packageName: String, val className: String, val kind: Kind, val timeMillis: Long)
 
-    /**
-     * Milliseconds each package was in front between [start] and [end]. An app counts as in front
-     * while any of its activities is resumed. An app already in front at [start] (its first event
-     * is a stop) counts from [start]; one still in front at [end] counts up to [end].
-     */
-    fun foregroundMillis(events: List<Event>, start: Long, end: Long, ignore: Set<String> = emptySet()): Map<String, Long> {
-        val open = HashMap<String, MutableSet<String>>()
-        val since = HashMap<String, Long>()
-        val seen = HashSet<String>()
-        val total = HashMap<String, Long>()
+    /** One stretch of an app being in front, clipped to the window asked for. */
+    data class Session(val packageName: String, val fromMillis: Long, val toMillis: Long)
 
-        fun close(pkg: String, at: Long) {
-            val from = since.remove(pkg) ?: return
-            val span = (minOf(at, end) - maxOf(from, start)).coerceAtLeast(0)
-            if (span > 0) total[pkg] = (total[pkg] ?: 0L) + span
+    private const val HOUR = 3_600_000L
+
+    /** Milliseconds each package was in front between [start] and [end]. See [sessions]. */
+    fun foregroundMillis(events: List<Event>, start: Long, end: Long, ignore: Set<String> = emptySet()): Map<String, Long> =
+        sessions(events, start, end, ignore)
+            .groupBy { it.packageName }
+            .mapValues { (_, list) -> list.sumOf { it.toMillis - it.fromMillis } }
+
+    /**
+     * Minutes of screen time in each hour from [dayStart], for [hours] hours. A session that
+     * crosses the hour is split between both. Hours after [end] stay at zero.
+     */
+    fun minutesByHour(sessions: List<Session>, dayStart: Long, hours: Int = 24): List<Int> {
+        val millis = LongArray(hours)
+        for (s in sessions) {
+            var from = s.fromMillis
+            while (from < s.toMillis) {
+                val slot = ((from - dayStart) / HOUR).toInt()
+                if (slot !in 0 until hours) break
+                val slotEnd = dayStart + (slot + 1) * HOUR
+                val to = minOf(s.toMillis, slotEnd)
+                millis[slot] += to - from
+                from = to
+            }
+        }
+        return millis.map { (it / 60_000L).toInt().coerceAtMost(60) }
+    }
+
+    /**
+     * Each stretch an app was in front between [start] and [end], counting one app at a time:
+     * a new app coming to the front (or the home screen, or the screen turning off) ends the
+     * previous one, even if Android never sent its pause. An app with several activities stays in
+     * front until the last one pauses. Only the very first event of the window may be a pause for
+     * an app that was already open at [start]; it then counts from [start]. An app still in front
+     * at [end] counts up to [end].
+     */
+    fun sessions(events: List<Event>, start: Long, end: Long, ignore: Set<String> = emptySet()): List<Session> {
+        val result = ArrayList<Session>()
+        var current: String? = null
+        var since = 0L
+        val activities = mutableSetOf<String>()
+        var first = true
+
+        fun add(pkg: String, from: Long, to: Long) {
+            val clippedFrom = maxOf(from, start)
+            val clippedTo = minOf(to, end)
+            if (clippedTo > clippedFrom) result += Session(pkg, clippedFrom, clippedTo)
+        }
+
+        fun closeCurrent(at: Long) {
+            val pkg = current ?: return
+            add(pkg, since, at)
+            current = null
+            activities.clear()
         }
 
         for (e in events.sortedBy { it.timeMillis }) {
-            if (e.kind == Kind.SCREEN_OFF) {
-                for (pkg in open.keys.toList()) close(pkg, e.timeMillis)
-                open.clear()
-                continue
-            }
-            val pkg = e.packageName
-            if (pkg in ignore) continue
-            val activities = open.getOrPut(pkg) { mutableSetOf() }
             when (e.kind) {
+                Kind.SCREEN_OFF -> closeCurrent(e.timeMillis)
                 Kind.START -> {
-                    if (activities.isEmpty()) since[pkg] = e.timeMillis
-                    activities += e.className
+                    if (current != e.packageName) {
+                        closeCurrent(e.timeMillis)
+                        if (e.packageName !in ignore) {
+                            current = e.packageName
+                            since = e.timeMillis
+                        }
+                    }
+                    if (current == e.packageName) activities += e.className
                 }
                 Kind.STOP -> {
-                    if (pkg !in seen && activities.isEmpty()) {
-                        // In front since before the window opened.
-                        since[pkg] = start
-                        activities += e.className
+                    if (first && current == null && e.packageName !in ignore) {
+                        // Open since before the window started.
+                        add(e.packageName, start, e.timeMillis)
+                    } else if (current == e.packageName) {
+                        activities -= e.className
+                        if (activities.isEmpty()) closeCurrent(e.timeMillis)
                     }
-                    activities -= e.className
-                    if (activities.isEmpty()) close(pkg, e.timeMillis)
                 }
-                Kind.SCREEN_OFF -> Unit
             }
-            seen += pkg
+            if (e.kind != Kind.SCREEN_OFF) first = false
         }
-        for (pkg in since.keys.toList()) close(pkg, end)
-        return total
+        closeCurrent(end)
+        return result
     }
 }
 
@@ -119,7 +163,8 @@ object ScreenTimeRepository {
         }
 
         // The home screen itself isn't app time.
-        val millis = ScreenTimeCalc.foregroundMillis(events, start, end, ignore = setOf(context.packageName))
+        val sessions = ScreenTimeCalc.sessions(events, start, end, ignore = setOf(context.packageName))
+        val millis = sessions.groupBy { it.packageName }.mapValues { (_, list) -> list.sumOf { it.toMillis - it.fromMillis } }
         val apps = millis.entries
             .filter { it.value >= 60_000L }
             .sortedByDescending { it.value }
@@ -128,7 +173,8 @@ object ScreenTimeRepository {
             topApps = apps.take(maxApps).map { (pkg, ms) ->
                 val label = InstalledAppsRepository.getCachedApp(pkg)?.label ?: pkg.substringAfterLast('.')
                 AppUsage(pkg, label, ms / 60_000L)
-            }
+            },
+            minutesByHour = ScreenTimeCalc.minutesByHour(sessions, start)
         )
     }
 
@@ -136,7 +182,9 @@ object ScreenTimeRepository {
     private fun kindOf(type: Int): ScreenTimeCalc.Kind? = when (type) {
         UsageEvents.Event.MOVE_TO_FOREGROUND -> ScreenTimeCalc.Kind.START // ACTIVITY_RESUMED on Android 10+
         UsageEvents.Event.MOVE_TO_BACKGROUND -> ScreenTimeCalc.Kind.STOP // ACTIVITY_PAUSED on Android 10+
-        UsageEvents.Event.SCREEN_NON_INTERACTIVE, 26 /* DEVICE_SHUTDOWN, Android 9+ */ -> ScreenTimeCalc.Kind.SCREEN_OFF
+        UsageEvents.Event.SCREEN_NON_INTERACTIVE,
+        18 /* KEYGUARD_SHOWN, Android 9+: the lock screen is not app time */,
+        26 /* DEVICE_SHUTDOWN, Android 9+ */ -> ScreenTimeCalc.Kind.SCREEN_OFF
         else -> null
     }
 }
