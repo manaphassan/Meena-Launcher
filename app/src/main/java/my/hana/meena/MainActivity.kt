@@ -58,6 +58,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -124,9 +125,98 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var settingsRepository: SettingsRepository
 
+    /** Widget ID being added, between Android's "allow" prompt and the widget's own setup screen. */
+    private var pendingWidgetId = android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID
+
+    private val bindWidgetLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val id = pendingWidgetId
+        if (id == android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID) return@registerForActivityResult
+        if (result.resultCode == RESULT_OK) configureOrAddWidget(id) else cancelPendingWidget()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        my.hana.meena.data.system.AppWidgetRepository.startListening(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        my.hana.meena.data.system.AppWidgetRepository.stopListening(this)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(KEY_PENDING_WIDGET, pendingWidgetId)
+    }
+
+    private fun addAppWidget(info: android.appwidget.AppWidgetProviderInfo) {
+        val repo = my.hana.meena.data.system.AppWidgetRepository
+        val id = runCatching { repo.allocate(this) }.getOrNull()
+        if (id == null) {
+            my.hana.meena.ui.components.MetroMessage.show(getString(R.string.app_widgets_failed))
+            return
+        }
+        pendingWidgetId = id
+        if (repo.bindIfAllowed(this, id, info.provider)) {
+            configureOrAddWidget(id)
+        } else {
+            // Android asks the person to allow Meena to add this widget.
+            val bind = Intent(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_BIND)
+                .putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                .putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, info.provider)
+            runCatching { bindWidgetLauncher.launch(bind) }.onFailure { failPendingWidget() }
+        }
+    }
+
+    private fun configureOrAddWidget(id: Int) {
+        val repo = my.hana.meena.data.system.AppWidgetRepository
+        val info = repo.info(this, id) ?: return failPendingWidget()
+        if (!repo.needsConfigure(info)) return finishAddingWidget(id)
+        try {
+            repo.host(this).startAppWidgetConfigureActivityForResult(this, id, 0, REQUEST_CONFIGURE_WIDGET, null)
+        } catch (_: Exception) {
+            failPendingWidget()
+        }
+    }
+
+    @Deprecated("The widget setup screen can only be started through startActivityForResult.")
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_CONFIGURE_WIDGET) return
+        val id = pendingWidgetId
+        if (id == android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID) return
+        if (resultCode == RESULT_OK) finishAddingWidget(id) else cancelPendingWidget()
+    }
+
+    private fun finishAddingWidget(id: Int) {
+        pendingWidgetId = android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID
+        lifecycleScope.launch {
+            val current = settingsRepository.userSettingsFlow.first()
+            settingsRepository.saveSettings(PinItemActivity.withHostedWidget(current, id))
+        }
+    }
+
+    /** The person said no, or backed out of the widget's setup: give the ID back quietly. */
+    private fun cancelPendingWidget() {
+        val id = pendingWidgetId
+        pendingWidgetId = android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID
+        if (id != android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID) {
+            my.hana.meena.data.system.AppWidgetRepository.delete(this, id)
+        }
+    }
+
+    private fun failPendingWidget() {
+        cancelPendingWidget()
+        my.hana.meena.ui.components.MetroMessage.show(getString(R.string.app_widgets_failed))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         settingsRepository = SettingsRepository(applicationContext)
+        pendingWidgetId = savedInstanceState?.getInt(KEY_PENDING_WIDGET, pendingWidgetId) ?: pendingWidgetId
         if (savedInstanceState == null) showPrivacyPolicyIfAsked(intent)
 
         enableEdgeToEdge()
@@ -192,7 +282,8 @@ class MainActivity : ComponentActivity() {
                             onOpenMessages = { openMessagesIntent() },
                             onOpenEmail = { openEmailIntent() },
                             onOpenCamera = { openCameraIntent() },
-                            onOpenCalculator = { openCalculatorIntent() }
+                            onOpenCalculator = { openCalculatorIntent() },
+                            onAddAppWidget = { info -> addAppWidget(info) }
                         )
                     }
                 }
@@ -201,6 +292,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private var currentHubIntentIndex = mutableStateOf<Int?>(null)
+
+    private companion object {
+        const val REQUEST_CONFIGURE_WIDGET = 0x4D57
+        const val KEY_PENDING_WIDGET = "pending_widget_id"
+    }
 
     /** Counts home presses while Meena is already in front; each one goes back to today. */
     private var homePresses = mutableStateOf(0)
@@ -321,7 +417,8 @@ fun MeenaHomeScreen(
     onOpenMessages: () -> Unit,
     onOpenEmail: () -> Unit,
     onOpenCamera: () -> Unit,
-    onOpenCalculator: () -> Unit
+    onOpenCalculator: () -> Unit,
+    onAddAppWidget: (android.appwidget.AppWidgetProviderInfo) -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val userSettingsState by settingsRepository.userSettingsFlow.collectAsState(initial = null)
@@ -336,6 +433,14 @@ fun MeenaHomeScreen(
     }
 
     var wallpaperBitmap by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+
+    // Keep Android's pinned shortcuts in step with the shortcut tiles.
+    LaunchedEffect(userSettings.pinnedAppIds) {
+        val pinned = userSettings.pinnedAppIds
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            my.hana.meena.data.system.ShortcutRepository.syncPinned(context, pinned)
+        }
+    }
     LaunchedEffect(userSettings.wallpaperUri) {
         wallpaperBitmap = if (userSettings.wallpaperUri != null) {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -869,6 +974,15 @@ fun MeenaHomeScreen(
                             },
                             onSetPinned = { updated ->
                                 coroutineScope.launch { settingsRepository.saveSettings(userSettings.copy(pinnedAppIds = updated)) }
+                            },
+                            onAddAppWidget = onAddAppWidget,
+                            onRemoveAppWidget = { widgetId ->
+                                my.hana.meena.data.system.AppWidgetRepository.delete(context, widgetId)
+                                coroutineScope.launch {
+                                    settingsRepository.saveSettings(
+                                        userSettings.copy(hostedWidgetIds = userSettings.hostedWidgetIds - widgetId)
+                                    )
+                                }
                             },
                             onToggleWidgetCollapse = { widgetId, isCollapsed ->
                                 coroutineScope.launch {

@@ -913,7 +913,10 @@ class MeenaLauncherLogicTest {
             "android.permission.health.READ_SLEEP",
             "android.permission.health.READ_HEART_RATE",
             // QR / barcode scanner, approved by the owner.
-            "android.permission.CAMERA"
+            "android.permission.CAMERA",
+            // Screen time widget and app widgets on today, approved by the owner on 18 Nov 2026.
+            "android.permission.PACKAGE_USAGE_STATS",
+            "android.permission.BIND_APPWIDGET"
         )
         val unauthorized = mutableListOf<String>()
 

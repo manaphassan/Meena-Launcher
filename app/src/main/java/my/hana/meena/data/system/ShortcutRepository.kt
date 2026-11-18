@@ -24,8 +24,52 @@ object ShortcutRepository {
     @Volatile
     private var cache: Map<String, DeviceAppInfo> = emptyMap()
 
+    private val _revision = kotlinx.coroutines.flow.MutableStateFlow(0)
+    /** Goes up whenever the cache changes, so tiles redraw with a newly loaded shortcut. */
+    val revision: kotlinx.coroutines.flow.StateFlow<Int> = _revision
+
+    private fun remember(key: String, entry: DeviceAppInfo) {
+        cache = cache + (key to entry)
+        _revision.value++
+    }
+
     /** Returns the cached [DeviceAppInfo] for a shortcut key, or null when not loaded. */
     fun getCachedShortcut(key: String): DeviceAppInfo? = cache[key]
+
+    /** Adds a shortcut another app just asked to pin (for example a WhatsApp chat). */
+    fun rememberPinned(context: Context, info: ShortcutInfo): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return null
+        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val key = FavouriteRules.shortcutKey(info.`package`, info.id)
+        remember(key, toDeviceAppInfo(context, launcherApps, info, key))
+        return key
+    }
+
+    /**
+     * Keeps Android's list of shortcuts pinned by Meena the same as the shortcut tiles, so a chat
+     * tile keeps working even after the app drops it from its own shortcut list, and a removed
+     * tile is unpinned. Only works while Meena is the home app; otherwise Android refuses quietly.
+     */
+    fun syncPinned(context: Context, pinnedAppIds: List<String>) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return
+        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        if (!runCatching { launcherApps.hasShortcutHostPermission() }.getOrDefault(false)) return
+        val user = Process.myUserHandle()
+        val wanted = pinnedAppIds.flatMap { FavouriteRules.members(it) }
+            .mapNotNull { FavouriteRules.parseShortcut(it) }
+            .groupBy({ it.first }, { it.second })
+        val alreadyPinned = runCatching {
+            launcherApps.getShortcuts(
+                LauncherApps.ShortcutQuery().setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED),
+                user
+            )
+        }.getOrNull().orEmpty().groupBy({ it.`package` }, { it.id })
+        for (pkg in wanted.keys + alreadyPinned.keys) {
+            val ids = wanted[pkg].orEmpty().distinct()
+            if (ids.toSet() == alreadyPinned[pkg].orEmpty().toSet()) continue
+            runCatching { launcherApps.pinShortcuts(pkg, ids, user) }
+        }
+    }
 
     /**
      * Loads the [DeviceAppInfo] for a single shortcut key that is already pinned.
@@ -41,12 +85,13 @@ object ShortcutRepository {
             .setQueryFlags(
                 LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
                     LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
-                    LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER
+                    // Shortcuts Meena pinned itself; a regular launcher can't see other launchers' pins.
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED
             )
         val info = runCatching { launcherApps.getShortcuts(query, Process.myUserHandle()) }
             .getOrNull()?.firstOrNull() ?: return null
         val entry = toDeviceAppInfo(context, launcherApps, info, key)
-        cache = cache + (key to entry)
+        remember(key, entry)
         return entry
     }
 
@@ -68,7 +113,7 @@ object ShortcutRepository {
         return shortcuts.mapNotNull { info ->
             val key = FavouriteRules.shortcutKey(packageName, info.id)
             val entry = toDeviceAppInfo(context, launcherApps, info, key)
-            cache = cache + (key to entry)
+            remember(key, entry)
             entry
         }
     }

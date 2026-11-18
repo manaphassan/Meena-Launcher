@@ -842,6 +842,28 @@
     <string name="screen_time_total_m">%1$dm today</string>
     <string name="screen_time_app_hm">%1$dh %2$dm</string>
     <string name="screen_time_app_m">%1$dm</string>
+    <string name="screen_time_loading">counting today’s screen time</string>
+    <string name="screen_time_empty">no screen time yet today</string>
+    <string name="screen_time_failed">couldn’t read screen time. unlock the phone and try again.</string>
+
+    <!-- App widgets from other apps -->
+    <string name="widget_name_app_widgets">app widgets</string>
+    <string name="app_widgets_empty">put widgets from your other apps here.</string>
+    <string name="app_widgets_add">add a widget</string>
+    <string name="app_widgets_pick_title">pick a widget</string>
+    <string name="app_widgets_none">no app on this phone offers a widget</string>
+    <string name="app_widgets_failed">couldn’t add that widget. try again.</string>
+    <string name="app_widgets_gone">this widget’s app is gone</string>
+    <string name="app_widgets_remove_title">remove widget</string>
+    <string name="app_widgets_remove_question">take %1$s off today?</string>
+
+    <!-- Another app asks to pin something -->
+    <string name="pin_shortcut_title">add to favourites</string>
+    <string name="pin_shortcut_question">pin %1$s to your favourite tiles?</string>
+    <string name="pin_widget_title">add widget</string>
+    <string name="pin_widget_question">put %1$s in app widgets on today?</string>
+    <string name="pin_failed">couldn’t add it. try again from the app.</string>
+    <string name="pin_added">added to today</string>
 
     <!-- Inbox: email and grouped alerts -->
     <string name="widget_name_email">email</string>

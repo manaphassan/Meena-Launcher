@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,11 +73,15 @@ fun FavouriteTiles(
     val groupFullMsg = stringResource(R.string.favourites_group_full)
     val fullMsg = stringResource(R.string.favourites_full)
 
-    val slots = FavouriteRules.visible(pinnedAppIds) { id ->
-        if (FavouriteRules.isShortcut(id)) {
-            my.hana.meena.data.system.ShortcutRepository.getCachedShortcut(id)
-        } else {
-            InstalledAppsRepository.getCachedApp(id)
+    // Redraw when a shortcut tile finishes loading (or another app pins one).
+    val shortcutRevision by my.hana.meena.data.system.ShortcutRepository.revision.collectAsState()
+    val slots = remember(pinnedAppIds, shortcutRevision, InstalledAppsRepository.revision) {
+        FavouriteRules.visible(pinnedAppIds) { id ->
+            if (FavouriteRules.isShortcut(id)) {
+                my.hana.meena.data.system.ShortcutRepository.getCachedShortcut(id)
+            } else {
+                InstalledAppsRepository.getCachedApp(id)
+            }
         }
     }
     val perRow = if (isSmall) FavouriteRules.PER_ROW_SMALL else FavouriteRules.PER_ROW

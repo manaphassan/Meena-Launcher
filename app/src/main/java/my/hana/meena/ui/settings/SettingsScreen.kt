@@ -354,6 +354,7 @@ internal val SETTINGS_WIDGET_TITLES = linkedMapOf<String, Int>(
     "widget-map-radar" to R.string.widget_name_nearby,
     "widget-wikipedia" to R.string.widget_name_wikipedia,
     "widget-scanner" to R.string.widget_name_scanner,
+    "widget-app-widgets" to R.string.widget_name_app_widgets,
     "widget-conversations" to R.string.widget_name_chats,
     "widget-email" to R.string.widget_name_email,
     "widget-notifications" to R.string.widget_name_alerts,

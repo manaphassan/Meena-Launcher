@@ -44,6 +44,8 @@ data class MeenaUserSettings(
     /** Title at the top of the home pages; empty hides it. See [HomeTitle]. */
     val homeTitle: String = HomeTitle.DEFAULT,
     val pinnedAppIds: List<String> = emptyList(),
+    /** Android widget IDs Meena hosts on today, in order. See [my.hana.meena.data.system.AppWidgetRepository]. */
+    val hostedWidgetIds: List<Int> = emptyList(),
     /** How the apps page is laid out: see [AppsSort]. */
     val appsSortMode: String = AppsSort.AZ,
     val solatZone: String = "",
@@ -285,6 +287,7 @@ data class MeenaUserSettings(
             "widget-map-radar" to WidgetConfig("today", 13, isEnabled = false),
             "widget-wikipedia" to WidgetConfig("today", 14, isEnabled = false),
             "widget-scanner" to WidgetConfig("today", 15, isEnabled = false),
+            "widget-app-widgets" to WidgetConfig("today", 16, isEnabled = false),
 
             // Inbox Hub (chats, email, alerts / notification stream)
             "widget-music-player" to WidgetConfig("inbox", 0, isEnabled = true),

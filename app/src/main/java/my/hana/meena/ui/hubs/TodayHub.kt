@@ -106,6 +106,8 @@ fun TodayHub(
     onTogglePin: (String) -> Unit = {},
     onReorderPin: (Int, Int) -> Unit = { _, _ -> },
     onSetPinned: (List<String>) -> Unit = {},
+    onAddAppWidget: (android.appwidget.AppWidgetProviderInfo) -> Unit = {},
+    onRemoveAppWidget: (Int) -> Unit = {},
     onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val haptic = LocalHapticFeedback.current
@@ -148,11 +150,22 @@ fun TodayHub(
 
     LaunchedEffect(Unit) {
         InstalledAppsRepository.loadInstalledApps(context)
-        // Pre-load any pinned shortcuts so tiles appear immediately.
-        settings.pinnedAppIds.filter { my.hana.meena.data.system.FavouriteRules.isShortcut(it) }.forEach {
-            my.hana.meena.data.system.ShortcutRepository.loadPinnedShortcut(context, it)
-        }
         appsVersion++
+    }
+
+    // Load shortcut tiles, including ones another app just asked to pin.
+    LaunchedEffect(settings.pinnedAppIds) {
+        val missing = settings.pinnedAppIds
+            .flatMap { my.hana.meena.data.system.FavouriteRules.members(it) }
+            .filter {
+                my.hana.meena.data.system.FavouriteRules.isShortcut(it) &&
+                    my.hana.meena.data.system.ShortcutRepository.getCachedShortcut(it) == null
+            }
+        if (missing.isNotEmpty()) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                missing.forEach { my.hana.meena.data.system.ShortcutRepository.loadPinnedShortcut(context, it) }
+            }
+        }
     }
 
     LaunchedEffect(settings.calendarDaysAhead, settings.calendarShowAllDay) {
@@ -1563,8 +1576,25 @@ fun TodayHub(
                         onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) }
                     ) {
                         val stContext = androidx.compose.ui.platform.LocalContext.current
-                        val hasPerm = remember { my.hana.meena.data.system.ScreenTimeRepository.hasPermission(stContext) }
-                        if (!hasPerm) {
+                        // Checked again each time Meena comes back, e.g. from Android's usage access page.
+                        var hasAccess by remember { mutableStateOf(my.hana.meena.data.system.ScreenTimeRepository.hasAccess(stContext)) }
+                        var usage by remember { mutableStateOf<my.hana.meena.data.system.ScreenTimeToday?>(null) }
+                        var usageFailed by remember { mutableStateOf(false) }
+                        LaunchedEffect(isOnScreen) {
+                            if (isOnScreen) hasAccess = my.hana.meena.data.system.ScreenTimeRepository.hasAccess(stContext)
+                        }
+                        LaunchedEffect(hasAccess, isOnScreen) {
+                            while (hasAccess && isOnScreen) {
+                                val read = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    my.hana.meena.data.system.ScreenTimeRepository.today(stContext)
+                                }
+                                usageFailed = read == null
+                                if (read != null) usage = read
+                                delay(60_000L)
+                            }
+                        }
+                        val today = usage
+                        if (!hasAccess) {
                             Text(
                                 text = stringResource(R.string.screen_time_needs_access),
                                 style = MaterialTheme.typography.bodySmall,
@@ -1576,13 +1606,23 @@ fun TodayHub(
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .heightIn(min = 48.dp)
-                                    .metroClickable { my.hana.meena.data.system.ScreenTimeRepository.openPermissionSettings(stContext) }
+                                    .metroClickable { my.hana.meena.data.system.ScreenTimeRepository.openAccessSettings(stContext) }
                                     .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
                             )
+                        } else if (today == null) {
+                            Text(
+                                text = stringResource(if (usageFailed) R.string.screen_time_failed else R.string.screen_time_loading),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
+                        } else if (today.totalMinutes == 0L) {
+                            Text(
+                                text = stringResource(R.string.screen_time_empty),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
                         } else {
-                            val (totalMinutes, topApps) = remember(currentTime) {
-                                my.hana.meena.data.system.ScreenTimeRepository.todayUsage(stContext)
-                            }
+                            val (totalMinutes, topApps) = today
                             val hours = totalMinutes / 60
                             val mins = totalMinutes % 60
                             Text(
@@ -1617,6 +1657,127 @@ fun TodayHub(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+
+                "widget-app-widgets" -> {
+                    CollapsibleWidget(
+                        title = stringResource(R.string.widget_name_app_widgets),
+                        isCollapsed = settings.widgetConfigs[widgetId]?.isCollapsed ?: false,
+                        onToggleCollapse = { onToggleWidgetCollapse(widgetId, it) }
+                    ) {
+                        val awContext = androidx.compose.ui.platform.LocalContext.current
+                        val density = androidx.compose.ui.platform.LocalDensity.current.density
+                        val widgetRepo = my.hana.meena.data.system.AppWidgetRepository
+                        var picking by remember { mutableStateOf(false) }
+                        var toRemove by remember { mutableStateOf<Pair<Int, String>?>(null) }
+
+                        if (settings.hostedWidgetIds.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.app_widgets_empty),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MeenaTextMuted
+                            )
+                        }
+                        settings.hostedWidgetIds.forEach { hostedId ->
+                            androidx.compose.runtime.key(hostedId) {
+                                val info = remember(hostedId, appsVersion) { widgetRepo.info(awContext, hostedId) }
+                                val name = remember(info) {
+                                    info?.loadLabel(awContext.packageManager)?.lowercase()
+                                }
+                                if (info != null) {
+                                    val heightDp = remember(info) { widgetRepo.heightDp(info, density) }
+                                    androidx.compose.foundation.layout.BoxWithConstraints(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(heightDp.dp)
+                                    ) {
+                                        val widthDp = maxWidth.value.toInt()
+                                        androidx.compose.ui.viewinterop.AndroidView(
+                                            factory = { ctx ->
+                                                widgetRepo.createView(ctx, hostedId, info).also {
+                                                    widgetRepo.reportSize(it, widthDp, heightDp)
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = name ?: stringResource(R.string.app_widgets_gone),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    val fallbackName = stringResource(R.string.widget_name_app_widgets)
+                                    Text(
+                                        text = stringResource(R.string.action_remove),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MeenaTextMuted,
+                                        modifier = Modifier
+                                            .heightIn(min = 48.dp)
+                                            .metroClickable { toRemove = hostedId to (name ?: fallbackName) }
+                                            .padding(start = my.hana.meena.theme.MeenaSpacing.m, top = my.hana.meena.theme.MeenaSpacing.m, bottom = my.hana.meena.theme.MeenaSpacing.m)
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.app_widgets_add),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .heightIn(min = 48.dp)
+                                .metroClickable { picking = true }
+                                .padding(vertical = my.hana.meena.theme.MeenaSpacing.m)
+                        )
+
+                        if (picking) {
+                            val providers = remember { widgetRepo.providers(awContext) }
+                            if (providers.isEmpty()) {
+                                picking = false
+                                my.hana.meena.ui.components.MetroMessage.show(stringResource(R.string.app_widgets_none))
+                            } else {
+                                my.hana.meena.ui.components.MetroListPicker(
+                                    title = stringResource(R.string.app_widgets_pick_title),
+                                    items = providers.map {
+                                        my.hana.meena.ui.components.MetroPickerItem(
+                                            key = it.provider.flattenToString(),
+                                            title = it.loadLabel(awContext.packageManager).lowercase(),
+                                            subtitle = widgetRepo.appLabel(awContext, it).lowercase()
+                                        )
+                                    },
+                                    selectedKey = "",
+                                    onSelect = { key ->
+                                        picking = false
+                                        providers.firstOrNull { it.provider.flattenToString() == key }?.let(onAddAppWidget)
+                                    },
+                                    onDismiss = { picking = false },
+                                    enableSearch = true
+                                )
+                            }
+                        }
+
+                        val removing = toRemove
+                        if (removing != null) {
+                            my.hana.meena.ui.components.MetroDialog(
+                                title = stringResource(R.string.app_widgets_remove_title),
+                                message = stringResource(R.string.app_widgets_remove_question, removing.second),
+                                confirmText = stringResource(R.string.action_yes),
+                                dismissText = stringResource(R.string.action_no),
+                                onConfirm = {
+                                    onRemoveAppWidget(removing.first)
+                                    toRemove = null
+                                },
+                                onDismiss = { toRemove = null }
+                            )
                         }
                     }
                 }
