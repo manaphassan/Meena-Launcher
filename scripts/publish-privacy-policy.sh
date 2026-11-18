@@ -74,7 +74,7 @@ page "Meena: a home screen for Android" "$(cat <<EOF
 <img class="wide" src="feature-graphic.png" width="1024" height="500" alt="meena: clean, light, open, fast, beside a grid of coloured tiles">
 <p>Built on Meena UI: big type, plenty of space, flat colour and square corners. Swipe sideways through five pages:</p>
 <ul>
-  <li><strong>today</strong>: time, weather, up to eight favourite tiles, your week, prayer times, a QR and barcode scanner, notes with tasks, a nearby map, battery and connected devices</li>
+  <li><strong>today</strong>: time, weather, up to eight favourite tiles (a WhatsApp chat can be one), your week, prayer times, a QR and barcode scanner, notes with tasks, screen time, widgets from your other apps, a nearby map, battery and connected devices</li>
   <li><strong>inbox</strong>: your chats, email and alerts, grouped by app, with quick replies, pictures and the music that's playing</li>
   <li><strong>news</strong>: the feeds you choose, with a clean reader</li>
   <li><strong>money</strong>: markets, Kijang Emas, exchange rates, your own Google Sheet and spending from bank alerts</li>

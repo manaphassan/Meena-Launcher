@@ -9,6 +9,8 @@ today
 - prayer times for your zone from jakim
 - a scanner for qr codes and barcodes that keeps the scans you save
 - notes with tasks you can tick off, or add to your calendar as a reminder
+- screen time since midnight, with the apps you used most
+- widgets from your other apps, right on today
 - a nearby map with 3 km and 5 km rings, a compass, the qibla line and the sun's path
 - battery: how fast it is charging, time to full and time left
 - bluetooth devices you have connected, with their battery when the device shares it

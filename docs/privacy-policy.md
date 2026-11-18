@@ -1,7 +1,7 @@
 # Privacy Policy for Meena
 
 **Effective Date:** 14 November 2026  
-**Last Updated:** 18 November 2026 (version 0.2.0: scanner and camera, music controls, quick replies, notification pictures, app shortcuts, wallpaper, new settings layout)  
+**Last Updated:** 18 November 2026 (version 0.2.0: scanner and camera, music controls, quick replies, notification pictures, app shortcuts, wallpaper, screen time, widgets from other apps, new settings layout)  
 **Application:** Meena (Package: `my.hana.meena`)  
 **Developer:** HaNa Innovation  
 **Contact:** harussani@outlook.my  
@@ -75,13 +75,13 @@ Meena requests only the minimal set of Android permissions necessary to provide 
 ### 2.6 Apps You Open
 - **Purpose:** The optional frequent apps widget shows the apps you open most from Meena.
 - **Handling:** Meena counts launches it makes itself, on your phone only. The frequent apps widget does not read Android's usage history. You can wipe the counts at any time with **clear app history** in the widget's settings.
-- **Screen time widget:** it would show today's time per app from Android's usage access, read on the phone only. This version does not ask Android for usage access, so the widget reads nothing yet.
+- **Screen time widget (`android.permission.PACKAGE_USAGE_STATS`, usage access):** if you turn the widget on and allow usage access in Android's settings, Meena reads Android's record of which apps were on screen today, adds it up on your phone and shows the total and the apps you used most. The record is read again about once a minute while today is on screen. It is never stored, logged or sent. Turn it off any time in Android's **usage access** settings.
 
 ### 2.7 Installed Applications (`LauncherApps` & Queries)
 - **Purpose:** Core launcher functionality to discover and display installed applications on the Apps hub, and allow launching, pinning, or uninstalling apps.
 - **Handling:** Applications are queried locally via the Android system `LauncherApps` API. The broad `QUERY_ALL_PACKAGES` permission has been completely eliminated in favor of targeted intent filters. Your app list is never shared or profiled.
 - **Icon packs:** If you choose an icon pack, Meena finds installed icon packs through the same kind of targeted filters and reads the pack's own icon list from it on your phone. Nothing about your apps or the pack leaves the device.
-- **App shortcuts:** When you pin a shortcut (for example a chat with one person), Meena lists the shortcuts that app offers through `LauncherApps`, and saves only the app and shortcut ID in its settings to show the tile.
+- **App shortcuts:** When you pin a shortcut (for example a chat with one person), Meena lists the shortcuts that app offers through `LauncherApps`, and saves only the app and shortcut ID in its settings to show the tile. An app can also ask to add one (WhatsApp's "add shortcut"); Meena asks you first and adds nothing unless you say yes. Meena keeps those shortcuts pinned with Android while their tiles are on today.
 - **Colourful tiles:** the tile colour is worked out from each app's icon on your phone.
 
 ### 2.11 Camera (`android.permission.CAMERA`, scanner)
@@ -91,6 +91,10 @@ Meena requests only the minimal set of Android permissions necessary to provide 
 ### 2.12 Wallpaper
 - **Purpose:** Use a photo of your own as the home screen background.
 - **Handling:** You pick one image with Android's picker. Meena keeps Android's permission to read that one image, and reads it on the phone at screen size. The image is not copied, uploaded or shared. Choosing **remove wallpaper** stops Meena using it; Android drops the read permission when Meena is uninstalled.
+
+### 2.13 Widgets from other apps (`android.permission.BIND_APPWIDGET`)
+- **Purpose:** Put another app's Android widget, such as a calendar or music widget, on the today page.
+- **Handling:** Android asks you before Meena can add each new widget (unless you chose "always allow"), and an app's own widget setup screen may follow. Each widget is drawn by its own app and shows that app's information under that app's privacy policy. Meena only gives it a place on the screen and keeps its widget number in settings; it does not read, store or send what the widget shows. Remove a widget from the widget's **remove** link.
 
 ### 2.8 Motion Sensor (shake to hide)
 - **Purpose:** Shaking the phone blurs chats, email, alerts, notes and money on the home pages, and shaking again shows them.

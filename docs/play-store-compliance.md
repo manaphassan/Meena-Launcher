@@ -3,7 +3,7 @@
 **Application:** Meena (`my.hana.meena`)  
 **Target SDK:** 36 (Android 16 / 15)  
 **Track:** Closed Test (Personal Developer Account)  
-**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded; 15 November 2026: markets prices, double tap to lock through device admin; 18 November 2026: 0.2.0 scanner with camera and ZXing, music controls, quick replies, notification pictures, app shortcuts, wallpaper)  
+**Document Date:** October 2026 (updated 12 November 2026: Gemini brief removed; 13 November 2026: map, news pictures, rain outlook, live tiles, icon packs, Bluetooth battery; 14 November 2026: Data safety rows checked against Play's help page, rain radar link gone, backup and transfer excluded; 15 November 2026: markets prices, double tap to lock through device admin; 18 November 2026: 0.2.0 scanner with camera and ZXing, music controls, quick replies, notification pictures, app shortcuts, wallpaper, screen time with usage access, widgets from other apps)  
 
 ---
 
@@ -48,6 +48,7 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 | Notification pictures, inbox replies, what's playing | Phone only; a reply is handed to the posting app's own reply action, which sends it |
 | Camera frames, saved scans | Phone only; frames are decoded in memory by ZXing and dropped; saved scans (max 50) are Keystore-encrypted |
 | Chosen wallpaper | Phone only; read through Android's picker, not copied |
+| App usage (screen time) | Phone only; read from usage access about once a minute while today is on screen, never stored |
 | Installed apps, app-open counts | Phone only |
 | Bluetooth device names and battery | Phone only; widget off by default |
 | Personal identifiers, device IDs | Not collected at all |
@@ -104,6 +105,16 @@ Checked against Play's [Data safety help](https://support.google.com/googleplay/
 - **Use:** `android.permission.CAMERA`, approved by the owner, asked with Android's runtime prompt the first time the scanner opens. CameraX 1.4.1 previews and analyses frames; ZXing core 3.5.4 decodes the brightness plane in memory. No frame is saved or sent. `android.hardware.camera` and `android.hardware.camera.autofocus` are declared `required="false"`, because Play otherwise treats them as required and hides the app from phones without them ([uses-feature](https://developer.android.com/guide/topics/manifest/uses-feature-element), "Permissions that imply feature requirements").
 - **Libraries:** ZXing core is Apache 2.0 ([POM](https://repo1.maven.org/maven2/com/google/zxing/zxing-parent/3.5.4/zxing-parent-3.5.4.pom)) and has no network code. ML Kit was tried first and removed before release: Google's [ML Kit data disclosure](https://developers.google.com/ml-kit/android-data-disclosure) says its SDKs collect device and app information, per-installation identifiers and performance metrics "for diagnostics and usage analytics", which Meena's no-analytics rule does not allow. The 0.2.0 release has no `com.google.mlkit`, `datatransport` or Firebase classes (checked in `mapping.txt` and the dex files).
 - **Data safety:** nothing leaves the phone; no row needed.
+
+### 2.10 Usage access (screen time)
+- **Use:** `android.permission.PACKAGE_USAGE_STATS` (owner, 18 Nov 2026), declared with `tools:ignore="ProtectedPermissions"`. Declaring it only lets Meena appear on Android's usage access page; the person turns it on there ([UsageStatsManager](https://developer.android.com/reference/android/app/usage/UsageStatsManager): "the user of the device still needs to grant permission through the Settings application"). Meena checks the `OPSTR_GET_USAGE_STATS` app op and reads `queryEvents` from local midnight, on the phone, about once a minute while today is on screen.
+- **Play policy:** whether Play asks for a declaration or extra review for usage access is [S] unverified; check the Play Console when uploading.
+- **Data safety:** on the phone only; listed in the table above.
+
+### 2.11 Widget host (`BIND_APPWIDGET`)
+- **Use:** declared because the [widget host guide](https://developer.android.com/develop/ui/views/appwidgets/host) says hosts must; it is a system-level permission Android never grants to Meena. `bindAppWidgetIdIfAllowed()` succeeds only after the person allows it in Android's `ACTION_APPWIDGET_BIND` prompt. Widgets are drawn by their own apps; Meena reads nothing from them.
+- **Pin requests:** `PinItemActivity` handles `CONFIRM_PIN_SHORTCUT` and `CONFIRM_PIN_APPWIDGET` ([PinItemRequest](https://developer.android.com/reference/android/content/pm/LauncherApps.PinItemRequest)) and asks yes or no before `accept()`.
+- **Data safety:** nothing collected; no row needed.
 
 ---
 

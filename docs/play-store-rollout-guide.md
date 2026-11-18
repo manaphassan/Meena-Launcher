@@ -14,16 +14,16 @@ Before uploading the release bundle to Google Play Console, confirm all verifica
 - [x] Package Name: `my.hana.meena` (Permanent unique identifier)
 - [x] Compilation: Target SDK 36, Min SDK 24, Compose 2026 BOM
 - [x] Bundle Output: `app/build/outputs/bundle/liveRelease/app-live-release.aab` (`./gradlew clean bundleLiveRelease assembleLiveRelease --no-build-cache`, 18 Nov 2026, tag `v0.2.0`)
-- [x] Bundle Size: **7.28 MiB** (7,629,067 bytes; within the 15 MB charter limit). Release APK 3.95 MB (3,951,762 bytes). ARM only (`abiFilters` arm64-v8a, armeabi-v7a; owner, 18 Nov 2026)
+- [x] Bundle Size: **7.31 MiB** (7,664,759 bytes; within the 15 MB charter limit). Release APK 3.98 MB (3,976,054 bytes). ARM only (`abiFilters` arm64-v8a, armeabi-v7a; owner, 18 Nov 2026)
 - [x] Baseline profile: `baseline.prof` packaged in the bundle
 - [x] Release signing: bundle and APK signed with the upload key (`CN=HaNa Innovation, O=HaNa Innovation, C=MY`, SHA-256 `b9e59f8c…696d`, checked with `apksigner verify` and `keytool -printcert`, 18 Nov 2026). Same key as 0.1.0, so 0.2.0 installs over it. Turn on Play App Signing at the first upload
 - [x] Privacy policy URL live: https://manaphassan.github.io/Meena-Launcher/privacy-policy/ (GitHub Pages, `gh-pages` branch; republished for 0.2.0)
 - [x] R8 & ProGuard: Minification enabled, resource shrinking enabled. No `com.google.mlkit`, `datatransport` or Firebase classes in the release (checked in `mapping.txt` and the dex files)
 - [x] 16 KB Page Alignment: `zipalign -c -P 16` passes on the 0.2.0 release APK, and every `LOAD` segment is 16 KB aligned in all eight native libraries (`libandroidx.graphics.path.so`, `libdatastore_shared_counter.so`, and CameraX's `libimage_processing_util_jni.so` and `libsurface_util_jni.so`, for both ABIs) (18 Nov 2026)
-- [x] Automated Tests: `testLiveDebugUnitTest` 251 and `testDemoDebugUnitTest` 251, 0 failed (18 Nov 2026)
-- [x] Android Lint (`lintLiveDebug`): 0 errors, 162 warnings, 4 hints (18 Nov 2026). Fixed for 0.2.0: shortcut calls guarded for Android 7.0, notification message pictures limited to Android 11+, backup messages read before the file picker opens
+- [x] Automated Tests: `testLiveDebugUnitTest` 258 and `testDemoDebugUnitTest` 258, 0 failed (18 Nov 2026)
+- [x] Android Lint (`lintLiveDebug`): 0 errors, 161 warnings, 4 hints (18 Nov 2026). Fixed for 0.2.0: shortcut calls guarded for Android 7.0, notification message pictures limited to Android 11+, backup messages read before the file picker opens
 - [x] Camera features: `android.hardware.camera` and `.autofocus` are `uses-feature-not-required` in `aapt2 dump badging`, so Play won't hide Meena from phones without them
-- [ ] Release smoke test: an earlier 0.2.0 build (with ML Kit) ran on a TECNO KL8 (Android 14): cold start 606 ms, no crashes, installed over the earlier release build and kept its data. The final ZXing build still needs a device run and the owner's scanner check. Sony SO-02J (Android 8.0): installs, but Family Link blocked it from opening
+- [ ] Release smoke test: an earlier 0.2.0 build (with ML Kit) ran on a TECNO KL8 (Android 14): cold start 606 ms, no crashes, installed over the earlier release build and kept its data. The final ZXing build still needs a device run and the owner's checks: scanner, WhatsApp "add shortcut", screen time and an app widget. Sony SO-02J (Android 8.0): installs, but Family Link blocked it from opening
 
 ---
 

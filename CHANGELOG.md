@@ -9,7 +9,9 @@ Installs over 0.1.0: same signing key, version code 2.
 
 ### New
 - **Scanner** for QR codes and barcodes, read on the phone with ZXing. Tap to focus, pinch to zoom, and a light for dark places. Keeps up to 50 scans you save, encrypted. Off by default (settings, pages); asks for the camera when you first open it.
-- **Favourite tiles:** up to 8 (was 6). Small tiles fit four to a row, icon only. Colourful tiles use each app's own icon colour. A tile can be an app shortcut, such as a chat with one person.
+- **Favourite tiles:** up to 8 (was 6). Small tiles fit four to a row, icon only. Colourful tiles use each app's own icon colour. A tile can be an app shortcut, such as a chat with one person: pick one from the tile menu, or use "add shortcut" inside an app such as WhatsApp and say yes when Meena asks.
+- **Screen time** on today: time on screen since midnight and the apps you used most, from Android's own usage records. Turn on usage access for Meena when the widget asks.
+- **App widgets** on today: put widgets from your other apps (a calendar, music, notes) on the today page. Apps that offer "add to home screen" for a widget can add it straight to Meena.
 - **Notes:** start a line with `-` for a note, `*` for a task or `x` when it's done. Tap a task in an open note to tick it.
 - **Inbox:** what's playing, with play, pause and skip. Alerts grouped by app; tap to see them all. Reply from the inbox when the app allows it. Pictures from notifications show as small previews. Each inbox widget shows its own number of items, up to 12.
 - **Apps:** an a to z filter that shows one letter at a time.
@@ -23,7 +25,7 @@ Installs over 0.1.0: same signing key, version code 2.
 - Backups are restored from a file you pick, not from the clipboard.
 - Sub-pages now turn in from the left edge like a door. Group tiles tilt when pressed. The money text fields and the widget switches are square.
 - Meena is described by its own brand, Meena UI, in the app and the store listing.
-- Release builds are for ARM phones only (arm64-v8a and armeabi-v7a); x86 emulators can't install them. APK 3.95 MB, AAB 7.6 MB.
+- Release builds are for ARM phones only (arm64-v8a and armeabi-v7a); x86 emulators can't install them. APK 3.98 MB, AAB 7.7 MB.
 
 ### Fixed
 - Favourite tiles no longer disappear after an app is installed or removed.
@@ -33,12 +35,13 @@ Installs over 0.1.0: same signing key, version code 2.
 
 ### Privacy and build
 - New: camera access, for the scanner only. Camera pictures are read in memory and never saved or sent. The camera is marked optional, so phones without one can still install Meena from Play.
+- New: usage access (`PACKAGE_USAGE_STATS`) for screen time, which you turn on yourself in Android's settings, and the widget host permission (`BIND_APPWIDGET`), which Android never grants to Meena outright: it asks you before each new widget. Both approved by the owner on 18 November 2026.
 - New libraries: CameraX 1.4.1 and ZXing core 3.5.4 (both Apache 2.0). Neither sends anything. An earlier draft used Google's ML Kit, which sends usage data to Google; it was replaced before release.
 - R8 keep rules rewritten for kotlinx.serialization, OkHttp, CameraX and Health Connect.
 
 ### Known gaps
-- The screen time widget can't be used yet: this version doesn't ask Android for usage access.
 - Not yet seen running on the Sony SO-02J (Android 8.0): it installs, but Family Link blocked it during testing.
+- On Android 7.0 and 7.1, apps can't add shortcuts or widgets to Meena themselves (that needs Android 8); pick them from Meena instead.
 - Bursa stock prices still need your own Google Sheet, Bank Negara's API terms still haven't been read, and Meena is not on Google Play yet.
 
 ## 0.1.0 (16 November 2026): first public build

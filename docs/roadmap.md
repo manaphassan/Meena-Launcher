@@ -9,10 +9,10 @@ Status on 18 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 | Check | Result (18 Nov 2026) |
 |---|---|
-| Unit tests | 251 live, 251 demo, 0 failed |
-| Lint | 0 errors, 162 warnings |
+| Unit tests | 258 live, 258 demo, 0 failed |
+| Lint | 0 errors, 161 warnings |
 | UI score (`meena-ui-score.md`) | 9.7 of 10; area 4 waits for the task test |
-| Release build | APK 3.95 MB, AAB 7.6 MB, ARM only, signed with the upload key |
+| Release build | APK 3.98 MB, AAB 7.7 MB, ARM only, signed with the upload key |
 
 ## Milestones
 
@@ -37,14 +37,14 @@ Status on 18 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 1 | Bank Negara API terms | Owner said yes to reading them in a browser (16 Nov); the agent still can't open the portal. Tell the agent if they ask for attribution or set limits, so the widget can follow them |
 | 2 | Task test comparison | Proposed: AIO Launcher (A) against Meena (B) on the Sony SO-02J; fallback: the Sony's own home screen. See `task-test-plan.md` |
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
-| 4 | Screen time widget | Needs Android's usage access (`PACKAGE_USAGE_STATS`), a new permission. Approve it, or hide the widget |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 
 ## Backlog (not scheduled)
 
 - Compose UI tests (only unit tests today).
-- Lint warning clean-up (162, mostly unused resources).
+- Lint warning clean-up (161, mostly unused resources).
+- App widgets: let people resize a widget; today each one gets the height it asks for.
 - Material buttons in settings still bring their own press effect; swap them for a Meena button with the scale and tilt press.
 - The outgoing sub-page only fades; it could turn away too.
 - Sparklines for stocks. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].

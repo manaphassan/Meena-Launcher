@@ -1,9 +1,10 @@
 meena 0.2.0
 - a scanner for qr codes and barcodes, read on your phone
-- up to 8 favourites: small, colourful, or a shortcut like a chat
+- up to 8 favourites: small, colourful, or a chat with one person
+- widgets from your other apps on today
+- screen time since midnight
 - notes with tasks you can tick off
 - reply, see pictures and control music from the inbox
-- an a to z letter filter on apps
 - your own wallpaper, and today's widgets in your order
 - settings in four tabs: personalize, pages, connections, about
 - no ads, no accounts, no tracking

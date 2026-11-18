@@ -36,6 +36,7 @@ Meena asks for a few things. Each one is optional, and anything you say no to ju
 | Nearby devices | Connected Bluetooth devices and their battery. |
 | Health Connect | Steps, distance, calories, heart rate and sleep. |
 | Camera | Only when you open the scanner. Pictures are read on your phone and never saved or sent. |
+| Usage access | Only if you turn on screen time. Android shows it on its own settings page; turn on Meena there. |
 
 The full privacy policy is at https://manaphassan.github.io/Meena-Launcher/privacy-policy/
 
@@ -50,6 +51,9 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 - Turn on the **scanner** (settings, pages) and scan a few QR codes and barcodes, including a small one. Does it read them? Try tap to focus, pinch to zoom and the light.
 - Open the nearby map. Do the 3 km and 5 km rings, the compass and the qibla line look right?
 - Write a note, edit it and set a reminder. Start lines with `-`, `*` and `x`, then tap a task to tick it.
+- In WhatsApp, open a chat, then menu, more, **add shortcut**. Does Meena ask, and does the chat appear as a favourite tile that opens it?
+- Turn on **screen time** (settings, pages) and allow usage access. Do the totals look close to Android's Digital Wellbeing?
+- Turn on **app widgets** (settings, pages) and add a widget from another app, such as a calendar or music player. Does it show, update and respond to taps? Try removing it.
 - Watch the battery line while charging and unplugged. Do the times seem sensible?
 - Connect Bluetooth earphones. Do they show up, with their battery?
 
