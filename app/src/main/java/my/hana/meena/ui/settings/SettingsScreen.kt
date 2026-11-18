@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.hana.meena.R
 import my.hana.meena.ui.components.MetroTurnstileContainer
+import my.hana.meena.ui.components.continuum
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.data.finance.FinanceRepository
 import my.hana.meena.data.health.HealthConnectAvailability
@@ -241,6 +242,10 @@ fun SettingsScreen(
             )
         }
 
+        androidx.compose.animation.SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.runtime.CompositionLocalProvider(
+            my.hana.meena.ui.components.LocalContinuumScope provides if (settingsState.reducedMotion) null else this
+        ) {
         MetroTurnstileContainer(
             targetState = activeSubPage,
             modifier = Modifier.fillMaxSize(),
@@ -309,6 +314,8 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+        }
         }
     }
 }
@@ -867,7 +874,8 @@ private fun SettingsPivotRow(
             style = MaterialTheme.typography.titleLarge,
             color = if (isDimmed) MeenaTextMuted else MeenaTextWhite,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.continuum(continuumTitleKey(title))
         )
         Text(
             text = status.lowercase(),
@@ -3104,10 +3112,14 @@ fun MetroSubPageHeader(
             style = MaterialTheme.typography.displayLarge,
             color = MeenaTextWhite,
             maxLines = 1,
-            softWrap = false
+            softWrap = false,
+            modifier = Modifier.continuum(continuumTitleKey(pageTitle))
         )
     }
 }
+
+/** A settings row and the page it opens share their title, so the title flies between them. */
+private fun continuumTitleKey(title: String) = "settings-title:" + title.lowercase()
 
 @Composable
 private fun SolatZonePicker(

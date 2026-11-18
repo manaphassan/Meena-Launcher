@@ -51,6 +51,26 @@ object FavouriteRules {
 
     fun contains(pinned: List<String>, pkg: String): Boolean = pinned.any { pkg in members(it) }
 
+    /**
+     * Splits tiles into rows of [perRow] cells, keeping their order. A wide tile takes two cells;
+     * if it doesn't fit at the end of a row it starts the next one, leaving a gap. [cells] gives
+     * each tile's width in cells (1 or 2). Returns the tile indices on each row.
+     */
+    fun packRows(cells: List<Int>, perRow: Int): List<List<Int>> {
+        val rows = mutableListOf<MutableList<Int>>()
+        var used = perRow
+        cells.forEachIndexed { index, wanted ->
+            val width = wanted.coerceIn(1, perRow)
+            if (used + width > perRow) {
+                rows += mutableListOf<Int>()
+                used = 0
+            }
+            rows.last() += index
+            used += width
+        }
+        return rows
+    }
+
     /** Slots that still have an installed app, in the user's order, capped at [MAX]. */
     fun <T : Any> visible(pinned: List<String>, lookup: (String) -> T?): List<FavouriteSlot<T>> =
         pinned.mapNotNull { id ->

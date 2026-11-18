@@ -44,6 +44,8 @@ data class MeenaUserSettings(
     /** Title at the top of the home pages; empty hides it. See [HomeTitle]. */
     val homeTitle: String = HomeTitle.DEFAULT,
     val pinnedAppIds: List<String> = emptyList(),
+    /** Favourite slots shown two cells wide (single apps and shortcuts only). */
+    val wideFavouriteIds: List<String> = emptyList(),
     /** Android widget IDs Meena hosts on today, in order. See [my.hana.meena.data.system.AppWidgetRepository]. */
     val hostedWidgetIds: List<Int> = emptyList(),
     /** How the apps page is laid out: see [AppsSort]. */

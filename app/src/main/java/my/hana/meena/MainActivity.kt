@@ -978,6 +978,9 @@ fun MeenaHomeScreen(
                             onSetPinned = { updated ->
                                 coroutineScope.launch { settingsRepository.saveSettings(userSettings.copy(pinnedAppIds = updated)) }
                             },
+                            onSetWide = { wide ->
+                                coroutineScope.launch { settingsRepository.saveSettings(userSettings.copy(wideFavouriteIds = wide)) }
+                            },
                             onAddAppWidget = onAddAppWidget,
                             onRemoveAppWidget = { widgetId ->
                                 my.hana.meena.data.system.AppWidgetRepository.delete(context, widgetId)

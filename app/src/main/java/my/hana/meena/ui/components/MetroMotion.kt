@@ -112,8 +112,10 @@ fun <T> MetroTurnstileContainer(
         },
         label = "metroTurnstileContainer"
     ) { state ->
-        Box(modifier = turnstile(forward = isForward, reducedMotion = reducedMotion)) {
-            content(state)
+        androidx.compose.runtime.CompositionLocalProvider(LocalContinuumPage provides this) {
+            Box(modifier = turnstile(forward = isForward, reducedMotion = reducedMotion)) {
+                content(state)
+            }
         }
     }
 }

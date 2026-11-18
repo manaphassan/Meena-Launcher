@@ -59,6 +59,8 @@ fun FavouriteTiles(
     onTogglePin: (String) -> Unit,
     onMoveApp: (Int, Int) -> Unit,
     onSetPinned: (List<String>) -> Unit = {},
+    wideIds: List<String> = emptyList(),
+    onSetWide: (List<String>) -> Unit = {},
     liveFaces: Map<String, List<my.hana.meena.data.system.LiveFace>> = emptyMap(),
     animateLive: Boolean = false
 ) {
@@ -119,13 +121,14 @@ fun FavouriteTiles(
         return
     }
 
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-        verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s),
-        maxItemsInEachRow = perRow
-    ) {
-        slots.forEachIndexed { index, slot ->
+    FavouriteGrid(
+        slots = slots,
+        perRow = perRow,
+        wideIds = wideIds,
+        showAdd = slots.size < FavouriteRules.MAX,
+        onAdd = onOpenApps,
+        addColor = tileColor
+    ) { index, slot, isWide, tileModifier ->
             when (slot) {
                 is FavouriteSlot.Group -> GroupTile(
                     apps = slot.apps,
@@ -138,9 +141,7 @@ fun FavouriteTiles(
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         selectedForMenu = slot.id
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f)
+                    modifier = tileModifier
                 )
 
                 is FavouriteSlot.App -> {
@@ -165,9 +166,7 @@ fun FavouriteTiles(
                         index = index,
                         color = appTileColor,
                         interactionSource = pressSource,
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
+                        modifier = tileModifier
                             .semantics { contentDescription = tileDescription }
                             .combinedClickable(
                                 interactionSource = pressSource,
@@ -200,8 +199,8 @@ fun FavouriteTiles(
                             )
                         }
 
-                        // App Label — hidden in small tile mode
-                        if (!isSmall) {
+                        // App Label: hidden on small tiles, unless the tile is wide
+                        if (!isSmall || isWide) {
                             Text(
                                 text = app.label.lowercase(),
                                 style = MaterialTheme.typography.labelSmall,
@@ -227,41 +226,6 @@ fun FavouriteTiles(
                     }
                 }
             }
-        }
-
-        // Add button while there is room
-        if (slots.size < FavouriteRules.MAX) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .background(tileColor.copy(alpha = 0.2f))
-                    .metroClickable(onClick = onOpenApps),
-                contentAlignment = Alignment.Center
-            ) {
-                androidx.compose.material3.Icon(
-                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_thin_add),
-                    contentDescription = stringResource(R.string.favourites_add),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            // Fill remainder of row with empty spaces to maintain exact size
-            val remainder = perRow - ((slots.size + 1) % perRow)
-            if (remainder < perRow) {
-                for (i in 0 until remainder) {
-                    Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
-                }
-            }
-        } else {
-             val remainder = perRow - (slots.size % perRow)
-             if (remainder < perRow) {
-                 for (i in 0 until remainder) {
-                     Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
-                 }
-             }
-        }
     }
 
     // Long press menu, for an app, shortcut, or group
@@ -322,6 +286,10 @@ fun FavouriteTiles(
                                     val grouped = FavouriteRules.makeGroup(pinnedAppIds, index)
                                     onSetPinned(grouped)
                                     addingTo = grouped[index]
+                                }
+                                val wide = menuId in wideIds
+                                MenuItem(stringResource(if (wide) R.string.favourites_make_normal else R.string.favourites_make_wide)) {
+                                    onSetWide(if (wide) wideIds - menuId else (wideIds + menuId).filter { it in pinnedAppIds })
                                 }
                             }
                             if (index > 0) {
@@ -465,6 +433,60 @@ fun FavouriteTiles(
                 onDismiss = { shortcutPickFrom = null },
                 enableSearch = true
             )
+        }
+    }
+}
+
+/**
+ * Lays out favourite slots in rows of [perRow] equal square cells. A wide slot is two cells and
+ * the gap between them, so every row lines up; one that doesn't fit at a row's end starts the
+ * next row. The add tile, when shown, takes the cell after the last slot.
+ */
+@Composable
+private fun FavouriteGrid(
+    slots: List<FavouriteSlot<my.hana.meena.data.system.DeviceAppInfo>>,
+    perRow: Int,
+    wideIds: List<String>,
+    showAdd: Boolean,
+    onAdd: () -> Unit,
+    addColor: Color,
+    tile: @Composable (index: Int, slot: FavouriteSlot<my.hana.meena.data.system.DeviceAppInfo>, isWide: Boolean, modifier: Modifier) -> Unit
+) {
+    val isWide = slots.map { it is FavouriteSlot.App && it.id in wideIds && perRow >= 2 }
+    val cells = isWide.map { if (it) 2 else 1 } + (if (showAdd) listOf(1) else emptyList())
+    val rows = FavouriteRules.packRows(cells, perRow)
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val gap = my.hana.meena.theme.MeenaSpacing.s
+        val cell = (maxWidth - gap * (perRow - 1)) / perRow
+        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+            rows.forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    row.forEach { i ->
+                        if (i < slots.size) {
+                            val wide = isWide[i]
+                            val width = if (wide) cell * 2 + gap else cell
+                            androidx.compose.runtime.key(slots[i].id) {
+                                tile(i, slots[i], wide, Modifier.size(width, cell))
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(cell)
+                                    .background(addColor.copy(alpha = 0.2f))
+                                    .metroClickable(onClick = onAdd),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                androidx.compose.material3.Icon(
+                                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_thin_add),
+                                    contentDescription = stringResource(R.string.favourites_add),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

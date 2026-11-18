@@ -106,6 +106,7 @@ fun TodayHub(
     onTogglePin: (String) -> Unit = {},
     onReorderPin: (Int, Int) -> Unit = { _, _ -> },
     onSetPinned: (List<String>) -> Unit = {},
+    onSetWide: (List<String>) -> Unit = {},
     onAddAppWidget: (android.appwidget.AppWidgetProviderInfo) -> Unit = {},
     onRemoveAppWidget: (Int) -> Unit = {},
     onToggleWidgetCollapse: (String, Boolean) -> Unit = { _, _ -> }
@@ -663,6 +664,8 @@ fun TodayHub(
                         onTogglePin = onTogglePin,
                         onMoveApp = onReorderPin,
                         onSetPinned = onSetPinned,
+                        wideIds = settings.wideFavouriteIds,
+                        onSetWide = onSetWide,
                         liveFaces = liveFaces,
                         animateLive = liveOn && !settings.reducedMotion
                     )
