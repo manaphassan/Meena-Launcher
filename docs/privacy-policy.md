@@ -53,7 +53,7 @@ Meena requests only the minimal set of Android permissions necessary to provide 
 - **Purpose:** Powers the Inbox hub (alerts and active chats), unread counts and chat names on live favourite tiles, and the opt-in personal spending tracker.
 - **Handling:** 
   - Incoming notification text and titles are inspected strictly in memory on-device.
-  - Live tiles show only how many notifications an app has and, for chats, who they are from (the sender or group name), never the message itself. Showing names can be turned off in settings.
+  - Live tiles show only how many notifications an app has and, for chats, who they are from (the sender or group name), never the message itself. A wide tile can show two names, and for an email app the newest sender and the email's subject. Names and subjects can be turned off in settings, and shake to hide covers them. A music app's tile can show the track playing and its cover. All of this stays on the phone.
   - The opt-in spending tracker only reads notifications from an allowlist of banking and e-wallet apps; amounts and merchant names are parsed locally in memory. Notifications from other apps are never parsed for spending.
   - No notification text, personal messages, or payment details are ever saved to plain logs or uploaded anywhere.
   - **Pictures:** when a notification carries a picture (a photo in a chat, an image in an alert), the inbox shows a small copy of it. The picture is held in memory while the notification exists and is never saved or sent.

@@ -63,8 +63,12 @@ fun FavouriteTiles(
     wideIds: List<String> = emptyList(),
     onSetWide: (List<String>) -> Unit = {},
     liveFaces: Map<String, List<my.hana.meena.data.system.LiveFace>> = emptyMap(),
+    /** Fuller faces for wide tiles; a wide tile without its own falls back to [liveFaces]. */
+    liveFacesWide: Map<String, List<my.hana.meena.data.system.LiveFace>> = emptyMap(),
     animateLive: Boolean = false
 ) {
+    // While shake to hide is on, tiles neither show nor read out who wrote.
+    val veiled by my.hana.meena.data.system.PrivacyVeil.hidden.collectAsState()
     val haptic = LocalHapticFeedback.current
     var selectedForMenu by remember { mutableStateOf<String?>(null) }
     // Slot id whose group is getting a new app, or losing one.
@@ -154,10 +158,13 @@ fun FavouriteTiles(
                     }
                     val realPkg = app.shortcutPackage ?: app.packageName
                     val unreadCount = notificationCounts[realPkg] ?: 0
-                    val faces = liveFaces[realPkg].orEmpty()
+                    val faces = (if (isWide) liveFacesWide[realPkg] else null) ?: liveFaces[realPkg].orEmpty()
                     val tileDescription = buildString {
                         append(app.label.lowercase())
-                        faces.forEach { append(", ").append(it.primary).append(' ').append(it.secondary) }
+                        if (!veiled) faces.forEach { face ->
+                            append(", ").append(face.primary).append(' ').append(face.secondary)
+                            if (face.third.isNotBlank()) append(' ').append(face.third)
+                        }
                     }
 
                     val pressSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -167,6 +174,7 @@ fun FavouriteTiles(
                         index = index,
                         color = appTileColor,
                         interactionSource = pressSource,
+                        wide = isWide,
                         modifier = tileModifier
                             .semantics { contentDescription = tileDescription }
                             .combinedClickable(

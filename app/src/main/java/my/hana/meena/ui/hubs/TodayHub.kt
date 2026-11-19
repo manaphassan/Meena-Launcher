@@ -607,12 +607,21 @@ fun TodayHub(
                     val liveOn = settings.liveTiles
                     val andMorePattern = stringResource(R.string.live_tile_and_more)
                     val alarmPattern = stringResource(R.string.live_tile_alarm)
+                    val fromToPattern = stringResource(R.string.live_tile_from_to)
+                    val inTimePattern = stringResource(R.string.live_tile_in_time)
                     val words = my.hana.meena.data.system.LiveTileWords(
                         new = stringResource(R.string.live_tile_new),
                         andMore = { name, more -> String.format(Locale.UK, andMorePattern, name, more) },
                         alarm = { day -> String.format(Locale.UK, alarmPattern, day) },
-                        onNow = stringResource(R.string.live_tile_on_now)
+                        onNow = stringResource(R.string.live_tile_on_now),
+                        fromTo = { from, to -> String.format(Locale.UK, fromToPattern, from, to) },
+                        inTime = { hours, minutes -> String.format(Locale.UK, inTimePattern, hours, minutes) }
                     )
+                    // The music app's tile shows what's playing; paused or stopped, it doesn't.
+                    val playingTrack by my.hana.meena.data.system.MediaPlayerRepository.nowPlaying.collectAsState()
+                    val playing = playingTrack?.takeIf { it.isPlaying }?.let {
+                        my.hana.meena.data.system.PlayingNow(it.packageName, it.title, it.artist, it.art != null)
+                    }
                     // Apps that open as the calendar; visible to Meena through its launcher query.
                     val calendarPackages = remember {
                         runCatching {
@@ -633,30 +642,38 @@ fun TodayHub(
                             }
                     }
                     val calEvents = (calendarState as? CalendarState.Ready)?.events ?: emptyList()
-                    val liveFaces = remember(
+                    // One set of faces for one-cell tiles and a fuller one for wide tiles.
+                    val liveFacesBoth = remember(
                         liveOn,
                         settings.pinnedAppIds,
+                        settings.wideFavouriteIds,
                         notifications,
                         calEvents,
                         nextAlarm,
                         currentTime,
                         settings.liveTileNames,
-                        settings.is24HourFormat
+                        settings.is24HourFormat,
+                        playing
                     ) {
-                        if (!liveOn) emptyMap() else settings.pinnedAppIds.filterNot { my.hana.meena.data.system.FavouriteRules.isGroup(it) }.associateWith { pkg ->
-                            my.hana.meena.data.system.LiveTiles.facesFor(
-                                packageName = pkg,
-                                notifications = notifications,
-                                calendarPackages = calendarPackages,
-                                events = calEvents,
-                                alarm = nextAlarm,
-                                nowMillis = System.currentTimeMillis(),
-                                showNames = settings.liveTileNames,
-                                is24Hour = settings.is24HourFormat,
-                                words = words
-                            )
-                        }
+                        val singles = settings.pinnedAppIds.filterNot { my.hana.meena.data.system.FavouriteRules.isGroup(it) }
+                        fun facesOf(pkg: String, wide: Boolean) = my.hana.meena.data.system.LiveTiles.facesFor(
+                            packageName = pkg,
+                            notifications = notifications,
+                            calendarPackages = calendarPackages,
+                            events = calEvents,
+                            alarm = nextAlarm,
+                            nowMillis = System.currentTimeMillis(),
+                            showNames = settings.liveTileNames,
+                            is24Hour = settings.is24HourFormat,
+                            words = words,
+                            wide = wide,
+                            playing = playing
+                        )
+                        if (!liveOn) emptyMap<String, List<my.hana.meena.data.system.LiveFace>>() to emptyMap()
+                        else singles.associateWith { facesOf(it, wide = false) } to
+                            singles.filter { it in settings.wideFavouriteIds }.associateWith { facesOf(it, wide = true) }
                     }
+                    val (liveFaces, liveFacesWide) = liveFacesBoth
                     my.hana.meena.ui.components.FavouriteTiles(
                         pinnedAppIds = settings.pinnedAppIds,
                         notificationCounts = notificationCounts,
@@ -671,6 +688,7 @@ fun TodayHub(
                         wideIds = settings.wideFavouriteIds,
                         onSetWide = onSetWide,
                         liveFaces = liveFaces,
+                        liveFacesWide = liveFacesWide,
                         animateLive = liveOn && !settings.reducedMotion
                     )
                 }

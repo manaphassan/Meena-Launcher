@@ -224,6 +224,8 @@
     <string name="live_tile_and_more">%1$s and %2$d more</string>
     <string name="live_tile_alarm">alarm %1$s</string>
     <string name="live_tile_on_now">on now</string>
+    <string name="live_tile_from_to">%1$s to %2$s</string>
+    <string name="live_tile_in_time">in %1$dh %2$dm</string>
     <string name="settings_icon_pack_system">system icons</string>
     <string name="settings_icon_pack_intro">pick a set of icons for your apps. apps the pack doesn\'t cover keep their usual icon.</string>
     <string name="settings_icon_pack_loading">looking for icon packs</string>
