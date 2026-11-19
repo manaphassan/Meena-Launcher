@@ -3,6 +3,24 @@
 All notable changes to Meena. Dates are when the work landed on `main`.
 Versions follow `versionName` in `app/build.gradle.kts`.
 
+## 0.2.1 (19 November 2026)
+
+Installs over 0.2.0: same signing key, version code 3.
+
+### New
+- **Weather page** sits on a live sky drawn from the real readings: rain and snow fall as heavily as the forecast says and lean with the wind, clouds drift, storms flash, and clear skies show a turning sun or stars. Touch it: drops part around your finger, a tap ripples. Adds feels like, rain now, cloud, wind direction and the air quality band. Tap the temperature to switch units.
+- **Wide tiles:** any single app or shortcut tile can be two cells wide, from its long-press menu.
+- **App widgets:** drag the line under a widget to change its height.
+
+### Changed
+- Continuum: tap a settings row and its title flies up into the page's big title, and back on the way out. The music title in the inbox does the same into now playing. Off with less motion.
+- Quick action icons are drawn and move while pressed; play and pause fold into each other, skip buttons lean.
+
+### Privacy and build
+- Weather now also reads wind direction and cloud cover from Open-Meteo, in the same request as before. Nothing new is sent.
+- No new permissions or libraries.
+- Debug builds show "debug" in the top right corner, so they can't be mistaken for a release.
+
 ## 0.2.0 (18 November 2026)
 
 Installs over 0.1.0: same signing key, version code 2.
