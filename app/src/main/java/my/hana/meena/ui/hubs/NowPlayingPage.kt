@@ -52,6 +52,7 @@ import my.hana.meena.data.system.NowPlaying
 import my.hana.meena.theme.MeenaSpacing
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.ui.components.LocalContinuumPage
 import my.hana.meena.ui.components.continuum
 import my.hana.meena.ui.components.metroClickable
 
@@ -144,6 +145,9 @@ fun NowPlayingPage(reducedMotion: Boolean, onNavigateBack: () -> Unit) {
                 return@Column
             }
 
+            // A title that has drifted along must start from its first letter when it flies back.
+            val leaving = LocalContinuumPage.current?.transition?.targetState ==
+                androidx.compose.animation.EnterExitState.PostExit
             Text(
                 text = track.title.lowercase(),
                 style = MaterialTheme.typography.displayMedium,
@@ -153,7 +157,7 @@ fun NowPlayingPage(reducedMotion: Boolean, onNavigateBack: () -> Unit) {
                 overflow = TextOverflow.Clip,
                 modifier = Modifier
                     .continuum(NOW_PLAYING_TITLE_KEY)
-                    .then(if (reducedMotion) Modifier else Modifier.basicMarquee(initialDelayMillis = 1500))
+                    .then(if (reducedMotion || leaving) Modifier else Modifier.basicMarquee(initialDelayMillis = 1500))
             )
             if (track.artist.isNotBlank()) {
                 Text(
@@ -257,18 +261,48 @@ private fun PlayPauseButton(isPlaying: Boolean, description: String, animate: Bo
     }
 }
 
-/** A thin line that fills as the track plays; tap anywhere on it to jump there. */
+/** Where the track is now, read again every [tickMs] while it plays. */
 @Composable
-private fun TrackProgress(track: NowPlaying, accent: androidx.compose.ui.graphics.Color) {
+private fun rememberTrackPosition(track: NowPlaying, tickMs: Long): Long {
     var now by remember { mutableLongStateOf(android.os.SystemClock.elapsedRealtime()) }
     LaunchedEffect(track.isPlaying, track.positionAtElapsed) {
         now = android.os.SystemClock.elapsedRealtime()
         while (track.isPlaying) {
-            delay(500L)
+            delay(tickMs)
             now = android.os.SystemClock.elapsedRealtime()
         }
     }
-    val position = track.positionNow(now)
+    return track.positionNow(now)
+}
+
+/**
+ * Just the line, for the inbox: how far along the track is, with no times and no seeking
+ * (nothing in a pivot drags). Says the position aloud for screen readers.
+ */
+@Composable
+internal fun TrackLine(track: NowPlaying, accent: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+    val position = rememberTrackPosition(track, tickMs = 1_000L)
+    val fraction = (position.toFloat() / track.durationMs).coerceIn(0f, 1f)
+    val muted = MeenaTextMuted
+    val description = stringResource(R.string.now_playing_position, trackTime(position), trackTime(track.durationMs))
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(MeenaSpacing.m)
+            .semantics { contentDescription = description }
+            .drawBehind {
+                val line = 2.dp.toPx()
+                val y = size.height / 2f - line / 2f
+                drawRect(muted.copy(alpha = 0.4f), Offset(0f, y), Size(size.width, line))
+                drawRect(accent, Offset(0f, y), Size(size.width * fraction, line))
+            }
+    )
+}
+
+/** A thin line that fills as the track plays; tap anywhere on it to jump there. */
+@Composable
+private fun TrackProgress(track: NowPlaying, accent: androidx.compose.ui.graphics.Color) {
+    val position = rememberTrackPosition(track, tickMs = 500L)
     val fraction = (position.toFloat() / track.durationMs).coerceIn(0f, 1f)
     val muted = MeenaTextMuted
     val positionText = trackTime(position)

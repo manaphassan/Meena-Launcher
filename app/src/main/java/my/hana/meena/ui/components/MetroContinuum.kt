@@ -1,6 +1,9 @@
 package my.hana.meena.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -8,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
@@ -25,7 +29,7 @@ import androidx.compose.ui.layout.ContentScale
  * scopes (or with reduced motion, when no scope is given) the modifier does nothing.
  *
  * Outside settings the same pairing works for a home sub-page: the sub-page's AnimatedVisibility
- * provides [LocalContinuumPage], and the title it came from uses [continuumSource].
+ * provides [LocalContinuumPage], and the title it came from sits in a [ContinuumSource].
  */
 val LocalContinuumScope: ProvidableCompositionLocal<SharedTransitionScope?> = compositionLocalOf { null }
 val LocalContinuumPage: ProvidableCompositionLocal<AnimatedVisibilityScope?> = compositionLocalOf { null }
@@ -55,21 +59,21 @@ fun Modifier.continuum(key: Any): Modifier {
 }
 
 /**
- * The other end of [continuum] for a title that stays put while a page opens over it (a home
- * widget under a sub-page), so it has no page of its own to come and go with. It hides while
- * [pageOpen] and flies back into place when the page closes. Needs only [LocalContinuumScope].
+ * Holds the other end of a [continuum] title that stays put while a page opens over it (a home
+ * widget under a sub-page). It gives the title a page of its own that leaves while [pageOpen]
+ * and comes back when the page closes, so the title scales both ways, as in settings, and the
+ * two titles cross-fade instead of overlapping. The title only leaves the layout once the
+ * flight ends, by which time the page above covers it. Without [LocalContinuumScope] (less
+ * motion) it just shows [content].
  */
 @Composable
-fun Modifier.continuumSource(key: Any, pageOpen: Boolean): Modifier {
-    val shared = LocalContinuumScope.current ?: return this
-    return with(shared) {
-        this@continuumSource
-            .sharedElementWithCallerManagedVisibility(
-                rememberSharedContentState(ContinuumKey(key)),
-                !pageOpen,
-                continuumBounds
-            )
-            // Laid out at its final size while it flies, so the text never re-wraps.
-            .skipToLookaheadSize()
+fun ContinuumSource(pageOpen: Boolean, content: @Composable () -> Unit) {
+    if (LocalContinuumScope.current == null) {
+        content()
+        return
+    }
+    // No transition of its own: the shared bounds' fade keeps it on screen for the flight.
+    AnimatedVisibility(visible = !pageOpen, enter = EnterTransition.None, exit = ExitTransition.None) {
+        CompositionLocalProvider(LocalContinuumPage provides this) { content() }
     }
 }

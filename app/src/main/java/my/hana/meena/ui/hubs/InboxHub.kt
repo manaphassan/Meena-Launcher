@@ -19,7 +19,10 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import my.hana.meena.ui.components.continuumSource
+import my.hana.meena.ui.components.ContinuumSource
+import my.hana.meena.ui.components.continuum
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -133,7 +136,8 @@ fun InboxHub(
                                 .fillMaxWidth()
                                 .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
                         ) {
-                            Column(
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 48.dp)
@@ -142,23 +146,45 @@ fun InboxHub(
                                         onClick = onOpenNowPlaying
                                     )
                             ) {
-                            Text(
-                                text = track.title.lowercase(),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MeenaTextWhite,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                modifier = Modifier.continuumSource(NOW_PLAYING_TITLE_KEY, pageOpen = isNowPlayingOpen)
-                            )
-                            if (track.artist.isNotBlank()) {
-                                Text(
-                                    text = track.artist.lowercase(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MeenaTextMuted,
-                                    maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                )
+                                // The cover the player shares, square like everything else; none when it shares none.
+                                val art = track.art
+                                if (art != null) {
+                                    Image(
+                                        bitmap = art,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.size(56.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(my.hana.meena.theme.MeenaSpacing.m))
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    ContinuumSource(pageOpen = isNowPlayingOpen) {
+                                        Text(
+                                            text = track.title.lowercase(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MeenaTextWhite,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                            modifier = Modifier.continuum(NOW_PLAYING_TITLE_KEY)
+                                        )
+                                    }
+                                    if (track.artist.isNotBlank()) {
+                                        Text(
+                                            text = track.artist.lowercase(),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MeenaTextMuted,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
                             }
+                            if (track.durationMs > 0) {
+                                TrackLine(
+                                    track = track,
+                                    accent = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = my.hana.meena.theme.MeenaSpacing.s)
+                                )
                             }
                             Row(
                                 modifier = Modifier
