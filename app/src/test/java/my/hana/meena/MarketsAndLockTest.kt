@@ -288,6 +288,98 @@ class MarketsAndLockTest {
         assertEquals("https://www.google.com/finance/quote/HLAL:NASDAQ", my.hana.meena.data.finance.googleQuoteUrl("NASDAQ:HLAL"))
     }
 
+    // Coin holdings from Frankfurter (19 Nov 2026)
+
+    // Real reply from https://api.frankfurter.dev/v2/rates?base=myr&quotes=xrp,btc,bch on 19 Nov 2026.
+    private val coinReply = """
+        [{"date":"2026-11-18","base":"MYR","quote":"BCH","rate":0.0011729},
+         {"date":"2026-11-18","base":"MYR","quote":"BTC","rate":0.0000038472},
+         {"date":"2026-11-18","base":"MYR","quote":"XRP","rate":0.24935}]
+    """.trimIndent()
+
+    private val coinCatalogue = listOf(
+        my.hana.meena.data.finance.Ticker("BTC", "Bitcoin", "crypto"),
+        my.hana.meena.data.finance.Ticker("BCH", "Bitcoin Cash", "crypto"),
+        my.hana.meena.data.finance.Ticker("XRP", "XRP", "crypto"),
+        my.hana.meena.data.finance.Ticker("SOL", "Solana", "crypto"),
+        my.hana.meena.data.finance.Ticker("XAU", "Gold (Troy Ounce)", "metal"),
+        my.hana.meena.data.finance.Ticker("USD", "US Dollar", "currency")
+    )
+
+    private fun holding(id: String, symbol: String, units: Double = 1.0, price: Double = 0.0) =
+        my.hana.meena.data.finance.FinanceHolding(id = id, symbol = symbol, name = symbol, shares = units, averageCost = 0.0, currentPrice = price, groupName = "luno")
+
+    @Test
+    fun coins_pricedInRinggitFromFrankfurter_stocksLeftToTheSheet() {
+        val coinApi = my.hana.meena.data.finance.CoinPrices
+        val priceable = coinApi.priceableCodes(coinCatalogue)
+        // Currencies are never treated as coins.
+        assertFalse("USD" in priceable)
+        val holdings = listOf(
+            holding("1", "XRP", units = 100.0),
+            holding("2", "xbt"),
+            holding("3", "BCH"),
+            holding("4", "FFB", price = 1.5),
+            holding("5", "SENHENG")
+        )
+        val coins = coinApi.coinHoldings(holdings, priceable, sheetSymbols = setOf("FFB", "SENHENG"))
+        // Luno's XBT is Frankfurter's BTC; the Bursa stocks stay with the sheet.
+        assertEquals(mapOf("1" to "XRP", "2" to "BTC", "3" to "BCH"), coins)
+        assertEquals("https://api.frankfurter.dev/v2/rates?base=myr&quotes=bch,btc,xrp", coinApi.latestUrl(coins.values.toSet()))
+
+        val latest = coinApi.latest(Markets.parse(coinReply))
+        val priced = holdings.map { coinApi.priced(it, coins, latest) }
+        assertEquals(1.0 / 0.24935, priced[0].currentPrice, 1e-9)
+        assertEquals(100.0 / 0.24935, priced[0].currentValue, 1e-6)
+        assertEquals(1.0 / 0.0000038472, priced[1].currentPrice, 1e-6)
+        assertEquals(1.0 / 0.0011729, priced[2].currentPrice, 1e-9)
+        assertEquals(holdings.drop(3), priced.drop(3))
+
+        val summary = coinApi.summarise(coins, latest)
+        assertEquals("2026-11-18", summary.date)
+        assertFalse(summary.failed)
+        assertTrue(summary.missing.isEmpty())
+    }
+
+    @Test
+    fun coins_aSheetRowWinsOverACoinWithTheSameTicker() {
+        val coinApi = my.hana.meena.data.finance.CoinPrices
+        val coins = coinApi.coinHoldings(listOf(holding("1", "BTC")), coinApi.priceableCodes(coinCatalogue), setOf("BTC"))
+        assertTrue(coins.isEmpty())
+    }
+
+    @Test
+    fun coins_noPriceBack_keepsTheOldPrice_andNeverMakesOneUp() {
+        val coinApi = my.hana.meena.data.finance.CoinPrices
+        val coins = mapOf("1" to "XRP", "2" to "SOL")
+        val held = listOf(holding("1", "XRP", price = 4.0), holding("2", "SOL"))
+
+        // A bad reply or an error body gives nothing, and nothing changes.
+        for (body in listOf("", "<html>", """{"status":422,"message":"invalid currency: FFB"}""")) {
+            val latest = coinApi.latest(Markets.parse(body))
+            assertEquals(held, held.map { coinApi.priced(it, coins, latest) })
+            val summary = coinApi.summarise(coins, latest)
+            assertTrue(summary.failed)
+            assertNull(summary.date)
+        }
+
+        // Only XRP came back: SOL is named as missing and keeps no price.
+        val partial = coinApi.latest(Markets.parse(coinReply))
+        val priced = held.map { coinApi.priced(it, coins, partial) }
+        assertFalse(priced[1].hasPrice)
+        assertEquals(listOf("SOL"), coinApi.summarise(coins, partial).missing)
+    }
+
+    @Test
+    fun sheet_blankOrErrorChange_isUnknown_notZero() {
+        val repo = my.hana.meena.data.finance.FinanceRepository
+        assertNull(repo.parseNumericOrNull("#N/A"))
+        assertNull(repo.parseNumericOrNull(""))
+        assertNull(repo.parseNumericOrNull("NaN"))
+        assertEquals(-1.5, repo.parseNumericOrNull("-1.5%")!!, 1e-9)
+        assertEquals(0.0, repo.parseNumericOrNull("0")!!, 0.0)
+    }
+
     // Double tap to lock
 
     @Test

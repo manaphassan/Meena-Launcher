@@ -48,6 +48,12 @@ object TickerCatalogueRepository {
         scope.launch { loadInternal(appContext) }
     }
 
+    /** The list, loaded first if there's no fresh saved copy; empty when it can't be had. */
+    suspend fun tickers(context: Context): List<Ticker> {
+        loadInternal(context.applicationContext)
+        return (_state.value as? State.Ready)?.tickers.orEmpty()
+    }
+
     private suspend fun loadInternal(context: Context) = mutex.withLock {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val saved = prefs.getString(KEY_JSON, null)?.let { Markets.parseCatalogue(it) }.orEmpty()

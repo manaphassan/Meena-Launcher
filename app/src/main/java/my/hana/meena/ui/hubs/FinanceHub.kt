@@ -190,7 +190,7 @@ fun FinanceHub(
                                 if (FinanceRepository.isStorageLocked) {
                                     showResetPortfolioDialog = true
                                 } else {
-                                    FinanceRepository.refreshSheetData(context, (financeState as? WidgetState.Ready)?.data?.sheetUrl ?: "")
+                                    FinanceRepository.refreshPrices(context)
                                 }
                             }
                         )
@@ -322,18 +322,24 @@ private fun PortfolioSection(
                     }
 
                     val syncedAt = data.sheetSyncedAt
-                    Text(
-                        text = when {
-                            !data.sheetConnected && !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_needs_prices)
-                            !data.sheetConnected -> stringResource(R.string.finance_source_local)
-                            syncedAt == null -> stringResource(R.string.finance_sheet_not_loaded)
-                            state is WidgetState.Stale -> stringResource(R.string.finance_source_sheet_saved, updatedAgoText(syncedAt))
-                            else -> stringResource(R.string.finance_source_sheet, updatedAgoText(syncedAt))
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MeenaTextMuted
-                    )
+                    // Holdings that aren't coins get their prices from the sheet or from what was typed in.
+                    val coinIds = data.coins?.holdingIds.orEmpty()
+                    if (data.sheetConnected || coinIds.isEmpty() || data.holdings.any { it.id !in coinIds }) {
+                        Text(
+                            text = when {
+                                !data.sheetConnected && !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_needs_prices)
+                                !data.sheetConnected -> stringResource(R.string.finance_source_local)
+                                syncedAt == null -> stringResource(R.string.finance_sheet_not_loaded)
+                                state is WidgetState.Stale -> stringResource(R.string.finance_source_sheet_saved, updatedAgoText(syncedAt))
+                                else -> stringResource(R.string.finance_source_sheet, updatedAgoText(syncedAt))
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MeenaTextMuted
+                        )
+                    }
                 }
+
+                data.coins?.let { coins -> CoinSourceLine(coins = coins, onRefresh = onRefresh) }
 
                 // Holdings List
                 if (data.holdings.isNotEmpty()) {
@@ -352,10 +358,15 @@ private fun PortfolioSection(
                                         interactionSource = interactionSource,
                                         indication = null,
                                         onClick = {
-                                            val sheetRow = data.watchlist.firstOrNull {
-                                                my.hana.meena.data.finance.plainTicker(it.symbol) == my.hana.meena.data.finance.plainTicker(holding.symbol)
+                                            // Coins have no sheet row or quote page; a tap loads fresh prices.
+                                            if (holding.id in data.coins?.holdingIds.orEmpty()) {
+                                                onRefresh()
+                                            } else {
+                                                val sheetRow = data.watchlist.firstOrNull {
+                                                    my.hana.meena.data.finance.plainTicker(it.symbol) == my.hana.meena.data.finance.plainTicker(holding.symbol)
+                                                }
+                                                FinanceRepository.openQuoteUrl(context, my.hana.meena.data.finance.googleQuoteUrl(sheetRow?.symbol ?: holding.symbol))
                                             }
-                                            FinanceRepository.openQuoteUrl(context, my.hana.meena.data.finance.googleQuoteUrl(sheetRow?.symbol ?: holding.symbol))
                                         },
                                         onLongClick = {
                                             onDeleteHolding(holding)
@@ -424,7 +435,7 @@ private fun PortfolioSection(
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
                         watchlist.forEach { item ->
-                            val isBull = item.change >= 0
+                            val isBull = (item.changePercent ?: 0.0) >= 0
                             val hasPrice = item.price > 0.0
                             val ticker = item.tickerDisplay.lowercase()
                             val name = item.name.lowercase().takeIf { item.name.isNotBlank() && item.name != item.symbol }
@@ -462,11 +473,13 @@ private fun PortfolioSection(
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MeenaTextWhite
                                     )
-                                    Text(
-                                        text = signedPercent(item.changePercent),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (isBull) MeenaProfitGreen else MaterialTheme.colorScheme.error
-                                    )
+                                    item.changePercent?.let { percent ->
+                                        Text(
+                                            text = signedPercent(percent),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (isBull) MeenaProfitGreen else MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 } else {
                                     Text(
                                         text = stringResource(R.string.finance_no_price),
@@ -1104,6 +1117,41 @@ private fun marketName(code: String, catalogue: my.hana.meena.data.finance.Ticke
 @androidx.compose.runtime.Composable
 private fun signedRm(value: Double): String =
     stringResource(R.string.finance_signed_amount, if (value < 0) "-" else "+", "%.2f".format(kotlin.math.abs(value)))
+
+/**
+ * Where coin prices come from and how old they are. Frankfurter's coin prices are daily and
+ * usually a day behind, so the date is always shown. A failed load is tappable to try again.
+ */
+@Composable
+private fun CoinSourceLine(coins: my.hana.meena.data.finance.CoinPricing, onRefresh: () -> Unit) {
+    val day = coins.date?.let { my.hana.meena.data.finance.KijangEmas.dayLabel(it) }.orEmpty()
+    val text = when {
+        coins.failed && day.isNotEmpty() -> stringResource(R.string.finance_coins_saved, day)
+        coins.failed -> stringResource(R.string.finance_coins_failed)
+        day.isEmpty() -> stringResource(R.string.finance_coins_loading)
+        else -> stringResource(R.string.finance_coins_source, day)
+    }
+    Column(
+        modifier = if (coins.failed) Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .metroClickable { onRefresh() }
+        else Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (coins.failed) MaterialTheme.colorScheme.primary else MeenaTextMuted
+        )
+        if (!coins.failed && coins.missing.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.finance_coins_missing, coins.missing.joinToString(", ").lowercase()),
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaTextMuted
+            )
+        }
+    }
+}
 
 /** "+1.5%" or "-1.5%"; a change that rounds to zero shows as "0.0%", never "-0.0%". */
 @androidx.compose.runtime.Composable

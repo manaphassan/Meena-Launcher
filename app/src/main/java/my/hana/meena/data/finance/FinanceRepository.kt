@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import my.hana.meena.data.system.KeystoreSecretsManager
 import my.hana.meena.data.system.SecureFields
@@ -84,8 +86,9 @@ data class FinanceTicker(
     val exchange: String = "KLSE",
     val currency: String = "MYR",
     val price: Double = 0.0,
-    val change: Double = 0.0,
-    val changePercent: Double = 0.0,
+    /** Null when the sheet cell is blank or an error such as #N/A, so no made-up 0 is shown. */
+    val change: Double? = null,
+    val changePercent: Double? = null,
     val dayHigh: Double = 0.0,
     val dayLow: Double = 0.0,
     val sparkline: List<Double> = emptyList(),
@@ -127,7 +130,9 @@ data class FinanceData(
     val sheetConnected: Boolean = false,
     val sheetUrl: String = "",
     /** When the sheet last loaded successfully; null if it hasn't loaded since the app started. */
-    val sheetSyncedAt: Long? = null
+    val sheetSyncedAt: Long? = null,
+    /** Coin holdings priced from Frankfurter; null when there are none. */
+    val coins: CoinPricing? = null
 )
 
 /** "KLSE:FFB", "ffb" and "FFB.KL" all mean FFB, so a holding matches its sheet row however it was typed. */
@@ -175,6 +180,10 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     private val watchlistItems = mutableListOf<FinanceTicker>()
     private var sheetUrlConfigured: String = ""
     private var sheetSyncedAt: Long? = null
+    private var coinPricing: CoinPricing? = null
+    private var appContext: Context? = null
+    /** One price load at a time, so the sheet and the coin prices never write over each other. */
+    private val refreshMutex = Mutex()
 
     /**
      * True when saved holdings exist but can't be decrypted. Saving is blocked so the
@@ -184,12 +193,11 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         private set
 
     fun initialize(context: Context) {
+        appContext = context.applicationContext
         loadSavedData(context)
         if (isStorageLocked) return
         evaluateState()
-        if (sheetUrlConfigured.isNotBlank()) {
-            refreshSheetData(context, sheetUrlConfigured)
-        }
+        refreshPrices(context)
     }
 
     /** Deletes saved holdings and the sheet link. Only call after the user says yes. */
@@ -200,6 +208,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         watchlistItems.clear()
         sheetUrlConfigured = ""
         sheetSyncedAt = null
+        coinPricing = null
         isStorageLocked = false
         evaluateState()
     }
@@ -208,11 +217,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
 
     override suspend fun refresh(): WidgetState<FinanceData> {
         if (isStorageLocked) return _state.value
-        if (sheetUrlConfigured.isNotBlank()) {
-            refreshSheetInternal(sheetUrlConfigured)
-        } else {
-            evaluateState()
-        }
+        refreshAll(appContext)
         return _state.value
     }
 
@@ -232,6 +237,9 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         holdingsList.add(holding)
         saveData(context)
         evaluateState()
+        // A new coin gets its price straight away.
+        val app = context.applicationContext
+        scope.launch { refreshMutex.withLock { refreshCoinsInternal(app) } }
     }
 
     fun removeHolding(context: Context, holdingId: String) {
@@ -246,17 +254,82 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         sheetUrlConfigured = url.trim()
         sheetSyncedAt = null
         saveData(context)
-        if (sheetUrlConfigured.isNotBlank()) {
-            refreshSheetData(context, sheetUrlConfigured)
-        } else {
-            evaluateState()
-        }
+        if (sheetUrlConfigured.isBlank()) evaluateState()
+        refreshPrices(context)
     }
 
-    fun refreshSheetData(context: Context, url: String) {
+    /** Loads the sheet (if linked), then coin prices from Frankfurter. */
+    fun refreshPrices(context: Context) {
         if (isStorageLocked) return
-        scope.launch {
-            refreshSheetInternal(url, context)
+        val app = context.applicationContext
+        scope.launch { refreshAll(app) }
+    }
+
+    private suspend fun refreshAll(context: Context?) = refreshMutex.withLock {
+        if (sheetUrlConfigured.isNotBlank()) refreshSheetInternal(sheetUrlConfigured, context)
+        refreshCoinsInternal(context)
+    }
+
+    /**
+     * Prices coin holdings (XRP, BTC, BCH; XBT for Luno's bitcoin) in ringgit from Frankfurter's
+     * latest daily rates. A failed load keeps whatever price each holding had and says so;
+     * it never fills in a price.
+     */
+    private suspend fun refreshCoinsInternal(context: Context?) {
+        val ctx = context ?: appContext ?: return
+        if (isStorageLocked || holdingsList.isEmpty()) {
+            coinPricing = null
+            publish()
+            return
+        }
+        val catalogue = TickerCatalogueRepository.tickers(ctx)
+        if (catalogue.isEmpty()) {
+            // Without Frankfurter's list there's no telling which holdings are coins.
+            coinPricing = coinPricing?.copy(failed = true)
+            publish()
+            return
+        }
+        val sheetSymbols = watchlistItems.map { plainTicker(it.symbol) }.toSet()
+        val coins = CoinPrices.coinHoldings(holdingsList.toList(), CoinPrices.priceableCodes(catalogue), sheetSymbols)
+        if (coins.isEmpty()) {
+            coinPricing = null
+            publish()
+            return
+        }
+        val before = coinPricing
+        coinPricing = before?.copy(holdingIds = coins.keys, failed = false) ?: CoinPricing(coins.keys)
+        publish()
+
+        coinPricing = try {
+            val request = Request.Builder().url(CoinPrices.latestUrl(coins.values.toSet())).build()
+            httpClient.newCall(request).execute().use { response ->
+                val body = if (response.isSuccessful) response.body?.string().orEmpty() else ""
+                val latest = CoinPrices.latest(Markets.parse(body))
+                val result = CoinPrices.summarise(coins, latest)
+                if (result.failed) {
+                    Log.w(TAG, "No coin prices came back (http ${response.code})")
+                    (before ?: result).copy(holdingIds = coins.keys, failed = true)
+                } else {
+                    for (i in holdingsList.indices) {
+                        holdingsList[i] = CoinPrices.priced(holdingsList[i], coins, latest)
+                    }
+                    saveData(ctx)
+                    result
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Couldn't load coin prices: ${e.javaClass.simpleName}")
+            (before ?: CoinPricing(coins.keys)).copy(holdingIds = coins.keys, failed = true)
+        }
+        publish()
+    }
+
+    /** Shows the latest holdings without hiding a sheet problem: a saved copy stays marked as saved. */
+    private fun publish() {
+        when (val current = _state.value) {
+            is WidgetState.Stale -> _state.value = WidgetState.Stale(buildData(), current.updatedAt)
+            is WidgetState.Error -> Unit
+            else -> evaluateState()
         }
     }
 
@@ -333,8 +406,11 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     /**
      * Sanitizes numerical string removing currency symbols, percentage signs, and commas.
      */
-    fun parseNumeric(value: String?): Double {
-        if (value.isNullOrBlank()) return 0.0
+    fun parseNumeric(value: String?): Double = parseNumericOrNull(value) ?: 0.0
+
+    /** Like [parseNumeric], but null for a blank cell or a sheet error such as #N/A. */
+    fun parseNumericOrNull(value: String?): Double? {
+        if (value.isNullOrBlank()) return null
         val cleaned = value
             .replace("RM", "", ignoreCase = true)
             .replace("$", "")
@@ -342,7 +418,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
             .replace(",", "")
             .replace("+", "")
             .trim()
-        return cleaned.toDoubleOrNull() ?: 0.0
+        return cleaned.toDoubleOrNull()?.takeIf { !it.isNaN() && !it.isInfinite() }
     }
 
     /**
@@ -368,8 +444,8 @@ object FinanceRepository : WidgetSpec<FinanceData> {
             val rawSymbol = cols[0]
             val symbol = rawSymbol.uppercase()
             val price = parseNumeric(cols.getOrNull(1))
-            val change = parseNumeric(cols.getOrNull(2))
-            val changePercent = parseNumeric(cols.getOrNull(3))
+            val change = parseNumericOrNull(cols.getOrNull(2))
+            val changePercent = parseNumericOrNull(cols.getOrNull(3))
             val name = cols.getOrNull(4)?.ifBlank { null } ?: symbol
 
             val cleanTicker = symbol
@@ -425,6 +501,14 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     private fun evaluateState() {
+        if (holdingsList.isEmpty() && watchlistItems.isEmpty() && sheetUrlConfigured.isBlank()) {
+            _state.value = WidgetState.NeedsSetup
+        } else {
+            _state.value = WidgetState.Ready(data = buildData(), updatedAt = System.currentTimeMillis())
+        }
+    }
+
+    private fun buildData(): FinanceData {
         val groups = holdingsList.groupBy { it.groupName }
         val accounts = groups.map { (groupName, list) ->
             val totals = portfolioTotals(list)
@@ -436,22 +520,18 @@ object FinanceRepository : WidgetSpec<FinanceData> {
                 currency = "MYR"
             )
         }
-
-        if (holdingsList.isEmpty() && watchlistItems.isEmpty() && sheetUrlConfigured.isBlank()) {
-            _state.value = WidgetState.NeedsSetup
-        } else {
-            _state.value = WidgetState.Ready(
-                data = FinanceData(
-                    holdings = holdingsList.toList(),
-                    portfolios = accounts,
-                    watchlist = watchlistItems.toList(),
-                    sheetConnected = sheetUrlConfigured.isNotBlank(),
-                    sheetUrl = sheetUrlConfigured,
-                    sheetSyncedAt = sheetSyncedAt
-                ),
-                updatedAt = System.currentTimeMillis()
-            )
-        }
+        val coins = coinPricing?.let { c ->
+            c.copy(holdingIds = c.holdingIds.filterTo(mutableSetOf()) { id -> holdingsList.any { it.id == id } })
+        }?.takeIf { it.holdingIds.isNotEmpty() }
+        return FinanceData(
+            holdings = holdingsList.toList(),
+            portfolios = accounts,
+            watchlist = watchlistItems.toList(),
+            sheetConnected = sheetUrlConfigured.isNotBlank(),
+            sheetUrl = sheetUrlConfigured,
+            sheetSyncedAt = sheetSyncedAt,
+            coins = coins
+        )
     }
 
     private fun handleFailure(message: String) {
