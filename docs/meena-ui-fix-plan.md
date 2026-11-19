@@ -261,6 +261,12 @@ settings (pivot, link lists only; no switches here)
 - **FX (free, no key):** Frankfurter (ECB reference rates, daily) is the default candidate; Bank Negara Malaysia OpenAPI is the alternative. Verify MYR coverage and terms [S]. **Built (16 Nov 2026):** Frankfurter v2 blended rates for any of 161 currencies, plus metals and 35 coins for the markets chart; its FAQ allows commercial use and caching. Bank Negara supplies Kijang Emas prices (terms unread, [S]).
 - **Portfolio:** pure local data entry; prices and totals computed live. Seed with nothing. The old hardcoded portfolio values and watchlist are deleted.
 - **Candles:** fix the cache to emit via `StateFlow`; drop the synthetic fallback. If the free source has no history, hide the chart rather than fake it.
+- **Coin holdings (19 Nov 2026):** coins are priced from **Frankfurter's daily blended rates** in ringgit (`/v2/rates?base=myr&quotes=xrp,btc,bch`), and stocks stay on the sheet. Only codes Frankfurter lists as `crypto` or `metal` count as coins (Luno's `XBT` is read as `BTC`), and a symbol with a sheet row keeps the sheet's price. Coin prices are about a day behind, so the money page always shows their date. A failed load keeps the old price and says so. Why:
+  - **Google Finance crypto is unreliable.** On 19 Nov 2026 the sheet showed BCH at RM 1,540.60 while Luno showed about RM 861, so crypto is not put in the sheet.
+  - **Luno API: not used.** Luno MY Terms of Use (14 May 2026), §19: market data from the Luno API may not be redistributed or sold without Luno's prior written consent (https://www.luno.com/en-my/legal/terms-of-use). It could be revisited only with that consent in writing.
+  - **Free stock APIs: none used.** Twelve Data, Finnhub, Massive (formerly Polygon) and Marketstack free tiers don't allow one shared key in a public app. The Alpha Vantage, FMP and Tiingo terms could not be read [S]. No terms address each user pasting their own key [S], so that isn't pursued without written confirmation.
+  - **Frankfurter:** the FAQ (https://frankfurter.dev) says blended rates are free for commercial use and may be cached. It lists 35 coins, including XRP, BTC and BCH (`/v2/currencies`, type `crypto`).
+- **Sheet cells (19 Nov 2026):** a blank or `#N/A` change cell now shows no change, instead of a made-up 0.
 
 ### 5.4 News
 - RSS/Atom parser with ETag/If-Modified-Since, per-feed error isolation (one bad feed never blanks the widget), HTML entity decoding via a proper parser, images off by default for Light/Fast.
