@@ -1,4 +1,4 @@
-# Meena tester guide (v0.2.0)
+# Meena tester guide (v0.2.1)
 
 Thanks for helping test Meena. It's a home screen for Android: five pages you swipe through sideways (today, inbox, news, money and apps), with big type and no clutter.
 
@@ -45,15 +45,16 @@ The full privacy policy is at https://manaphassan.github.io/Meena-Launcher/priva
 Spend a few minutes on each page in the first days, then just use your phone as normal.
 
 **Today**
-- Does the weather match your area? Tap it for the detail page.
+- Does the weather match your area? Tap it for the detail page. Does the sky there match outside (rain, cloud, a clear sky)? Touch it, and tap the temperature to switch units.
 - Add favourites: on the apps page, long-press an app and choose **add to favourites**. Try the tile that holds four small apps, and **pin a shortcut** from a tile's long-press menu (for example a chat). Then try **small tiles** and **colourful tiles** in settings, personalize.
+- Long-press a single app or shortcut tile and choose **make it wide**. Turn on **live tiles** (settings, personalize). Do tiles turn over now and then to show unread counts, who a chat is from, your next event and your next alarm?
 - Are the prayer times right for your zone?
 - Turn on the **scanner** (settings, pages) and scan a few QR codes and barcodes, including a small one. Does it read them? Try tap to focus, pinch to zoom and the light.
 - Open the nearby map. Do the 3 km and 5 km rings, the compass and the qibla line look right?
 - Write a note, edit it and set a reminder. Start lines with `-`, `*` and `x`, then tap a task to tick it.
 - In WhatsApp, open a chat, then menu, more, **add shortcut**. Does Meena ask, and does the chat appear as a favourite tile that opens it?
 - Turn on **screen time** (settings, pages) and allow usage access. Do the totals look close to Android's Digital Wellbeing?
-- Turn on **app widgets** (settings, pages) and add a widget from another app, such as a calendar or music player. Does it show, update and respond to taps? Try removing it.
+- Turn on **app widgets** (settings, pages) and add a widget from another app, such as a calendar or music player. Does it show, update and respond to taps? Drag the line under it to change its height. Try removing it.
 - Watch the battery line while charging and unplugged. Do the times seem sensible?
 - Connect Bluetooth earphones. Do they show up, with their battery?
 
@@ -82,6 +83,8 @@ Spend a few minutes on each page in the first days, then just use your phone as 
 - Pick a wallpaper (settings, personalize, wallpaper). Is text still easy to read? Try a few dim levels.
 - Move today's widgets around (settings, pages, reorder widgets).
 - Swipe down from the top of a page. Does the quick panel open?
+- Open a row in settings. Does its title fly up into the page's big title, and back when you leave? Tapping the song name in the inbox does the same.
+- Turn on **shake to hide** (settings, personalize). Do two firm shakes blur chats, email, notes and money, and does the next shake bring them back?
 - Try **double tap to lock** (settings, about). Does a double tap on an empty spot lock the phone? Does a double tap on a tile or link ever lock it by mistake?
 - Anything slow, stuck, cut off, hard to read or hard to tap?
 - Anything that shows made-up looking numbers? Meena should only ever show real information, or say what it needs.
