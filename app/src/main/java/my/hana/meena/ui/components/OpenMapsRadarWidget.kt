@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +42,6 @@ import my.hana.meena.data.system.Qibla
 import my.hana.meena.data.system.SunEvents
 import my.hana.meena.data.system.SunPath
 import my.hana.meena.data.system.SunPosition
-import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
 import kotlin.math.roundToInt
@@ -289,11 +287,9 @@ fun NearbyMap(
     val accentHex = hex(MaterialTheme.colorScheme.primary)
     // OpenFreeMap's own styles (https://openfreemap.org/quick_start/): dark on black, positron on white and paper.
     val styleUrl = if (palette.isLight) "https://tiles.openfreemap.org/styles/positron" else "https://tiles.openfreemap.org/styles/dark"
-    val pageColor = hex(palette.background)
     val look = MapLook(
         accent = accentHex,
         styleUrl = styleUrl,
-        pageColor = pageColor,
         textColor = hex(palette.text),
         mutedColor = hex(palette.textMuted),
         sunColor = hex(palette.warning),
@@ -349,9 +345,9 @@ fun NearbyMap(
         }
     }
 
+    // No background of its own: the page (or the dimmed wallpaper on today) shows through.
     Box(
         modifier = modifier
-            .background(MeenaBlack)
             .semantics { contentDescription = description }
     ) {
         AndroidView(
@@ -368,7 +364,7 @@ fun NearbyMap(
                         loadWithOverviewMode = true
                         useWideViewPort = true
                     }
-                    setBackgroundColor(AndroidColor.parseColor(pageColor))
+                    setBackgroundColor(AndroidColor.TRANSPARENT)
                     // The page carries its own spoken summary on the Box above.
                     importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
 
@@ -402,7 +398,6 @@ fun NearbyMap(
                 if (view.tag != mapHtml) {
                     if (view.tag != null) {
                         isMapLoaded = false
-                        view.setBackgroundColor(AndroidColor.parseColor(pageColor))
                         view.loadDataWithBaseURL("https://www.openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
                     }
                     view.tag = mapHtml
@@ -454,7 +449,6 @@ internal object MapAssets {
 private data class MapLook(
     val accent: String,
     val styleUrl: String,
-    val pageColor: String,
     val textColor: String,
     val mutedColor: String,
     val sunColor: String,
@@ -481,7 +475,6 @@ private fun generateMapHtml(lat: Double, lng: Double, accuracyMeters: Float, loo
     val qiblaWord = jsString(look.qiblaWord)
     val radius = accuracyMeters.coerceIn(100f, 5000f)
     val accent = look.accent
-    val pageColor = look.pageColor
     val interactive = look.interactive
     val detailed = look.detailed
     return """
@@ -493,10 +486,10 @@ private fun generateMapHtml(lat: Double, lng: Double, accuracyMeters: Float, loo
 $MAP_LIBS_MARKER
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; background: $pageColor; overflow: hidden; }
+  html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
   /* Height is set from window.innerHeight in script: CSS vh and % resolve to 0 in this WebView. */
-  #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: $pageColor; }
-  .leaflet-container { background: $pageColor; }
+  #map { position: fixed; top: 0; left: 0; width: 100%; height: 0; background: transparent; }
+  .leaflet-container { background: transparent; }
   /* Compass and labels sit over the map and never take touches. */
   #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 0; pointer-events: none; z-index: 1000; overflow: visible; }
   #overlay text { font: 12px sans-serif; }
@@ -566,7 +559,23 @@ $MAP_LIBS_MARKER
   }, 250);
 
   // OpenFreeMap vector style (free, no key; https://openfreemap.org). Credit is shown below the map.
-  L.maplibreGL({ style: '${look.styleUrl}' }).addTo(map);
+  var glLayer = L.maplibreGL({ style: '${look.styleUrl}' }).addTo(map);
+  // The style paints its own background (near black, or off white), which showed as a box on
+  // the page. Make it see-through so the page or wallpaper shows; roads, water and labels stay.
+  // https://maplibre.org/maplibre-style-spec/layers/#background-opacity
+  var glMap = glLayer.getMaplibreMap();
+  var backgroundCleared = false;
+  if (glMap) glMap.on('styledata', function () {
+    if (backgroundCleared) return;
+    try {
+      var style = glMap.getStyle();
+      if (!style || !style.layers) return;
+      style.layers.forEach(function (layer) {
+        if (layer.type === 'background') glMap.setPaintProperty(layer.id, 'background-opacity', 0);
+      });
+      backgroundCleared = true;
+    } catch (e) {}
+  });
 
   // How rough the location is: a thin ring, barely filled.
   var area = L.circle([lat, lng], {
