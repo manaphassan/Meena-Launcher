@@ -292,6 +292,7 @@ fun NearbyMap(
         styleUrl = styleUrl,
         textColor = hex(palette.text),
         mutedColor = hex(palette.textMuted),
+        pageColor = hex(palette.background),
         sunColor = hex(palette.warning),
         ringLabels = MAP_RING_KM.map { stringResource(R.string.map_ring_label, it) },
         cardinals = listOf(
@@ -451,6 +452,7 @@ private data class MapLook(
     val styleUrl: String,
     val textColor: String,
     val mutedColor: String,
+    val pageColor: String,
     val sunColor: String,
     val ringLabels: List<String>,
     val cardinals: List<String>,
@@ -525,7 +527,7 @@ $MAP_LIBS_MARKER
   var RING_LABELS = [$labels];
   var CARDINALS = [$cardinals];
   var QIBLA_WORD = $qiblaWord;
-  var TEXT = '${look.textColor}', MUTED = '${look.mutedColor}', SUN = '${look.sunColor}';
+  var TEXT = '${look.textColor}', MUTED = '${look.mutedColor}', SUN = '${look.sunColor}', PAGE = '${look.pageColor}';
   var PULSE_MS = 3000;
   var WAVE_OPACITY = [0.6, 0.3];
   var ringsOn = false, pulseOn = false, timer = null;
@@ -561,19 +563,47 @@ $MAP_LIBS_MARKER
   // OpenFreeMap vector style (free, no key; https://openfreemap.org). Credit is shown below the map.
   var glLayer = L.maplibreGL({ style: '${look.styleUrl}' }).addTo(map);
   // The style paints its own background (near black, or off white), which showed as a box on
-  // the page. Make it see-through so the page or wallpaper shows; roads, water and labels stay.
-  // https://maplibre.org/maplibre-style-spec/layers/#background-opacity
+  // the page, so it is made see-through and the page or wallpaper shows. The style's roads and
+  // names are tuned for that background (near-black roads on dark, white roads on light) and
+  // vanish without it, so they are redrawn in the page's text colour, small roads fainter, with
+  // names haloed in the page colour. Water and buildings become a faint tint.
+  // https://maplibre.org/maplibre-style-spec/layers/
   var glMap = glLayer.getMaplibreMap();
-  var backgroundCleared = false;
+  var restyled = false;
+  function roadOpacity(id) {
+    if (/motorway|trunk/.test(id)) return 0.7;
+    if (/major|primary|secondary/.test(id)) return 0.55;
+    if (/minor|path|service|track/.test(id)) return 0.35;
+    return 0.25;
+  }
+  function restyle(layer) {
+    var id = layer.id;
+    var paint = function (k, v) { glMap.setPaintProperty(id, k, v); };
+    if (layer.type === 'background') {
+      paint('background-opacity', 0);
+    } else if (layer.type === 'fill') {
+      paint('fill-color', TEXT);
+      paint('fill-opacity', /water/.test(id) ? 0.12 : 0.05);
+      if (layer.paint && layer.paint['fill-outline-color']) paint('fill-outline-color', TEXT);
+    } else if (layer.type === 'line') {
+      // Casings and dash overlays only made sense against the old background.
+      if (/casing|dashline/.test(id)) glMap.setLayoutProperty(id, 'visibility', 'none');
+      else { paint('line-color', TEXT); paint('line-opacity', roadOpacity(id)); }
+    } else if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+      paint('text-color', /place|label_(city|town|village|other|state|country)/.test(id) ? TEXT : MUTED);
+      paint('text-halo-color', PAGE);
+      paint('text-halo-width', 1.2);
+    }
+  }
   if (glMap) glMap.on('styledata', function () {
-    if (backgroundCleared) return;
+    if (restyled) return;
     try {
       var style = glMap.getStyle();
       if (!style || !style.layers) return;
+      restyled = true;
       style.layers.forEach(function (layer) {
-        if (layer.type === 'background') glMap.setPaintProperty(layer.id, 'background-opacity', 0);
+        try { restyle(layer); } catch (e) {}
       });
-      backgroundCleared = true;
     } catch (e) {}
   });
 
