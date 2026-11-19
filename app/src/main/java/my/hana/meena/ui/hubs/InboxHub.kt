@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import my.hana.meena.ui.components.continuumSource
 import my.hana.meena.ui.components.metroClickable
 import my.hana.meena.ui.components.metroFeatherIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -65,6 +66,7 @@ import my.hana.meena.ui.components.MetroDialog
 fun InboxHub(
     settings: MeenaUserSettings,
     listState: LazyListState,
+    isNowPlayingOpen: Boolean = false,
     onOpenNowPlaying: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
@@ -145,7 +147,8 @@ fun InboxHub(
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MeenaTextWhite,
                                 maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.continuumSource(NOW_PLAYING_TITLE_KEY, pageOpen = isNowPlayingOpen)
                             )
                             if (track.artist.isNotBlank()) {
                                 Text(

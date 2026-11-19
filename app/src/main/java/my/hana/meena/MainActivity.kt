@@ -675,7 +675,12 @@ fun MeenaHomeScreen(
     }
 
     val currentWallpaper = wallpaperBitmap
-    Box(modifier = Modifier.fillMaxSize()) {
+    // One shared scope over home and its sub-pages, so a widget title can fly into the page it opens.
+    androidx.compose.animation.SharedTransitionScope { sharedModifier ->
+    androidx.compose.runtime.CompositionLocalProvider(
+        my.hana.meena.ui.components.LocalContinuumScope provides if (userSettings.reducedMotion) null else this
+    ) {
+    Box(modifier = sharedModifier.fillMaxSize()) {
         if (currentWallpaper != null) {
             Image(
                 bitmap = currentWallpaper,
@@ -1014,6 +1019,7 @@ fun MeenaHomeScreen(
                         1 -> InboxHub(
                             settings = userSettings,
                             listState = hubInboxListState,
+                            isNowPlayingOpen = isNowPlayingOpen,
                             onOpenNowPlaying = { isNowPlayingOpen = true }
                         )
                         2 -> NewsHub(
@@ -1132,10 +1138,14 @@ fun MeenaHomeScreen(
                     .fillMaxSize()
                     .then(turn)
             ) {
+                androidx.compose.runtime.CompositionLocalProvider(
+                    my.hana.meena.ui.components.LocalContinuumPage provides this@AnimatedVisibility
+                ) {
                 my.hana.meena.ui.hubs.NowPlayingPage(
                     reducedMotion = userSettings.reducedMotion,
                     onNavigateBack = { isNowPlayingOpen = false }
                 )
+                }
             }
         }
 
@@ -1308,6 +1318,8 @@ fun MeenaHomeScreen(
                 onDismiss = { answer() }
             )
         }
+    }
+    }
     }
 }
 

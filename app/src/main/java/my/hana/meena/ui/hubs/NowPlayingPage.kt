@@ -52,6 +52,7 @@ import my.hana.meena.data.system.NowPlaying
 import my.hana.meena.theme.MeenaSpacing
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
+import my.hana.meena.ui.components.continuum
 import my.hana.meena.ui.components.metroClickable
 
 /** "3:07", or "1:02:45" for long tracks. */
@@ -62,6 +63,9 @@ internal fun trackTime(ms: Long): String {
     val s = total % 60
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
+
+/** Joins the inbox music title to the now playing title, so one flies into the other. */
+internal const val NOW_PLAYING_TITLE_KEY = "now-playing-title"
 
 /**
  * Full-page now playing, in the Zune style: the album art fills the screen behind a dim layer,
@@ -147,7 +151,9 @@ fun NowPlayingPage(reducedMotion: Boolean, onNavigateBack: () -> Unit) {
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Clip,
-                modifier = if (reducedMotion) Modifier else Modifier.basicMarquee(initialDelayMillis = 1500)
+                modifier = Modifier
+                    .continuum(NOW_PLAYING_TITLE_KEY)
+                    .then(if (reducedMotion) Modifier else Modifier.basicMarquee(initialDelayMillis = 1500))
             )
             if (track.artist.isNotBlank()) {
                 Text(
