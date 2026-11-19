@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>meena: wide live tiles, flip or peek</title>
+<!--
+  Owner question Q3 in docs/live-faces-plan.md: should wide live tiles flip like the other
+  tiles, or peek? Open this file in any browser. Self-contained: no fonts or scripts are
+  loaded from the internet. Tiles are drawn at their real size in dp (1 CSS px = 1 dp):
+  a wide tile is 206 x 100 with three tiles to a row. The words on the faces are made-up
+  examples for this page only; the app only ever shows real data.
+-->
+<style>
+  :root { --bg: #000; --text: #fff; --muted: #888; --tile: #007db6; --gap: 6px; --cell: 100px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; border-radius: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Segoe UI", "Selawik", Roboto, sans-serif; padding: 24px; }
+  h1 { font-weight: 300; font-size: 44px; letter-spacing: -1px; margin-bottom: 6px; }
+  p.lead { color: var(--muted); font-size: 14px; max-width: 640px; margin-bottom: 24px; line-height: 1.45; }
+  .columns { display: flex; flex-wrap: wrap; gap: 48px; }
+  .column h2 { font-weight: 300; font-size: 28px; margin-bottom: 6px; }
+  .column p { color: var(--muted); font-size: 13px; max-width: 318px; margin-bottom: 12px; line-height: 1.4; }
+  .grid { display: grid; grid-template-columns: repeat(3, var(--cell)); gap: var(--gap); width: calc(var(--cell) * 3 + var(--gap) * 2); }
+  .tile { position: relative; height: var(--cell); background: var(--tile); overflow: hidden; perspective: 1200px; }
+  .tile.wide { grid-column: span 2; }
+  .face { position: absolute; inset: 0; padding: 6px; }
+  .front .glyph { position: absolute; left: 50%; top: 40%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border: 1.5px solid #fff; }
+  .front .label { position: absolute; left: 6px; bottom: 6px; font-size: 12px; }
+  .big { font-size: 28px; font-weight: 300; line-height: 30px; }
+  .line { font-size: 12px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .music { display: flex; padding: 0; }
+  .cover { width: var(--cell); height: var(--cell); flex: none; background: linear-gradient(135deg, #3a5a40, #a3b18a 55%, #344e41); }
+  .music .words { padding: 6px; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+  .music .title { font-size: 15px; line-height: 19px; }
+
+  /* Flip: what tiles do in the app today. Turn away to 90 degrees, swap the face, turn back in. */
+  .flip .card { position: absolute; inset: 0; transform-origin: 50% 50%; transition: transform 180ms ease-in; }
+  .flip .card.out { transform: rotateX(90deg); }
+  .flip .card.in { transition: transform 180ms ease-out; }
+  .flip .face { display: none; }
+  .flip .face.shown { display: block; }
+  .flip .face.music.shown { display: flex; }
+
+  /* Peek: the next face slides up from the bottom and pushes the current one off the top. */
+  .peek .strip { position: absolute; left: 0; right: 0; top: 0; transition: transform 380ms cubic-bezier(0.1, 0.9, 0.2, 1); }
+  .peek .face { position: relative; inset: auto; height: var(--cell); }
+
+  .note { color: var(--muted); font-size: 12px; margin-top: 12px; max-width: 318px; line-height: 1.4; }
+  @media (prefers-reduced-motion: reduce) { .flip .card, .peek .strip { transition: none; } }
+</style>
+</head>
+<body>
+<h1>flip or peek</h1>
+<p class="lead">Both columns show the same wide tiles with the same faces and timing: the front for 4 s, each face for 3 s (shortened from the app's 7 s and 4 s so you don't have to wait). The small tiles flip in both, as they do today.</p>
+
+<div class="columns">
+  <section class="column">
+    <h2>flip</h2>
+    <p>Like the small tiles today: the wide tile turns over on its middle and comes back with the next face.</p>
+    <div class="grid" id="flipGrid"></div>
+  </section>
+  <section class="column">
+    <h2>peek</h2>
+    <p>Windows Phone wide tiles: the next face slides up from the bottom. Small tiles still flip, so wide and small move differently.</p>
+    <div class="grid" id="peekGrid"></div>
+  </section>
+</div>
+<p class="note">Example words only. On the phone a face only shows real data: real counts, the real sender (when show names is on), the real cover from the music app.</p>
+
+<script>
+  // Each tile: a front, then its faces. Faces are HTML for one face area.
+  var tiles = [
+    { wide: true, label: "whatsapp", faces: [
+      '<div class="big">3</div><div class="line">aisyah</div><div class="line">farid and 1 more</div>'
+    ] },
+    { wide: false, label: "clock", faces: [
+      '<div class="big">06:30</div><div class="line">alarm tomorrow</div>'
+    ] },
+    { wide: true, label: "poweramp", music: true, faces: [
+      '<div class="cover"></div><div class="words"><div class="title">aku yang asing</div><div class="line">hujan</div></div>'
+    ] },
+    { wide: false, label: "calendar", faces: [
+      '<div class="line" style="font-size:13px;white-space:normal">standup</div><div class="line">today 09:00</div>'
+    ] },
+    { wide: true, label: "gmail", faces: [
+      '<div class="big">2</div><div class="line">siti</div><div class="line">invoice for november</div>'
+    ] },
+    { wide: false, label: "telegram", faces: [
+      '<div class="big">1</div><div class="line">rumah hijau</div>'
+    ] }
+  ];
+  var FRONT_MS = 4000, FACE_MS = 3000, STAGGER_MS = 900, HALF_MS = 180;
+
+  function frontHtml(t) { return '<div class="glyph"></div><div class="label">' + t.label + '</div>'; }
+  function faceClass(t, i) { return "face" + (i > 0 && t.music ? " music" : ""); }
+
+  function buildFlip(t, el) {
+    el.classList.add("flip");
+    var card = document.createElement("div");
+    card.className = "card";
+    var all = [frontHtml(t)].concat(t.faces);
+    all.forEach(function (html, i) {
+      var f = document.createElement("div");
+      f.className = (i === 0 ? "face front" : faceClass(t, i)) + (i === 0 ? " shown" : "");
+      f.innerHTML = html;
+      card.appendChild(f);
+    });
+    el.appendChild(card);
+    var shown = 0;
+    return function step() {
+      card.classList.remove("in");
+      card.classList.add("out");
+      setTimeout(function () {
+        card.children[shown].classList.remove("shown");
+        shown = (shown + 1) % all.length;
+        card.children[shown].classList.add("shown");
+        card.style.transition = "none";
+        card.style.transform = "rotateX(-90deg)";
+        card.offsetWidth; // apply before turning back in
+        card.style.transition = "";
+        card.style.transform = "";
+        card.classList.remove("out");
+        card.classList.add("in");
+      }, HALF_MS);
+      return shown === 0 ? FRONT_MS : FACE_MS;
+    };
+  }
+
+  function buildPeek(t, el) {
+    el.classList.add("peek");
+    var strip = document.createElement("div");
+    strip.className = "strip";
+    // Front, faces, then the front again so the loop always slides upward.
+    var all = [frontHtml(t)].concat(t.faces).concat([frontHtml(t)]);
+    all.forEach(function (html, i) {
+      var f = document.createElement("div");
+      f.className = (i === 0 || i === all.length - 1) ? "face front" : faceClass(t, i);
+      f.innerHTML = html;
+      strip.appendChild(f);
+    });
+    el.appendChild(strip);
+    var at = 0;
+    return function step() {
+      at += 1;
+      strip.style.transform = "translateY(calc(" + (-at) + " * var(--cell)))";
+      if (at === all.length - 1) {
+        // Back on the copy of the front: jump to the real front without moving.
+        setTimeout(function () {
+          strip.style.transition = "none";
+          strip.style.transform = "translateY(0)";
+          strip.offsetWidth;
+          strip.style.transition = "";
+          at = 0;
+        }, 420);
+        return FRONT_MS;
+      }
+      return FACE_MS;
+    };
+  }
+
+  function run(step, delay) {
+    setTimeout(function loop() { setTimeout(loop, step()); }, delay);
+  }
+
+  function fill(gridId, widePeeks) {
+    var grid = document.getElementById(gridId);
+    tiles.forEach(function (t, i) {
+      var el = document.createElement("div");
+      el.className = "tile" + (t.wide ? " wide" : "");
+      grid.appendChild(el);
+      var step = (t.wide && widePeeks) ? buildPeek(t, el) : buildFlip(t, el);
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) run(step, FRONT_MS / 2 + i * STAGGER_MS);
+    });
+  }
+
+  fill("flipGrid", false);
+  fill("peekGrid", true);
+</script>
+</body>
+</html>
