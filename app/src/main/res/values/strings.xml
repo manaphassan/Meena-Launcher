@@ -958,4 +958,5 @@
     <string name="settings_wallpaper_dim_status">%1$d%%</string>
     <string name="settings_wallpaper_dim_hint">darkens the image so text stays readable</string>
     <string name="settings_wallpaper_pick_failed">couldn\u2019t use that image. try another one.</string>
+    <string name="debug_build_label">debug</string>
 </resources>

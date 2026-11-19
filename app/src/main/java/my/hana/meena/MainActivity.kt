@@ -1318,6 +1318,22 @@ fun MeenaHomeScreen(
                 onDismiss = { answer() }
             )
         }
+
+        // Debug builds say so in the corner, over every page, so they can't be mistaken for the real app.
+        val isDebugBuild = remember {
+            (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        }
+        if (isDebugBuild) {
+            Text(
+                text = stringResource(R.string.debug_build_label),
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaTextMuted,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(top = my.hana.meena.theme.MeenaSpacing.s, end = my.hana.meena.theme.MeenaSpacing.l)
+            )
+        }
     }
     }
     }
