@@ -378,7 +378,7 @@ private fun PortfolioSection(
                             ) {
                                 Column {
                                     Text(
-                                        text = holding.symbol.lowercase(),
+                                        text = my.hana.meena.data.finance.plainTicker(holding.symbol).lowercase(),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MeenaTextWhite
                                     )
