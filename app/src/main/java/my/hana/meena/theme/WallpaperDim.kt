@@ -1,6 +1,7 @@
 package my.hana.meena.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.scale
 import kotlin.math.max
 import kotlin.math.pow
 
@@ -85,7 +86,7 @@ fun wallpaperDimSample(bitmap: android.graphics.Bitmap, screenWidth: Int, screen
     val crop = android.graphics.Bitmap.createBitmap(bitmap, (bw - cw) / 2, (bh - ch) / 2, cw, ch)
     val w = 72
     val h = (w.toLong() * ch / cw).toInt().coerceIn(1, 400)
-    val small = android.graphics.Bitmap.createScaledBitmap(crop, w, h, true)
+    val small = crop.scale(w, h)
     val pixels = IntArray(w * h)
     small.getPixels(pixels, 0, w, 0, 0, w, h)
     if (small !== crop && small !== bitmap) small.recycle()
