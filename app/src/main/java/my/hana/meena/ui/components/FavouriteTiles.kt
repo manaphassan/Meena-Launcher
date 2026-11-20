@@ -26,7 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -132,8 +138,18 @@ fun FavouriteTiles(
         wideIds = wideIds,
         showAdd = slots.size < FavouriteRules.MAX,
         onAdd = onOpenApps,
-        addColor = tileColor
-    ) { index, slot, isWide, tileModifier ->
+        addColor = tileColor,
+        onMove = { from, to ->
+            // Slots skip apps that aren't installed, so move by id in the saved list.
+            val fromIndex = pinnedAppIds.indexOf(slots[from].id)
+            val toIndex = pinnedAppIds.indexOf(slots[to].id)
+            if (fromIndex >= 0 && toIndex >= 0) onMoveApp(fromIndex, toIndex)
+        },
+        onHold = { index -> selectedForMenu = slots[index].id }
+    ) { index, slot, isWide, tileModifier, gesture ->
+            // Screen readers can't hold and drag; their long press opens the menu, which can move tiles too.
+            val menuLabel = stringResource(R.string.favourites_menu_action)
+            val openMenu: () -> Boolean = { selectedForMenu = slot.id; true }
             when (slot) {
                 is FavouriteSlot.Group -> GroupTile(
                     apps = slot.apps,
@@ -142,10 +158,7 @@ fun FavouriteTiles(
                     notificationCounts = notificationCounts,
                     onLaunchApp = onLaunchApp,
                     onAdd = { addingTo = slot.id },
-                    onLongPress = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        selectedForMenu = slot.id
-                    },
+                    gesture = gesture.semantics { onLongClick(label = menuLabel, action = openMenu) },
                     modifier = tileModifier
                 )
 
@@ -180,12 +193,10 @@ fun FavouriteTiles(
                             .combinedClickable(
                                 interactionSource = pressSource,
                                 indication = null, // no ripple (Meena UI)
-                                onClick = { onLaunchApp(slot.id) },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    selectedForMenu = slot.id
-                                }
+                                onClick = { onLaunchApp(slot.id) }
                             )
+                            .semantics { onLongClick(label = menuLabel, action = openMenu) }
+                            .then(gesture)
                     ) {
                         // Shortcut tiles always show their full icon (contact photo); app tiles use glyph in monochrome.
                         val isShortcutTile = app.shortcutId != null
@@ -459,23 +470,90 @@ private fun FavouriteGrid(
     showAdd: Boolean,
     onAdd: () -> Unit,
     addColor: Color,
-    tile: @Composable (index: Int, slot: FavouriteSlot<my.hana.meena.data.system.DeviceAppInfo>, isWide: Boolean, modifier: Modifier) -> Unit
+    /** A tile was held and dropped on another: move slot [from] to where slot [to] is. */
+    onMove: (from: Int, to: Int) -> Unit = { _, _ -> },
+    /** A tile was held and let go without moving: open its menu. */
+    onHold: (index: Int) -> Unit = {},
+    /**
+     * [gesture] must be added after the tile's own click handler, so the hold and drag are seen
+     * first and a held tile is never also opened.
+     */
+    tile: @Composable (index: Int, slot: FavouriteSlot<my.hana.meena.data.system.DeviceAppInfo>, isWide: Boolean, modifier: Modifier, gesture: Modifier) -> Unit
 ) {
     val isWide = slots.map { it is FavouriteSlot.App && it.id in wideIds && perRow >= 2 }
     val cells = isWide.map { if (it) 2 else 1 } + (if (showAdd) listOf(1) else emptyList())
     val rows = FavouriteRules.packRows(cells, perRow)
+    // Hold and drag to move a tile: it follows the finger, the tile under it dims, and letting go
+    // puts it there. Held without moving, the menu opens as before.
+    val bounds = remember(slots) { androidx.compose.runtime.mutableStateMapOf<Int, androidx.compose.ui.geometry.Rect>() }
+    var dragIndex by remember(slots) { mutableStateOf<Int?>(null) }
+    var dragOffset by remember(slots) { mutableStateOf(Offset.Zero) }
+    val slop = androidx.compose.ui.platform.LocalViewConfiguration.current.touchSlop
+    val haptic = LocalHapticFeedback.current
+    fun targetOf(from: Int): Int? {
+        val start = bounds[from] ?: return null
+        val point = start.center + dragOffset
+        return bounds.entries.firstOrNull { (i, r) -> i != from && r.contains(point) }?.key
+    }
+    val target = dragIndex?.let { targetOf(it) }
     androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val gap = my.hana.meena.theme.MeenaSpacing.s
         val cell = (maxWidth - gap * (perRow - 1)) / perRow
         Column(verticalArrangement = Arrangement.spacedBy(gap)) {
             rows.forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                // The row holding the dragged tile is drawn last, so the tile passes over the others.
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(gap),
+                    modifier = Modifier.zIndex(if (dragIndex != null && dragIndex in row) 1f else 0f)
+                ) {
                     row.forEach { i ->
                         if (i < slots.size) {
                             val wide = isWide[i]
                             val width = if (wide) cell * 2 + gap else cell
+                            val dragging = dragIndex == i
+                            val dragModifier = Modifier
+                                .size(width, cell)
+                                .onGloballyPositioned { bounds[i] = it.boundsInRoot() }
+                                .zIndex(if (dragging) 1f else 0f)
+                                .graphicsLayer {
+                                    if (dragging) {
+                                        translationX = dragOffset.x
+                                        translationY = dragOffset.y
+                                        scaleX = 1.05f
+                                        scaleY = 1.05f
+                                    }
+                                    alpha = if (target == i) 0.5f else 1f
+                                }
+                            val gesture = Modifier
+                                .pointerInput(slots[i].id) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            dragIndex = i
+                                            dragOffset = Offset.Zero
+                                        },
+                                        onDrag = { change, amount ->
+                                            change.consume()
+                                            dragOffset += amount
+                                        },
+                                        onDragEnd = {
+                                            val moved = dragOffset.getDistance() > slop * 2
+                                            val to = targetOf(i)
+                                            dragIndex = null
+                                            dragOffset = Offset.Zero
+                                            when {
+                                                !moved -> onHold(i)
+                                                to != null -> onMove(i, to)
+                                            }
+                                        },
+                                        onDragCancel = {
+                                            dragIndex = null
+                                            dragOffset = Offset.Zero
+                                        }
+                                    )
+                                }
                             androidx.compose.runtime.key(slots[i].id) {
-                                tile(i, slots[i], wide, Modifier.size(width, cell))
+                                tile(i, slots[i], wide, dragModifier, gesture)
                             }
                         } else {
                             val addSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -519,8 +597,9 @@ private fun GroupTile(
     notificationCounts: Map<String, Int>,
     onLaunchApp: (String) -> Unit,
     onAdd: () -> Unit,
-    onLongPress: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Hold and drag for the whole group, added to every small tile after its own click. */
+    gesture: Modifier = Modifier
 ) {
     val gap = my.hana.meena.theme.MeenaSpacing.s
     val addLabel = stringResource(R.string.favourites_group_add)
@@ -556,9 +635,9 @@ private fun GroupTile(
                             .combinedClickable(
                                 interactionSource = miniInteraction,
                                 indication = null,
-                                onClick = { if (app != null) onLaunchApp(app.packageName) else onAdd() },
-                                onLongClick = onLongPress
-                            ),
+                                onClick = { if (app != null) onLaunchApp(app.packageName) else onAdd() }
+                            )
+                            .then(gesture),
                         contentAlignment = Alignment.Center
                     ) {
                         if (app == null) {

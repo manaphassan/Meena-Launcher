@@ -762,6 +762,7 @@
     <string name="favourites_add">add a favourite</string>
     <string name="favourites_move_left">move left</string>
     <string name="favourites_move_right">move right</string>
+    <string name="favourites_menu_action">options</string>
     <string name="favourites_full">today has room for 8 favourites. remove one first.</string>
     <string name="favourites_make_group">make a group of 4 small tiles</string>
     <string name="favourites_make_wide">make it wide</string>
