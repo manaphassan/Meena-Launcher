@@ -20,7 +20,7 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | Check | Result (20 Nov 2026, 0.2.3) |
 |---|---|
 | Unit tests | 294 live, 294 demo, 0 failed |
-| Lint | 0 errors, 166 warnings |
+| Lint | 0 errors, 30 warnings |
 | UI score (`meena-ui-score.md`) | 9.7 of 10; area 4 waits for the task test |
 | Release build | APK 4.06 MB, AAB 7.89 MB, ARM only, signed with the upload key |
 
@@ -55,7 +55,7 @@ Done after 0.2.2, released in 0.2.3: light and paper themes fade the wallpaper t
 
 - **Fixed in 0.2.3 (20 Nov 2026):** saved holdings were only loaded when the money page opened, so adding a holding or saving a sheet link from settings first could save over the stored portfolio. Now nothing is saved until the saved copy has been read, and money settings reads it itself.
 - Compose UI tests (only unit tests today).
-- Lint warning clean-up (166, mostly unused resources).
+- Lint: 30 warnings left (20 Nov 2026, from 166). 25 are newer library, plugin and target SDK versions, which need the owner's approval; 5 ask for launcher icon artwork with padding; the rest are Compose suggestions in `MainActivity` and the motion helpers.
 - The nearby map was said to flash black for about 0.15 s when it opens (since 0.2.0). A frame-by-frame screen recording on the TECNO (dark theme, 20 Nov 2026) found no flash over content: the new page is plain black for about 0.3 s until the map draws. Not changed; check again on the light theme or the Sony if it is still seen.
 - Sparklines for stocks. Kept in the backlog (owner, 20 Nov 2026), for exchanges Sheets can fetch such as NASDAQ; Bursa can't be fetched by Sheets. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].
 
