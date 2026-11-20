@@ -570,8 +570,10 @@ fun TodayHub(
                     }
                 }
                 
-                "widget-favourites" -> {
-                    // Business card: a tappable link to the owner's digital card
+                "widget-favourites" -> Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
+                    // Business card: a tappable link to the owner's digital card, above the tiles.
+                    // (The widget slot is a Box, so without this Column the link sat under the tiles
+                    // and caught taps in the gaps between them.)
                     if (settings.showBusinessCard) {
                         val cardContext = androidx.compose.ui.platform.LocalContext.current
                         Row(
