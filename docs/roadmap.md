@@ -4,8 +4,10 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 ## Where we are
 
-**Version 0.2.3**, published as a GitHub release on 20 November 2026. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
+**Version 0.2.4**, published as a GitHub release on 20 November 2026. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
 **Blocked on:** a personal Google Play developer account (owner; on hold for now, 16 Nov 2026).
+
+**New in 0.2.4:** hold and drag to move favourite tiles; money settings start with holdings, with Google Sheets below as optional; the digital card link no longer sits under the tiles; lint down to 30 warnings.
 
 **New in 0.2.3:** holdings can no longer be wiped by saving from settings before they were read; light and paper themes fade the wallpaper to white; settings buttons have the Meena press.
 
@@ -17,7 +19,7 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 **Money, found 19 Nov 2026:** Google Sheets can't fetch Bursa Malaysia prices (`GOOGLEFINANCE` gives "not authorised to access data for exchange: 'KLSE'"), so Bursa holdings use a price you type. The owner chose not to change the plan or the sheet template for this.
 
-| Check | Result (20 Nov 2026, 0.2.3) |
+| Check | Result (20 Nov 2026, 0.2.4) |
 |---|---|
 | Unit tests | 294 live, 294 demo, 0 failed |
 | Lint | 0 errors, 30 warnings |

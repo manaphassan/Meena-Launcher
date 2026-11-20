@@ -29,8 +29,8 @@ android {
         applicationId = "my.hana.meena"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.2.3"
+        versionCode = 6
+        versionName = "0.2.4"
         // Phones only (owner, 18 Nov 2026): x86 and x86_64 are for emulators.
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")

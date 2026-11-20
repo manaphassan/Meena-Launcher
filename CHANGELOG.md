@@ -3,6 +3,29 @@
 All notable changes to Meena. Dates are when the work landed on `main`.
 Versions follow `versionName` in `app/build.gradle.kts`.
 
+## 0.2.4 (20 November 2026)
+
+Installs over 0.2.3: same signing key, version code 6.
+
+### New
+- **Move favourite tiles by dragging:** hold a tile and drag it; the tile under your finger dims, and letting go puts it there. Held without moving, the menu opens as before, and screen readers keep a long-press action for it.
+
+### Changed
+- **Money settings start with your holdings.** Google Sheets moved below them and is marked optional, for exchanges Sheets supports such as nasdaq. The guide says plainly that Bursa Malaysia prices can't come from Sheets.
+- Counts read properly at one: "the next 1 day", "1 feed", "1 minute", "1 degree".
+
+### Fixed
+- The digital card link on today sat underneath the favourite tiles and opened when you tapped a gap between them. It now has its own line above the tiles.
+
+### Privacy and build
+- No new permissions or libraries, and nothing new is sent.
+- Unused text, colours and images removed; lint warnings down from 166 to 30 (the rest are version upgrades waiting for approval, launcher icon artwork and Compose suggestions).
+- Six one-off scripts from October removed from the repository.
+
+### Known gaps
+- Google Sheets can't fetch Bursa Malaysia (`KLSE`) prices; type the price of Bursa holdings yourself.
+- Not on Google Play yet.
+
 ## 0.2.3 (20 November 2026)
 
 Installs over 0.2.2: same signing key, version code 5.
