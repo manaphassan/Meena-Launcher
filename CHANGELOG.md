@@ -3,6 +3,32 @@
 All notable changes to Meena. Dates are when the work landed on `main`.
 Versions follow `versionName` in `app/build.gradle.kts`.
 
+## 0.2.2 (20 November 2026)
+
+Installs over 0.2.1: same signing key, version code 4.
+
+### New
+- **Live faces on wide tiles:** two chat names, an email's sender and subject, an event's times and place, or how long until the alarm. One-cell tiles still flip. A music app's tile shows the song playing and its cover.
+- **Coin holdings priced for you:** XRP, BTC, BCH and the other coins Frankfurter lists get a daily price in ringgit, with its date shown. Luno's `XBT` counts as bitcoin. If prices can't load, the last ones stay and the page says so; a price is never made up.
+
+### Changed
+- **Money page:** bigger section titles, holdings grouped by account with a subtotal for each, one line saying where prices come from, values level with their names, and even spacing. Holdings show as `ffb`, not `klse:ffb`.
+- **Wallpaper:** bright photos are darkened on their own until faint text reads at 4.5:1. The dim setting is now the least it darkens. Light and paper themes keep the setting as it is.
+- The inbox player shows the cover and a progress line.
+- The page shows through the nearby map, and its roads and names stay visible over a wallpaper.
+- Titles fly back properly when you leave a page.
+
+### Fixed
+- A blank or `#N/A` change in your sheet shows no change, instead of +0.0%.
+
+### Privacy and build
+- When you hold coins, Meena asks Frankfurter for their prices: only the coin codes, never how much you hold. The privacy policy covers this (updated 19 November 2026).
+- No new permissions or libraries.
+
+### Known gaps
+- Google Sheets can't fetch Bursa Malaysia (`KLSE`) prices: `GOOGLEFINANCE` isn't licensed for that exchange. Type the price of Bursa holdings yourself; a tap opens the stock's Google Finance page.
+- Not on Google Play yet.
+
 ## 0.2.1 (19 November 2026)
 
 Installs over 0.2.0: same signing key, version code 3.

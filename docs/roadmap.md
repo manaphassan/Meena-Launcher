@@ -1,25 +1,26 @@
 # Meena roadmap and milestones
 
-Status on 19 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fix-plan.md) (milestones, phases, decisions) and [`meena-ui-fix-plan-v2.md`](meena-ui-fix-plan-v2.md) (UI score phases). What shipped: [`CHANGELOG.md`](../CHANGELOG.md).
+Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fix-plan.md) (milestones, phases, decisions) and [`meena-ui-fix-plan-v2.md`](meena-ui-fix-plan-v2.md) (UI score phases). What shipped: [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Where we are
 
-**Version 0.2.1**, published as a GitHub release on 19 November 2026. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
+**Version 0.2.2**, published as a GitHub release on 20 November 2026. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
 **Blocked on:** a personal Google Play developer account (owner; on hold for now, 16 Nov 2026).
 
-**Since 0.2.1, not released yet** (on `phase/10-signoff`, and on the owner's phone):
-- Live faces: wide tiles show two chat names, an email's sender and subject, an event's times and place, and how long until the alarm. One-cell tiles still flip. A music app's tile shows the song playing and its cover.
-- Titles fly back properly when you leave a page.
-- The page shows through the nearby map.
-- The inbox player shows the cover and a progress line.
-- Coin holdings are priced from Frankfurter's daily rates, with the date shown.
+**New in 0.2.2** (details in the changelog):
+- Live faces on wide tiles, and the inbox player's cover and progress line.
+- Coin holdings priced from Frankfurter's daily rates, with the date shown.
+- Money page: section titles, holdings grouped by account with subtotals, one source line, even spacing.
+- Bright wallpapers are darkened on their own so faint text reads at 4.5:1.
 
-| Check | Result (19 Nov 2026, `6630243`) |
+**Money, found 19 Nov 2026:** Google Sheets can't fetch Bursa Malaysia prices (`GOOGLEFINANCE` gives "not authorised to access data for exchange: 'KLSE'"), so Bursa holdings use a price you type. The owner chose not to change the plan or the sheet template for this.
+
+| Check | Result (20 Nov 2026, 0.2.2) |
 |---|---|
-| Unit tests | 286 live, 286 demo, 0 failed |
+| Unit tests | 291 live, 291 demo, 0 failed |
 | Lint | 0 errors, 166 warnings |
 | UI score (`meena-ui-score.md`) | 9.7 of 10; area 4 waits for the task test |
-| Release build | APK 4.06 MB, AAB 7.88 MB, ARM only, signed with the upload key |
+| Release build | APK 4.06 MB, AAB 7.89 MB, ARM only, signed with the upload key |
 
 ## Milestones
 
@@ -44,7 +45,8 @@ Status on 19 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 1 | Bank Negara API terms | Owner said yes to reading them in a browser (16 Nov); the agent still can't open the portal. Tell the agent if they ask for attribution or set limits, so the widget can follow them |
 | 2 | Task test comparison | Proposed: AIO Launcher (A) against Meena (B) on the Sony SO-02J; fallback: the Sony's own home screen. See `task-test-plan.md` |
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
-| 4 | When to release 0.2.2 | The work since 0.2.1 is merged. A release needs version code 4 and the privacy policy republished (it now covers live faces) |
+| 4 | Light and paper themes over a wallpaper | The overlay is black under dark text, which reads poorly. Proposed: a light overlay on those themes; waiting for the owner's yes |
+| 5 | Stock sparklines (backlog) | Relies on `GOOGLEFINANCE` history, which can't reach Bursa; keep or drop? |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 
