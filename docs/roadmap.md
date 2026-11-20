@@ -45,9 +45,9 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 1 | Bank Negara API terms | Owner said yes to reading them in a browser (16 Nov); the agent still can't open the portal. Tell the agent if they ask for attribution or set limits, so the widget can follow them |
 | 2 | Task test comparison | Proposed: AIO Launcher (A) against Meena (B) on the Sony SO-02J; fallback: the Sony's own home screen. See `task-test-plan.md` |
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
-| 4 | Light and paper themes over a wallpaper | The overlay is black under dark text, which reads poorly. Proposed: a light overlay on those themes; waiting for the owner's yes |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
+Done after 0.2.2, not released yet: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026).
 
 ## Backlog (not scheduled)
 
