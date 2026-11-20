@@ -38,10 +38,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -1138,11 +1137,10 @@ private fun SubPageContainer(
                         Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        Button(
+                        my.hana.meena.ui.components.MetroButton(
                             onClick = { showNotificationDisclosure = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                            shape = RoundedCornerShape(0.dp)
+                            containerColor = my.hana.meena.theme.MeenaAccentFill,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
@@ -1155,11 +1153,10 @@ private fun SubPageContainer(
                         Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        Button(
+                        my.hana.meena.ui.components.MetroButton(
                             onClick = { showNotificationDisclosure = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                            shape = RoundedCornerShape(0.dp)
+                            containerColor = my.hana.meena.theme.MeenaAccentFill,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
@@ -1172,11 +1169,10 @@ private fun SubPageContainer(
                         Text(stringResource(R.string.widget_more_group), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
                     item {
-                        Button(
+                        my.hana.meena.ui.components.MetroButton(
                             onClick = { showNotificationDisclosure = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                            shape = RoundedCornerShape(0.dp)
+                            containerColor = my.hana.meena.theme.MeenaAccentFill,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
@@ -1215,16 +1211,15 @@ private fun SubPageContainer(
                         )
                     }
                     item {
-                        Button(
+                        my.hana.meena.ui.components.MetroButton(
                             onClick = {
                                 try {
                                     val intent = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
                                     context.startActivity(intent)
                                 } catch (e: Exception) { }
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                            shape = RoundedCornerShape(0.dp)
+                            containerColor = my.hana.meena.theme.MeenaAccentFill,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(stringResource(R.string.health_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                         }
@@ -1273,11 +1268,10 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Button(
+                my.hana.meena.ui.components.MetroButton(
                     onClick = { showNotificationDisclosure = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                    shape = RoundedCornerShape(0.dp)
+                    containerColor = my.hana.meena.theme.MeenaAccentFill,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.notif_open_settings), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                 }
@@ -1949,31 +1943,28 @@ private fun SubPageContainer(
                 )
             }
             item {
-                Button(
+                my.hana.meena.ui.components.MetroButton(
                     onClick = onExportBackup,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                    shape = RoundedCornerShape(0.dp)
+                    containerColor = my.hana.meena.theme.MeenaAccentFill,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.backup_share), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
                 }
             }
             item {
-                Button(
+                my.hana.meena.ui.components.MetroButton(
                     onClick = onImportBackup,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
-                    shape = RoundedCornerShape(0.dp)
+                    containerColor = MeenaSurface,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.backup_import), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
             }
             item {
-                Button(
+                my.hana.meena.ui.components.MetroButton(
                     onClick = { confirmReset = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface),
-                    shape = RoundedCornerShape(0.dp)
+                    containerColor = MeenaSurface,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.backup_reset), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 }
@@ -2385,25 +2376,23 @@ private fun FinanceAccountSettings(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
         ) {
-            Button(
+            my.hana.meena.ui.components.MetroButton(
                 onClick = {
                     FinanceRepository.setSheetUrl(context, sheetUrlInput)
                 },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-                shape = RoundedCornerShape(0.dp)
+                containerColor = my.hana.meena.theme.MeenaAccentFill,
+                modifier = Modifier.weight(1f)
             ) {
                 Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
             }
 
             if (sheetUrlInput.isNotBlank()) {
-                Button(
+                my.hana.meena.ui.components.MetroButton(
                     onClick = {
                         sheetUrlInput = ""
                         FinanceRepository.setSheetUrl(context, "")
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(0.dp)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Text(stringResource(R.string.finance_sheet_unlink), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
                 }
@@ -2479,7 +2468,7 @@ private fun FinanceAccountSettings(
                                 color = MeenaTextMuted
                             )
                         }
-                        IconButton(
+                        my.hana.meena.ui.components.MetroIconButton(
                             onClick = { holdingToDelete = holding }
                         ) {
                             Icon(ImageVector.vectorResource(id = my.hana.meena.R.drawable.ic_close), contentDescription = stringResource(R.string.finance_delete_desc), tint = MaterialTheme.colorScheme.error)
@@ -2587,7 +2576,7 @@ private fun FinanceAccountSettings(
             )
         }
 
-        Button(
+        my.hana.meena.ui.components.MetroButton(
             onClick = {
                 val shares = newShares.toDoubleOrNull() ?: 0.0
                 val cost = newAvgCost.toDoubleOrNull() ?: 0.0
@@ -2612,9 +2601,8 @@ private fun FinanceAccountSettings(
                     newPrice = ""
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-            shape = RoundedCornerShape(0.dp)
+            containerColor = my.hana.meena.theme.MeenaAccentFill,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.finance_add_button), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
         }
@@ -2650,7 +2638,7 @@ private fun HealthAccountSettings(
             color = if (availability == HealthConnectAvailability.AVAILABLE) MeenaProfitGreen else MeenaSolarAmber
         )
 
-        Button(
+        my.hana.meena.ui.components.MetroButton(
             onClick = {
                 if (availability == HealthConnectAvailability.AVAILABLE) {
                     HealthRepository.openHealthConnectSettings(context)
@@ -2658,9 +2646,8 @@ private fun HealthAccountSettings(
                     HealthRepository.openHealthConnectPlayStore(context)
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill),
-            shape = RoundedCornerShape(0.dp)
+            containerColor = my.hana.meena.theme.MeenaAccentFill,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = stringResource(if (availability == HealthConnectAvailability.AVAILABLE) R.string.health_manage_permissions else R.string.health_install_app),
@@ -2706,13 +2693,12 @@ private fun HealthAccountSettings(
             )
         }
 
-        Button(
+        my.hana.meena.ui.components.MetroButton(
             onClick = {
                 HealthRepository.openFitnessApp(context, settingsState.healthCompanionPackage)
             },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            shape = RoundedCornerShape(0.dp)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.health_open_companion), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
@@ -2725,13 +2711,12 @@ private fun HealthAccountSettings(
             style = MaterialTheme.typography.bodySmall,
             color = MeenaTextMuted
         )
-        Button(
+        my.hana.meena.ui.components.MetroButton(
             onClick = {
                 HealthRepository.openAirQualityDetails(context)
             },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            shape = RoundedCornerShape(0.dp)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.air_quality_open), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
         }
@@ -2763,7 +2748,7 @@ private fun CalendarAccountSettings(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MeenaTextWhite
             )
-            Button(
+            my.hana.meena.ui.components.MetroButton(
                 onClick = {
                     try {
                         val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -2772,9 +2757,8 @@ private fun CalendarAccountSettings(
                         context.startActivity(intent)
                     } catch (_: Exception) {}
                 },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(0.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = my.hana.meena.theme.MeenaAccentFill)
+                containerColor = my.hana.meena.theme.MeenaAccentFill,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
                 Text(stringResource(R.string.calendar_turn_on), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
             }
@@ -2839,7 +2823,7 @@ private fun CalendarAccountSettings(
                 }
             }
 
-            Button(
+            my.hana.meena.ui.components.MetroButton(
                 onClick = {
                     try {
                         val intent = Intent(Intent.ACTION_VIEW).setData(android.provider.CalendarContract.CONTENT_URI).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -2851,9 +2835,8 @@ private fun CalendarAccountSettings(
                         } catch (_: Exception) {}
                     }
                 },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(0.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MeenaSurface)
+                containerColor = MeenaSurface,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
                 Text(stringResource(R.string.calendar_open_app), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
             }

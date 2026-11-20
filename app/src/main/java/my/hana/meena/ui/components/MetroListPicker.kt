@@ -25,7 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -123,10 +123,7 @@ fun MetroListPicker(
                         )
                     }
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(48.dp)
-                    ) {
+                    MetroIconButton(onClick = onDismiss) {
                         Icon(
                             painter = painterResource(R.drawable.ic_thin_close),
                             contentDescription = stringResource(R.string.action_close),
