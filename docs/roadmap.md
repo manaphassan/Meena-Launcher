@@ -46,7 +46,6 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 2 | Task test comparison | Proposed: AIO Launcher (A) against Meena (B) on the Sony SO-02J; fallback: the Sony's own home screen. See `task-test-plan.md` |
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
 | 4 | Light and paper themes over a wallpaper | The overlay is black under dark text, which reads poorly. Proposed: a light overlay on those themes; waiting for the owner's yes |
-| 5 | Stock sparklines (backlog) | Relies on `GOOGLEFINANCE` history, which can't reach Bursa; keep or drop? |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 
@@ -57,7 +56,7 @@ Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
 - Material buttons in settings still bring their own press effect; swap them for a Meena button with the scale and tilt press.
 - The nearby map flashes black for about 0.15 s when it opens (since 0.2.0).
 - Check the nearby map in the light theme.
-- Sparklines for stocks. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].
+- Sparklines for stocks. Kept in the backlog (owner, 20 Nov 2026), for exchanges Sheets can fetch such as NASDAQ; Bursa can't be fetched by Sheets. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].
 
 ## Won't do
 
