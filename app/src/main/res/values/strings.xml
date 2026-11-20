@@ -964,7 +964,7 @@
     <string name="settings_wallpaper_remove_hint">go back to a plain background</string>
     <string name="settings_wallpaper_dim_title">dim level</string>
     <string name="settings_wallpaper_dim_status">%1$d%%</string>
-    <string name="settings_wallpaper_dim_hint">the least it darkens the image. bright photos get darker on their own so text stays readable.</string>
+    <string name="settings_wallpaper_dim_hint">the least it fades the image behind text. bright or dark photos fade more on their own so text stays readable.</string>
     <string name="settings_wallpaper_pick_failed">couldn\u2019t use that image. try another one.</string>
     <string name="debug_build_label">debug</string>
 </resources>

@@ -683,20 +683,23 @@ fun MeenaHomeScreen(
     }
 
     val currentWallpaper = wallpaperBitmap
-    // The dim setting is the minimum. A bright photo is darkened further until the faintest text
-    // (grey, green, red and the accent) reads at 4.5:1. Light pages put dark text on the photo,
-    // where darkening wouldn't help, so they keep the setting as it is.
+    // The dim setting is the minimum. The overlay gets stronger on its own until the faintest text
+    // (grey, green, red and the accent) reads at 4.5:1: black under the light text of dark pages,
+    // white under the dark text of light and paper pages.
     val homePalette = my.hana.meena.theme.LocalMeenaPalette.current
     val homeAccent = MaterialTheme.colorScheme.primary
     val wallpaperDim = remember(wallpaperSample, homePalette, homeAccent, userSettings.wallpaperDimPercent) {
         val sample = wallpaperSample
-        if (sample == null || homePalette.isLight) userSettings.wallpaperDimPercent.coerceIn(40, 90)
+        if (sample == null) userSettings.wallpaperDimPercent.coerceIn(40, 90)
         else my.hana.meena.theme.WallpaperDim.dimFor(
             sample,
             listOf(homePalette.textMuted, homePalette.positive, homePalette.negative, homeAccent),
-            userSettings.wallpaperDimPercent
+            userSettings.wallpaperDimPercent,
+            lightOverlay = homePalette.isLight
         )
     }
+    // The page colour: black on dark pages, white on light and paper pages.
+    val wallpaperOverlay = homePalette.background
     // One shared scope over home and its sub-pages, so a widget title can fly into the page it opens.
     androidx.compose.animation.SharedTransitionScope { sharedModifier ->
     androidx.compose.runtime.CompositionLocalProvider(
@@ -713,7 +716,7 @@ fun MeenaHomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MeenaBlack.copy(alpha = wallpaperDim / 100f))
+                    .background(wallpaperOverlay.copy(alpha = wallpaperDim / 100f))
             )
         }
         Column(modifier = Modifier.fillMaxSize()) {

@@ -63,4 +63,38 @@ class WallpaperDimTest {
         // Text too dark to ever reach 4.5:1 on a black page gets the darkest dim, not more.
         assertEquals(90, WallpaperDim.dimFor(photo(255, 255, 255), listOf(Color(0xFF222222)), minPercent = 60))
     }
+
+    // Light and paper pages: dark text on a white overlay.
+
+    /** The colour of [r],[g],[b] under a white overlay of [percent]%, as Compose draws it. */
+    private fun lightened(r: Int, g: Int, b: Int, percent: Int): Color {
+        val keep = 1f - percent / 100f
+        val add = percent / 100f
+        return Color(r / 255f * keep + add, g / 255f * keep + add, b / 255f * keep + add)
+    }
+
+    @Test
+    fun darkPhotos_onLightPages_areFadedJustEnough() {
+        for (palette in listOf(my.hana.meena.theme.MeenaLightPalette, my.hana.meena.theme.MeenaPaperPalette)) {
+            val dark = listOf(palette.textMuted, palette.positive, palette.negative)
+            // Black (worst case) and the dark wood of the owner's beach photo.
+            for ((r, g, b) in listOf(Triple(0, 0, 0), Triple(60, 50, 45))) {
+                val dim = WallpaperDim.dimFor(photo(r, g, b), dark, minPercent = 60, lightOverlay = true)
+                val ratio = { p: Int -> dark.minOf { calculateContrastRatio(it, lightened(r, g, b, p)) } }
+                assertTrue("${palette.id} dim $dim for $r,$g,$b", dim in 61..90)
+                assertTrue("${palette.id} at $dim", ratio(dim) >= 4.5f)
+                assertTrue("${palette.id}: one percent less would be enough", ratio(dim - 1) < 4.5f)
+            }
+        }
+    }
+
+    @Test
+    fun lightPhotos_onLightPages_keepTheSetting_andShadowsAreLetOff() {
+        val dark = listOf(my.hana.meena.theme.MeenaLightPalette.textMuted)
+        assertEquals(60, WallpaperDim.dimFor(photo(250, 250, 250), dark, minPercent = 60, lightOverlay = true))
+        val mostlyLight = photo(250, 250, 250).also { for (i in 0 until 5) it[i] = 0xFF000000.toInt() }
+        assertEquals(60, WallpaperDim.dimFor(mostlyLight, dark, minPercent = 60, lightOverlay = true))
+        // A black overlay would make dark text worse, so the white one must be what moves.
+        assertTrue(WallpaperDim.dimFor(photo(0, 0, 0), dark, minPercent = 60, lightOverlay = true) > 60)
+    }
 }
