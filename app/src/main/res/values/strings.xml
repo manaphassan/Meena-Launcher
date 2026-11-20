@@ -313,7 +313,7 @@
     <string name="finance_source_sheet_saved">%1$s · google sheets · saved copy</string>
     <string name="finance_sheet_not_loaded">sheet not loaded yet · showing prices you entered</string>
     <string name="finance_source_local">prices you entered</string>
-    <string name="finance_needs_prices">no prices yet. link your google sheet in settings, connections, money.</string>
+    <string name="finance_needs_prices">no prices yet. add a price to your holdings in settings, connections, money.</string>
     <string name="finance_coins_loading">loading coin prices</string>
     <string name="finance_coins_source">coins %1$s via frankfurter</string>
     <string name="finance_coins_saved">coins %1$s · couldn\'t update. tap to try again.</string>
@@ -447,8 +447,8 @@
     <string name="privacy_backup_body">android backup is off, so your data stays on this phone. clearing meena\'s storage in android settings deletes it all.</string>
     <string name="finance_delete_title">delete holding</string>
     <string name="finance_delete_question">delete %1$s from your portfolio?</string>
-    <string name="finance_sheet_title">google sheets</string>
-    <string name="finance_sheet_intro">link your own google sheet that uses googlefinance().</string>
+    <string name="finance_sheet_title">google sheets, optional</string>
+    <string name="finance_sheet_intro">live prices for stocks on exchanges google sheets supports, such as nasdaq. bursa malaysia isn\'t one of them, so type bursa prices in your holdings above.</string>
     <string name="finance_sheet_link">sheet or csv link</string>
     <string name="finance_sheet_save">save and load</string>
     <string name="finance_sheet_unlink">unlink</string>
@@ -462,10 +462,10 @@
     <string name="finance_holdings_empty">nothing here yet. add your first one below.</string>
     <string name="finance_add_title">add a holding</string>
     <string name="finance_add_button">add</string>
-    <string name="finance_symbol_label">symbol, like ffb or senheng, as in your sheet</string>
+    <string name="finance_symbol_label">symbol, like ffb, xrp or hlal</string>
     <string name="finance_units_label">units</string>
     <string name="finance_cost_label">average cost (rm), optional</string>
-    <string name="finance_price_label">price now (rm), optional</string>
+    <string name="finance_price_label">price now (rm), for bursa shares</string>
     <string name="finance_account_label">account, like mplus</string>
     <string name="health_status_ready">health connect is ready</string>
     <string name="health_status_update">health connect needs an update</string>
@@ -507,13 +507,14 @@
     <string name="finance_guide_status">5 columns and a share link</string>
     <string name="finance_guide_page">sheet setup</string>
     <string name="finance_guide_step_1">1. make a sheet with these five columns</string>
-    <string name="finance_guide_col_a">a · symbol, like klse:bursa or nasdaq:hlal</string>
+    <string name="finance_guide_col_a">a · symbol, like nasdaq:hlal</string>
     <string name="finance_guide_col_b">b · price: =googlefinance(a2, \"price\")</string>
     <string name="finance_guide_col_c">c · change: =googlefinance(a2, \"change\")</string>
     <string name="finance_guide_col_d">d · change in percent: =googlefinance(a2, \"changepct\")</string>
     <string name="finance_guide_col_e">e · name, typed in yourself (the sheet can\'t look names up)</string>
+    <string name="finance_guide_bursa">google sheets can\'t fetch bursa malaysia (klse) prices, so a klse row shows no price. type bursa prices in your holdings instead.</string>
     <string name="finance_guide_step_2">2. share it so anyone with the link can view</string>
-    <string name="finance_guide_step_3">3. copy the link and paste it on the money page</string>
+    <string name="finance_guide_step_3">3. copy the link and paste it in settings, connections, money</string>
     <string name="home_title_title">home title</string>
     <string name="home_title_intro">shown at the top of your home pages. leave it empty to hide it.</string>
     <string name="home_title_hidden">hidden</string>
@@ -628,7 +629,7 @@
     <!-- Lowercase on purpose: Meena UI writes every label in lowercase. -->
     <string name="action_cancel" tools:ignore="ButtonCase">cancel</string>
     <!-- money, apps, inbox, weather -->
-    <string name="finance_portfolio_setup">add your holdings or link a google sheet. tap to set up.</string>
+    <string name="finance_portfolio_setup">add what you own. tap to set up.</string>
     <string name="finance_portfolio_loading">updating your portfolio</string>
     <string name="finance_amount">rm %1$s</string>
     <string name="finance_amount_hidden">rm ·····</string>
@@ -666,7 +667,7 @@
     <string name="ticker_full">that\'s the most this widget can follow. remove one first.</string>
     <string name="ticker_remove_title">remove ticker</string>
     <string name="ticker_remove_question">take %1$s off the list?</string>
-    <string name="ticker_stocks_note">stocks such as bursa shares come from your google sheet. see settings, connections, money.</string>
+    <string name="ticker_stocks_note">stocks aren\'t listed here. add them to your holdings in settings, connections, money.</string>
     <string name="ticker_type_crypto">coin</string>
     <string name="ticker_type_metal">metal, per oz</string>
     <string name="ticker_type_currency">currency</string>

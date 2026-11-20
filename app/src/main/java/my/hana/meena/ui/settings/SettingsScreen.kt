@@ -1305,6 +1305,9 @@ private fun SubPageContainer(
                 )
             }
             item {
+                Text(stringResource(R.string.finance_guide_bursa), style = MaterialTheme.typography.bodyMedium, color = MeenaTextWhite)
+            }
+            item {
                 Text(stringResource(R.string.finance_guide_step_1), style = MaterialTheme.typography.bodyLarge, color = MeenaTextWhite)
             }
             item {
@@ -2346,76 +2349,7 @@ private fun FinanceAccountSettings(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-        // 1. Google Sheets Bridge
-        Text(
-            text = stringResource(R.string.finance_sheet_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = stringResource(R.string.finance_sheet_intro),
-            style = MaterialTheme.typography.bodySmall,
-            color = MeenaTextMuted
-        )
-
-        OutlinedTextField(
-            value = sheetUrlInput,
-            onValueChange = { sheetUrlInput = it },
-            label = { Text(stringResource(R.string.finance_sheet_link), style = MaterialTheme.typography.labelSmall) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MeenaSurface,
-                unfocusedContainerColor = MeenaSurface,
-                focusedTextColor = MeenaTextWhite,
-                unfocusedTextColor = MeenaTextWhite,
-                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                unfocusedIndicatorColor = MeenaBorder
-            ),
-            shape = RoundedCornerShape(0.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
-        ) {
-            my.hana.meena.ui.components.MetroButton(
-                onClick = {
-                    FinanceRepository.setSheetUrl(context, sheetUrlInput)
-                },
-                containerColor = my.hana.meena.theme.MeenaAccentFill,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
-            }
-
-            if (sheetUrlInput.isNotBlank()) {
-                my.hana.meena.ui.components.MetroButton(
-                    onClick = {
-                        sheetUrlInput = ""
-                        FinanceRepository.setSheetUrl(context, "")
-                    },
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Text(stringResource(R.string.finance_sheet_unlink), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
-                }
-            }
-        }
-
-        Text(
-            text = stringResource(R.string.finance_delay_notice),
-            style = MaterialTheme.typography.bodySmall,
-            color = MeenaTextMuted
-        )
-        SettingLinkRow(
-            title = stringResource(R.string.finance_guide_title),
-            status = stringResource(R.string.finance_guide_status),
-            onClick = onOpenGuide
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 2. Local Portfolio Holdings
+        // 1. Local Portfolio Holdings
         Text(
             text = stringResource(R.string.finance_holdings_title),
             style = MaterialTheme.typography.titleMedium,
@@ -2609,6 +2543,75 @@ private fun FinanceAccountSettings(
         ) {
             Text(stringResource(R.string.finance_add_button), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
         }
+
+        Spacer(modifier = Modifier.height(my.hana.meena.theme.MeenaSpacing.m))
+
+        // 2. Google Sheets, optional: live prices for exchanges Sheets supports (not Bursa).
+        Text(
+            text = stringResource(R.string.finance_sheet_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.finance_sheet_intro),
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+
+        OutlinedTextField(
+            value = sheetUrlInput,
+            onValueChange = { sheetUrlInput = it },
+            label = { Text(stringResource(R.string.finance_sheet_link), style = MaterialTheme.typography.labelSmall) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MeenaSurface,
+                unfocusedContainerColor = MeenaSurface,
+                focusedTextColor = MeenaTextWhite,
+                unfocusedTextColor = MeenaTextWhite,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MeenaBorder
+            ),
+            shape = RoundedCornerShape(0.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)
+        ) {
+            my.hana.meena.ui.components.MetroButton(
+                onClick = {
+                    FinanceRepository.setSheetUrl(context, sheetUrlInput)
+                },
+                containerColor = my.hana.meena.theme.MeenaAccentFill,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.finance_sheet_save), style = MaterialTheme.typography.labelSmall, color = my.hana.meena.theme.MeenaOnAccent)
+            }
+
+            if (sheetUrlInput.isNotBlank()) {
+                my.hana.meena.ui.components.MetroButton(
+                    onClick = {
+                        sheetUrlInput = ""
+                        FinanceRepository.setSheetUrl(context, "")
+                    },
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(stringResource(R.string.finance_sheet_unlink), style = MaterialTheme.typography.labelSmall, color = MeenaTextWhite)
+                }
+            }
+        }
+
+        Text(
+            text = stringResource(R.string.finance_delay_notice),
+            style = MaterialTheme.typography.bodySmall,
+            color = MeenaTextMuted
+        )
+        SettingLinkRow(
+            title = stringResource(R.string.finance_guide_title),
+            status = stringResource(R.string.finance_guide_status),
+            onClick = onOpenGuide
+        )
     }
 }
 
