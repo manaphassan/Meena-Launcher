@@ -283,6 +283,15 @@ class MarketsAndLockTest {
     }
 
     @Test
+    fun portfolio_isNeverSaved_beforeTheSavedCopyIsRead() {
+        // Settings could open before the money page; an empty list then replaced the saved holdings.
+        assertFalse(my.hana.meena.data.finance.mayWrite(isLoaded = false, isStorageLocked = false))
+        assertFalse(my.hana.meena.data.finance.mayWrite(isLoaded = true, isStorageLocked = true))
+        assertFalse(my.hana.meena.data.finance.mayWrite(isLoaded = false, isStorageLocked = true))
+        assertTrue(my.hana.meena.data.finance.mayWrite(isLoaded = true, isStorageLocked = false))
+    }
+
+    @Test
     fun googleQuoteUrl_flipsTheSheetCode() {
         assertEquals("https://www.google.com/finance/quote/FFB:KLSE", my.hana.meena.data.finance.googleQuoteUrl("klse:ffb"))
         assertEquals("https://www.google.com/finance/quote/HLAL:NASDAQ", my.hana.meena.data.finance.googleQuoteUrl("NASDAQ:HLAL"))

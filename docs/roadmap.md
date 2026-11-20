@@ -47,11 +47,11 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
-Done after 0.2.2, not released yet: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026). Settings buttons have the Meena press (scale and tilt, no ripple).
+Done after 0.2.2, not released yet: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026). Settings buttons have the Meena press (scale and tilt, no ripple). The holdings data-loss risk below is fixed.
 
 ## Backlog (not scheduled)
 
-- **Data-loss risk (found 20 Nov 2026, in 0.2.2 and earlier):** saved holdings are only loaded when the money page is opened. Opening settings, connections, money first (for example straight after a restart) shows "nothing here yet", and adding a holding or saving a sheet link then would save over the holdings already stored. Not fixed yet; waiting for the owner.
+- **Fixed (20 Nov 2026, after 0.2.2):** saved holdings were only loaded when the money page opened, so adding a holding or saving a sheet link from settings first could save over the stored portfolio. Now nothing is saved until the saved copy has been read, and money settings reads it itself.
 - Compose UI tests (only unit tests today).
 - Lint warning clean-up (166, mostly unused resources).
 - The nearby map was said to flash black for about 0.15 s when it opens (since 0.2.0). A frame-by-frame screen recording on the TECNO (dark theme, 20 Nov 2026) found no flash over content: the new page is plain black for about 0.3 s until the map draws. Not changed; check again on the light theme or the Sony if it is still seen.

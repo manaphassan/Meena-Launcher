@@ -2312,6 +2312,8 @@ private fun FinanceAccountSettings(
     onOpenGuide: () -> Unit
 ) {
     val context = LocalContext.current
+    // Settings can open before the money page has read the saved portfolio; read it here too.
+    LaunchedEffect(Unit) { FinanceRepository.ensureLoaded(context) }
     val financeState by FinanceRepository.state.collectAsState()
     val data: my.hana.meena.data.finance.FinanceData? = when (val s = financeState) {
         is my.hana.meena.ui.widgets.WidgetState.Ready -> s.data

@@ -146,6 +146,12 @@ fun FinanceData.unheldWatchlist(): List<FinanceTicker> {
 }
 
 /**
+ * Whether the portfolio may be saved. Only after the saved copy has been read, so an empty list
+ * that was never loaded can't replace it, and never while that copy can't be decrypted.
+ */
+fun mayWrite(isLoaded: Boolean, isStorageLocked: Boolean): Boolean = isLoaded && !isStorageLocked
+
+/**
  * Compliance-ready Finance Repository.
  * Primary live quote source: Google Sheets bridge (user's sheet with GOOGLEFINANCE formulas).
  * Local portfolio holdings management with zero hardcoded sample data (Hard Rule 1).
@@ -192,12 +198,28 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     var isStorageLocked: Boolean = false
         private set
 
+    /**
+     * True once the saved holdings and sheet link have been read. Until then the lists in memory
+     * are empty, not "nothing saved", so nothing may be written: a save would replace the stored
+     * portfolio with that empty list (found 20 Nov 2026: settings could open before the money page).
+     */
+    @Volatile
+    private var isLoaded = false
+
     fun initialize(context: Context) {
         appContext = context.applicationContext
         loadSavedData(context)
         if (isStorageLocked) return
         evaluateState()
         refreshPrices(context)
+    }
+
+    /** Reads the saved portfolio if it hasn't been read yet, without loading prices. */
+    fun ensureLoaded(context: Context) {
+        if (isLoaded) return
+        appContext = context.applicationContext
+        loadSavedData(context)
+        if (!isStorageLocked) evaluateState()
     }
 
     /** Deletes saved holdings and the sheet link. Only call after the user says yes. */
@@ -210,6 +232,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
         sheetSyncedAt = null
         coinPricing = null
         isStorageLocked = false
+        isLoaded = true
         evaluateState()
     }
 
@@ -232,6 +255,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     fun getTotalPortfolioChangePercent(): Double = portfolioTotals(holdingsList).changePercent ?: 0.0
 
     fun addHolding(context: Context, holding: FinanceHolding) {
+        ensureLoaded(context)
         if (isStorageLocked) return
         holdingsList.removeAll { it.id == holding.id }
         holdingsList.add(holding)
@@ -243,6 +267,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     fun removeHolding(context: Context, holdingId: String) {
+        ensureLoaded(context)
         if (isStorageLocked) return
         holdingsList.removeAll { it.id == holdingId }
         saveData(context)
@@ -250,6 +275,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     fun setSheetUrl(context: Context, url: String) {
+        ensureLoaded(context)
         if (isStorageLocked) return
         sheetUrlConfigured = url.trim()
         sheetSyncedAt = null
@@ -579,6 +605,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
             holdingsList.clear()
             holdingsList.addAll(loaded)
             sheetUrlConfigured = sheet.text.orEmpty()
+            isLoaded = true
         } catch (e: Exception) {
             // JSONException messages quote the input, so log the type only (hard rule 6).
             lockStorage("saved portfolio can't be parsed: ${e.javaClass.simpleName}")
@@ -595,7 +622,10 @@ object FinanceRepository : WidgetSpec<FinanceData> {
     }
 
     private fun saveData(context: Context) {
-        if (isStorageLocked) return
+        if (!mayWrite(isLoaded, isStorageLocked)) {
+            Log.w(TAG, "Not saving: the saved portfolio hasn't been read yet")
+            return
+        }
         try {
             val arr = JSONArray()
             for (h in holdingsList) {
