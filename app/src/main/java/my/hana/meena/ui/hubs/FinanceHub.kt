@@ -239,11 +239,7 @@ private fun PortfolioSection(
     onRefresh: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-        Text(
-            text = stringResource(R.string.widget_name_portfolio),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        SectionTitle(stringResource(R.string.widget_name_portfolio))
 
         when (state) {
             is WidgetState.NeedsSetup -> {
@@ -293,8 +289,7 @@ private fun PortfolioSection(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
+                        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
                     ) {
                         Text(
                             text = when {
@@ -303,9 +298,9 @@ private fun PortfolioSection(
                                 !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_amount, stringResource(R.string.finance_no_price))
                                 else -> stringResource(R.string.finance_amount, "%,.2f".format(totals.value))
                             },
-                            fontSize = 32.sp,
-                            style = MaterialTheme.typography.displaySmall,
-                            color = MeenaTextWhite
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MeenaTextWhite,
+                            modifier = Modifier.weight(1f).alignByBaseline()
                         )
                         if (totalChange != null && changePct != null) {
                             val changeText = if (showAmounts) {
@@ -316,109 +311,81 @@ private fun PortfolioSection(
                             Text(
                                 text = changeText,
                                 style = MaterialTheme.typography.titleSmall,
-                                color = if (isProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error
+                                color = if (isProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error,
+                                modifier = Modifier.alignByBaseline()
                             )
                         }
                     }
 
+                    // One line says where every price comes from: "prices you entered · coins 18 nov via frankfurter".
                     val syncedAt = data.sheetSyncedAt
-                    // Holdings that aren't coins get their prices from the sheet or from what was typed in.
-                    val coinIds = data.coins?.holdingIds.orEmpty()
-                    if (data.sheetConnected || coinIds.isEmpty() || data.holdings.any { it.id !in coinIds }) {
+                    val coins = data.coins
+                    val coinIds = coins?.holdingIds.orEmpty()
+                    val otherText = if (data.sheetConnected || coinIds.isEmpty() || data.holdings.any { it.id !in coinIds }) {
+                        when {
+                            !data.sheetConnected && !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_needs_prices)
+                            !data.sheetConnected -> stringResource(R.string.finance_source_local)
+                            syncedAt == null -> stringResource(R.string.finance_sheet_not_loaded)
+                            state is WidgetState.Stale -> stringResource(R.string.finance_source_sheet_saved, updatedAgoText(syncedAt))
+                            else -> stringResource(R.string.finance_source_sheet, updatedAgoText(syncedAt))
+                        }
+                    } else null
+                    val coinText = coins?.takeIf { !it.failed }?.let { c ->
+                        val day = c.date?.let { KijangEmas.dayLabel(it) }.orEmpty()
+                        if (day.isEmpty()) stringResource(R.string.finance_coins_loading)
+                        else stringResource(R.string.finance_coins_source, day)
+                    }
+                    val sourceText = when {
+                        otherText != null && coinText != null -> stringResource(R.string.settings_status_pair, otherText, coinText)
+                        else -> otherText ?: coinText.orEmpty()
+                    }
+                    if (sourceText.isNotEmpty()) {
                         Text(
-                            text = when {
-                                !data.sheetConnected && !totals.anyPriced && data.holdings.isNotEmpty() -> stringResource(R.string.finance_needs_prices)
-                                !data.sheetConnected -> stringResource(R.string.finance_source_local)
-                                syncedAt == null -> stringResource(R.string.finance_sheet_not_loaded)
-                                state is WidgetState.Stale -> stringResource(R.string.finance_source_sheet_saved, updatedAgoText(syncedAt))
-                                else -> stringResource(R.string.finance_source_sheet, updatedAgoText(syncedAt))
-                            },
+                            text = sourceText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MeenaTextMuted
                         )
                     }
                 }
 
-                data.coins?.let { coins -> CoinSourceLine(coins = coins, onRefresh = onRefresh) }
+                data.coins?.takeIf { it.failed || it.missing.isNotEmpty() }?.let { coins ->
+                    CoinProblemLine(coins = coins, onRefresh = onRefresh)
+                }
 
-                // Holdings List
+                // Holdings, grouped by account when there is more than one ("luno", "malacca securities cds").
                 if (data.holdings.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)) {
-                        data.holdings.forEach { holding ->
-                            val hProfit = holding.profitLoss >= 0
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val isPressed by interactionSource.collectIsPressedAsState()
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 48.dp)
-                                    .metroPressEffect(isPressed)
-                                    .combinedClickable(
-                                        interactionSource = interactionSource,
-                                        indication = null,
-                                        onClick = {
-                                            // Coins have no sheet row or quote page; a tap loads fresh prices.
-                                            if (holding.id in data.coins?.holdingIds.orEmpty()) {
-                                                onRefresh()
-                                            } else {
-                                                val sheetRow = data.watchlist.firstOrNull {
-                                                    my.hana.meena.data.finance.plainTicker(it.symbol) == my.hana.meena.data.finance.plainTicker(holding.symbol)
-                                                }
-                                                FinanceRepository.openQuoteUrl(context, my.hana.meena.data.finance.googleQuoteUrl(sheetRow?.symbol ?: holding.symbol))
-                                            }
-                                        },
-                                        onLongClick = {
-                                            onDeleteHolding(holding)
-                                        }
-                                    )
-                                    .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = my.hana.meena.data.finance.plainTicker(holding.symbol).lowercase(),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MeenaTextWhite
-                                    )
-                                    val units = java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString()
-                                    val sharesText = when {
-                                        !showAmounts -> stringResource(R.string.finance_units_hidden)
-                                        holding.hasCost -> stringResource(R.string.finance_units_avg, units, "%.2f".format(holding.averageCost))
-                                        else -> stringResource(R.string.finance_units, units)
-                                    }
-                                    Text(
-                                        text = sharesText,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MeenaTextMuted
-                                    )
-                                }
-                                Column(horizontalAlignment = Alignment.End) {
-                                    val valText = when {
+                    val groups = data.holdings.groupBy { it.groupName.trim().lowercase() }
+                    Column {
+                        groups.entries.forEachIndexed { index, (groupName, holdings) ->
+                            if (groups.size > 1) {
+                                val subtotal = my.hana.meena.data.finance.portfolioTotals(holdings)
+                                GroupLabel(
+                                    text = groupName,
+                                    value = when {
                                         !showAmounts -> stringResource(R.string.finance_amount_hidden)
-                                        !holding.hasPrice -> stringResource(R.string.finance_no_price)
-                                        else -> stringResource(R.string.finance_amount, "%,.2f".format(holding.currentValue))
-                                    }
-                                    Text(
-                                        text = valText,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = if (holding.hasPrice || !showAmounts) MeenaTextWhite else MeenaTextMuted
-                                    )
-                                    // Gain or loss only when both a cost and a price are known.
-                                    if (holding.hasCost && holding.hasPrice) {
-                                        val profitText = if (showAmounts) {
-                                            stringResource(R.string.finance_change, signedRm(holding.profitLoss), signedPercent(holding.profitLossPercent))
+                                        !subtotal.anyPriced -> null
+                                        else -> stringResource(R.string.finance_amount, "%,.2f".format(subtotal.value))
+                                    },
+                                    first = index == 0
+                                )
+                            }
+                            holdings.forEach { holding ->
+                                HoldingRow(
+                                    holding = holding,
+                                    showAmounts = showAmounts,
+                                    onClick = {
+                                        // Coins have no quote page to open; a tap loads fresh prices.
+                                        if (holding.id in data.coins?.holdingIds.orEmpty()) {
+                                            onRefresh()
                                         } else {
-                                            stringResource(R.string.finance_change, stringResource(R.string.finance_hidden_short), signedPercent(holding.profitLossPercent))
+                                            val sheetRow = data.watchlist.firstOrNull {
+                                                my.hana.meena.data.finance.plainTicker(it.symbol) == my.hana.meena.data.finance.plainTicker(holding.symbol)
+                                            }
+                                            FinanceRepository.openQuoteUrl(context, my.hana.meena.data.finance.googleQuoteUrl(sheetRow?.symbol ?: holding.symbol))
                                         }
-                                        Text(
-                                            text = profitText,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = if (hProfit) MeenaProfitGreen else MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                }
+                                    },
+                                    onLongClick = { onDeleteHolding(holding) }
+                                )
                             }
                         }
                     }
@@ -427,13 +394,8 @@ private fun PortfolioSection(
                 // Watchlist Items: sheet rows you don't own. Owned ones already show above as holdings.
                 val watchlist = data.unheldWatchlist()
                 if (watchlist.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.finance_watchlist_title),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MeenaTextMuted
-                    )
-                    Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
+                    GroupLabel(text = stringResource(R.string.finance_watchlist_title), first = data.holdings.isEmpty())
+                    Column {
                         watchlist.forEach { item ->
                             val isBull = (item.changePercent ?: 0.0) >= 0
                             val hasPrice = item.price > 0.0
@@ -536,11 +498,7 @@ private fun ExchangeRatesSection(
     onOpenSettings: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-        Text(
-            text = stringResource(R.string.rates_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        SectionTitle(stringResource(R.string.rates_title))
 
         when (state) {
             is WidgetState.NeedsSetup -> {
@@ -659,19 +617,15 @@ private fun SpendingSection(
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
         ) {
-            Text(
-                text = stringResource(R.string.widget_name_spending),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            SectionTitle(stringResource(R.string.widget_name_spending), Modifier.weight(1f).alignByBaseline())
             if (totalSpentToday > 0 && state is WidgetState.Ready) {
                 Text(
                     text = stringResource(R.string.spending_today, "%.2f".format(totalSpentToday)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MeenaTextWhite
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MeenaTextWhite,
+                    modifier = Modifier.alignByBaseline()
                 )
             }
         }
@@ -770,11 +724,7 @@ private fun MarketsSection(
     onOpenSettings: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-        Text(
-            text = stringResource(R.string.widget_name_markets),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        SectionTitle(stringResource(R.string.widget_name_markets))
 
         when {
             tickers.isEmpty() -> {
@@ -926,6 +876,7 @@ private fun RateTableRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (isHeader) Modifier else Modifier.heightIn(min = 48.dp))
             .then(if (onClick != null) Modifier.metroClickable { onClick() } else Modifier),
         horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m),
         verticalAlignment = Alignment.CenterVertically
@@ -983,11 +934,7 @@ private fun KijangEmasSection(
     onRefresh: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.s)) {
-        Text(
-            text = stringResource(R.string.widget_name_kijang),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        SectionTitle(stringResource(R.string.widget_name_kijang))
 
         when (state) {
             is WidgetState.NeedsSetup, is WidgetState.Loading -> {
@@ -1102,6 +1049,118 @@ private fun KijangEmasRow(label: String, pay: String, get: String, isHeader: Boo
     }
 }
 
+/**
+ * A widget's title on the money page: 24sp Light (plan §2.4), with 12dp to its content
+ * (6dp padding plus the section's 6dp spacing).
+ */
+@Composable
+private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.padding(bottom = my.hana.meena.theme.MeenaSpacing.s)
+    )
+}
+
+/**
+ * A small grey label over a group of rows, with an optional value on the right ("luno   rm 3.04").
+ * [first] is false for later groups, which get 12dp more space above so groups sit 24dp apart.
+ */
+@Composable
+private fun GroupLabel(text: String, value: String? = null, first: Boolean = true) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = if (first) my.hana.meena.theme.MeenaSpacing.s else my.hana.meena.theme.MeenaSpacing.s + my.hana.meena.theme.MeenaSpacing.m),
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MeenaTextMuted,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        if (value != null) {
+            Text(text = value, style = MaterialTheme.typography.labelSmall, color = MeenaTextMuted)
+        }
+    }
+}
+
+/**
+ * One holding: symbol over units on the left, value over gain or loss on the right, with the two
+ * first lines on one baseline. Rows are at least 48dp and sit 12dp apart (6dp padding each).
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HoldingRow(
+    holding: FinanceHolding,
+    showAmounts: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .metroPressEffect(isPressed)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+            .padding(vertical = my.hana.meena.theme.MeenaSpacing.s),
+        horizontalArrangement = Arrangement.spacedBy(my.hana.meena.theme.MeenaSpacing.m)
+    ) {
+        Column(modifier = Modifier.weight(1f).alignByBaseline()) {
+            Text(
+                text = my.hana.meena.data.finance.plainTicker(holding.symbol).lowercase(),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MeenaTextWhite
+            )
+            val units = java.math.BigDecimal.valueOf(holding.shares).stripTrailingZeros().toPlainString()
+            Text(
+                text = when {
+                    !showAmounts && holding.hasCost -> stringResource(R.string.finance_units_hidden)
+                    !showAmounts -> stringResource(R.string.finance_units, stringResource(R.string.finance_units_hidden_count))
+                    holding.hasCost -> stringResource(R.string.finance_units_avg, units, "%.2f".format(holding.averageCost))
+                    else -> stringResource(R.string.finance_units, units)
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MeenaTextMuted
+            )
+        }
+        Column(modifier = Modifier.alignByBaseline(), horizontalAlignment = Alignment.End) {
+            Text(
+                text = when {
+                    !showAmounts -> stringResource(R.string.finance_amount_hidden)
+                    !holding.hasPrice -> stringResource(R.string.finance_no_price)
+                    else -> stringResource(R.string.finance_amount, "%,.2f".format(holding.currentValue))
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (holding.hasPrice || !showAmounts) MeenaTextWhite else MeenaTextMuted
+            )
+            // Gain or loss only when both a cost and a price are known.
+            if (holding.hasCost && holding.hasPrice) {
+                Text(
+                    text = stringResource(
+                        R.string.finance_change,
+                        if (showAmounts) signedRm(holding.profitLoss) else stringResource(R.string.finance_hidden_short),
+                        signedPercent(holding.profitLossPercent)
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (holding.profitLoss >= 0) MeenaProfitGreen else MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
 /** Built-in names for the four default tickers; others use the ticker list's name, or the code. */
 @Composable
 private fun marketName(code: String, catalogue: my.hana.meena.data.finance.TickerCatalogueRepository.State): String = when (code) {
@@ -1119,37 +1178,30 @@ private fun signedRm(value: Double): String =
     stringResource(R.string.finance_signed_amount, if (value < 0) "-" else "+", "%.2f".format(kotlin.math.abs(value)))
 
 /**
- * Where coin prices come from and how old they are. Frankfurter's coin prices are daily and
- * usually a day behind, so the date is always shown. A failed load is tappable to try again.
+ * Shown only when coin prices didn't load or some coin has no daily price; the normal case is part
+ * of the portfolio's source line. A failed load is tappable to try again.
  */
 @Composable
-private fun CoinSourceLine(coins: my.hana.meena.data.finance.CoinPricing, onRefresh: () -> Unit) {
+private fun CoinProblemLine(coins: my.hana.meena.data.finance.CoinPricing, onRefresh: () -> Unit) {
     val day = coins.date?.let { my.hana.meena.data.finance.KijangEmas.dayLabel(it) }.orEmpty()
-    val text = when {
-        coins.failed && day.isNotEmpty() -> stringResource(R.string.finance_coins_saved, day)
-        coins.failed -> stringResource(R.string.finance_coins_failed)
-        day.isEmpty() -> stringResource(R.string.finance_coins_loading)
-        else -> stringResource(R.string.finance_coins_source, day)
-    }
-    Column(
-        modifier = if (coins.failed) Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .metroClickable { onRefresh() }
-        else Modifier.fillMaxWidth()
-    ) {
+    if (coins.failed) {
         Text(
-            text = text,
+            text = if (day.isNotEmpty()) stringResource(R.string.finance_coins_saved, day)
+            else stringResource(R.string.finance_coins_failed),
             style = MaterialTheme.typography.labelSmall,
-            color = if (coins.failed) MaterialTheme.colorScheme.primary else MeenaTextMuted
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .metroClickable { onRefresh() }
+                .padding(vertical = my.hana.meena.theme.MeenaSpacing.s)
         )
-        if (!coins.failed && coins.missing.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.finance_coins_missing, coins.missing.joinToString(", ").lowercase()),
-                style = MaterialTheme.typography.labelSmall,
-                color = MeenaTextMuted
-            )
-        }
+    } else if (coins.missing.isNotEmpty()) {
+        Text(
+            text = stringResource(R.string.finance_coins_missing, coins.missing.joinToString(", ").lowercase()),
+            style = MaterialTheme.typography.labelSmall,
+            color = MeenaTextMuted
+        )
     }
 }
 

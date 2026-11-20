@@ -350,7 +350,7 @@
     <string name="finance_source_local">prices you entered</string>
     <string name="finance_needs_prices">no prices yet. link your google sheet in settings, connections, money.</string>
     <string name="finance_coins_loading">loading coin prices</string>
-    <string name="finance_coins_source">coins %1$s · daily prices via frankfurter</string>
+    <string name="finance_coins_source">coins %1$s via frankfurter</string>
     <string name="finance_coins_saved">coins %1$s · couldn\'t update. tap to try again.</string>
     <string name="finance_coins_failed">couldn\'t load coin prices, so they may be old. tap to try again.</string>
     <string name="finance_coins_missing">no daily price for %1$s</string>
@@ -680,6 +680,7 @@
     <string name="finance_units_avg">%1$s units · avg rm %2$s</string>
     <string name="finance_units">%1$s units</string>
     <string name="finance_units_hidden">··· units · avg rm ··.··</string>
+    <string name="finance_units_hidden_count">···</string>
     <string name="finance_watchlist_title">watchlist</string>
     <string name="finance_portfolio_empty">nothing in your portfolio yet</string>
     <string name="rates_title">exchange rates</string>
