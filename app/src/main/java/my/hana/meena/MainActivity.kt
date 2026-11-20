@@ -434,6 +434,8 @@ fun MeenaHomeScreen(
     }
 
     var wallpaperBitmap by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    // A small copy of the visible part of the wallpaper, for choosing how dark the overlay must be.
+    var wallpaperSample by remember { mutableStateOf<IntArray?>(null) }
 
     // Keep Android's pinned shortcuts in step with the shortcut tiles.
     LaunchedEffect(userSettings.pinnedAppIds) {
@@ -443,7 +445,7 @@ fun MeenaHomeScreen(
         }
     }
     LaunchedEffect(userSettings.wallpaperUri) {
-        wallpaperBitmap = if (userSettings.wallpaperUri != null) {
+        val loaded = if (userSettings.wallpaperUri != null) {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 runCatching {
                     val uri = android.net.Uri.parse(userSettings.wallpaperUri)
@@ -463,11 +465,17 @@ fun MeenaHomeScreen(
                         inSampleSize = sampleSize
                     }
                     context.contentResolver.openInputStream(uri)?.use { s ->
-                        android.graphics.BitmapFactory.decodeStream(s, null, decodeOpts)?.asImageBitmap()
+                        android.graphics.BitmapFactory.decodeStream(s, null, decodeOpts)
+                    }?.let { bmp ->
+                        bmp.asImageBitmap() to runCatching {
+                            my.hana.meena.theme.wallpaperDimSample(bmp, targetW, targetH)
+                        }.getOrNull()
                     }
                 }.getOrNull()
             }
         } else null
+        wallpaperBitmap = loaded?.first
+        wallpaperSample = loaded?.second
     }
 
     var showFirstRunPermissionDialog by remember {
@@ -675,6 +683,20 @@ fun MeenaHomeScreen(
     }
 
     val currentWallpaper = wallpaperBitmap
+    // The dim setting is the minimum. A bright photo is darkened further until the faintest text
+    // (grey, green, red and the accent) reads at 4.5:1. Light pages put dark text on the photo,
+    // where darkening wouldn't help, so they keep the setting as it is.
+    val homePalette = my.hana.meena.theme.LocalMeenaPalette.current
+    val homeAccent = MaterialTheme.colorScheme.primary
+    val wallpaperDim = remember(wallpaperSample, homePalette, homeAccent, userSettings.wallpaperDimPercent) {
+        val sample = wallpaperSample
+        if (sample == null || homePalette.isLight) userSettings.wallpaperDimPercent.coerceIn(40, 90)
+        else my.hana.meena.theme.WallpaperDim.dimFor(
+            sample,
+            listOf(homePalette.textMuted, homePalette.positive, homePalette.negative, homeAccent),
+            userSettings.wallpaperDimPercent
+        )
+    }
     // One shared scope over home and its sub-pages, so a widget title can fly into the page it opens.
     androidx.compose.animation.SharedTransitionScope { sharedModifier ->
     androidx.compose.runtime.CompositionLocalProvider(
@@ -691,7 +713,7 @@ fun MeenaHomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MeenaBlack.copy(alpha = userSettings.wallpaperDimPercent.coerceIn(40, 90) / 100f))
+                    .background(MeenaBlack.copy(alpha = wallpaperDim / 100f))
             )
         }
         Column(modifier = Modifier.fillMaxSize()) {
