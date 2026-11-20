@@ -4,8 +4,10 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 ## Where we are
 
-**Version 0.2.2**, published as a GitHub release on 20 November 2026. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
+**Version 0.2.3**, published as a GitHub release on 20 November 2026. Built and tested on a TECNO KL8 (Android 14); installs on a Sony SO-02J (Android 8.0), where Family Link blocked it from opening during testing.
 **Blocked on:** a personal Google Play developer account (owner; on hold for now, 16 Nov 2026).
+
+**New in 0.2.3:** holdings can no longer be wiped by saving from settings before they were read; light and paper themes fade the wallpaper to white; settings buttons have the Meena press.
 
 **New in 0.2.2** (details in the changelog):
 - Live faces on wide tiles, and the inbox player's cover and progress line.
@@ -15,9 +17,9 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 
 **Money, found 19 Nov 2026:** Google Sheets can't fetch Bursa Malaysia prices (`GOOGLEFINANCE` gives "not authorised to access data for exchange: 'KLSE'"), so Bursa holdings use a price you type. The owner chose not to change the plan or the sheet template for this.
 
-| Check | Result (20 Nov 2026, 0.2.2) |
+| Check | Result (20 Nov 2026, 0.2.3) |
 |---|---|
-| Unit tests | 291 live, 291 demo, 0 failed |
+| Unit tests | 294 live, 294 demo, 0 failed |
 | Lint | 0 errors, 166 warnings |
 | UI score (`meena-ui-score.md`) | 9.7 of 10; area 4 waits for the task test |
 | Release build | APK 4.06 MB, AAB 7.89 MB, ARM only, signed with the upload key |
@@ -47,11 +49,11 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
-Done after 0.2.2, not released yet: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026). Settings buttons have the Meena press (scale and tilt, no ripple). The holdings data-loss risk below is fixed.
+Done after 0.2.2, released in 0.2.3: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026). Settings buttons have the Meena press (scale and tilt, no ripple). The holdings data-loss risk below is fixed.
 
 ## Backlog (not scheduled)
 
-- **Fixed (20 Nov 2026, after 0.2.2):** saved holdings were only loaded when the money page opened, so adding a holding or saving a sheet link from settings first could save over the stored portfolio. Now nothing is saved until the saved copy has been read, and money settings reads it itself.
+- **Fixed in 0.2.3 (20 Nov 2026):** saved holdings were only loaded when the money page opened, so adding a holding or saving a sheet link from settings first could save over the stored portfolio. Now nothing is saved until the saved copy has been read, and money settings reads it itself.
 - Compose UI tests (only unit tests today).
 - Lint warning clean-up (166, mostly unused resources).
 - The nearby map was said to flash black for about 0.15 s when it opens (since 0.2.0). A frame-by-frame screen recording on the TECNO (dark theme, 20 Nov 2026) found no flash over content: the new page is plain black for about 0.3 s until the map draws. Not changed; check again on the light theme or the Sony if it is still seen.

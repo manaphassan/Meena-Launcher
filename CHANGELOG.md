@@ -3,6 +3,24 @@
 All notable changes to Meena. Dates are when the work landed on `main`.
 Versions follow `versionName` in `app/build.gradle.kts`.
 
+## 0.2.3 (20 November 2026)
+
+Installs over 0.2.2: same signing key, version code 5.
+
+### Fixed
+- **Your holdings can't be wiped by settings any more.** Saved holdings were only read when the money page opened, so adding a holding or saving a sheet link in settings first (for example straight after a restart) could replace everything you had saved. Now nothing is saved until your saved holdings have been read, and money settings reads them itself.
+- **Light and paper themes over a wallpaper:** the photo fades to white instead of black, just enough for dark text to read at 4.5:1.
+
+### Changed
+- Settings buttons press like the rest of Meena: they shrink and tilt, with no ripple.
+
+### Privacy and build
+- No new permissions or libraries, and nothing new is sent.
+
+### Known gaps
+- Google Sheets can't fetch Bursa Malaysia (`KLSE`) prices; type the price of Bursa holdings yourself.
+- Not on Google Play yet.
+
 ## 0.2.2 (20 November 2026)
 
 Installs over 0.2.1: same signing key, version code 4.

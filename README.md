@@ -10,7 +10,7 @@
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.3-purple.svg?style=flat-square&logo=kotlin" alt="Kotlin 2.3"></a>
   <a href="https://developer.android.com/jetpack/compose"><img src="https://img.shields.io/badge/Jetpack_Compose-2026.03-green.svg?style=flat-square&logo=jetpackcompose" alt="Jetpack Compose 2026.03"></a>
   <a href="https://developer.android.com"><img src="https://img.shields.io/badge/Android-7.0%20(API%2024)%20to%2016%20(API%2036)-blue.svg?style=flat-square&logo=android" alt="Android 7.0 to 16"></a>
-  <img src="https://img.shields.io/badge/version-0.2.2-black.svg?style=flat-square" alt="Version 0.2.2">
+  <img src="https://img.shields.io/badge/version-0.2.3-black.svg?style=flat-square" alt="Version 0.2.3">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-black.svg?style=flat-square" alt="Apache 2.0"></a>
 </p>
 
@@ -24,7 +24,7 @@
 
 Meena is an Android launcher built on its own design language, **Meena UI**: clean, light, open, fast. Big type, plenty of space, flat colour and square corners. No cards, no boxes, no made-up numbers. It is written in Kotlin with Jetpack Compose.
 
-**Status:** 0.2.2 ([download from Releases](https://github.com/manaphassan/Meena-Launcher/releases/latest)). Getting ready for a Google Play closed test; it is not on the Play Store yet. What's next: [roadmap](docs/roadmap.md). What changed: [changelog](CHANGELOG.md).
+**Status:** 0.2.3 ([download from Releases](https://github.com/manaphassan/Meena-Launcher/releases/latest)). Getting ready for a Google Play closed test; it is not on the Play Store yet. What's next: [roadmap](docs/roadmap.md). What changed: [changelog](CHANGELOG.md).
 
 - Website: https://manaphassan.github.io/Meena-Launcher/
 - Privacy policy: https://manaphassan.github.io/Meena-Launcher/privacy-policy/
@@ -121,7 +121,7 @@ Store assets (icon, feature graphic, listing text) are in [`store/`](store/).
 
 ### Install the release APK
 
-Download `meena-0.2.2.apk` from [Releases](https://github.com/manaphassan/Meena-Launcher/releases/latest) and open it on your phone (Android 7.0 or newer, ARM phones; allow installing from your browser when asked). Then pick Meena as your home app when it asks. It installs over 0.2.1, 0.2.0 and 0.1.0.
+Download `meena-0.2.3.apk` from [Releases](https://github.com/manaphassan/Meena-Launcher/releases/latest) and open it on your phone (Android 7.0 or newer, ARM phones; allow installing from your browser when asked). Then pick Meena as your home app when it asks. It installs over 0.2.2, 0.2.1, 0.2.0 and 0.1.0.
 
 The APK is signed with Meena's upload key. When Meena reaches Google Play, Play signs it with a different key, so you'll need to uninstall this APK before installing from Play.
 
