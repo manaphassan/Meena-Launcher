@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
 
 /**
  * Data model for an active real-time Android status bar notification.
@@ -288,7 +290,7 @@ object NotificationRepository {
             if (bigPic != null) return@runCatching scaleTo(bigPic, 160).asImageBitmap()
 
             // 2. EXTRA_LARGE_ICON_BIG (expanded big-picture icon)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            run {
                 val iconObj = extras.getParcelable<Icon>(Notification.EXTRA_LARGE_ICON_BIG)
                 val bmp = iconObj?.loadDrawable(context)?.let { drawableToBitmap(it) }
                 if (bmp != null && bmp.width > 48) return@runCatching scaleTo(bmp, 160).asImageBitmap()
@@ -319,13 +321,13 @@ object NotificationRepository {
     private fun scaleTo(bmp: Bitmap, maxSide: Int): Bitmap {
         if (bmp.width <= maxSide && bmp.height <= maxSide) return bmp
         val scale = maxSide.toFloat() / maxOf(bmp.width, bmp.height)
-        return Bitmap.createScaledBitmap(bmp, (bmp.width * scale).toInt(), (bmp.height * scale).toInt(), true)
+        return bmp.scale((bmp.width * scale).toInt(), (bmp.height * scale).toInt())
     }
 
     private fun drawableToBitmap(drawable: android.graphics.drawable.Drawable): Bitmap {
         val w = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 160
         val h = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 160
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val bmp = createBitmap(w, h)
         drawable.setBounds(0, 0, w, h)
         drawable.draw(android.graphics.Canvas(bmp))
         return bmp

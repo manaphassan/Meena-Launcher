@@ -242,8 +242,9 @@ fun rememberCompass(active: Boolean, location: DeviceLocation): CompassState {
 /** What a screen reader hears for the map: the place, the qibla and the sun. */
 @Composable
 fun mapDescription(placeName: String?, sky: SkyInfo): String {
-    val base = stringResource(
-        R.string.map_a11y,
+    val base = androidx.compose.ui.res.pluralStringResource(
+        R.plurals.map_a11y,
+        sky.qibla.roundToInt(),
         placeName ?: stringResource(R.string.weather_near_you),
         sky.qibla.roundToInt()
     )

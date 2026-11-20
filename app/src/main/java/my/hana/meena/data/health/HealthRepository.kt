@@ -38,6 +38,7 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import androidx.core.net.toUri
 
 enum class HealthConnectAvailability {
     AVAILABLE,
@@ -463,12 +464,12 @@ object HealthRepository : WidgetSpec<HealthData> {
      */
     fun openHealthConnectPlayStore(context: Context) {
         try {
-            val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata")).apply {
+            val marketIntent = Intent(Intent.ACTION_VIEW, "market://details?id=com.google.android.apps.healthdata".toUri()).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(marketIntent)
         } catch (_: Exception) {
-            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")).apply {
+            val webIntent = Intent(Intent.ACTION_VIEW, "https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata".toUri()).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(webIntent)
@@ -480,7 +481,7 @@ object HealthRepository : WidgetSpec<HealthData> {
      */
     fun openAirQualityDetails(context: Context) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://open-meteo.com/en/docs/air-quality-api")).apply {
+            val intent = Intent(Intent.ACTION_VIEW, "https://open-meteo.com/en/docs/air-quality-api".toUri()).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(intent)

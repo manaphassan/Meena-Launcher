@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import androidx.core.content.edit
 
 /**
  * Counts apps opened from Meena, for the frequent apps widget. Kept on the phone only,
@@ -23,7 +24,7 @@ object AppLaunchStats {
         if (packageName == context.packageName) return
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val current = decode(prefs.getString(packageName, null))
-        prefs.edit().putString(packageName, encode(Entry((current?.count ?: 0) + 1, now))).apply()
+        prefs.edit { putString(packageName, encode(Entry((current?.count ?: 0) + 1, now))) }
         _version.update { it + 1 }
     }
 
@@ -33,7 +34,7 @@ object AppLaunchStats {
     }
 
     fun clear(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
         _version.update { it + 1 }
     }
 

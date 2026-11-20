@@ -86,6 +86,7 @@ import androidx.lifecycle.compose.currentStateAsState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
 
 @Composable
 fun TodayHub(
@@ -582,7 +583,7 @@ fun TodayHub(
                                         cardContext.startActivity(
                                             android.content.Intent(
                                                 android.content.Intent.ACTION_VIEW,
-                                                android.net.Uri.parse("https://manaphassan.github.io/cv")
+                                                "https://manaphassan.github.io/cv".toUri()
                                             ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                                         )
                                     }
@@ -866,7 +867,7 @@ fun TodayHub(
                                         .metroClickable {
                                             try {
                                                 context.startActivity(
-                                                    android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(article.url))
+                                                    android.content.Intent(android.content.Intent.ACTION_VIEW, article.url.toUri())
                                                         .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                                                 )
                                             } catch (_: Exception) {

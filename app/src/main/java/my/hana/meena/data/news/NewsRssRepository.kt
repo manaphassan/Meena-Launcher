@@ -23,6 +23,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
 
 /**
  * Data model for a local news article from RSS feeds (Amanz.my & SuamiSihat.com.my).
@@ -429,7 +430,7 @@ object NewsRssRepository : WidgetSpec<List<NewsArticle>> {
      */
     fun openArticle(context: Context, article: NewsArticle) {
         try {
-            val uri = Uri.parse(article.link)
+            val uri = article.link.toUri()
             val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }

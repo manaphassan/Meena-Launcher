@@ -102,6 +102,8 @@ import my.hana.meena.ui.settings.SettingsScreen
 import my.hana.meena.ui.components.turnstile
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 
 /** The last base theme, kept outside DataStore so it can be read before the first frame. */
 private object LaunchTheme {
@@ -239,7 +241,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(userSettings.baseTheme) { LaunchTheme.write(this@MainActivity, userSettings.baseTheme) }
 
             val parsedAccent = try {
-                Color(android.graphics.Color.parseColor(userSettings.accentHex))
+                Color(userSettings.accentHex.toColorInt())
             } catch (e: Exception) {
                 my.hana.meena.theme.MeenaCyan
             }
@@ -448,7 +450,7 @@ fun MeenaHomeScreen(
         val loaded = if (userSettings.wallpaperUri != null) {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 runCatching {
-                    val uri = android.net.Uri.parse(userSettings.wallpaperUri)
+                    val uri = (userSettings.wallpaperUri ?: return@runCatching null).toUri()
                     // First pass: decode bounds only
                     val opts = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
                     context.contentResolver.openInputStream(uri)?.use { s ->

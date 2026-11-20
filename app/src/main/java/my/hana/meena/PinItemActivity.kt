@@ -23,6 +23,7 @@ import my.hana.meena.data.system.ShortcutRepository
 import my.hana.meena.theme.MeenaLauncherTheme
 import my.hana.meena.ui.components.MetroDialog
 import my.hana.meena.ui.components.MetroMessage
+import androidx.core.graphics.toColorInt
 
 /**
  * Shown when another app asks the home screen to pin something: a shortcut such as a WhatsApp
@@ -49,7 +50,7 @@ class PinItemActivity : ComponentActivity() {
         setContent {
             val settings by settingsRepository.userSettingsFlow.collectAsState(initial = null)
             val loaded = settings ?: return@setContent
-            val accent = runCatching { Color(android.graphics.Color.parseColor(loaded.accentHex)) }
+            val accent = runCatching { Color(loaded.accentHex.toColorInt()) }
                 .getOrDefault(my.hana.meena.theme.MeenaCyan)
             val scope = rememberCoroutineScope()
             val fullMsg = stringResource(R.string.favourites_full)

@@ -46,10 +46,12 @@ fun ScreenTimeHourChart(
     val accent = MaterialTheme.colorScheme.primary
     val muted = MeenaTextMuted
     val busiest = minutesByHour.indices.maxByOrNull { minutesByHour[it] } ?: 0
-    val description = stringResource(
-        R.string.screen_time_chart_description,
+    val busiestMinutes = minutesByHour.getOrElse(busiest) { 0 }
+    val description = androidx.compose.ui.res.pluralStringResource(
+        R.plurals.screen_time_chart_description,
+        busiestMinutes,
         screenTimeHourLabel(busiest, is24Hour),
-        minutesByHour.getOrElse(busiest) { 0 }
+        busiestMinutes
     )
     Column(
         modifier = modifier

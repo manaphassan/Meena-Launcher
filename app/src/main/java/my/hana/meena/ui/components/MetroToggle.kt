@@ -112,7 +112,7 @@ fun MetroToggle(
             // Flat rectangular thumb
             Box(
                 modifier = Modifier
-                    .offset(x = thumbOffset)
+                    .offset { androidx.compose.ui.unit.IntOffset(thumbOffset.roundToPx(), 0) }
                     .width(thumbWidth)
                     .height(thumbHeight)
                     .background(if (checked) my.hana.meena.theme.MeenaOnAccent else MeenaTextWhite)

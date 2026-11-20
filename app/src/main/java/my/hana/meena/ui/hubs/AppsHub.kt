@@ -76,6 +76,7 @@ import my.hana.meena.theme.MeenaBlack
 import my.hana.meena.ui.components.MetroDottedProgress
 import my.hana.meena.ui.components.metroClickable
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -584,7 +585,9 @@ fun AppsHub(
                             // The system uninstaller silently finishes for callers targeting API 28+
                             // without REQUEST_DELETE_PACKAGES (AOSP UninstallerActivity.onCreate), so
                             // without it we open the app's info page, where uninstall is one tap.
-                            val packageUri = Uri.parse("package:${target.packageName}")
+                            val packageUri = "package:${target.packageName}".toUri()
+                            // On Android 7 the permission doesn't exist, so the check says no and the info page opens.
+                            @android.annotation.SuppressLint("InlinedApi")
                             val canUninstallDirectly = context.checkSelfPermission(
                                 android.Manifest.permission.REQUEST_DELETE_PACKAGES
                             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -675,7 +678,7 @@ fun AppsHub(
                                     .metroClickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                            data = Uri.parse("package:${target.packageName}")
+                                            data = "package:${target.packageName}".toUri()
                                         }
                                         context.startActivity(intent)
                                         selectedTargetForProperties = null

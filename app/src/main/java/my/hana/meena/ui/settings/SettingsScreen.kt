@@ -107,6 +107,7 @@ import my.hana.meena.theme.MeenaOrange
 import my.hana.meena.theme.MeenaSurface
 import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
+import androidx.core.net.toUri
 
 /**
  * Meena UI settings, laid out like a Zune HD pivot: pages, connections, personalize, system.
@@ -501,7 +502,7 @@ private fun LazyListScope.connectionsTab(settingsState: MeenaUserSettings, conte
         val hasCalendar = my.hana.meena.data.system.DeviceCalendarRepository.hasCalendarPermission(context)
         SettingsPivotRow(
             title = stringResource(R.string.settings_calendar_title),
-            status = if (hasCalendar) stringResource(R.string.settings_calendar_on, settingsState.calendarDaysAhead) else stringResource(R.string.settings_needs_okay),
+            status = if (hasCalendar) androidx.compose.ui.res.pluralStringResource(R.plurals.settings_calendar_on, settingsState.calendarDaysAhead, settingsState.calendarDaysAhead) else stringResource(R.string.settings_needs_okay),
             onClick = { open("account:calendar") }
         )
     }
@@ -525,7 +526,7 @@ private fun LazyListScope.connectionsTab(settingsState: MeenaUserSettings, conte
         val count = settingsState.newsFeeds.size
         SettingsPivotRow(
             title = stringResource(R.string.settings_news_title),
-            status = if (count > 0) stringResource(R.string.settings_news_status, count) else stringResource(R.string.settings_news_default),
+            status = if (count > 0) androidx.compose.ui.res.pluralStringResource(R.plurals.settings_news_status, count, count) else stringResource(R.string.settings_news_default),
             onClick = { open("account:news") }
         )
     }
@@ -712,7 +713,7 @@ private fun LazyListScope.aboutTab(settingsState: MeenaUserSettings, context: an
             onClick = {
                 runCatching {
                     cardContext.startActivity(
-                        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://manaphassan.github.io/cv"))
+                        android.content.Intent(android.content.Intent.ACTION_VIEW, "https://manaphassan.github.io/cv".toUri())
                             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                     )
                 }

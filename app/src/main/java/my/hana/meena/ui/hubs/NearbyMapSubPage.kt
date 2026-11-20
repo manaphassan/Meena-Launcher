@@ -51,6 +51,7 @@ import my.hana.meena.ui.components.rememberSkyInfo
 import my.hana.meena.ui.widgets.WidgetState
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.core.net.toUri
 
 /**
  * The full nearby page: a large live map whose compass turns with the phone, which way to turn
@@ -268,7 +269,7 @@ fun NearbyMapSubPage(
                     .metroClickable {
                         try {
                             context.startActivity(
-                                android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.openstreetmap.org/copyright"))
+                                android.content.Intent(android.content.Intent.ACTION_VIEW, "https://www.openstreetmap.org/copyright".toUri())
                                     .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                             )
                         } catch (_: Exception) {}

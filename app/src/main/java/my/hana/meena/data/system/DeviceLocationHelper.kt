@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 data class DeviceLocation(
     val latitude: Double,
@@ -90,7 +91,7 @@ object DeviceLocationHelper {
     fun openAppSettings(context: Context) {
         try {
             context.startActivity(
-                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         } catch (_: Exception) {
@@ -309,13 +310,13 @@ object DeviceLocationHelper {
     fun openInExternalMaps(context: Context, lat: Double, lng: Double, label: String = "location") {
         try {
             val encodedLabel = Uri.encode(label)
-            val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng($encodedLabel)")
+            val uri = "geo:$lat,$lng?q=$lat,$lng($encodedLabel)".toUri()
             val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(intent)
         } catch (e: Exception) {
-            val webUri = Uri.parse("https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=15/$lat/$lng")
+            val webUri = "https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=15/$lat/$lng".toUri()
             val webIntent = Intent(Intent.ACTION_VIEW, webUri).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }

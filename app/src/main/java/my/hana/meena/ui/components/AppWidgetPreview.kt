@@ -28,6 +28,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import my.hana.meena.data.system.AppWidgetRepository
+import androidx.core.graphics.createBitmap
 
 private const val PREVIEW_MAX_HEIGHT_DP = 160
 
@@ -73,7 +74,7 @@ fun AppWidgetPreview(info: AppWidgetProviderInfo, modifier: Modifier = Modifier)
                     val w = d.intrinsicWidth.takeIf { it > 0 } ?: 192
                     val h = d.intrinsicHeight.takeIf { it > 0 } ?: 192
                     val scale = minOf(1f, maxSide.toFloat() / maxOf(w, h))
-                    val bmp = Bitmap.createBitmap((w * scale).toInt().coerceAtLeast(1), (h * scale).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+                    val bmp = createBitmap((w * scale).toInt().coerceAtLeast(1), (h * scale).toInt().coerceAtLeast(1))
                     d.setBounds(0, 0, bmp.width, bmp.height)
                     d.draw(Canvas(bmp))
                     bmp.asImageBitmap() to (preview != null)

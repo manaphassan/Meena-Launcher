@@ -3,6 +3,7 @@ package my.hana.meena.data.system
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 
 /**
  * Meena's public privacy policy: the same page linked in Play Console, shown from settings and
@@ -20,7 +21,7 @@ object PrivacyPolicy {
 
     /** Opens the policy in the browser; false when no app can show a web page. */
     fun open(context: Context): Boolean = try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(Intent(Intent.ACTION_VIEW, URL.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         true
     } catch (_: Exception) {
         false

@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 
 data class DeviceAppInfo(
     val packageName: String,
@@ -206,7 +208,7 @@ object InstalledAppsRepository {
         val layer = themed ?: adaptive.foreground ?: return null
         val size = 96 // tiles draw the glyph at 40dp
         val inset = (size * android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction()).toInt()
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size, size)
         layer.setBounds(-inset, -inset, size + inset, size + inset)
         layer.draw(Canvas(bitmap))
         if (themed == null && !looksLikeGlyph(bitmap)) return null
@@ -228,11 +230,11 @@ object InstalledAppsRepository {
             if (bmp.width <= targetSize && bmp.height <= targetSize) {
                 return bmp
             }
-            return Bitmap.createScaledBitmap(bmp, targetSize, targetSize, true)
+            return bmp.scale(targetSize, targetSize)
         }
         val width = if (drawable.intrinsicWidth in 1..targetSize) drawable.intrinsicWidth else targetSize
         val height = if (drawable.intrinsicHeight in 1..targetSize) drawable.intrinsicHeight else targetSize
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)

@@ -72,6 +72,7 @@ import my.hana.meena.theme.MeenaTextMuted
 import my.hana.meena.theme.MeenaTextWhite
 import my.hana.meena.ui.components.metroClickable
 import java.util.concurrent.Executors
+import androidx.core.net.toUri
 
 @Composable
 fun ScannerSubPage(onNavigateBack: () -> Unit) {
@@ -368,7 +369,7 @@ private fun ScannerCamera(onNavigateBack: () -> Unit) {
                                 .heightIn(min = 48.dp)
                                 .metroClickable {
                                     runCatching {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(content)))
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, content.toUri()))
                                     }
                                 }
                                 .padding(vertical = MeenaSpacing.m)

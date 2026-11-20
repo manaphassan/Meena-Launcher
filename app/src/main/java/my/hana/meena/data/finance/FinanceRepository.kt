@@ -26,6 +26,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import androidx.core.net.toUri
 
 /**
  * Google Finance's page for a sheet symbol. Sheets write "KLSE:FFB" but the page address is
@@ -519,7 +520,7 @@ object FinanceRepository : WidgetSpec<FinanceData> {
 
     fun openQuoteUrl(context: Context, url: String) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(intent)

@@ -26,6 +26,7 @@ import my.hana.meena.data.news.NewsTime
 import my.hana.meena.ui.components.MetroMessage
 import my.hana.meena.ui.widgets.AgeUnit
 import my.hana.meena.ui.widgets.Freshness
+import androidx.core.net.toUri
 
 sealed interface NewsImageState {
     data object Loading : NewsImageState
@@ -120,7 +121,7 @@ fun newsAgeText(pubDateMs: Long, nowMs: Long): String {
 
 /** Host shown in "open on ...", without "www."; null when the link has none. */
 fun linkHost(link: String): String? =
-    runCatching { Uri.parse(link).host }.getOrNull()
+    runCatching { link.toUri().host }.getOrNull()
         ?.lowercase()
         ?.removePrefix("www.")
         ?.ifBlank { null }
@@ -128,7 +129,7 @@ fun linkHost(link: String): String? =
 /** Opens [url] in the user's browser; shows [failedMessage] when nothing can open it. */
 fun openInBrowser(context: Context, url: String, failedMessage: String) {
     try {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)

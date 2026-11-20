@@ -71,6 +71,8 @@ object SecureFields {
 }
 
 /** Uses commit() so callers know each write reached disk before erasing anything. */
+// The KTX edit {} returns nothing, and these callers need commit()'s result.
+@android.annotation.SuppressLint("UseKtx")
 class SharedPrefsStore(private val prefs: SharedPreferences) : PlainStore {
     override fun get(key: String): String? = prefs.getString(key, null)
     override fun put(key: String, value: String): Boolean = prefs.edit().putString(key, value).commit()

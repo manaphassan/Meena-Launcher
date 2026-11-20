@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 
 /** How fast the phone is charging, as Android Settings words it. */
 enum class ChargeSpeed { SLOW, NORMAL, FAST }
@@ -137,7 +138,7 @@ object BatteryHistory {
         val kept = (current + BatterySample(now, level, charging))
             .filter { now - it.atMillis <= BatteryRules.WINDOW_MS * 2 }
             .takeLast(MAX_SAMPLES)
-        prefs(context).edit().putString(KEY, BatteryRules.encode(kept)).apply()
+        prefs(context).edit { putString(KEY, BatteryRules.encode(kept)) }
     }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

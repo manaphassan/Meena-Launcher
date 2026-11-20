@@ -68,7 +68,8 @@ object AppWidgetRepository {
     /** True when the widget must show its own setup screen before it can be placed. */
     fun needsConfigure(info: AppWidgetProviderInfo): Boolean {
         if (info.configure == null) return false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        // CONFIGURATION_OPTIONAL is new in Android 12; before that the bit is never set.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val optional = AppWidgetProviderInfo.WIDGET_FEATURE_CONFIGURATION_OPTIONAL
             val reconfigurable = AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE
             if (info.widgetFeatures and optional != 0 && info.widgetFeatures and reconfigurable != 0) return false

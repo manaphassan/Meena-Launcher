@@ -9,6 +9,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import androidx.core.content.edit
 
 /**
  * Encrypts small values (portfolio holdings, sheet link) with an Android Keystore-backed
@@ -94,7 +95,7 @@ object KeystoreSecretsManager {
     fun deleteLegacyGeminiKey(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (prefs.contains(PREF_LEGACY_GEMINI_KEY)) {
-            prefs.edit().remove(PREF_LEGACY_GEMINI_KEY).commit()
+            prefs.edit(commit = true) { remove(PREF_LEGACY_GEMINI_KEY) }
         }
     }
 }

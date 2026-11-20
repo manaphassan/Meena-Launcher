@@ -1,19 +1,12 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Meena</string>
-    <string name="design_system_name">meena ui</string>
-    <string name="motto">clean, light, open, fast</string>
 
     <!-- Hubs -->
-    <string name="hub_today">today</string>
     <string name="hub_inbox">inbox</string>
-    <string name="hub_news">news</string>
-    <string name="hub_money">money</string>
-    <string name="hub_apps">apps</string>
 
     <!-- Common Actions & Dialogs -->
     <string name="action_yes">yes</string>
     <string name="action_no">no</string>
-    <string name="action_ok">ok</string>
     <string name="action_close">close</string>
     <string name="action_clear_all">clear all</string>
     <string name="action_all_settings">all settings</string>
@@ -21,8 +14,6 @@
     <string name="action_new_event">new event</string>
 
     <!-- App Menu -->
-    <string name="menu_pin_today">pin to today</string>
-    <string name="menu_unpin_today">unpin from today</string>
     <string name="menu_app_info">app info</string>
     <string name="menu_uninstall">uninstall</string>
     <string name="dialog_uninstall_title">uninstall app?</string>
@@ -31,36 +22,26 @@
     <!-- Common States -->
     <string name="state_all_quiet">all quiet</string>
     <string name="state_offline">offline</string>
-    <string name="state_loading">loading</string>
     <string name="state_needs_setup">needs setup</string>
     <string name="state_needs_quick_okay">needs a quick okay</string>
-    <string name="state_nothing_new">nothing new</string>
     <string name="state_allow_location">allow location</string>
     <string name="state_checking">checking</string>
     <string name="state_updated_just_now">updated just now</string>
     <string name="state_updated_ago">updated %1$dm ago</string>
-    <string name="state_new_count">%1$d new</string>
+    <string name="state_new_count" tools:ignore="PluralsCandidate">%1$d new</string>
 
     <!-- Settings Pivot Tabs -->
-    <string name="settings_tab_widgets">widgets</string>
-    <string name="settings_tab_accounts">accounts</string>
-    <string name="settings_tab_look">look &amp; feel</string>
 
     <!-- Service Label -->
     <string name="notification_service_label">meena notifications</string>
 
     <!-- Prominent Disclosures & Privacy -->
-    <string name="disclosure_notification_title">notification access</string>
-    <string name="disclosure_notification_body">meena reads incoming notifications solely on your phone to show alerts and chats. your messages and notifications are processed locally in memory and never sent to any server, cloud, or third party.</string>
-    <string name="disclosure_notification_question">do you want to open notification access settings?</string>
     <string name="disclosure_location_title">your location</string>
     <string name="disclosure_location_body">meena uses your location for local weather, prayer times and the nearby map. you can choose approximate on the next screen. weather and air quality only get your area to about 1 km, and openfreemap gets the part of the map you look at. no background tracking.</string>
     <string name="disclosure_location_question">allow location access?</string>
     <string name="disclosure_calendar_title">calendar access</string>
     <string name="disclosure_calendar_body">meena reads your calendar to show today\'s events. your events stay on your phone.</string>
     <string name="disclosure_calendar_question">allow calendar access?</string>
-    <string name="about_privacy_title">privacy charter</string>
-    <string name="about_privacy_body">no analytics, no ads and no background tracking. your portfolio is stored encrypted on your phone. only what weather, prayer times, news and rates need goes online.</string>
     <string name="privacy_status">no ads · no tracking</string>
     <string name="privacy_intro">meena keeps your data on your phone. a few features need the internet, and each one is listed below.</string>
     <string name="privacy_on_device_body">notifications, bank alerts, calendar events and health stats are read on your phone and never leave it. no analytics, no ads, no tracking.</string>
@@ -81,17 +62,13 @@
     <string name="error_open_email">couldn\'t open email</string>
     <string name="error_open_camera">couldn\'t open camera</string>
     <string name="error_open_calculator">couldn\'t open calculator</string>
-    <string name="error_open_app">couldn\'t open app</string>
-    <string name="error_uninstall_app">couldn\'t uninstall app</string>
     <string name="error_generic">something went wrong. try again?</string>
-    <string name="error_offline">you\'re offline. showing what we had.</string>
 
     <!-- Backups -->
     <string name="backup_shared">backup shared</string>
     <string name="backup_share_failed">couldn\'t share backup</string>
     <string name="backup_restored">settings restored from your backup</string>
     <string name="backup_parse_failed">couldn\'t read that file. pick a backup you shared from meena.</string>
-    <string name="backup_clipboard_hint">copy your backup to the clipboard first, then tap import from clipboard</string>
     <string name="backup_import_failed">couldn\'t import backup</string>
 
     <!-- Quick Panel -->
@@ -106,28 +83,8 @@
     <string name="quick_panel_notifications">notifications</string>
 
     <!-- Widget Catalog Names -->
-    <string name="widget_clock">clock</string>
-    <string name="widget_weather">weather</string>
-    <string name="widget_solat">solat</string>
-    <string name="widget_agenda">agenda</string>
-    <string name="widget_health">health</string>
-    <string name="widget_air">air</string>
-    <string name="widget_alerts">alerts</string>
-    <string name="widget_chats">chats</string>
-    <string name="widget_mail">mail</string>
-    <string name="widget_news">news</string>
-    <string name="widget_portfolio">portfolio</string>
-    <string name="widget_watchlist">watchlist</string>
-    <string name="widget_rates">rates</string>
-    <string name="widget_spending">spending</string>
-    <string name="widget_notes">notes</string>
-    <string name="widget_tasks">tasks</string>
-    <string name="widget_phone">phone</string>
-    <string name="widget_nearby">nearby</string>
 
     <!-- Milestone 2: Finance -->
-    <string name="dialog_delete_holding_title">delete holding</string>
-    <string name="dialog_delete_holding_question">delete this holding?</string>
     <string name="dialog_reset_portfolio_title">start over</string>
     <string name="dialog_reset_portfolio_question">delete your saved portfolio and sheet link, then start fresh?</string>
     <string name="finance_unlock_failed_hint">this phone can\'t open your saved portfolio. tap to start over.</string>
@@ -144,14 +101,14 @@
     <string name="widget_devices_title">connected devices</string>
     <string name="devices_needs_setup">want to see your band and headphones here? tap to allow nearby devices.</string>
     <string name="devices_empty">nothing seen yet. devices that connect while meena is running show up here.</string>
-    <string name="devices_loading">looking for devices...</string>
+    <string name="devices_loading">looking for devices…</string>
     <string name="devices_kind_wearable">band or watch</string>
     <string name="devices_kind_audio">audio</string>
     <string name="devices_kind_other">device</string>
     <string name="devices_battery_percent">%1$d%%</string>
     <string name="devices_battery_in_app">%1$s · battery in %2$s</string>
     <string name="devices_its_app">its app</string>
-    <string name="devices_battery_description">%1$s, battery %2$d percent</string>
+    <string name="devices_battery_description" tools:ignore="PluralsCandidate">%1$s, battery %2$d percent</string>
     <string name="devices_signal_strong">strong signal</string>
     <string name="devices_signal_good">good signal</string>
     <string name="devices_signal_weak">weak signal</string>
@@ -163,7 +120,6 @@
     <string name="settings_tab_pages">pages</string>
     <string name="settings_tab_connections">connections</string>
     <string name="settings_tab_personalize">personalize</string>
-    <string name="settings_tab_system">system</string>
     <string name="settings_tab_about">about</string>
     <string name="settings_pages_intro">what shows on each page. tap a widget to turn it on, move it or change it.</string>
     <string name="settings_story_title">sort as a story</string>
@@ -181,7 +137,10 @@
     <string name="settings_solat_title">prayer times</string>
     <string name="settings_solat_auto">zone from your rough location</string>
     <string name="settings_calendar_title">calendar</string>
-    <string name="settings_calendar_on">showing the next %1$d days</string>
+    <plurals name="settings_calendar_on">
+        <item quantity="one">showing the next %1$d day</item>
+        <item quantity="other">showing the next %1$d days</item>
+    </plurals>
     <string name="settings_needs_okay">needs a quick okay</string>
     <string name="settings_notifications_title">notifications</string>
     <string name="settings_notifications_on">alerts, chats and spending are on</string>
@@ -190,7 +149,10 @@
     <string name="settings_money_title">money</string>
     <string name="settings_money_status">portfolio, sheet link and rates</string>
     <string name="settings_news_title">news feeds</string>
-    <string name="settings_news_status">%1$d feeds</string>
+    <plurals name="settings_news_status">
+        <item quantity="one">%1$d feed</item>
+        <item quantity="other">%1$d feeds</item>
+    </plurals>
     <string name="settings_news_default">built-in feeds</string>
     <string name="settings_group_look">look</string>
     <string name="settings_group_feel">feel</string>
@@ -221,7 +183,7 @@
     <string name="live_tiles_names_hint">chat tiles show the sender or group name, never the message</string>
     <string name="live_tiles_reduced_motion">less motion is on, so tiles stay still and only show the unread count.</string>
     <string name="live_tile_new">new</string>
-    <string name="live_tile_and_more">%1$s and %2$d more</string>
+    <string name="live_tile_and_more" tools:ignore="PluralsCandidate">%1$s and %2$d more</string>
     <string name="live_tile_alarm">alarm %1$s</string>
     <string name="live_tile_on_now">on now</string>
     <string name="live_tile_from_to">%1$s to %2$s</string>
@@ -243,7 +205,6 @@
     <string name="settings_backup_title">backup and restore</string>
     <string name="settings_backup_status">save or bring back your settings</string>
     <string name="settings_about_title">about meena</string>
-    <string name="settings_about_status">version %1$s</string>
     <string name="news_title">news</string>
     <string name="news_from">from %1$s</string>
     <string name="news_feeds_using_defaults">built-in feeds</string>
@@ -270,8 +231,9 @@
     <string name="forecast_title">forecast</string>
     <string name="forecast_air">air quality</string>
     <string name="rain_title">rain</string>
-    <string name="rain_dry">none expected for the next %1$d hours</string>
-    <string name="rain_all">likely for the next %1$d hours</string>
+    <!-- Always RainOutlookCalculator.HOURS (3), never one. -->
+    <string name="rain_dry" tools:ignore="PluralsCandidate">none expected for the next %1$d hours</string>
+    <string name="rain_all" tools:ignore="PluralsCandidate">likely for the next %1$d hours</string>
     <string name="rain_until">likely till %1$s, then easing</string>
     <string name="rain_from">likely from %1$s</string>
 
@@ -311,7 +273,10 @@
     <string name="map_legend">on the outer ring: north, sunrise (filled dot) and sunset (open dot). the dotted arc is the sun\'s path today with prayer times on it, and the dotted line is where the sun is now.</string>
     <string name="map_open_larger">open the larger map</string>
     <string name="map_attribution_short">openfreemap © openmaptiles · © openstreetmap</string>
-    <string name="map_a11y">map around %1$s. qibla is %2$d degrees from north.</string>
+    <plurals name="map_a11y">
+        <item quantity="one">map around %1$s. qibla is %2$d degree from north.</item>
+        <item quantity="other">map around %1$s. qibla is %2$d degrees from north.</item>
+    </plurals>
     <string name="map_a11y_sun">sunrise %1$s, sunset %2$s.</string>
     <string name="map_detail_place">place</string>
     <string name="map_detail_accuracy">accuracy</string>
@@ -337,7 +302,7 @@
     <string name="disclosure_bluetooth_body">meena checks which bluetooth devices are connected, like your band or headphones, and shows their names on today. it doesn\'t scan for new devices, and names stay on your phone.</string>
     <string name="disclosure_bluetooth_question">allow nearby devices?</string>
     <string name="widget_wikipedia_title">wikipedia</string>
-    <string name="wikipedia_loading">finding an article...</string>
+    <string name="wikipedia_loading">finding an article…</string>
     <string name="wikipedia_source">%1$s · from wikipedia, cc by-sa · tap to read</string>
     <string name="wikipedia_another">show another</string>
     <string name="tap_to_retry">tap to retry</string>
@@ -365,18 +330,12 @@
     <string name="health_install_app">get health connect from play store</string>
     <string name="health_open_companion">open companion app</string>
     <string name="health_step_goal_title">step goal</string>
-    <string name="health_sleep_goal_title">sleep goal</string>
     <string name="health_companion_title">companion app</string>
-    <string name="health_options_title">health options</string>
 
     <!-- Apps Hub -->
     <string name="apps_search_hint">search apps</string>
-    <string name="apps_empty">nothing called \"%1$s\"</string>
-    <string name="apps_jump_title">jump to</string>
-    <string name="apps_quick_actions">quick actions</string>
 
     <!-- News Hub -->
-    <string name="news_local_rss">local news · rss feeds</string>
     <string name="news_search_hint">search articles</string>
     <string name="news_empty_query">nothing about \"%1$s\"</string>
     <string name="news_empty_stories">no stories right now</string>
@@ -394,7 +353,6 @@
     <string name="news_open_failed">couldn\'t open the link. try again?</string>
 
     <!-- About -->
-    <string name="about_motto">meena · built on meena ui: clean, light, open, fast</string>
     <string name="about_version">version %1$s · my.hana.meena</string>
     <string name="about_made_by">made by manap hassan</string>
     <string name="about_visit_card">visit digital card</string>
@@ -665,9 +623,10 @@
     <string name="notes_remind">remind me</string>
     <string name="notes_remind_hint">opens your calendar so you can pick the time</string>
     <string name="notes_remind_failed">couldn\'t open a calendar app. install one, then try again.</string>
-    <string name="notes_more_lines">%1$d more</string>
+    <string name="notes_more_lines" tools:ignore="PluralsCandidate">%1$d more</string>
     <string name="action_save">save</string>
-    <string name="action_cancel">cancel</string>
+    <!-- Lowercase on purpose: Meena UI writes every label in lowercase. -->
+    <string name="action_cancel" tools:ignore="ButtonCase">cancel</string>
     <!-- money, apps, inbox, weather -->
     <string name="finance_portfolio_setup">add your holdings or link a google sheet. tap to set up.</string>
     <string name="finance_portfolio_loading">updating your portfolio</string>
@@ -763,7 +722,6 @@
     <string name="apps_sort_recent">last used</string>
     <string name="apps_sort_recent_hint">newest first. only counts apps you open from meena.</string>
     <string name="apps_sort_grid">a to z filter</string>
-    <string name="apps_sort_grid_hint">tap a letter to see only those apps.</string>
     <string name="apps_category_other">other</string>
     <string name="apps_recent_today">today</string>
     <string name="apps_recent_week">this week</string>
@@ -773,9 +731,7 @@
     <string name="weather_rain_chance">rain chance</string>
     <string name="weather_humidity">humidity</string>
     <string name="weather_wind">wind</string>
-    <string name="weather_wind_kmh">%1$d km/h</string>
-    <string name="weather_aqi">%1$d aqi</string>
-    <string name="weather_aqi_band">%1$d aqi, %2$s</string>
+    <string name="weather_aqi_band" tools:ignore="PluralsCandidate">%1$d aqi, %2$s</string>
     <string name="weather_source">%1$s · open-meteo</string>
     <string name="weather_none">no weather yet. check your connection, then come back.</string>
     <string name="weather_feels_like">feels like</string>
@@ -834,7 +790,7 @@
 
     <!-- Widget length (3-line rule) -->
     <string name="widget_lines_title">widget length</string>
-    <string name="widget_lines_status">up to %1$d lines each</string>
+    <string name="widget_lines_status" tools:ignore="PluralsCandidate">up to %1$d lines each</string>
     <string name="widget_lines_toggle">keep widgets short</string>
     <string name="widget_lines_toggle_hint">on shows up to 3 lines in each widget. off shows up to 5.</string>
 
@@ -845,7 +801,7 @@
     <string name="settings_reorder_up">up</string>
     <string name="settings_reorder_down">down</string>
 
-    <string name="notes_show_more">show %1$d more</string>
+    <string name="notes_show_more" tools:ignore="PluralsCandidate">show %1$d more</string>
 
     <!-- Scanner -->
     <string name="widget_name_scanner">scanner</string>
@@ -858,7 +814,6 @@
     <string name="scanner_scanning">point at a code</string>
     <string name="scanner_torch_on">turn on light</string>
     <string name="scanner_torch_off">turn off light</string>
-    <string name="scanner_found">found</string>
     <string name="scanner_copy">copy</string>
     <string name="scanner_open_link">open link</string>
     <string name="scanner_save">save to history</string>
@@ -873,7 +828,7 @@
         <item quantity="one">%1$d scan</item>
         <item quantity="other">%1$d scans</item>
     </plurals>
-    <string name="scanner_show_more">show %1$d more</string>
+    <string name="scanner_show_more" tools:ignore="PluralsCandidate">show %1$d more</string>
 
     <!-- Screen Time -->
     <string name="widget_name_screen_time">screen time</string>
@@ -888,7 +843,10 @@
     <string name="screen_time_failed">couldn’t read screen time. unlock the phone and try again.</string>
     <string name="screen_time_hour_am">%1$dam</string>
     <string name="screen_time_hour_pm">%1$dpm</string>
-    <string name="screen_time_chart_description">screen time by hour. busiest hour: %1$s, %2$d minutes.</string>
+    <plurals name="screen_time_chart_description">
+        <item quantity="one">screen time by hour. busiest hour: %1$s, %2$d minute.</item>
+        <item quantity="other">screen time by hour. busiest hour: %1$s, %2$d minutes.</item>
+    </plurals>
 
     <!-- App widgets from other apps -->
     <string name="widget_name_app_widgets">app widgets</string>
@@ -915,13 +873,11 @@
     <!-- Inbox: email and grouped alerts -->
     <string name="widget_name_email">email</string>
     <string name="inbox_email_prompt">want your email here? turn on notification access. meena reads it on your phone only.</string>
-    <string name="inbox_more">%1$d more</string>
+    <string name="inbox_more" tools:ignore="PluralsCandidate">%1$d more</string>
     <string name="inbox_app_count">%1$s · %2$d</string>
-    <string name="inbox_thread_collapse">collapse</string>
     <string name="inbox_reply">reply</string>
     <string name="inbox_reply_hint">type a reply</string>
     <string name="inbox_reply_sent">sent</string>
-    <string name="inbox_reply_failed">couldn\'t send the reply</string>
 
     <!-- Home app -->
     <string name="home_app_title">home app</string>

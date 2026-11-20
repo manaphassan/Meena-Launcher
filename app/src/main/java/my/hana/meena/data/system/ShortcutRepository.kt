@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.Process
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
 
 /**
  * Queries and caches app shortcuts (conversation shortcuts from WhatsApp, etc.)
@@ -170,11 +172,11 @@ object ShortcutRepository {
         if (drawable is BitmapDrawable && drawable.bitmap != null) {
             val bmp = drawable.bitmap
             return if (bmp.width <= size && bmp.height <= size) bmp
-            else Bitmap.createScaledBitmap(bmp, size, size, true)
+            else bmp.scale(size, size)
         }
         val w = if (drawable.intrinsicWidth in 1..size) drawable.intrinsicWidth else size
         val h = if (drawable.intrinsicHeight in 1..size) drawable.intrinsicHeight else size
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val bmp = createBitmap(w, h)
         drawable.setBounds(0, 0, w, h)
         drawable.draw(Canvas(bmp))
         return bmp
