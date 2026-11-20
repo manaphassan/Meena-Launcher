@@ -47,15 +47,14 @@ Status on 20 November 2026. Plan of record: [`meena-ui-fix-plan.md`](meena-ui-fi
 | 3 | Stock search inside Meena (Google sign-in to write the sheet) | Needs a new library, a Cloud setup and possibly Google review; not planned unless approved |
 
 Dropped: "malaysia top 5" on the money page (owner, 16 Nov 2026).
-Done after 0.2.2, not released yet: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026).
+Done after 0.2.2, not released yet: light and paper themes fade the wallpaper to white so dark text reads (owner, 20 Nov 2026). Settings buttons have the Meena press (scale and tilt, no ripple).
 
 ## Backlog (not scheduled)
 
+- **Data-loss risk (found 20 Nov 2026, in 0.2.2 and earlier):** saved holdings are only loaded when the money page is opened. Opening settings, connections, money first (for example straight after a restart) shows "nothing here yet", and adding a holding or saving a sheet link then would save over the holdings already stored. Not fixed yet; waiting for the owner.
 - Compose UI tests (only unit tests today).
 - Lint warning clean-up (166, mostly unused resources).
-- Material buttons in settings still bring their own press effect; swap them for a Meena button with the scale and tilt press.
-- The nearby map flashes black for about 0.15 s when it opens (since 0.2.0).
-- Check the nearby map in the light theme.
+- The nearby map was said to flash black for about 0.15 s when it opens (since 0.2.0). A frame-by-frame screen recording on the TECNO (dark theme, 20 Nov 2026) found no flash over content: the new page is plain black for about 0.3 s until the map draws. Not changed; check again on the light theme or the Sony if it is still seen.
 - Sparklines for stocks. Kept in the backlog (owner, 20 Nov 2026), for exchanges Sheets can fetch such as NASDAQ; Bursa can't be fetched by Sheets. Google's help says `GOOGLEFINANCE` history "cannot be downloaded or accessed via the Sheets API or Apps Script"; whether the CSV export Meena reads carries it is unverified [S].
 
 ## Won't do
